@@ -14,12 +14,16 @@ SEDF
 - channel range selector [C3][C4] .. use same syntax as [C3][1..4] .. will have to wait and expand on a per-EDF basis ... 
 
 - add EDF+ --> EDF converter  (zero-pad and add MASK for discontinuities)
+
+add an explicit COUPL command that uses caches
+
 -->
+
 
 
 ## v0.25 (XX-December-2020)
 
-add an explicit COUPL command that uses caches
+now HEADERS respects `sig` option, some changes to variable output names
 
 fix mkdir WRITE for Windows
 
