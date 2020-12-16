@@ -1,0 +1,1346 @@
+<htmk>
+<body>
+<h1>Matlab code extracts from Cox & Fell, 2020</h1>
+
+The following are excerpts of Matlab code copied more or less directly from Cox & Fell (2020).  The excerpts here are designed to accompanying this
+<a href="http://zzz.bwh.harvard.edu/luna/vignette/rcox/">vignette</a> and do not reflect the full scope of the Cox & Fell manuscript.  The full, original Matlab
+code is available <a href="https://zenodo.org/record/3929730#.XyAQ3S-z3dc">here</a>.
+
+<a name="setup"></a>
+<h2> Set up project</h2>
+
+<pre>
+function projectRoot=getProjectRoot()
+thisFolder=mfilename('fullpath');
+seps=strfind(thisFolder,filesep);
+lastSep=seps(end-1);
+
+%the root is two folders above current function
+projectRoot=thisFolder(1:lastSep-1);
+
+%alternatively, hard code 
+%projectRoot='I:\sleepMethods\sleepEEGMethods';
+%projectRoot='/data/sleepEEGMethods';
+</pre>
+
+<a name="simulate1"></a>
+<h2> Generating a simulated signal </h2>
+
+<pre>
+%1)----SIMULATED---
+
+%------combine two sine waves
+sineLength=5; %in sec
+sineTime=0:sPeriod:sineLength-sPeriod; %subtract to get even number of samples
+numSamplesSine=length(sineTime);
+
+
+%----SO-like sine
+sineFreq_1=1;
+sineAmp_1=50;
+
+sineWave_1=sineAmp_1*sin(2*pi*sineFreq_1*sineTime);
+
+%---spindle-like sine
+sineFreq_2=13;
+sineAmp_2=10;
+
+sineWave_2=sineAmp_2*sin(2*pi*sineFreq_2*sineTime);
+
+%compound sine
+sineWaves=sineWave_1+sineWave_2;
+</pre>
+
+<a name="fft_sim"></a>
+<h2> DFT/FFT of a simulated signal</h2>
+<pre>
+%-----------FFT OF SIMULATED SIGNAL---------
+
+%fft function does not return actual frequencies, so compute
+sineFreqs_fft=linspace(0,1,numSamplesSine/2+1)*NyLimit;
+
+%perform fft
+sineFft_twoSided=fft(sineWaves); %complex-valued, two-sided Fourier spectrum
+
+%for single-sided spectrum, we take first half of results (positive
+%frequencies), plus 1 for DC
+sineFft_oneSided=sineFft_twoSided(1:numSamplesSine/2+1);
+
+%non-normalized amplitude spectrum
+sineAmp_oneSided=abs(sineFft_oneSided);
+
+%normalized spectrum (by data length, and multiplied by two include
+%negative frequencies)
+sineAmpNorm_oneSided=2*sineAmp_oneSided/numSamplesSine;
+</pre>
+
+
+
+<a name="load_data"></a>
+<h2> Loading sleep EEG data </h2>
+<pre>
+clear all
+
+%-----setup and load---
+
+projectRoot=getProjectRoot;
+dataFolder=[projectRoot filesep 'data' filesep];
+subName='pp3'; %default pp3
+EEG=pop_loadset([dataFolder subName filesep subName '_N3_mast.set']);
+
+%sample rate and sample period
+sRate=EEG.srate;
+sPeriod=1/sRate;
+
+%also define Nyquist freq
+NyLimit=sRate/2;
+
+%channel to use
+channelLabels={'Cz'};
+
+%select 30 s for intial plots (-sPeriod for even number of samples)
+EEG_singleChan_30s=pop_select(EEG,'channel',channelLabels,'time',[1660 1680-sPeriod]); %segment with some SO and spindle activity
+
+%also select entire record
+EEG_singleChan=pop_select(EEG,'channel',channelLabels);
+
+%time vector in seconds
+timesEEG=EEG_singleChan_30s.times/1000;
+
+%signal
+timeData=EEG_singleChan_30s.data';
+
+%data length (samples)
+numSamplesEEG=size(timeData,1);
+</pre>
+
+
+
+<a name="fft_data"></a>
+<h2> DFT/FFT of sleep EEG signal </h2>
+
+<pre>
+%----------FFT OF EEG SIGNAL--------
+%fft function does not return actual frequencies, so compute
+freqs_fft=linspace(0,1,numSamplesEEG/2+1)*NyLimit;
+
+%perform fft
+fft_twoSided=fft(timeData); %complex-valued, two-sided Fourier spectrum
+
+%for single-sided spectrum, we take first half of results (positive
+%frequencies), plus 1 for DC
+fft_oneSided=fft_twoSided(1:numSamplesEEG/2+1);
+
+%non-normalized amplitude spectrum
+amp_oneSided=abs(fft_oneSided);
+ampNorm_oneSided=2*amp_oneSided/numSamplesEEG;
+
+%------PSD----
+%PSD is amplitude spectrum squared, normalized by data length and sample rate
+%(see Matlab help page: Power Spectral Density Estimates Using FFT)
+psd_oneSided = (1/(sRate*numSamplesEEG)) * amp_oneSided.^2;
+psd_oneSided(2:end-1) = 2*psd_oneSided(2:end-1); %multiply by 2
+</pre>
+
+
+<a name="welch30"></a>
+<h2>Welch PSD of 30-second interval</h2>
+
+<pre>
+%---------WELCH PSD/POWER ESTIMATE FOR 30 s WINDOW
+
+%Welch parameters
+fftWindowLength=5; %in seconds
+fftWindowOverlap=0.5; %fraction of 1.
+
+%get Welch PSD
+[rawPSD,freq_welch]=pwelch(EEG_singleChan_30s.data',sRate*fftWindowLength,fftWindowOverlap*sRate*5,[],sRate);
+</pre>
+
+
+<a name="welch_all"></a>
+<h2>Welch PSD of full signal </h2>
+
+<pre>
+%---------WELCH PSD/POWER ESTIMATE FOR FULL DATA--
+%---Fig. 1A----
+
+%Welch parameters
+fftWindowLength=5; %in seconds
+fftWindowOverlap=0.5; %fraction of 1.
+
+%get Welch PSD
+[rawPSD_full,freq_welch]=pwelch(EEG_singleChan.data',sRate*fftWindowLength,fftWindowOverlap*sRate*5,[],sRate);
+</pre>
+
+
+
+<a name="absrelpsd"></a>
+<h2>Absolute and relative PSD spectra</h2>
+<pre>
+
+projectRoot=getProjectRoot;
+dataFolder=[projectRoot filesep 'data' filesep];
+
+subName='pp2'; %default pp2 (also possible to check pp1 and pp3)
+
+channelLabels={'AFz','Cz','Pz','Oz'};
+refLabels={'mastoids'};
+chanCols=linspecer(length(channelLabels));
+
+%N3 is main stage of interest, but include N2 for final plot
+EEG_mast_N3=pop_loadset([dataFolder subName filesep subName '_N3_mast.set']);
+EEG_mast_N2=pop_loadset([dataFolder subName filesep subName '_N2_mast.set']);
+
+sRate=EEG_mast_N3.srate;
+sPeriod=1/sRate;
+
+%figure out channel indices
+allchanlocs=EEG_mast_N3.chanlocs;
+chanIndsToPlot=[];
+for chan_i=1:length(channelLabels)
+    chanInd=find(strcmp({allchanlocs.labels},channelLabels{chan_i}));
+    chanIndsToPlot=[chanIndsToPlot chanInd];
+end
+
+%%
+%----------calculate power across full data---
+%Welch parameters
+fftWindowLength=5; %in seconds
+fftWindowOverlap=0.5; %fraction of 1
+
+%---for N3----
+%get raw PSD: returns freq bins x channel data
+[rawPSD_N3,freq_welch]=pwelch(EEG_mast_N3.data',sRate*fftWindowLength,fftWindowOverlap*sRate*5,[],sRate);
+
+%normalization range (in freqs)
+relRange=[0 30];
+relRangeInds=dsearchn(freq_welch,relRange');
+
+%sum across raw power (band-limited)
+denominator=sum(rawPSD_N3(relRangeInds(1):relRangeInds(2),:),1);
+relPSD_N3=rawPSD_N3./repmat(denominator,[length(freq_welch) 1]);
+
+%--for N2---
+%get raw PSD: returns freq bins x channel data
+[rawPSD_N2,freq_welch]=pwelch(EEG_mast_N2.data',sRate*fftWindowLength,fftWindowOverlap*sRate*5,[],sRate);
+
+%sum across raw power (band-limited)
+denominator=sum(rawPSD_N2(relRangeInds(1):relRangeInds(2),:),1);
+relPSD_N2=rawPSD_N2./repmat(denominator,[length(freq_welch) 1]);
+
+%%
+%--------PLOT N2 and N3 normalization ---
+%Fig. A-2---------
+
+%which of these to plot
+%channelLabels={'AFz','Cz','Pz','Oz'};
+chanIndsToPlot_N2=[1 3];
+
+allData_N3=cat(3,rawPSD_N3,relPSD_N3);
+allData_N2=cat(3,rawPSD_N2,relPSD_N2);
+normLabels={'raw','relative'};
+normUnits={'\muV^2/Hz','ratio'};
+
+%---plot spectra for selected channels
+figure('Position',[53 58 800 300]);
+
+for norm_i=1:size(allData_N3,3)
+        
+    subplot(1,size(allData_N3,3),norm_i)
+    
+    hold on
+    
+    P=plot(freq_welch,squeeze(allData_N3(:,chanIndsToPlot(chanIndsToPlot_N2),norm_i)),'linewidth',3);
+    set(P,{'color'},num2cell(chanCols(chanIndsToPlot_N2,:),2));
+    
+    P=plot(freq_welch,squeeze(allData_N2(:,chanIndsToPlot(chanIndsToPlot_N2),norm_i)),'linewidth',3, 'linestyle',':');
+    set(P,{'color'},num2cell(chanCols(chanIndsToPlot_N2,:),2));
+    
+    xlim([0 30]);
+    
+    g=gca;
+    set(g,'YScale','log','Box','off')
+    
+    if norm_i==3
+        set(g,'YScale','lin')
+    end
+    
+    %V=vline(plotFreqs,'-k');
+    
+    ylabel(normUnits{norm_i});
+    
+    title(normLabels{norm_i})
+    
+    if norm_i==1
+        legend(channelLabels(1,chanIndsToPlot_N2))
+    end
+
+end
+
+xlabel('frequency (Hz)')
+set(gcf,'color','w')
+
+tightfig;
+  
+</pre>
+
+
+
+<a name="topo"></a>
+<h2> PSD band topoplots</h2>
+<pre>
+
+% nb. using data/results from the previous code section
+  
+%%
+%%--------PLOT NORMALIZATION TOPOGRAPHIES---------
+%-Fig. 1CDE (right)---
+
+plotFreqInds=dsearchn(freq_welch,plotFreqs');
+
+figure('Position',[53 58 900 600]);
+
+plotCount=1;
+for norm_i=1:2
+        
+    for freq_i=1:length(plotFreqs)
+        useFreqInd=plotFreqInds(freq_i);
+        
+        %log10 for plotting
+        plotData=log10(squeeze(allData_N3(useFreqInd,:,norm_i)));
+        
+        %log10 not needed for temporal derivative
+        if norm_i==3
+            plotData=squeeze(allData_N3(useFreqInd,:,norm_i));
+        end
+        
+        plotData=plotData-min(plotData(:)); %because topoplot doesn't scale colors for negative data well
+        
+        %data range to plot
+        MI=min(plotData);
+        MA=max(plotData);
+        
+        subplot(3,length(plotFreqs),plotCount)
+        hold on
+        
+        %plot with a whole lot of options to make the plot look nicer
+        topoplot(plotData,allchanlocs,...
+            'colormap',hot(256),'maplimits',[MI MA],...
+            'shading','flat','numcontour',4,'electrodes','off','whitebk','on','plotrad',0.6,'conv','off',...
+            'emarker2',{chanIndsToPlot,'o','b',5});       
+        
+        title(sprintf('%s - %2.3g Hz',normLabels{norm_i},plotFreqs(freq_i)));
+        
+        plotCount=plotCount+1;
+    end
+    
+end
+
+set(gcf,'color','w')
+
+tightfig;
+  
+</pre>
+
+
+
+<a name="hilbertPhase"></a>
+<h2> Extracting phase with the Hilbert transform (extractPhase.m) </a></h2>
+<pre>
+%figures generated by this script:
+%-Fig. 5A
+clear all
+
+%%
+%------make a simple sine wave
+sRate=400;
+sPeriod=1/sRate;
+
+
+sineFreq=1;
+sineAmp=5;
+
+sineLength=4; %in sec
+sineTime=0:sPeriod:sineLength;
+
+sineWave=sineAmp*sin(2*pi*sineFreq*sineTime);
+
+%--- find a peak and postive zero-crossing
+%derivative is helpful here
+dSine=[nan diff(sineWave)]; %add a nan to make dSine same length and sineWave
+
+%peak: first time that slope decreases
+firstPeakInd=find(dSine<0,1,'first');
+firstPeakTime=sineTime(firstPeakInd);
+
+%pos zero crossing
+posGoingInds=find(sineWave>0 & dSine>0) ;
+firstPosZeroCrossRelInd=find(posGoingInds>firstPeakInd,1,'first');
+firstPosZeroCrossInd=posGoingInds(firstPosZeroCrossRelInd);
+
+firstPosZeroCrosTime=sineTime(firstPosZeroCrossInd);
+
+
+%------Hilbert transform
+hilbSine=hilbert(sineWave); %note: no need to filter because signal is narrowband
+
+%---transposing complex results using ' will yield reverse phase angle
+%progression
+hilbSineTransposed=hilbSine'; %to fix this, use transpose(hilbSine) instead
+
+
+%phase
+phaseHilbSine=angle(hilbSine);
+phaseShiftHilbSine=wrapToPi(phaseHilbSine+0.5*pi); %<---add 90 degrees to adjust for Hilbert phase shift
+phaseHilbSineTransposed=angle(hilbSineTransposed);
+
+
+</pre>
+
+
+
+
+<a name="filterHilbert"></a>
+<h2> Filter-Hilbert to extract slow oscillation and spindle amplitude (extractHilbertAmplitude.m)</h2>
+<pre>
+%figures generated by this script:
+%-Fig. 5A
+clear all
+
+%%
+%------make a simple sine wave
+sRate=400;
+sPeriod=1/sRate;
+
+
+sineFreq=1;
+sineAmp=5;
+
+sineLength=4; %in sec
+sineTime=0:sPeriod:sineLength;
+
+sineWave=sineAmp*sin(2*pi*sineFreq*sineTime);
+
+%--- find a peak and postive zero-crossing
+%derivative is helpful here
+dSine=[nan diff(sineWave)]; %add a nan to make dSine same length and sineWave
+
+%peak: first time that slope decreases
+firstPeakInd=find(dSine<0,1,'first');
+firstPeakTime=sineTime(firstPeakInd);
+
+%pos zero crossing
+posGoingInds=find(sineWave>0 & dSine>0) ;
+firstPosZeroCrossRelInd=find(posGoingInds>firstPeakInd,1,'first');
+firstPosZeroCrossInd=posGoingInds(firstPosZeroCrossRelInd);
+
+firstPosZeroCrosTime=sineTime(firstPosZeroCrossInd);
+
+
+%------Hilbert transform
+hilbSine=hilbert(sineWave); %note: no need to filter because signal is narrowband
+
+%---transposing complex results using ' will yield reverse phase angle
+%progression
+hilbSineTransposed=hilbSine'; %to fix this, use transpose(hilbSine) instead
+
+
+%phase
+phaseHilbSine=angle(hilbSine);
+phaseShiftHilbSine=wrapToPi(phaseHilbSine+0.5*pi); %<---add 90 degrees to adjust for Hilbert phase shift
+phaseHilbSineTransposed=angle(hilbSineTransposed);
+
+%%
+%------------AMPLITUDE FROM FILTER-HILBERT -------
+
+
+%--------STEP 1: BUILD AND APPLY FILTERS-----
+%Based on chapter 14 in Cohen's Analyzing Neural Time Series Data
+
+%---build filters
+%in seconds, default: 5 (longer -> better spectral shape)
+%(Change to e.g. 1 to see reduced correpsondence between the spindle-filtered signal and the "true" spindle signal)
+filterLength=1;
+filterOrder=filterLength*sRate;
+
+filterShape=[0 0 1 1 0 0]; %[zero, low cutoff, low passband, high passband, high cutoff, Nyquist]
+%we want maximal signal between low and high passband, maximal suppression elsewhere
+
+%---SO filter
+%here, we hardcode frequencies
+
+%frequencies of [low cutoff, low passband, high passband, high cutoff]
+SO_filter_freqs=[0.2 0.5 2 2.5];
+
+%frequencies relative to nyquist (+DC and Nyquist)
+SO_filter_freqs_nyquist=[0 SO_filter_freqs/(sRate/2) 1];
+SO_filter_coeffs=firls(filterOrder,SO_filter_freqs_nyquist,filterShape);
+
+%---spindle filter
+%here, we use a center frequency and determine a band around it (useful
+%when center freq varies between subjects)
+spindleFiltCenter=sineFreq_2;
+halfBandSize=1;
+transitionWidth=0.5;
+spindle_filter_freqs=[spindleFiltCenter-halfBandSize-transitionWidth spindleFiltCenter-halfBandSize spindleFiltCenter+halfBandSize spindleFiltCenter+halfBandSize+transitionWidth];
+
+%frequencies relative to nyquist (+DC and Nyquist)
+spindle_filter_freqs_nyquist=[0 spindle_filter_freqs/(sRate/2) 1];
+spindle_filter_coeffs=firls(filterOrder,spindle_filter_freqs_nyquist,filterShape);
+
+% two-way filtering to avoid phase offsets
+SOfilt=filtfilt(SO_filter_coeffs,1,compoundSignal);
+spindleFilt=filtfilt(spindle_filter_coeffs,1,compoundSignal);
+
+%--------STEP 2: APPLY HILBERT TRANSFORM-------
+
+%apply Hilbert to bandpass-filtered signal
+hilbSO=hilbert(SOfilt);
+filtHilbSO=real(hilbSO); %"filtered" sine
+ampHilbSO=abs(hilbSO); %envelope
+phaseHilbSO=angle(hilbSO);%phase (not used)
+
+
+hilbSpindle=hilbert(spindleFilt);
+filtHilbSpindle=real(hilbSpindle); %"filtered" sine
+ampHilbSpindle=abs(hilbSpindle); %envelope
+phaseHilbSpindle=angle(hilbSpindle);%phase (not used)
+
+
+maxSoEnv=max(ampHilbSO);
+maxSpindleEnv=max(ampHilbSpindle);
+
+
+</pre>
+
+
+
+
+<a name="wavelets"></a>
+<h2>Wavelets to extract spindle amplitude and phase (extractWaveletPhaseAmplitude.m)</h2>
+<pre>
+%figures generated by this script:
+%-Fig. 5C
+clear all
+%%
+%------create artificial phase-amplitude coupling signal---
+sRate=400;
+sPeriod=1/sRate;
+
+sineLength=20; %in sec. relatively long because signal needs to be longer than filter length
+sineTime=0:sPeriod:sineLength;
+
+
+%----SO-like sine
+sineFreq_1=1;
+sineAmp_1=5;
+
+sineWave_1=sineAmp_1*sin(2*pi*sineFreq_1*sineTime);
+
+%apply Hilbert to sine to get some "ground-truth" information
+hilbSine_1=hilbert(sineWave_1); %note: not filtering because signal is narrowband
+
+
+%---spindle-like sine
+sineFreq_2=13;
+sineAmp_2=2;
+
+
+%calculate phase-based modulation of amplitude
+ampMod=sineWave_1./max(sineWave_1); %maximum spindles at SO peak...
+ampMod(ampMod<0)=0;%..but no spindle activity when SO amplitude is negative
+
+%modulate spindle amplitude depending on SO phase
+sineWave_2=ampMod.*sin(2*pi*sineFreq_2*sineTime);
+
+
+%finally, some noise
+noiseAmp=0.2;
+noise=noiseAmp*rand(1,length(sineTime));
+
+compoundSignal=sineWave_1+sineWave_2+noise; %SO-spindle
+
+%%
+%----------WAVELET AMPLITUDE----
+
+%wavelet parameters
+waveletFreq=sineFreq_2;
+waveletTimeFWHM=0.25;% desired fwhm temporal resolution (in s)
+
+halfWaveletLength=10; %in s, on either side
+
+waveletTime=-halfWaveletLength:sPeriod:halfWaveletLength;
+
+%---make regular (unscaled) wavelet
+%complex sine wave
+waveletSine=exp(2*1i*pi*waveletFreq.*waveletTime);
+%gaussian window
+gauss=exp((-4*log(2)*waveletTime.^2)./(waveletTimeFWHM.^2));
+%multiply
+unscaledWavelet=waveletSine.*gauss; %this is the usual wavelet
+
+
+%%
+%-----------PERFORM FREQUENCY-DOMAIN CONVOLUTION IN 3 WAYS
+
+%%--general taper details
+dataLength=length(sineTime);
+waveletLength  =  length(unscaledWavelet);
+
+convLengtNarrow =  dataLength+waveletLength-1;
+convLengthWide  =  pow2(nextpow2( convLengtNarrow ));
+
+%transform signal to frequency domain
+signalFFT = fft(compoundSignal,convLengthWide);
+
+%--- 1) CORRECT WAY----
+%----CONSTRUCT "WRAPPED AROUND" WAVELET--
+%determine amount of zero padding
+middlePaddingLength=convLengthWide-waveletLength;
+
+%get wavelet halves
+waveletUnscaledHalf1=unscaledWavelet(1:floor(waveletLength/2));
+waveletUnscaledHalf2=unscaledWavelet(floor(waveletLength/2)+1:end);
+
+%wrapped wavelet is second half plus zeros plus first half
+wrappedUnscaledWavelet=[waveletUnscaledHalf2 zeros(1,middlePaddingLength) waveletUnscaledHalf1];
+
+%transform wavelet to frequency domain ( equally long as signal)
+wrappedUnscaledWaveletFFT=fft(wrappedUnscaledWavelet,convLengthWide);
+
+%rescale wavelet in frequency domain (factor two for negative frequencies)
+wrappedScaledWaveletFFT=2*wrappedUnscaledWaveletFFT./max(wrappedUnscaledWaveletFFT);
+
+% convolve and get analytic signal
+convResultWide = ifft(signalFFT.*wrappedScaledWaveletFFT,convLengthWide);
+%adjust for power-of-two
+convResultNarrow = convResultWide(1:convLengtNarrow);
+%strip wavelet (full wavelet length from end)
+wrappedScaledConvResult=convResultNarrow(1:end-waveletLength+1);
+
+
+</pre>
+
+
+
+
+<a name="sosp_coupling"></a>
+<h2>Slow oscillation-spindle coupling</h2>
+<pre>
+
+%figures generated by this script:
+%-Fig. 4
+clear all
+set(groot,'defaultAxesColorOrder',linspecer(6))
+%%
+%-----setup and load---
+
+projectRoot=getProjectRoot;
+dataFolder=[projectRoot filesep 'data' filesep];
+
+
+subName='pp2'; %default pp2
+stageName='N3';
+
+refLabels={'mastoids','average','Laplacian'};
+
+EEG_mast=pop_loadset([dataFolder subName filesep subName '_' stageName '_mast.set']);
+EEG_ave=pop_loadset([dataFolder subName filesep subName '_' stageName '_ave.set']);
+EEG_lap=pop_loadset([dataFolder subName filesep subName '_' stageName '_lap.set']);
+
+numChan=EEG_mast.nbchan;
+
+%get channel locations
+allchanlocs=EEG_mast.chanlocs;
+
+sRate=EEG_mast.srate;
+sPeriod=1/sRate;
+
+%concatenate: sample x chan x refType
+allTimeData=cat(3,EEG_mast.data',EEG_ave.data',EEG_lap.data');
+
+%make some space
+clear EEG_mast EEG_ave EEG_lap
+%%
+%----------RUN WAVELET CONVOLUTION------
+
+%we'll use wavelets to extract phase and amplitude information
+
+%first create (too many) wavelets
+[wavelets,waveletFreqs,waveletTimes]=createWavelets_sleepScalpEEG(sRate); %note: dependent on sample rate
+
+%now keep only 3 freqs to speed things up
+useFreqs=[0.8 10.7 13.3]; %SO, slow spindle, fast spindle
+useFreqInds=dsearchn(waveletFreqs',useFreqs');
+
+numFreqs=length(useFreqs);
+waveletFreqs=waveletFreqs(1,useFreqInds);
+wavelets=wavelets(useFreqInds,:);
+
+%for each montage
+for refType_i=1:length(refLabels)
+    
+    fprintf('\nreference %i of %i',refType_i,length(refLabels))
+    
+    data=allTimeData(:,:,refType_i);
+    
+    %--taper details
+    Ldata=size(data,1);
+    Ltapr  =  length(waveletTimes);
+    Lconv1 =  Ldata+Ltapr-1; %sum of data and wavelet (minus one)
+    Lconv  =  pow2(nextpow2( Lconv1 ));
+    
+    middlePaddingLength=Lconv-Ltapr;
+    
+    %GET FIRST AND SECOND HALF OF WAVELET (NOT PERFECT HALFS BECAUSE ODD NUMBER
+    %OF POINTS. MAYBE BETTER TO USE EVEN NUMBER OF POINTS FOR WAVELET?
+    waveletsHalf1=wavelets(:,1:floor(Ltapr/2));
+    waveletsHalf2=wavelets(:,floor(Ltapr/2)+1:end);
+    
+    
+    for chan_i=1:numChan
+        
+        %including padding
+        chanData=data(:,chan_i)';
+        
+        fprintf('\nchannel %i of %i',chan_i,numChan);
+        
+        %fft of signal
+        EEGfft = fft(chanData,Lconv);
+        
+        for fr_i=1:numFreqs
+            fprintf('.');
+            
+            %now we "wrap the wavelet around" to ensure correct phase
+            %estimates relative to original signal
+            %WRAPPED WAVELET IS SECOND HALF PLUS ZEROS PLUS FIRST HALF
+            wrappedWavelet=[waveletsHalf2(fr_i,:) zeros(1,middlePaddingLength) waveletsHalf1(fr_i,:)];
+            
+            %fft of wavelet kernel
+            kernelFFT=fft(wrappedWavelet,Lconv);
+            
+            %scaling factor to ensure similar amplitudes of original traces and wavelet-filtered signal
+            kernelFFT=2*kernelFFT./max(kernelFFT);
+            
+            % convolve and get analytic signal
+            m = ifft(EEGfft.*kernelFFT,Lconv);
+            m = m(1:Lconv1);
+            m = m(1:end-Ltapr+1);
+            
+            
+            %time X channel x freq x reference type
+            if  fr_i==1 && chan_i==1 && refType_i==1
+                allChanConv=zeros(Ldata,numChan,numFreqs,length(refLabels));
+            end
+            
+            %store in single format
+            allChanConv(:,chan_i,fr_i,refType_i)=single(m.'); %note " .' " instead of " ' "
+            
+        end
+    end
+        
+end
+
+
+%-----------phase-amplitude coupling (dPAC) per 30s segment
+
+epochSizeSec=30;
+chunkSize=sRate*epochSizeSec;
+numChunk =floor(Ldata/chunkSize);
+
+%limit calculations to 20 segments to speed things up
+if numChunk>20
+    numChunk=20;
+end
+useChunks=1:numChunk;
+
+allChunkPacStrength=[];
+allChunkPacPhase=[];
+
+%chunk it up
+for chunk_i=1:numChunk
+    
+    %get indices of current chunk
+    chunkRange=useChunks(chunk_i)*chunkSize-chunkSize+1:useChunks(chunk_i)*chunkSize;
+    
+    for refType_i=1:length(refLabels)
+        %time X channel x freq
+        chunkConv=allChanConv(chunkRange,:,:,refType_i);
+        
+        %extract SO phase (first freq)
+        phaseSO=squeeze(angle(chunkConv(:,:,1)));
+        
+        %now loop across amplitude/power frequencies (slow and fast
+        %spindles)
+        for fr_i=2:numFreqs
+            fprintf('\nanalyzing chunk %i of %i, reference %i of %i, freq %i of %i',...
+                chunk_i,numChunk,refType_i,length(refLabels),...
+                fr_i,numFreqs);
+            
+            currFreq=waveletFreqs(fr_i);
+            
+            powSpindle= squeeze(abs(chunkConv(:,:,fr_i))).^2;
+            
+            %---determine PAC using debias factor
+            debias_term = mean(exp(1i*phaseSO)); % -- this is the phase clustering bias
+            
+            dPAC_complex=mean((exp(1i*phaseSO) - repmat(debias_term,[size(phaseSO,1) 1])) .* powSpindle);
+            dPAC_strength = abs(dPAC_complex);
+            dPAC_phase=angle(dPAC_complex);
+            
+            
+            allChunkPacStrength(chunk_i,:,fr_i,refType_i)=dPAC_strength;
+            allChunkPacPhase(chunk_i,:,fr_i,refType_i)=dPAC_phase;
+            
+        end
+        
+        
+    end
+    
+end
+
+%%
+%----------PLOT COUPLING PHASE
+%--Fig. 4
+%for slow and fast spindles
+
+
+figure('Position',[53 58 900 900]);
+
+plotCount=1;
+for refType_i=1:length(refLabels)
+    
+    %fr_i==1 should be ignored (empty)
+    for fr_i=1:numFreqs
+        
+        seedCh_i=fr_i;
+        
+        %for circular data, use circ_mean
+        plotData=squeeze(circ_mean(allChunkPacPhase(:,:,fr_i,refType_i),[],1));
+        
+        %data range to plot
+        MI=-pi;
+        MA=pi;
+        
+        subplot(3,numFreqs,plotCount)
+        hold on
+        
+        %plot with a whole lot of options to make the plot look nicer
+        topoplot(plotData,allchanlocs,...
+            'colormap',phasemap(256),'maplimits',[MI MA],...
+            'shading','flat','numcontour',4,'electrodes','off','whitebk','on','plotrad',0.6,'conv','off'...
+            );
+        
+        
+        title(sprintf('%s - %2.3g Hz',refLabels{refType_i},waveletFreqs(fr_i)));
+        
+        plotCount=plotCount+1;
+    end
+    
+end
+
+set(gcf,'color','w')
+
+tightfig;
+
+</pre>
+
+
+<a name="dPAC"></a>
+<h2> Phase amplitude coupling (dPAC) and surrogate-based normalization (surrogatePhaseAmplitudeCoupling.m)</h2>
+<pre>
+%figures generated by this script:
+%-Fig. 7A
+
+clear all
+set(groot,'defaultAxesColorOrder',linspecer(6))
+%%
+%-----setup and load---
+
+projectRoot=getProjectRoot;
+dataFolder=[projectRoot filesep 'data' filesep];
+
+subName='pp3'; %default pp3
+stageName='N3';
+
+EEG_mast=pop_loadset([dataFolder subName filesep subName '_' stageName '_mast.set']);
+
+numChan=EEG_mast.nbchan;
+
+%get channel locations
+allchanlocs=EEG_mast.chanlocs;
+
+sRate=EEG_mast.srate;
+sPeriod=1/sRate;
+
+
+%%
+%----------RUN WAVELET CONVOLUTION------
+
+%we'll use wavelets to extract phase and amplitude information
+
+%first create wavelets
+[wavelets,waveletFreqs,waveletTimes]=createWavelets_sleepScalpEEG(sRate); %note: dependent on sample rate
+
+%now keep only 3 freqs to speed things up
+useFreqs=[0.8 11.5 14.3]; %freqs for pp3
+
+useFreqInds=dsearchn(waveletFreqs',useFreqs');
+
+numFreqs=length(useFreqs);
+waveletFreqs=waveletFreqs(1,useFreqInds);
+wavelets=wavelets(useFreqInds,:);
+
+data=EEG_mast.data';
+
+%--taper details
+Ldata=size(data,1);
+Ltapr  =  length(waveletTimes);
+Lconv1 =  Ldata+Ltapr-1; %sum of data and wavelet (minus one)
+Lconv  =  pow2(nextpow2( Lconv1 ));
+
+middlePaddingLength=Lconv-Ltapr;
+
+%GET FIRST AND SECOND HALF OF WAVELET (NOT PERFECT HALFS BECAUSE ODD NUMBER
+%OF POINTS. MAYBE BETTER TO USE EVEN NUMBER OF POINTS FOR WAVELET?
+waveletsHalf1=wavelets(:,1:floor(Ltapr/2));
+waveletsHalf2=wavelets(:,floor(Ltapr/2)+1:end);
+
+
+for chan_i=1:numChan
+    
+    %including padding
+    chanData=data(:,chan_i)';
+    
+    fprintf('\nchannel %i of %i',chan_i,numChan);
+    
+    %fft of signal
+    EEGfft = fft(chanData,Lconv);
+    
+    for fr_i=1:numFreqs
+        fprintf('.');
+        
+        %now we "wrap the wavelet around" to ensure correct phase
+        %estimates relative to original signal
+        %WRAPPED WAVELET IS SECOND HALF PLUS ZEROS PLUS FIRST HALF
+        wrappedWavelet=[waveletsHalf2(fr_i,:) zeros(1,middlePaddingLength) waveletsHalf1(fr_i,:)];
+        
+        %fft of wavelet kernel
+        kernelFFT=fft(wrappedWavelet,Lconv);
+        
+        %scaling factor to ensure similar amplitudes of original traces and wavelet-filtered signal
+        kernelFFT=2*kernelFFT./max(kernelFFT);
+        
+        % convolve and get analytic signal
+        m = ifft(EEGfft.*kernelFFT,Lconv);
+        m = m(1:Lconv1);
+        m = m(1:end-Ltapr+1);
+        
+        
+        %time X channel x freq
+        if  fr_i==1 && chan_i==1
+            allChanConv=zeros(Ldata,numChan,numFreqs);
+        end
+        
+        %store in single format
+        allChanConv(:,chan_i,fr_i)=single(m.'); %note " .' " instead of " ' "
+        
+    end
+end
+
+%%
+%-----------calculate dPAC per 30s segment
+
+epochSizeSec=30;
+chunkSize=sRate*epochSizeSec;
+numChunk =floor(Ldata/chunkSize);
+
+
+%limit calculations to 20 segments to speed things up
+if numChunk>20
+    numChunk=20;
+end
+useChunks=1:numChunk;
+
+allChunkPacStrength=[];
+allChunkPacPhase=[];
+allChunkPacStrength_Z=[];
+
+
+nperm=200;
+
+%chunk it up
+for chunk_i=1:numChunk
+    
+    %get indices of current chunk
+    chunkRange=useChunks(chunk_i)*chunkSize-chunkSize+1:useChunks(chunk_i)*chunkSize;
+    
+    
+    %time X channel x freq
+    chunkConv=allChanConv(chunkRange,:,:);
+    
+    %extract SO phase (first freq)
+    phaseSO=squeeze(angle(chunkConv(:,:,1)));
+    
+    %now loop across amplitude/power frequencies (slow and fast
+    %spindles)
+    for fr_i=2:numFreqs
+        fprintf('\nanalyzing chunk %i of %i, freq %i of %i',...
+            chunk_i,numChunk,...
+            fr_i,numFreqs);
+        
+        powSpindle= squeeze(abs(chunkConv(:,:,fr_i))).^2;
+        
+        %---determine PAC using debias factor
+        debias_term = mean(exp(1i*phaseSO)); % -- this is the phase clustering bias
+        
+        dPAC_complex=mean((exp(1i*phaseSO) - repmat(debias_term,[size(phaseSO,1) 1])) .* powSpindle);
+        
+        dPAC_strength = abs(dPAC_complex);
+        dPAC_phase=angle(dPAC_complex);        
+        
+        allChunkPacStrength(chunk_i,:,fr_i)=dPAC_strength;
+        allChunkPacPhase(chunk_i,:,fr_i)=dPAC_phase;
+        
+        fake_dPAC_shifted=zeros(nperm,numChan);
+        
+        fprintf('\npermuting')
+        for perm_i=1:nperm
+            fprintf('.')
+            
+            %create surrogates by adjusting phases in two ways
+            
+            phaseSO_shifted=circshift(phaseSO,randi(size(phaseSO,1)),1); % time shift
+            
+            %determine surrogate dPAC strength
+            %Note: debias term is unchanged as it depends on the same phases
+            fake_dPAC_shifted(perm_i,:) =abs(mean( (exp(1i*phaseSO_shifted) - repmat(debias_term,[size(phaseSO,1) 1])) .* powSpindle));
+            
+        end
+        
+        % Z scores
+        dPAC_strength_Z=(dPAC_strength - mean(fake_dPAC_shifted,1)) ./ std(fake_dPAC_shifted,[],1);
+        
+        allChunkPacStrength_Z(chunk_i,:,fr_i)=dPAC_strength_Z;
+        
+    end
+    
+    
+    
+    
+end
+%%
+%----------PLOT COUPLING STRENGTH
+%%--Fig. 7A
+
+%for SOs and fast spindles
+
+couplingLabels={'raw','z-scored'};
+figure('Position',[53 58 900 900]);
+
+plotCount=1;
+for couplingType_i=1:2
+    
+    %fr_i==1 should be ignored (empty)
+    for fr_i=2:numFreqs
+        
+        
+        if couplingType_i==1
+            
+            plotData=squeeze(mean(allChunkPacStrength(:,:,fr_i),1));
+            
+            
+        elseif couplingType_i==2
+            plotData=squeeze(mean(allChunkPacStrength_Z(:,:,fr_i),1));
+        end
+        
+        %data range to plot
+        
+        MI=min(plotData);
+        
+        %for z-scores start at 0
+        if couplingType_i==2
+            MI=0;
+        end
+        MA=max(plotData);
+        
+        subplot(2,2,plotCount)
+        hold on
+        
+        %plot with a whole lot of options to make the plot look nicer
+        topoplot(plotData,allchanlocs,...
+            'colormap',hot(256),'maplimits',[MI MA],...
+            'shading','flat','numcontour',4,'electrodes','off','whitebk','on','plotrad',0.6,'conv','off'...
+            );
+        
+        colorbar
+        
+        title(sprintf('%s - %2.3g Hz',couplingLabels{couplingType_i},waveletFreqs(fr_i)));
+        
+        plotCount=plotCount+1;
+    end
+    
+end
+
+set(gcf,'color','w')
+
+</pre>
+
+
+<a name="wPLI"></a>
+<h2> Weighted Phase Lag Index (wPLI) and surrogate-based normalization (surrogatePhaseSynchrony.m)</h2>
+<pre>
+%figures generated by this script:
+%-Fig. 7B
+
+
+clear all
+set(groot,'defaultAxesColorOrder',linspecer(6))
+%%
+%-----setup and load---
+
+projectRoot=getProjectRoot;
+dataFolder=[projectRoot filesep 'data' filesep];
+
+subName='pp3'; %default pp3
+stageName='N3';
+
+%we'll determine wPLI between these two channels (only)
+channelLabels={'AFz','Oz'};
+
+
+chanCols=linspecer(length(channelLabels));
+
+EEG_mast=pop_loadset([dataFolder subName filesep subName '_' stageName '_mast.set']);
+EEG_mast_small=pop_select(EEG_mast,'channel',channelLabels);
+
+numChan=EEG_mast_small.nbchan;
+
+
+sRate=EEG_mast_small.srate;
+sPeriod=1/sRate;
+
+
+%%
+%----------RUN WAVELET CONVOLUTION------
+
+%we'll use wavelets to extract phase and amplitude information
+
+%first create wavelets
+[wavelets,waveletFreqs,waveletTimes]=createWavelets_sleepScalpEEG(sRate); %note: dependent on sample rate
+numFreqs=length(waveletFreqs);
+
+data=EEG_mast_small.data';
+
+%--taper details
+Ldata=size(data,1);
+Ltapr  =  length(waveletTimes);
+Lconv1 =  Ldata+Ltapr-1; %sum of data and wavelet (minus one)
+Lconv  =  pow2(nextpow2( Lconv1 ));
+
+middlePaddingLength=Lconv-Ltapr;
+
+%GET FIRST AND SECOND HALF OF WAVELET (NOT PERFECT HALFS BECAUSE ODD NUMBER
+%OF POINTS. MAYBE BETTER TO USE EVEN NUMBER OF POINTS FOR WAVELET?
+waveletsHalf1=wavelets(:,1:floor(Ltapr/2));
+waveletsHalf2=wavelets(:,floor(Ltapr/2)+1:end);
+
+
+for chan_i=1:numChan
+    
+    %including padding
+    chanData=data(:,chan_i)';
+    
+    fprintf('\nchannel %i of %i',chan_i,numChan);
+    
+    %fft of signal
+    EEGfft = fft(chanData,Lconv);
+    
+    for fr_i=1:numFreqs
+        fprintf('.');
+        
+        %now we "wrap the wavelet around" to ensure correct phase
+        %estimates relative to original signal
+        %WRAPPED WAVELET IS SECOND HALF PLUS ZEROS PLUS FIRST HALF
+        wrappedWavelet=[waveletsHalf2(fr_i,:) zeros(1,middlePaddingLength) waveletsHalf1(fr_i,:)];
+        
+        %fft of wavelet kernel
+        kernelFFT=fft(wrappedWavelet,Lconv);
+        
+        %scaling factor to ensure similar amplitudes of original traces and wavelet-filtered signal
+        kernelFFT=2*kernelFFT./max(kernelFFT);
+        
+        % convolve and get analytic signal
+        m = ifft(EEGfft.*kernelFFT,Lconv);
+        m = m(1:Lconv1);
+        m = m(1:end-Ltapr+1);
+        
+        
+        %time X channel x freq
+        if  fr_i==1 && chan_i==1
+            allChanConv=zeros(Ldata,numChan,numFreqs);
+        end
+        
+        %store in single format
+        allChanConv(:,chan_i,fr_i)=single(m.'); %note " .' " instead of " ' "
+        
+    end
+end
+
+%%
+%-----------calculate weighted phase lag index per 30s segment
+
+epochSizeSec=30;
+chunkSize=sRate*epochSizeSec;
+numChunk =floor(Ldata/chunkSize);
+
+%limit calculations to 20 segments to speed things up
+if numChunk>20
+    numChunk=20;
+end
+useChunks=1:numChunk;
+
+allChunkwPLI=[];
+allChunkwPLI_Z=[];
+
+%number of permutations
+nperm=200; %note: while 200 would be low if this is the only time we create surrogates, we do it for every single segment:
+%subsequent averaging across chunks leads to little difference with e.g. nperm=1000
+
+%chunk it up
+for chunk_i=1:numChunk
+    
+    %get indices of current chunk
+    chunkRange=useChunks(chunk_i)*chunkSize-chunkSize+1:useChunks(chunk_i)*chunkSize;
+    
+    
+    %time X channel x freq
+    chunkConv=allChanConv(chunkRange,:,:);
+    
+    
+    %now loop across amplitude/power frequencies (slow and fast
+    %spindles)
+    for fr_i=1:numFreqs
+        fprintf('\nanalyzing chunk %i of %i, freq %i of %i',...
+            chunk_i,numChunk,...
+            fr_i,numFreqs);
+        
+        %chunk-, freq-, and seed/target-specific
+        %permute so every channel is in a column
+        chunkConvFreqSeed=chunkConv(:,1,fr_i);
+        chunkConvFreqTargets=chunkConv(:,2,fr_i);
+        
+        
+        
+        %---wPLI
+        % cross-spectral density
+        crossSpectChunk = chunkConvFreqSeed.*conj(chunkConvFreqTargets);
+        imagCrossSpectChunk=imag(crossSpectChunk);
+        
+        %---seed vs. all targets
+        chunkwPliRaw=abs(mean(abs(imagCrossSpectChunk).*sign(imagCrossSpectChunk),1))...
+            ./mean(abs(imagCrossSpectChunk),1);
+        
+        
+        allChunkwPLI(chunk_i,fr_i)=chunkwPliRaw;
+        
+        
+        %also extract phases and amplitudes for easier permuting
+        chunkAmpFreqSeed=abs(chunkConvFreqSeed);
+        chunkPhaseFreqSeed=angle(chunkConvFreqSeed);
+        
+        %-permute: shuffle phases of seed channel
+        chunkwPliFake=zeros([nperm,length(chunkwPliRaw)]);
+        
+        fprintf('\npermuting')
+        for perm_i=1:nperm
+            fprintf('.')
+            
+            %shuffle phases of analytic signal (keeping
+            %amplitudes intact)
+            chunkConvFreqSeed_Shifted=chunkAmpFreqSeed.*exp(1i*circshift(chunkPhaseFreqSeed,randi(size(chunkPhaseFreqSeed,1))));
+            
+            
+            % cross-spectral density
+            crossSpectChunkFake = chunkConvFreqSeed_Shifted.*conj(chunkConvFreqTargets);
+            imagCrossSpectChunkFake=imag(crossSpectChunkFake);
+            
+            % wPLI
+            
+            chunkwPliFake(perm_i,:)=abs(mean(abs(imagCrossSpectChunkFake).*sign(imagCrossSpectChunkFake),1))...
+                ./mean(abs(imagCrossSpectChunkFake),1);
+        end
+        
+        
+        %z-score wPLI
+        chunkwPliZ=(chunkwPliRaw-squeeze(mean(chunkwPliFake,1)))./squeeze(std(chunkwPliFake,0,1));
+        allChunkwPLI_Z(chunk_i,fr_i)=  chunkwPliZ;
+        
+        
+    end
+    
+end
+
+%%
+%------PLOT wPLI---
+%--Fig. 7B
+
+metricCols=linspecer(2);
+
+phaseSyncPlotRaw=mean(allChunkwPLI,1);
+phaseSyncPlotRaw_sem=sem(allChunkwPLI,1);
+
+phaseSyncPlotZ=mean(allChunkwPLI_Z,1);
+phaseSyncPlotZ_sem=sem(allChunkwPLI_Z,1);
+
+figure( 'Position', [680 637 600 300])
+
+% yyaxis introduced in Matlab 2016A
+try
+    yyaxis left
+end
+
+%-plot raw wPLI
+B=boundedline(waveletFreqs,phaseSyncPlotRaw,permute(repmat(phaseSyncPlotRaw_sem,[2 1]),[2 1]),...
+    'cmap',metricCols(1,:),'transparency',0.2);
+set(B,'linewidth',2)
+
+
+ylabel('raw PLI')
+
+
+try
+    yyaxis right
+end
+%-plot z-scores wPLI
+hold on
+
+B=boundedline(waveletFreqs,phaseSyncPlotZ,permute(repmat(phaseSyncPlotZ_sem,[2 1]),[2 1]),...
+    'cmap',metricCols(2,:),'transparency',0.2);
+set(B,'linewidth',2)
+
+
+ylabel('z-scored PLI')
+
+H=hline(0);
+set(H,'color',metricCols(2,:), 'linewidth',1,'linestyle','--')
+
+g=gca;
+set(g,'box','off')
+
+xlabel('frequency (Hz)')
+
+set(gcf,'color','w')
+tightfig;
+
+
+
+
+</pre>
+
+
+
+</body>
+</html>
+  

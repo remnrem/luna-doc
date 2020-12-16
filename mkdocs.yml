@@ -1,0 +1,86 @@
+site_name: Luna
+
+site_url: http://zzz.bwh.harvard.edu/luna
+
+site_description: Documentation for the Luna software
+
+site_author: S. M. Purcell
+
+theme:
+    name: 'material'
+    palette:
+      primary: 'indigo'
+      accent: 'indigo'
+      
+#    custom_dir: '/usr/local/lib/python3.7/site-packages/mkdocs_material-3.2.0.dist-info/'
+
+    highlightjs: false
+
+    shortcuts:
+        help: 191    # ?
+        next: 78     # n
+        previous: 80 # p
+        search: 83   # s
+
+markdown_extensions:
+  - admonition
+  - pymdownx.superfences
+
+#extra_javascript:
+#  - 'javascripts/extra.js'
+
+extra_css:
+  - 'stylesheets/extra.css'
+
+      
+nav:
+ - Overview: 'index.md'
+
+ - Updates: 'updates.md'
+
+ - Tutorial: 
+     - 'Quick start': 'tut/tut1.md'
+     - 'Take two': 'tut/tut2.md'
+     - 'Deeper dive': 'tut/tut3.md'
+     - '/R/epeat': 'tut/tut4.md'
+
+ - lunaC: 'luna/args.md'
+
+ - lunaR: 'ext/R.md'
+
+ - Output:
+    - 'Luna output': 'luna/destrat.md'
+    - 'merge': 'merge/merge.md'
+  
+ - Reference: 
+    - 'Overview': 'ref/index.md'
+    - 'Summaries': 'ref/summaries.md'
+    - 'Annotations': 'ref/annotations.md'
+    - 'Expressions': 'ref/evals.md'
+    - 'Epochs': 'ref/epochs.md'
+    - 'Masks': 'ref/masks.md'
+    - 'Manipulations': 'ref/manipulations.md'
+    - 'Outputs': 'ref/outputs.md'
+    - 'Filters': 'ref/fir-filters.md'
+    - 'Artifacts': 'ref/artifacts.md'
+    - 'Hypnograms': 'ref/hypnograms.md'
+    - 'Spectral analyses': 'ref/power-spectra.md'
+    - 'Spindles/SO ': 'ref/spindles-so.md'
+    - 'Coupling/connectivity': 'ref/cc.md'
+    - 'Misc': 'ref/misc.md'
+    - 'Experimental ': 'ref/exp.md'
+
+ - NSRR: 'nsrr.md' 
+
+ - Vignettes: 'vignettes/index.md'
+
+ - Downloads:
+    - 'Overview': 'download/index.md'
+    - 'Binaries': 'download/exec.md'
+    - 'Source': 'download/source.md'
+    - 'Data': 'download/data.md'
+    - 'Notes': 'download/misc.md'
+
+ - 'Docker': 'download/docker.md'
+
+ - FAQ: 'faq.md'
