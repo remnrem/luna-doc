@@ -50,8 +50,9 @@ nav:
 
  - Output:
     - 'Luna output': 'luna/destrat.md'
-    - 'merge': 'merge/merge.md'
-  
+    - 'dmerge': 'merge/merge.md'
+    - 'dmerge example': 'merge/merge-example.md'
+    
  - Reference: 
     - 'Overview': 'ref/index.md'
     - 'Summaries': 'ref/summaries.md'

@@ -1,6 +1,6 @@
-# merge
+# dmerge
 
-_merge_ is a tool for working with derived metrics from Luna (or other
+_dmerge_ is a tool for working with derived metrics from Luna (or other
 tools that generate individual-level output).  By adhering to a
 particular file and folder naming convention, data from diverse
 pipelines can be easily compiled and checked across multiple individuals.
@@ -8,11 +8,11 @@ pipelines can be easily compiled and checked across multiple individuals.
 ## Usage
 
 ```
-merge -d derived/domains
-      -s studies/study1
-      -o merged/study1.txt
-      { domains/groups/exclusions }
-      > merged/dictionary1.txt
+dmerge derived/domains
+       studies/study1
+       merged/study1.txt
+       { domains/groups/exclusions }
+       > merged/dictionary1.txt
 ```
 
 ## Primary functions
@@ -27,13 +27,13 @@ merge -d derived/domains
 ## Definitions
 
 __FACTOR__: a variable such as channel, frequency or sleep stage, etc.
-The level of a factor is its value, e.g. C3, 12.5 Hz or N2
+The level of a factor is its value, e.g. `C3`, `12.5` (Hz) or `N2`
 respectively.  Factors stratify the values of typical variables,
 rather than represent data by themselves. Factors can appear in the
 body of a file (for long-format data) or are otherwise encoded in the
 variable name (see variable naming conventions, below).  Factors can
 also be specified through file naming conventions (e.g. here the
-factor SS is set to N2: eeg-spectral-PSD-CH_B_SS-N2.txt).
+factor `SS` is set to `N2`: `eeg_spectral_PSD-CH_B_SS-N2.txt`).
 
 __DOMAIN__: the highest grouping of data dictionaries; typically a
 domain will correspond to an NSRR investigator, i.e. one person/group
@@ -54,7 +54,7 @@ variable name
 
 ## Folder naming conventions
 
-- All dictionaries must be in a single folder (passed via the -d option)
+- All dictionaries must be in a single folder (passed via the first parameter)
 
 - All individual data should be in individual subfolders within a study folder: e.g.
 
@@ -78,7 +78,7 @@ data/study1/pupa/id003/
 ```
 
 - Additional data that need to be stored (e.g. verbose intermediate
-  files) can be put under a special folder 'extra' within the
+  files) can be put under a special folder `extra` within the
   individual sub-folders, and will be skipped; e.g. below, _file3_ is
   ignored
 
@@ -93,23 +93,23 @@ data/study1/id003/extra/{file3}
 All data files should be named according to the convention:
 
 ```
-   {domain}-{group}-{label}{-factor}{_factor}{_factor-level}{.txt}
+   {domain}_{group}_{label}{_factor}{_factor}{_factor-level}{.txt}
 ```
 
-Examples (in the `eeg-spectral` domain/group): 
+Examples (in the `eeg_spectral` domain/group): 
 
 ```
-  eeg-spectral-psd-B_CH_SS-N1
-  eeg-spectral-psd-B_CH_SS-N2
-  eeg-spectral-psd-F_CH_SS-N2
-  eeg-spectral-psd-E_F_CH_SS-N2.txt
+  eeg_spectral_psd_B_CH_SS-N1
+  eeg_spectral_psd_B_CH_SS-N2
+  eeg_spectral_psd_F_CH_SS-N2
+  eeg_spectral_psd_E_F_CH_SS-N2.txt
 ```
 
-- Domain and group and label are required
+- Domain, group and label are required (i.e. always three
+  underscore-delimited terms starting the filename)
 
-- Domain and group must correspond to a data dictionary (e.g. given `-d
-  dict/` is specified on the command line, then `dict/EEG-spectral.txt`
-  must exist)
+- Domain and group must correspond to a data dictionary specified on
+  the command line, e.g. then `dict/eeg_spectral.txt` must exist)
 
 - The file extension `.txt`, if present, is ignored; files ending `'~'`
   are ignored completely
@@ -117,7 +117,7 @@ Examples (in the `eeg-spectral` domain/group):
 - Optional factors in the file name (e.g. `CH` for channel) indicate a
   column in the body of the file that gives levels for that factor
 
-- Optional _{factor_level}_ pairs, e.g. `SS-N2`, set that factor
+- Optional _{factor-level}_ pairs, e.g. `SS-N2`, set that factor
   (`SS`) to that level (`N2`), i.e. as if a column existed in the body
   of the file where all values of `SS` were set to `N2`. Only the first
   hyphen is used to delimit the factor and level, so `F--2` will set
@@ -135,10 +135,10 @@ Examples (in the `eeg-spectral` domain/group):
 For example, if the following file 
 
 ```
-eeg-spectral-psd-B_CH_SS-N2.txt
+eeg_spectral_psd_B_CH_SS-N2.txt
 ```
 
-contained the variable `PSD` (which was defined in the `eeg-spectral`
+contained the variable `PSD` (which was defined in the `eeg_spectral`
 domain/group data dictionary), then we might then find expanded
 variables such as:
 
@@ -177,52 +177,52 @@ the root variable label, and factors/levels (see examples).
 
 ## Data-dictionary format
 
-As well as residing in the folder specified by the `-d` option, data
+As well as residing in the folder specified on the command line, data
 dictionaries should adhere to the following naming convention:
 
 ```
-{domain}-{group}.txt
+{domain}_{group}.txt
 ```
 
 e.g.
 ```
-dict/eeg-spectral.txt
-dict/macro-stages.txt
+dict/eeg_spectral.txt
+dict/macro_stages.txt
 ```
 
 Possible _domains_ (e.g. broad areas) are:
 
-- macro
-- eeg
-- ecg
-- resp
-- actigraphy
+- `macro`
+- `eeg`
+- `ecg`
+- `resp`
+- `actigraphy`
 
 
-Domain and group names _cannot_ contain hyphen characters, as these
-are used to delimit domain, group and file tag/factor-list.  They can
-contain periods and underscores.
+Domain and group names _cannot_ contain underscore characters, as these
+are used to delimit domain, group and file tag/factor-lists.  They can
+contain periods and hyphens.
 
 To only extract/compile variables from specific domains, add those
-domain or domain-group identifiers to the command line, after the
-other options. For example:
+domain or domain_group identifiers to the command line, after the
+other options. For example, if the folders `dict/` and `study1` exist:
 
 _All domains/groups:_
 
 ```
-merge -d dict -s study1 -o study1.txt 
+dmerge dict study1 study1.txt 
 ```
 
 _Only `eeg` domain variables_:
 
 ```
-merge -d dict -s study1 -o study1.txt eeg
+dmerge dict study1 study1.txt eeg
 ```
 
-_Only `eeg-spectral` and `eeg-spindles` groups, and all `macro` domain variables_:
+_Only `eeg_spectral` and `eeg_spindles` groups, and all `macro` domain variables_:
 
 ```
- merge -d dict -s study1 -o study1.txt eeg-spectral eeg-spindles macro
+dmerge dict study1 study1.txt eeg_spectral eeg_spindles macro
 ```
 
 Within a dictionary file, we expect 3 tab-delimited columns:
@@ -230,6 +230,8 @@ Within a dictionary file, we expect 3 tab-delimited columns:
 - variable 
 - type
 - label/description 
+
+Any lines starting with `%` are treated as comments and ignored.
 
 Types are as follows:
 
@@ -284,13 +286,14 @@ my.ch   alias    CH
 
 ## Data dictionary output format      
 
-The combined data are written to the file specified by `'-o'` on the
+The combined data are written to the file specified on the
 command line.  The corresponding data-dictionary is written to stdout,
 using the following format:
 
 | Variable | Description |
 | --- | --- |
 |VAR | Variable name (e.g. DENS_F_11_CH_F3_SS_N2)
+|BASE | Variable root (e.g. `DENS`) |
 |TYPE | Type of variable
 |OBS | Number of non-missing observations
 |GROUP | Group name
@@ -298,7 +301,7 @@ using the following format:
 |DOMAIN | Domain name |
 |DESC | Description |
 |COL | Column number in the data file (0 for factors, i.e. which do not appear as columns/variables in the data file)| 
-|BASE | Variable root (e.g. `DENS`) |
+
 
 
 ## Exclusions
@@ -312,7 +315,7 @@ using the following format:
 
 - Can exclude particular files by setting a `-tag` or
   '-tag-factorlist' on the command line (`-HYPNO-C` will skip
-  `macro-stages-HYPNO-C.txt`)
+  `macro_stages_HYPNO_C.txt`)
 
 
 ## Permissible character cheat sheet
@@ -322,13 +325,13 @@ Less complicated than it may look at first sight, here's a summary of identifier
 | Identifier| Allowed | Disallowed | Notes | 
 | --- | --- | --- | --- |
 | __All identifiers below__ | __Alphanumeric, period, hyphen/minus & underscore__ | __All other special characters (including spaces)__ | __These conventions allow identifiers to be straightforwardly represented as both filenames (across different OS) and variable names (e.g. within a package such as R)__ | 
-| Data dictionary file | Alphanumeric, period and underscore | | An optional .txt extension is allowed, and will be ignored; hyphens are used to delimit domain and group identifiers from file names. | 
-| Data dictionary domain/group | Alphanumeric, period and underscore | Hyphen | As above, hyphens are used to delimit domain-group identifiers | 
+| Data dictionary file | Alphanumeric, period, hyphen and underscore | | An optional `.txt` extension is allowed, and will be ignored; underscores are used to delimit domain and group identifiers from file names. | 
+| Data dictionary domain/group | Alphanumeric, period and hyphen | Underscore | As above, underscores are used to delimit domain-group identifiers | 
 | Variable | Alphanumeric and underscore | Period, hyphen | Should start with a letter; upper and lowercase allowed, although all output will be transformed to uppercase |
 | Factor | Alphanumeric and period | Underscore, hyphen | Should start with a letter; upper and lowercase allowed, although all output will be transformed to uppercase |
 | Factor levels (data file body) | Alphanumeric, period, hyphen/minus & underscore | | Underscores are allowed but are transformed to a period in the output (in variable names) | 
 | Factor levels (data file name)  | Alphanumeric, period, hyphen/minus | Underscores | Levels specified in this way can contain periods and additional hyphens; they cannot contain underscores |
-| Data file | Alphanumeric, period, hyphen/minus & underscore | |  Special format(s): <br> `domain-group-tag` <br> _data w/out factors ('baseline')_ </p> `domain-group-tag-F1_F2_F3` <br> _data w/ 3 factors F1, F2 & F3_ </p> `domain-group-tag-F1_F2-X_F3-Y` <br> _as above, but setting F2 to X and F3 to Y_ </p> i) hyphens delimit domain, group, file-tag and optional factor list </p> ii) underscore delimits factor list </p> iii) optionally, first hyphen in FAC-LVL sets factor FAC to level LVL </p> A `.txt` file extension is allowed, and will be removed |
+| Data file | Alphanumeric, period, hyphen/minus & underscore | |  Special format(s): <br> `domain_group_tag` <br> _data w/out factors ('baseline')_ </p> `domain_group_tag_F1_F2_F3` <br> _data w/ 3 factors F1, F2 & F3_ </p> `domain_group_tag_F1_F2-X_F3-Y` <br> _as above, but setting F2 to X and F3 to Y_ </p> i) underscores delimit domain, group, file-tag and optional factor list </p> ii) optionally, first hyphen in `FAC-LVL` sets factor `FAC` to level `LVL` </p> A `.txt` file extension is allowed, and will be removed |
 
 ## Misc details
 
@@ -339,6 +342,15 @@ Less complicated than it may look at first sight, here's a summary of identifier
 
 - Checks that variable names (except factors) are unique within and
   across domains
+
+- Run with option `-v` to produce verbose output
+
+- Run with option `-s` to enfore strict mode: here all
+   variables/factors/domains/groups present in the data folders must
+   have an exact match in the data dictionary (otherwise an error is
+   given and the program halted). Otherwise, in the default
+   (non-strict) mode, such things are just skipped over silently (or,
+   if `-v` is set, with a message to standard error stream).
 
 - Flag duplicate rows (same ID/factors) in and across datasets
 
@@ -360,19 +372,16 @@ column gives the actual missing value code)
 
 - Basic type enforcement checks on values 
 
-- Count missing data for each variable
+- Counts missing data for each variable
 
 - Data-dictionary only needs to specify root (long-format) variables
- (e.g. `PSD` not `PSD.B_SIGMA_CH_C3_SS_N2`)
+  (e.g. `PSD` not `PSD.B_SIGMA_CH_C3_SS_N2`)
 
-- Throws an error if a variable is present but not described in the dictionary
-
-- Filename specifies the order of factors in variable names
-
-- Option for adding file-specific factors, e.g. SS based on filename
+- Throws an error if a variable is present but not described in the
+  dictionary
 
 - Columns can be in any order across datasets
 
-- All variables must be in the data dictionary, but different
- individuals need not all have the same variables in each file
- (missing data will be indicated in the output)
+- Even in strict mode, all variables must be in the data dictionary, but different
+  individuals need not all have the same variables in each file
+  (missing data will be indicated in the output)

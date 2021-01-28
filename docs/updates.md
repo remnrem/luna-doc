@@ -7,7 +7,7 @@ Current stable version: __v0.25__ (main [downloads](download/index.md) page)
 
 <!--
 ## v0.26
-SEDF
+
 - [ midflight ] adding `ORDER` command (or that command-line 'sig' sets order)
 
 - loops in scripts [todo]
@@ -22,6 +22,28 @@ add an explicit COUPL command that uses caches
 
 
 ## v0.25 (XX-December-2020)
+
+- added `Eigen` support for `ICA`
+
+- added `ADJUST` command
+
+- added annot output for SOAP-SUDEs and spindles
+
+- added `MS`
+
+- added `regional` MASK
+
+- added `force-edf` option to `WRITE` to force writing as EDF (from EDF+)
+
+- added `annot` option to `WRITE-ANNOTS`
+
+- added A2S command
+
+- added MS;
+
+- added `SEDF` command to generate a summary EDF
+
+make separate REF type (A1, A2, M1, M2)
 
 now HEADERS respects `sig` option, some changes to variable output names
 
