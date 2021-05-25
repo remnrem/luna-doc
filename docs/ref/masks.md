@@ -6,10 +6,18 @@ channels/signals_
 
 | Command   | Description |
 |------|---|
-| [`MASK`](#mask)               | Mask epochs based on annotations and other features | 
-| [`DUMP-MASK`](#dump-mask)     | Output epoch-level mask information |
-| [`RESTRUCTURE`](#restructure) (or [`RE`](#restructure))  | Remove masked out epochs (and channels) |
-| [`CHEP`](#chep) | CHannel/EPoch masks |
+| [`MASK`](#mask)               | Mask epochs based on annotations and other features (standard mask) | 
+| [`DUMP-MASK`](#dump-mask)     | Output epoch-level mask information (standard mask) |
+| [`RESTRUCTURE`](#restructure) (or [`RE`](#restructure))  | Remove masked out epochs (and channels) based on the standard mask |
+| [`CHEP`](#chep) | Process CHannel/EPoch _CHEP_ masks and modify the standard mask based on them |
+
+Luna uses two types of _masks_: one that is only defined per epoch (the _standard_ or _epoch-level_ mask),
+and one which is also specific to each channel and epoch pair (the so-called CHannel/EPoch or _CHEP_ mask).
+The graphic below illustrates how these two masks are related and some of the key commands which operate on
+them:
+
+![img](../img/chep-mask.png)
+
 
 ## `MASK`
 
@@ -110,11 +118,6 @@ Epoch encoding and the internal _time-track_ information is retained,
 respecting potential _discontinuities_ in the data, until another
 `EPOCH` command is issued.  At that point, the data are assumed to
 represent a _continuous_ EDF.
-
-
-!!! note
-    Currently, _masks_ are not channel-specific.  That is, an epoch is
-    either included or excluded from analysis/the file.
 
 
 <h3>Parameters</h3>
@@ -1104,35 +1107,31 @@ id00001   30664   120     30664    120
 
 _Set and manipulate CHannel/EPoch masks_
 
-Luna's primary _mask_ (set via the [`MASK`](#mask) command) applies
+Luna's primary epoch-level _mask_ (set via the [`MASK`](#mask) command) applies
 only to epochs, meaning that _all_ channels in a given epoch are
 either flagged as masked or unmasked.
 
-For high-density EEG, this may not be optimal, particularly if one
+For high-density EEG or other types of study, this may not be optimal, particularly if one
 intends to [`INTERPOLATE`](cross-signal-analyses.md#interpolate)
 partially bad signals based on neighboring signals.  This can be
-accomplished using CHEP (CHannel/EPoch) masks, with specify whether a
+accomplished using _CHEP_ (CHannel/EPoch) masks, to specify whether a
 given channel/epoch combination is _masked_ (i.e. bad) or _unmasked_
 (i.e. good).
 
-Although CHEP masks can be set manually (or read from a file),
-currently the main way to set a CHEP mask is via the `chep` option of
-the [`SIGSTATS`](artifacts.md#sigstats) command.  This modifies the
-behavior of `SIGSTATS`: whereas the normal behavior (with the `mask`
-option) is to mask any epoch that has one or more flagged channels,
-with the `chep` option, it will now track individually for each
-channel whether or not it was flagged by `SIGSTATS`.  The `CHEP`
-command, described here, can be used to output the CHEP mask (a
+Although _CHEP_ masks can be set manually (or read from a file),
+currently the main way to set a CHEP mask is via the [`CHEP-MASK` command](artifacts.md#chep-mask).
+The `CHEP` command, described here, can be used to output the CHEP mask (a
 channel-by-epoch matrix), or to specify bad channels and/or epochs as
 those that have above a certain number/proportion of bad
 epochs/channels respectively.
 
 Primary commands (such as [`RE`](#restructure)) that use mask
-information to restructure an EDF still only consider the _standard
-mask_.  Currently, CHEP masks (as set by `SIGSTATS`) are only
-considered by the `CHEP` and
-[`INTERPOLATE`](cross-signal-analyses.md#interpolate) commands.
+information to restructure an EDF still only consider the standard (i.e. epoch-level)
+mask.
 
+!!! note "CHEP masks and interpolation"
+    Currently, CHEP masks (as set by `SIGSTATS`) are only considered by the `CHEP-MASK`, `CHEP` and
+    [`INTERPOLATE`](spatial.md#interpolate) commands.
 
 <h3>Options</h3>
 
@@ -1141,14 +1140,14 @@ considered by the `CHEP` and
 | `clear` |  | Clear CHEP mask |
 | `load` | `file.txt` | Load CHEP from `file.txt` |
 | `bad-channels` | C3,C5 | Manually specify bad channels |
-| `epochs` | 2,0.1 | Mask epochs with 2 or more bad channels, or >10% bad channels |
-| `channels` | 10,0.5 | Mask channels with 10 or more bad epochs, or >50% bad epochs |
+| `epochs` | 0.1,2 | Mask epochs with >10% bad channel, or 2 or more bad channels<br>(expects 0, 1 or 2 arguments) |  
+| `channels` | 0.5,10 | Mask channels with >50% bad epochs, or 10 or more bad epochs<br>(expects 1 or 2 arguments) |
+| `drop-channel` | 0.5,10 | Drop (rather than mask) channels such channels |
+| `black-and-white`| | When setting bad channels, make all epochs in good channels good |
 | `dump` | | Write current CHEP mask to output |
 | `save` | `file.txt` | Write CHEP mask to `file.txt` |
 
-
 <h3>Outputs</h3>
-
 
 Epoch-level summaries (option: `dump`, strata: `E`)
 
@@ -1172,11 +1171,11 @@ Epoch/channel-level CHEP matrix (option: `dump`, strata: `CH` x `E`)
 
 <h3>Example</h3>
 
-Currently, the [`SIGSTATS`](artifacts.md#sigstats) command can be used
-to automatically generate a CHEP mask.  For example, bsed on just two signals:
+The [`CHEP-MASK`](artifacts.md#chep-mask) command can be used
+to automatically generate a CHEP mask.  For example, based on just two signals:
 
 ```
-luna s.lst -o out.db 2 -s 'SIGSTATS chep th=2 sig=EEG,EEG(sec) & CHEP dump' 
+luna s.lst -o out.db 2 -s 'CHEP-MASK ep-th=2 sig=EEG,EEG(sec) & CHEP dump' 
 ```
 
 ```
@@ -1184,65 +1183,52 @@ destrat out.db +CHEP -r CH
 ```
 
 ```
-ID      CH        CHEP
-nsrr02  SaO2      0
-nsrr02  PR        0
-nsrr02  EEG(sec)  308
-nsrr02  ECG       0
-nsrr02  EMG       0
-nsrr02  EOG(L)    0
-nsrr02  EOG(R)    0
-nsrr02  EEG       266
-nsrr02  AIRFLOW   0
-nsrr02  THOR RES  0
-nsrr02  ABDO RES  0
-nsrr02  POSITION  0
-nsrr02  LIGHT     0
-nsrr02  OX STAT   0
+ID	CH	CHEP
+nsrr02	SaO2	0
+nsrr02	PR	0
+nsrr02	EEG(sec)	102
+nsrr02	ECG	0
+nsrr02	EMG	0
+nsrr02	EOG(L)	0
+nsrr02	EOG(R)	0
+nsrr02	EEG	46
+nsrr02	AIRFLOW	0
+nsrr02	THOR_RES	0
+nsrr02	ABDO_RES	0
+nsrr02	POSITION	0
+nsrr02	LIGHT	0
+nsrr02	OX_STAT	0
 ```
 
-That is, `EEG` has 266 bad epochs, whereas `EEG(sec)` had 308.  To set
+That is, in this toy example, `EEG` has 46 bad epochs, whereas `EEG(sec)` had 102.  To set
 the _standard mask_ to flag epochs where _both_ channels are bad, we
-can use the `CHEP` command and the `epochs` option:
+can use the `CHEP` command and the `epochs` option. The `epochs` option can take 0, 1 or 2 arguments:
+
+ - `epochs` by itself will mask any epoch with 1 or more flagged channel (i.e. _any_ bad channels, equals `epochs=0` )
+ - `epochs=0.5` will mask any epoch for which _more than_ 50% of channels are flagged (note: an additional `sig` option can be given to `CHEP` which is used to determine the denominator in the proportion calculations)
+ - `epochs=0.5,10` will mask any epoch for which more than 50%, _or_ at least 10 or more channels are bad.
+
+Therefore, to mask epochs in which both EEG are bad here, we would use
+`epochs=1,2` (i.e. setting the first parameter to 100% effectively
+ignore this option, which is based on finding epochs _above_ (not
+equal to) this threshold). 
 
 ```
-luna s.lst -o out.db 2 -s 'SIGSTATS chep th=2 sig=EEG,EEG(sec) & CHEP epochs=2 & RE' 
+luna s.lst -o out.db 2 -s 'CHEP-MASK ep-th=2 sig=EEG,EEG(sec) & CHEP epochs=1,2 & RE' 
 ```
 As shown in the console/log, this sets the epoch mask where 2 or more channels have their CHEP mask set:
 ```
- CMD #2: CHEP
-  masking epochs with 2 or more masked channels  newly masked 243 epochs; now 0 masked in total
+  masking epochs with 2 or more masked channels: 38 epochs
+  CHEP summary:
+   604 of 16730 channel/epoch pairs masked (4%)
+   110 of 1195 epochs with 1+ masked channel, 0 with all channels masked
+   14 of 14 channels with 1+ masked epoch, 0 with all epochs masked
+```
+This removes 38 epochs in total, leaving 952 epochs in the final dataset, which is evident when dropping them via `RE`:
+
+```
  CMD #3: RE
- restructuring as an EDF+ : keeping 28560 records of 35850, resetting mask
- retaining 952 epochs
-```
-This removes 243 epochs in total, leaving 952 epochs in the final dataset.  In contrast, running `SIGSTATS` with the standard `mask` option (instead of `chep`) would 
-set the (standard) mask for any epoch with one or more bad channels:
-
-```
-luna s.lst -o out.db 2 -s 'SIGSTATS mask th=2 sig=EEG,EEG(sec) & RE' 
+  restructuring as an EDF+:   keeping 34710 records of 35850, resetting mask
+  retaining 1157 epochs
 ```
 
-```
- restructuring as an EDF+ : keeping 25920 records of 35850, resetting mask
- retaining 864 epochs
-```
-i.e. this only gives 864 rather than 952 epochs.   To confirm that the `CHEP` command worked as expected, we can replicate the behavior of the last command as follows, with `epochs=1`:
-
-```
-luna s.lst -o out.db 2 -s 'SIGSTATS chep th=2 sig=EEG,EEG(sec) & CHEP epochs=1 & RE'
-```
-```
- CMD #2: CHEP
-  masking epochs with 1 or more masked channels  newly masked 331 epochs; now 0 masked in total
- ..................................................................
- CMD #3: RE
- restructuring as an EDF+ : keeping 25920 records of 35850, resetting mask
- retaining 864 epochs
-```
-
-
-!!! note
-    The primary use of the `CHEP` command is for high-density EEG, e.g. where
-    it can be used in conjuction with `INTERPOLATE`.  Documentation and
-    examples for this context will be added in the future.  

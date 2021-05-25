@@ -1,7 +1,7 @@
 # Docker
 
 The [Docker](https://www.docker.com/) distribution of Luna is designed
-to allow users to test both the [_lunaC_](../luna/args.md) and [_lunaR_](../ext/R.md), that is, the
+to allow users to test both the [_lunaC_](../luna/args.md) and [_lunaR_](../ext/R/index.md), that is, the
 C/C++ command-line and the R package versions of Luna.  Although
 beyond the scope of this documentation, Docker containers can also
 facilitate using Luna in a cloud computing environment, such as [Amazon
@@ -17,7 +17,7 @@ Web Services EC2](https://aws.amazon.com/ec2/).
     (Community Edition) and then use one or two commands to launch the
     _containerized_ version of Luna (which includes a full Linux
     environment comprising [_lunaC_](../luna/args.md),
-    [_lunaR_](../ext/R.md), the [tutorial data](../tut/tut1.md) as
+    [_lunaR_](../ext/R/index.md), the [tutorial data](../tut/tut1.md) as
     well as [R](https://www.r-project.org/) or
     [RStudio](https://www.rstudio.com/).  For those interested in
     learning more about Docker, [this

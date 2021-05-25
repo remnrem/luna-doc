@@ -31,7 +31,6 @@ markdown_extensions:
 
 extra_css:
   - 'stylesheets/extra.css'
-
       
 nav:
  - Overview: 'index.md'
@@ -46,8 +45,12 @@ nav:
 
  - lunaC: 'luna/args.md'
 
- - lunaR: 'ext/R.md'
-
+ - lunaR:
+    - Overview: 'ext/R/index.md'
+    - Example usage: 'ext/R/example.md'
+    - Reference: 'ext/R/ref.md'
+    - Plotting: 'ext/R/viz.md'
+    
  - Output:
     - 'Luna output': 'luna/destrat.md'
     - 'dmerge': 'merge/merge.md'
@@ -65,13 +68,22 @@ nav:
     - 'Filters': 'ref/fir-filters.md'
     - 'Artifacts': 'ref/artifacts.md'
     - 'Hypnograms': 'ref/hypnograms.md'
+    - 'SUDS': 'ref/suds.md'
     - 'Spectral analyses': 'ref/power-spectra.md'
     - 'Spindles/SO ': 'ref/spindles-so.md'
     - 'Coupling/connectivity': 'ref/cc.md'
-    - 'Misc': 'ref/misc.md'
+    - 'Interval-based': 'ref/intervals.md'
+    - 'PSC': 'ref/psc.md'
+    - 'Spatial': 'ref/spatial.md'
+    - 'ICA': 'ref/ica.md'    
+    - 'EEG microstates': 'ref/ms.md'
+    - 'Clustering': 'ref/clustering.md'
+    - 'Association' : 'ref/assoc.md'
     - 'Experimental ': 'ref/exp.md'
+ 
+ - NSRR: 'nsrr.md'
 
- - NSRR: 'nsrr.md' 
+ - NAP: 'nap.md' 
 
  - Vignettes: 'vignettes/index.md'
 

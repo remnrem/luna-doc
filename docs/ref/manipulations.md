@@ -13,9 +13,12 @@ _Commands to alter basic properties of the EDF and the signals therein_
 |[`uV`](#uv) | Rescale units to uV |
 |[`mV`](#mv) | Rescale units to mV |
 |[`FLIP`](#flip) | Flip polarity of signal | 
+|[`EDF`](#edf) | Force EDF (versus EDF+) state |
 |[`TIME-TRACK`](#time-track) | Add a time-track to an EDF |
 |[`RECORD-SIZE`](#record-size) | Change EDF record size |
+|[`ALIGN`](#align) | Realign EDF records, annotations and epochs |
 |[`ANON`](#anon)       | Strip ID information from EDF header |
+|[`SIGGEN`](#siggen) | Generate/spike in artificial test signals |
 
 ## SIGNALS
 
@@ -177,18 +180,21 @@ intention of the `CANONICAL` command is to faciliate this type of
 pre-processing, to generate signals that are _canonical_ in the sense
 that they constitute a uniform set for further processing.
 
-The key behind this command is a text file that defines the canonical signals.   This should be
-a plain-text file;  comments can be included, by starting the line with a `%` character (the same of Luna command scripts).
-Uncommented lines group should contain either five or six tab-delimited columns:
+The key behind this command is a text file that defines the canonical
+signals.  This should be a plain-text file; comments can be included,
+by starting the line with a `%` character (the same of Luna command
+scripts).  Uncommented lines group should contain either six or seven
+tab-delimited columns:
 
 | Column | Description |
 | --- | --- |
 | _GROUP_ | Matches the `group` option on the CANONICAL command |
 | _TYPE_ | Currently one of: `EEG`, `LOC`, `ROC`, `EMG` or `ECG` |
 | _CHANNEL_ | The channel that represents the canonical form |
-| _REFERNECE_ | If needed, the reference channel to achieve canonical form (or `.` if not needed)
+| _REFERNECE_ | If needed, the reference channel to achieve canonical form (or `.` if not needed) |
 | _SR_ | The desired sampling rate for the canonical channel |
-| _NOTES_ | Optionally, a six (tab-delimited) field that contains notes on this rule, which will be recorded in the output |
+| _UNIT_ | The desired physical units for the canonical channel (or `.` if no change needed) |
+| _NOTES_ | Optionally, a seventh (tab-delimited) field that contains notes on this rule, which will be recorded in the output |
 
 Canonical signals can currently only be one of the following types:
 `EEG`, `LOC`, `ROC`, `EMG` and `ECG`.  Note: _canonical signals_ are
@@ -204,26 +210,34 @@ multiple studies.
 
 To make things more concrete: consider this example __tab-delimited__ plain text file `cs.txt`:
 ```
-TEST  EEG  C4,EEG2 .      100  If 'C4' not present, look for 'EEG2' instead
-TEST  EMG  Lchin   Rchin  100
-TEST  LOC  LOC     M2,A2  100  If 'M2' not present, look for 'A2' instead
-TEST  ROC  E2,ROC  M2,A2  100  If 'E2' not present, look for 'ROC' instead
-TEST  ECG  ECG     .      100
+TEST  EEG  C4,EEG2 .      100  uV   If 'C4' not present, look for 'EEG2' instead
+TEST  EMG  Lchin   Rchin  100  uV 
+TEST  LOC  LOC     M2,A2  100  uV   If 'M2' not present, look for 'A2' instead
+TEST  ROC  E2,ROC  M2,A2  100  uV   If 'E2' not present, look for 'ROC' instead
+TEST  ECG  ECG     .      100  mV
 ```
 
-Here we see five rules that define five canonical channels.  These
-channels will be added to the (in-memory) EDF as `cs_EEG`, `cs_EMG`,
-etc, and can be included in any analysis, or writen to a new EDF (with
-the [`WRITE`](outputs.md#write) command).
+Here we see five rules that define five canonical channels.  If run
+with the option `prefix=cs` as above, these channels will be added to
+the (in-memory) EDF as `csEEG`, `csEMG`, etc, and can be included in
+any analysis, or writen to a new EDF (with the
+[`WRITE`](outputs.md#write) command).
+
+!!! Note "Channel label clashses"
+    If there is already a channel called `EEG`, then Luna will not
+    overwrite it with a new canonical channel.  In this instance, use the
+    `prefix` option to specify a new canonical name: e.g. `prefix=cs` will
+    make the new channel `csEEG` rather than just `EEG`, which can be used
+    to avoid naming clashes.
 
 The first channel, which is the _canonical EEG_ is defined either `C4`
 or `EEG2`.  That is, if `C4` is not present, then `EEG2` will be used
-to generate `cs_EEG`, if present.  The `.` indicates that no
-re-referencing is needed; the `100` indicates that `cs_EEG` will be
+to generate `csEEG`, if present.  The `.` indicates that no
+re-referencing is needed; the `100` indicates that `EEG` will be
 resampled to 100 Hz, if needed.  Finally, the sixth column has an optional note
 describing this rule. The second line shows the rule of the _canonical EMG_, which is
 defined as the channel `Lchin` re-referenced against the channel
-`Rchin`. The other lines continue in this manner: for example, `cs_LOC` will
+`Rchin`. The other lines continue in this manner: for example, `csLOC` will
 reflect `LOC` either re-referenced against `M2` or `A2`.
 
 It is possible to have different rules for the same canonical signal,
@@ -237,8 +251,8 @@ instance, you'd want to take the already re-referenced channel as is.
 Therefore:
 
 ```
-TEST    EMG     lchin   rchin   100
-TEST    EMG     chin    .       100
+TEST    EMG     lchin   rchin   100   uV
+TEST    EMG     chin    .       100   uV
 ```
 
 That is, if Luna can't find `lchin` and `rchin` in the EDF, it will
@@ -279,8 +293,8 @@ TEST EEG  C4   M1,.  100      <--- not allowed
   were present in the EDF.  To specify the logic of `C4/M1` or `C3/M2` 
   instead use two different rules:
 ```
-TEST EEG C4  M1   100
-TEST EEG C3  M2   100
+TEST EEG C4  M1   100  uV
+TEST EEG C3  M2   100  uV
 ```
 
  * Do not replicate channel aliases in these files; i.e. this command is intended to 
@@ -292,7 +306,7 @@ TEST EEG C3  M2   100
 ```
   then when using `CANONICAL` we can just write:
 ```
- TEST EEG  EEG2 .  100
+ TEST EEG  EEG2 .  100  uV
 ```
 and it will match `EEG2` to any of those aliases in the standard manner.  That is, 
 there no need to add all the aliases in again, e.g. when running the following:
@@ -315,11 +329,11 @@ luna s.lst @sig.alias -s 'CANONICAL file=cs.txt group=TEST'
 | `file` | `file=cs.txt` | Specify the definitions of canonical signals |
 | `group` | `group=SHHS` | Specifying the group to use |
 | `cs` | `cs=EEG,EMG` | Only create these canonical channels |
-
+| `prefix` | `prefix=cs` | Adds an optional prefix to canonical signals | 
 
 <h3>Output</h3>
 
-The primary action of this command is to add new signals to the in-memory EDF, e.g. `cs_EEG`.
+The primary action of this command is to add new signals to the in-memory EDF, e.g. `csEEG`.
 
 Canonical signal information (strata: `CS`)
 
@@ -338,37 +352,37 @@ Consider the following (admittedly, not particularly compelling) example of how 
 We have a file `cs.txt` that defines the canonical signals for this group:
 
 ```
-G1	EEG	EEG	.	100
-G1	EMG	EMG	.	100
-G1	LOC	EOG(L)	.	100
-G1	ROC	EOG(R)	.	100
-G1	ECG	ECG	.	100
+G1	EEG	EEG	.	100	uV
+G1	EMG	EMG	.	100	uV
+G1	LOC	EOG(L)	.	100	uV	
+G1	ROC	EOG(R)	.	100	uV
+G1	ECG	ECG	.	100	mV
 ```
 We apply it to a test EDF:
 ```
-luna s.lst 1 -o out.db -s 'CANONICAL file=cs.txt group=G1 & DESC'
+luna s.lst 1 -o out.db -s 'CANONICAL file=cs.txt group=G1 prefix=cs & DESC'
 ```
 This reports what is being done in the log:
 
 ```
-  generating canonical signal cs_EEG from EEG/.
-  resampling channel cs_EEG from sample rate 125 to 100
-  generating canonical signal cs_LOC from EOG(L)/.
-  resampling channel cs_LOC from sample rate 50 to 100
-  generating canonical signal cs_ROC from EOG(R)/.
-  resampling channel cs_ROC from sample rate 50 to 100
-  generating canonical signal cs_EMG from EMG/.
-  resampling channel cs_EMG from sample rate 125 to 100
-  generating canonical signal cs_ECG from ECG/.
-  resampling channel cs_ECG from sample rate 250 to 100
+  generating canonical signal csEEG from EEG/.
+  resampling channel csEEG from sample rate 125 to 100
+  generating canonical signal csLOC from EOG(L)/.
+  resampling channel csLOC from sample rate 50 to 100
+  generating canonical signal csROC from EOG(R)/.
+  resampling channel csROC from sample rate 50 to 100
+  generating canonical signal csEMG from EMG/.
+  resampling channel csEMG from sample rate 125 to 100
+  generating canonical signal csECG from ECG/.
+  resampling channel csECG from sample rate 250 to 100
 ```
 And we can see the output of `DESC` (also in the log) that confirms new channels have been created:
 
 ```
 Signals : SaO2[1] PR[1] EEG(sec)[125] ECG[250] EMG[125] EOG(L)[50]
           EOG(R)[50] EEG[125] AIRFLOW[10] THOR_RES[10] ABDO_RES[10] POSITION[1]
-          LIGHT[1] OX_STAT[1] cs_EEG[100] cs_LOC[100] cs_ROC[100] cs_EMG[100]
-          cs_ECG[100]
+          LIGHT[1] OX_STAT[1] csEEG[100] csLOC[100] csROC[100] csEMG[100]
+          csECG[100]
 ```
 We can also see the summary of what was done in the output:
 
@@ -377,11 +391,11 @@ destrat out.db +CANONICAL -r CS
 ```
 ```
 ID       CS      DEFINED  NOTES   REF   SIG     SR    UNITS
-nsrr01   cs_EEG  1        .       .     EEG     100   uV
-nsrr01   cs_LOC  1        .       .     EOG(L)  100   uV
-nsrr01   cs_ROC  1        .       .     EOG(R)  100   uV
-nsrr01   cs_EMG  1        .       .     EMG     100   uV
-nsrr01   cs_ECG  1        .       .     ECG     100   mV
+nsrr01   csEEG  1        .       .     EEG     100   uV
+nsrr01   csLOC  1        .       .     EOG(L)  100   uV
+nsrr01   csROC  1        .       .     EOG(R)  100   uV
+nsrr01   csEMG  1        .       .     EMG     100   uV
+nsrr01   csECG  1        .       .     ECG     100   mV
 ```
 
 ## MINMAX
@@ -588,6 +602,34 @@ id001    1   0   8  0.03125       2.05909
     biosignals, if they are recorded with sensible physical and
     digital min/max values to reflect the dynamic range of the signal.
 
+## EDF
+
+_Sets/forces EDF status for a EDF+_
+
+This command downcasts an EDF+ to a standard EDF file.  This means that
+
+ - any `EDF Annotations` channels will be dropped
+
+ - if the file is a `EDF+D` (i.e. a potentially discontinuous EDF), then it is converted to a standard EDF if it _is actually_ continuous (i.e. is a EDF+D but does not actually contain any gaps)
+
+ - if the `force` option is given, then the conversion to EDF is done _even if the EDF+D actually contains gaps_.
+
+<h5>Parameters</h5>
+
+| Parameter | Description
+| ---- | ---- |
+| `force` | Change a EDF+D to EDF even if it actually contains gaps |
+
+<h5>Output</h5>
+
+No output other than changing the internal status of the EDF
+
+<h5>Example</h5>
+
+_to be added_
+
+
+
 ## RECORD-SIZE
 
 _Alters the record size of an EDF_
@@ -711,6 +753,215 @@ is obviously the same as before).
     seconds has been truncated (i.e. the log will indicate a total
     duration of `11:21:40` instead of the original `11:22:00`).
 
+## ALIGN
+
+_Alters the EDF record structure to perfectly align records with annotations and epochs_
+
+This is a rather specialized command to fix certain issues that can arise when working
+with EDFs and epoch-defining annotations when the annotations are not "aligned" with EDF records.
+
+Consider the following (which occurs in the NSRR National Children's Hospital dataset):
+
+ - all EDFs start on a clock-time with an exact, integer number of seconds (i.e. EDF spec. does not allow otherwise), e.g. `23.03.07`
+
+ - sample rate is 256 Hz for all EEG channels, and the EDF record size is 4 seconds
+
+ - annotations that define sleep stages are all in exactly 30-second epochs, but they start at a fractional offset:
+   ```   
+   Stage   Onset (elapsed seconds from EDF start)
+   N1 	   4110.9609375 
+   N2 	   4140.9609375 
+   N2 	   4170.9609375 
+   ```
+
+This means that annotations and EDF records not in exact temporal
+alignment.  In theory, there is of course absolutely nothing _wrong_
+per se with this.  In practice, it can make some Luna commands, or
+more generally, working with EDFs (that have a fixed block size) a
+little challenging.  That is, the EDF record is an atomic unit: one
+must either write a whole record, or none of it, when constructing a
+new EDF.  If epochs only partially span EDF records, this naturally
+poses problems when thinking about how to write a new EDF that is
+structured by those epochs, i.e. only NREM sleep epochs, etc.
+
+Here we break this down three distinct issues, only the third of which
+is more challenging and requires the `ALIGN` command.
+
+<h6>Offsets for EDF annotations</h6>
+
+Specifically, when counting epochs, by default Luna starts at 0
+seconds elapsed (i.e. the EDF start) and proceeds forwards: 0-30,
+30-60, etc.  If sleep stages start at some different offset (other
+than starting at 0 or a multiple of 30 seconds) this means that some
+Luna-defined epochs may contain more than one implied stage.  For example,
+consider that sleep stages start at 4 seconds past the EDF start:
+
+```
+      Elapsed seconds from EDF start:
+      0000000000 1111111111 2222222222 3333333333 4444444444 5555555555 666...
+      0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 012...
+
+Luna: |---epoch 1----------------------|
+                                       |---epoch 2----------------------|
+
+Actual:   |---epoch 1-(W)------------------|
+                                           |---epoch 2-(N1)------------------|
+```
+
+As in the above example, the second Luna epoch (30-60) will span two
+distinct annotations, which is clearly a mistake.  This means that
+commands that use sleep stages will report (in this example) a missing
+(`?`) annotation, as there is a conflict in that _epoch 2_ has both a
+wake (`W`) and N1 (`N1`) annotation.   Luna will also flag in the log that
+conflicts were found, e.g.:
+
+```
+ CMD #1: HYPNO
+   options: sig=*
+  set epochs to default 30 seconds, 1186 epochs
+  *** found 37 epoch(s) of 1186 with conflicting spanning annotations
+  *** check that epochs and annotations align as intended
+  *** see EPOCH 'start-annot' or 'offset' options
+```
+and write `CONF` variable to the standard output.
+
+The solution to this is simply to supply an offset to the epoch command, which can either be done
+manually:
+```
+luna s.lst -s 'EPOCH offset=4 & HYPNO`
+```
+or automatically with respect to a set of annotations (i.e. making the offset equal to the start of the first of these annotions encountered):
+```
+luna s.lst -s 'EPOCH start-annot=N1,N2,N3,R,W,? & HYPNO'
+```
+
+<h6>EDF record size and epoch duration</h6>
+
+Another issue arises when epochs may span EDF records only
+partially. The core data structure (of EDF, and internally of Luna) is
+a block/record based system: the underlying data must correspond to
+whole records. If epochs span partial EDF records, this presents a
+problem if we want to restructure the data, e.g. remove W epochs and
+write a new EDF
+
+In the above example, with an EDF record duration of 4 seconds, one
+cannot straightforwardly output a new EDF on an epoch-by-epoch basis,
+as for 30 second epochs), an epoch is not perfectly divisible by 4. In
+Luna, this can be fixed by using the `RECORD-SIZE` command to change
+the EDF record size, e.g. to 1 second say.  Now, Luna would be
+outputting only whole EDF records (i.e. 30 times 1 second) rather than
+having to worry about a partial record (i.e. 7 times 4 seconds, plus
+an additional two seconds, which would be half an EDF record).
+
+<h6>Fractional offsets</h6>
+
+Finally, a more tedious issue arises if the annotations/epochs _start_ at
+arbitray, fractional time points within an EDF.  In the example above, we, for example, 
+an annotation starting:
+```
+   N1      4110.9609375
+```
+In this example, with a sample rate of 256 Hz, this offset corresponds exactly to 246 (= 0.9609375 * 256 ) samples
+past the start of each second.  Although one solution would be to have a very short EDF record sizes (i.e. the length of
+one sample, 1/256 seconds), this may for technical reasons make data access suboptimal for many readers; further, we consdier the
+more general case, where the offset is not even exactly aligned with a sample point. 
+
+The `ALIGN` command attempts to handle this issue, by creating a new
+EDF in which the epochs are perfectly aligned to EDF records.
+
+One specifies a list of annotations that will define epochs: these annotations must be a) non-overlapping, and b)
+an exact multiple of the EDF record size.  i.e. if we have changed the above data to have 1 second records, then we can
+specify 30-second epochs.  The `ALIGN` command then finds all sample points within an annotation that fits completely within the observed duration
+(i.e. only ‘complete’ annotations, to skip those spans discontinuities/borders) and maps these into a new set of records
+(e.g. 30 new 1 second records) for each annotation (i.e. which may be mapping fractionally across original records). The end result is a new EDF
+with in which annotations, epochs & EDF records are all aligned.
+
+To make this concrete: consider (for ease of presentation) a 5 Hz signal and an EDF record size of 1 second:
+
+```
+    RECORD   SAMPLE    TIME
+    1        1         0.0
+    1        2         0.2
+    1        3         0.4
+    1        4         0.6
+    1        5         0.8
+
+    2        1         1.0
+    2        2         1.2
+    2        3         1.4
+    2        4         1.6
+    2        5         1.8
+
+    3        1         2.0
+    3        2         2.2
+    3        3         2.4
+    3        4         2.6
+    3        5         2.8
+```
+
+Also for simplicity of presentation, assume here we have 1 second epoch (rather than 30 seconds)
+
+If we were to have epoch-defining annotations starting with an offset
+of 0.25 seconds, (e.g. 0.25 - 1.25, 1.25 - 2.25, etc.)  The challenge
+would be, for example: how to extract those epochs into a new EDF.
+Naturally, this involves changing the internal structure of the EDF.
+
+We first collect all the new data-points, making new 5-sample EDF records from the new data, starting at the first point after 0.25 seconds:
+
+```
+    RECORD   SAMPLE    TIME           NEW RECORD  SAMPLE    TIME 
+    1        1         0.0      xxx
+    1        2         0.2      xxx
+    1        3         0.4      --->      1       1         0.0 
+    1        4         0.6      --->      1       2         0.2 
+    1        5         0.8      --->      1       3         0.2 
+    2        1         1.0      --->      1       4         0.6
+    2        2         1.2      --->      1       5         0.8
+
+    2        3         1.4      --->      2       1         1.0
+    2        4         1.6      --->      2       2         1.2
+    2        5         1.8      --->      2       3         1.4
+    3        1         2.0      --->      2       4         1.6
+    3        2         2.2      --->      2       5         1.8
+    3        3         2.4      xxx          
+    3        4         2.6      xxx          
+    3        5         2.8      xxx       
+```
+
+If the signal were 100 Hz, we can obviously select an exact sample
+point (the 25th) in an EDF record to correspond to an offset of 0.25
+seconds.  In the case of our hypothetical 5 Hz signal, as above, we
+have to select the closest next signal, so there will be a slight
+shift in the timings of signals.  If this matters, you can first
+resample all signals to align to the new offset perfectly.
+
+<h5>Parameters</h5>
+
+Main arguments
+
+| Parameter | Example | Description |
+| ---- | ---- | ---- |
+| `align` | `align=N1,N2,N3,R,W,?` | Annotations to align epochs by |
+| `annot-out` | `annot-out=annots/^.annot` | Write (realigned) annotations | 
+
+Other arguments as required by the [`WRITE` command](../outputs.md#write)
+
+| Parameter | Description |
+| ---- |  ---- |
+| `edf-tag` | New EDF tag |
+| `edf-dir` | New EDF directory |
+
+
+<h5>Output</h5>
+
+The `ALIGN` command forces a `WRITE` of the EDF; also, annotation files can be output, with the
+annotations correctly altered to specify onset relative to the new EDF start.
+
+<h5>Example</h5>
+
+_to be added_
+
+
 ## ANON
 
 Sets the _in memory_ EDF header fields `Patient ID` and `Start Date` 
@@ -773,4 +1024,39 @@ set to missing:
 ```
 luna s.lst -s "ANON & WRITE edf-dir=edfs/ edf-tag=anon sample-list=s2.lst" 
 ```
+
+## SIGGEN
+
+_Generate, or add-in, artificial test signals_
+
+This is a simple command to generate test signal data (on top of an existing EDF).  Currently, it
+only generates sine wave signals.
+
+<h5>Parameters</h5>
+
+| Parameter | Example | Description |
+| ---- | ----- | ----- |
+| `sig` | `sig=C3,C4` | Signals to be modified |
+| `sine` | `sine=10,20` | Generate a sine wave with specified frequency (10 Hz), amplitude (20 units) and optionally phase |
+| `clear` | | If present, clear the signal before adding in this component |
+
+
+<h5>Output</h5>
+
+No new output, this command just modifies the internal signal data.
+
+<h5>Example</h5>
+
+
+To generate a sine wave in the signal `C3` (first clearing that signal):
+
+```
+luna s.lst -o out.db -s ' MASK ifnot=NREM2 & RE
+                          SIGGEN sig=C3 clear sine=10,100 
+                          MTM sig=C3 '
+```
+
+Plotting the output of `MTM`:
+
+![img](../img/siggen.png)
 

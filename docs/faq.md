@@ -8,11 +8,11 @@ here are some frequently asked questions:
 Luna is a C/C++ library focused on the analysis of large numbers of
 sleep studies encoded as EDFs.  This is a free, open-source project.
 Currently, there is a command-line tool ([_lunaC_](luna/args.md)) and an
-extension library for R ([_lunaR_](ext/R.md)).
+extension library for R ([_lunaR_](ext/R/index.md)).
 
 ## Which? 
 
-The current version is the _beta-release_ __v0.24 (28-August-2020)__.
+The current version is the _beta-release_ __v0.25.5 (31-March-2021)__.
 Use `luna -v` to display the specific build date/time.
 
 ## Where?
@@ -29,7 +29,7 @@ a number of colleagues:
 - Shyamal Agarwal for work on automating the build distribution -- and
   onging work on the to-be-released web-based NSRR Automated Pipeline
   (NAP) built around Luna
-
+- Nataliia Kozhemiako for input into multiple EEG analytic components and the revised artifact detection workflows
 - Alexander Kent for testing and feedback
 - Susan Redline and her team developing the [National Sleep Research Resource](http://sleepdata.org)
 - Dennis Dean for sharing his original SpectralTrainFig code-base
@@ -193,7 +193,7 @@ file use:
 MASK if="REM sleep|5" 
 ```
 
-Alternatively, use the [`remap`](../luna/args.md#remapping-annotations) option.
+Alternatively, use the [`remap`](luna/args.md#remapping-annotations) option.
 
 If you are using the `-s` option to specify a commands directly as
 arguments to Luna, you will likely already be using quotes for the
@@ -269,22 +269,64 @@ then use single quotes instead of double quotes.  That is, this will _not_ work:
 ```
  luna s.lst -s "EPOCH & STATS sig=${eeg}" 
 ```
-whereas this will:
+as there is no shell variable called `${eeg}`,  whereas this will:
 
 ```
  luna s.lst -s 'EPOCH & STATS sig=${eeg}'
 ```
+(because `${eeg}` is a special Luna variable that is automatically defined based on channel names).
 
-Note that one or two Luna commands expect single quotes to define
-string literals: e.g.  if using _eval_ expressions, such as
-`c('a','b','c')` to define a vector of characters `a`, `b` and `c`.
-If already using single quotes after the `-s` command, it will not
-work to use additional single quotes in expressions such as this.  For
-this special scenario (that likely will not often arise), either 1)
-place the commands in a separate file rather than use the `-s`
-function, or 2) utilize the fact that `{` an `}` can stand in for
-single quotes in this context: e.g. `c( {a}, {b}, {c} )` is
-interpreted identically to the above expression.
+It is important to understand this distinction between _shell_
+variables and _Luna_ variables: i.e. these are distinct entities, even
+if they share the same label. If you want to pass a shell variable
+into a script as a Luna variable (either via `-s` or using a command file), you
+need to define this Luna variable prior to the `-s` statements, setting it to the
+shell variable value: e.g. say you define a bash (shell) variable `s` as follows:
+
+```
+s="C3"
+```
+To use this shell variable in a Luna script, you could do one of two things: use double quotes, so that
+the `${s}` variable that is expanded will be the shell variable:
+
+```
+luna s.lst -s "EPOCH & STATS sig=${s}" 
+```
+Note that this version does not use a Luna variable,
+rather it is identical to typing the following on the command line (i.e. this is what Luna 'sees'):
+```
+luna s.lst -s "EPOCH & STATS sig=C3" 
+```
+
+Alternatively, if using single-quotes (e.g. because the script had other Luna variables) you have to
+define the Luna variable first:
+```
+luna s.lst s=${s} -s 'EPOCH & STATS sig=${s}'
+```
+In the above, the first instance of `${s}` refers to the shell variable, i.e. it is the same as typing `s=C3`.   The second
+instance of `${s}` is instead interpreted as a Luna variable, as it is in single quotes and so not expanded by the shell.
+In this case, it has been set to `C3`.   The Luna variable need not have the same name: i.e. the following is functionally identical:
+```
+luna s.lst myvar=${s} -s 'EPOCH & STATS sig=${myvar}'
+```
+Finally, even if the shell variable `${s}` exists, the following would _not_ work:
+```
+luna s.lst -s 'EPOCH & STATS sig=${s}'
+```
+i.e. because there is no `${s}` Luna variable defined as on this run.
+
+
+!!! Note "String literals"
+    One or two Luna commands expect single quotes to define
+    string literals: e.g.  if using _eval_ expressions, such as
+    `c('a','b','c')` to define a vector of characters `a`, `b` and `c`.
+    If already using single quotes after the `-s` command, it will not
+    work to use additional single quotes in expressions such as this.  For
+    this special scenario (that likely will not often arise), either 1)
+    place the commands in a separate file rather than use the `-s`
+    function, or 2) utilize the fact that `{` an `}` can stand in for
+    single quotes in this context: e.g. `c( {a}, {b}, {c} )` is
+    interpreted identically to the above expression.
 
 
 ### EDF+ support for long integers and floats

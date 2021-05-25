@@ -8,11 +8,7 @@
 
 - empirical threshold setting for `SPINDLES` appears broken in v0.24
 
-- documnetation: need to document `cstats`, `astats` etc for
-  `SIGSTATS` (and `chep` and its interaction with `INTERPOLATE`; need
-  to update documentation on various new v0.24 features (e.g. use of
-  `file` for `FILTER` etc).  Many of these things will be covered by
-  the upcoming _vignettes_ however, and we will add then.
+- documentation: need to document new `FILTER` features, e.g. taking a `file`, etc
 
 
 

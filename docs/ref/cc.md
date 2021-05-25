@@ -5,12 +5,9 @@
 | [`COH`](#coh) | Pairwise channel coherence | 
 | [`CORREL`](#correl) | Pairwise channel correlation | 
 | [`CC`](#cc) | Coupling (dPAC) and connectivity (wPLI) | 
+| [`PSI`](#psi) | Phase slope index (PSI) connectivity metric |
 | [`MI`](#mi) | Mutual information |
-| [`CLOCS`](#clocs) | Specifying channel location maps | 
-| [`INTERPOLATE`](#interpolate) | Spherical-spline interpolation |
-| [`SL`](#sl) | Surface Laplacian spatial filter |
-| [`L1OUT`](#l1out) | Leave-one-out interpolation for multichannel EEG |
-| [`ICA`](#ica) | Independent components analysis |
+| [`TSYNC`](#tsync) | Cross-correlation and phase delay |
 
 ## COH
 
@@ -98,7 +95,7 @@ luna s.lst nsrr02 -o out.db -s "MASK ifnot=NREM2 & RE \
                                 & COH spectrum max=20 sig=EEG,EEG(sec)"
 ```
 
-Loading this into [_lunaR_](../ext/R.md), 
+Loading this into [_lunaR_](../ext/R/index.md), 
 
 ```
 k <- ldb( "out.db" ) 
@@ -175,7 +172,7 @@ luna s.lst nsrr02 -o out.db -s "MASK if=wake & RE \
 Note that the above command also reports the manually-assigned stage of each epoch (with the [`STAGE`](hypnograms.md#stage) 
 command, which we can use later when plotting results:
 
-Using [_lunaR_](../ext/R.md) to examine the output (in R):
+Using [_lunaR_](../ext/R/index.md) to examine the output (in R):
 
 ```
 library(luna)
@@ -387,6 +384,100 @@ That is, we see significant connectivity between these two central channels in t
     especially if you are using randomization to estimate Z scores (`nreps`) and/or have lots of individuals in the datasets.
     Therefore, try to focus these analyses and start small...
 
+
+## PSI
+
+_Calculates the phase slope index across channels_
+
+Estimates the [phase slop
+index](http://doc.ml.tu-berlin.de/causality/) between pairs of
+channels, and provides a single-channel summary of net PSI (i.e.  net
+sender versus recipient).
+
+The command requires that channels have similar sampling rates.
+
+<h5>Parameters</h5>
+
+To set the frequency or frequencies at which to calculate PSI either:
+
+ - specify `f` and `w` - one or more frequencies, for bands `f-w/2` to `f+w/2`
+
+ - or specify `f-lwr`, `f-upr` only - for a band of lower to upper (or an equal range of comma-delimited values for each to give
+   a range of bands, e.g. `f-lwr=1,4,8` and `f-upr=4,8,12` implies three bands: 1-4 Hz, 4-8 Hz and 8-12 Hz)
+   
+ - or specify `f-lwr`, `f-upr`, `w` and `r` - for a range of bands,
+   from `f` equalling `f-lwr` up to `f-upr`, in steps of `r` Hz; for
+   each frequency, the window of `w` spanning the center frequency is
+   constructed
+
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+|`sig`|`sig=C3,C4` | An optional parameter, to specify which channels to calculate PSI |
+|`epoch`| | Report epoch-level (e.g. 30-second epoch) output |
+|`f-lwr`| `f-lwr=3` | Consider frequencies from `f-lwr` to `f-upr` (as a band, or in steps of `r` ) |
+|`f` | `f=10,12,15` | One or more frequencies to test (Hz) |
+|`w` | `w=5` | Window around each center frequency (Hz) in which to calculate PSI |
+
+Secondary parameters are:
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+|`eplen` | `eplen=5` | PSI sub-epoch length (default 4 seconds) |
+|`seglen` | `seglen=2.5` | Segment length (with 50% overlap) within each sub-epoch |
+|`cache-metrics` | `cache-metrics=c1` | Cache PSI, e.g. for use with `PSC` |
+
+<h6>Cache options</h6>
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+|`cache-metrics` | `cache-metrics=c1`  | Cache net and pairwsie `PSC` (e.g. for `PSC`) |
+
+<h5>Output</h5>
+
+Analysis parameter output (strata: `F` )
+
+| Variable | Description |
+| ---- | ---- |
+| `F1` | Lower frequency |
+| `F2` | Higher frequency |
+| `NF` | Number of frequency bins |
+
+
+Channel-level output (strata: `CH` )
+
+| Variable | Description |
+| ---- | ---- |
+| `PSI` | Net PSI (standardized) for this channel |
+
+Channel pair output (strata: `CH1` x `CH2`)
+
+| Variable | Description |
+| ---- | ---- |
+| `PSI` | Standardized PSI for this channel pair |
+| `PSI_RAW` | Raw PSI |
+| `STD` | Standard deviation of PSI |
+
+
+Channel-level output (option: `epoch`, strata: `E` x `CH` )
+
+| Variable | Description |
+| ---- | ---- |
+| `PSI` | Net PSI (standardized) for this channel |
+
+Channel pair output (olption: `epoch`, strata: `E` x `CH1` x `CH2`)
+
+| Variable | Description |
+| ---- | ---- |
+| `PSI` | Standardized PSI for this channel pair |
+| `PSI_RAW` | Raw PSI |
+| `STD` | Standard deviation of PSI |
+
+<h5>Example</h5>
+
+_to be added_
+
+
 ## MI
 
 _Calculates pairwise mutual information metrics across channels_
@@ -451,28 +542,47 @@ Output for permutation test (option: `permute`)
 | `Z`     | Z-statistic |
 
 
-## CLOCS
 
-!!!warning "Experimental feature, under-development"
-    Full documentation to be added; further notes [here](exp.md#clocs) 
+## TSYNC
 
-## INTERPOLATE
+_Cross-correlation and phase delay_
 
-!!!warning "Experimental feature, under-development"
-    Full documentation to be added; further notes [here](exp.md#interpolate) 
+Estimate the cross-correlation between two signals, within a window of _W_ seconds, and
+report the estimated phase delay (in seconds) based on the maximal cross-correlation in
+that time window.
 
-## SL
+<h5>Options</h5>
 
-!!!warning "Experimental feature, under-development"
-    Full documentation to be added; further notes [here](exp.md#sl) 
+| Parameter | Example | Description |
+| ---- | ----- | ----- |
+| `sig` | `sig=C3,C4,F3,F4` | Optionally specify channels (default is to include all) |
+| `w` | `w=0.5` | Required time window (seconds) |
+| `verbose` | | Verbose output |
+| `epoch` | | Epoch-level output |
 
-## L1OUT
 
-!!!warning "Experimental feature, under-development"
-    Full documentation to be added; further notes [here](exp.md#l1out) 
+<h5>Output</h5>
 
-## ICA
+Channel-pair output (strata: `CH1` x `CH2`)
 
-!!!warning "Experimental feature, under-development"
-    Full documentation to be added; further notes [here](exp.md#ica) 
+| Variable | Description |
+| ---- | ---- |
+| `S` | Phase delay based on cross-correlation |
 
+
+Channel-pair output (option: `verbose`, strata: `D` x `CH1` x `CH2`)
+
+| Variable | Description |
+| ---- | ---- |
+| `XCORR` | Estimated cross-correlation for this delay |
+
+Epoch-level channel-pair output (option: `epoch`, strata: `CH1` x `CH2`)
+
+| Variable | Description |
+| ---- | ---- |
+| `S` | Phase delay based on cross-correlation |
+
+
+<h5>Example</h5>
+
+_to be added_

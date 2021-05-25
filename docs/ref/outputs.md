@@ -9,6 +9,7 @@ _Commands to rewrite EDFs and signals/annotations in other text-based formats_
 | [`DUMP-RECORDS`](#dump-records)| Dump annotations and signals, by EDF record | 
 | [`RECS`](#recs)| Dump basic information on EDF record structure | 
 | [`SEGMENTS`](#segments)| Dump (discontinuous EDF+) intervals |
+| [`SEDF`](#sedf) | Generate a "summary EDF" |
 
 ## WRITE
 
@@ -448,4 +449,23 @@ nsrr01 1    0.0333333  2        120      240    22.02.17   360   22.04.17
 nsrr01 2    0.0166667  1        60       630    22.08.47   690   22.09.47
 nsrr01 3    0.0416667  2.5      150      2070   22.32.47   2220  22.35.17
 ```
+
+## SEDF
+
+_Generates a summary-EDF and writes it to disk_
+
+For data channels only (i.e. not any EDF+ annotation channels), the `SEDF` command
+creates a "summary" EDF
+
+| Option | Description |
+| ----- | ----- |
+| `sig` |  Signals to output (if not given, all signals) |
+| `sedf-dir` | Directory for SEDFs (if not working directory)  |
+
+This creates an EDF in which contains epoch-level summary statistics of the original EDF. That is, if the original EDF has 1000 30-second epochs, the SEDF will comprise only 1000 records, where each record has a duration of 30 seconds, and contains only a single value.  For a given channel, e.g. `CZ`, the `SEDF` will contain three new channels, depending on the _type_ of that channel.  For a channel called `XYZ` in the original:
+
+ - for oscillatory signals (e.g. EEG, EMG, etc), the three Hjorth parameters: `XYZ_H1`, `XYZ_H2` and `XYZ_H3`
+ - for other signals (e.g. light or heart rate, etc), the mean, min and max: `XYZ_M`, `XYZ_L`, `XYZ_U`
+
+The idea is that this SEDF file is an effective _thumbnail_ for the EDF, which can be quickly loaded and rendered, e.g. by a viewer application.   
 

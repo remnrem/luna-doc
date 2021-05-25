@@ -5,7 +5,7 @@
 Luna is fundamentally a console/command-line package, i.e. there is no
 _point-and-click_. When talking specifically about the command-line
 interface to Luna, we'll often refer it as _lunaC_, to distinguish it from the
-[_lunaR_](../ext/R.md) package for R.  Familiarity with the
+[_lunaR_](../ext/R/index.md) package for R.  Familiarity with the
 basic Unix/macOS console environment and shell scripting is recommended.
 
 Once [installed](../download/index.md) and in your command path,
@@ -829,7 +829,7 @@ and third individual, respectively:
 PSD sig=${var2}
 ```
 
-The [`VARS`](ref/summaries.md#vars) can be used to dump a list of which variables are defined for each individual.
+The [`VARS`](../ref/summaries.md#vars) can be used to dump a list of which variables are defined for each individual.
 
 
 <h4>Individual-ID substitution</h4>
@@ -1307,7 +1307,7 @@ This will remap any of the three forms listed to the primary label: `REM`.
 !!! warning "Automatric NSRR remappings"
     Note that Luna by defaults
     add in some _default_ annotaton remappings, to help working with
-    NSRR data.  See [here](nsrr.md#annotation-aliases) for more
+    NSRR data.  See [here](../nsrr.md#annotation-aliases) for more
     details.  This can sometimes mean that any remapping you specify
     conflicts with an internal one.  This is because, by definition,
     the same label cannot be both a primary value (i.e. to-be-mapped-to)
@@ -1315,7 +1315,7 @@ This will remap any of the three forms listed to the primary label: `REM`.
     get an error message, then add `nsrr-remap=F` _before_ the `remap`
     you want to add. This will turn off all automatic remappings of
     annotations.  (These remappings are all listed on
-    [this](nsrr.md#annotation-aliases) page.)  Note that this is one of the few instances in which
+    [this](../nsrr.md#annotation-aliases) page.)  Note that this is one of the few instances in which
     the _order_ of options is important, i.e. the `nsrr-remap=F` (which effectively clears the internal cache of mapping terms) must occur 
     _before_ new remappings are added (whether this is on the command line or via a [parameter file](#parameter-files).
 
@@ -1355,6 +1355,8 @@ assign corresponding variables (e.g. `${eeg}` and `${emg}`).  The current channe
 | Type | Variable | Description |
 |---  | --- | --- |
 |`IGNORE` | `${ignore}` | Flag to ignore these channels |
+|`REF`| `${ref}` | Mastoid EEG reference |
+|`IC`| `${ic}` | Independent components |
 |`EOG` | `${eog}` | Electrooculogram |
 |`ECG` | `${ecg}` | Electrocardiogram |
 |`EMG` | `${emg}` | Electromyogram (chin) |
@@ -1404,6 +1406,10 @@ When determining channel type, Luna will attempt to match exact
 matches first, and then partial matches.  Furthermore, within each
 class of match, Luna will try to match types in the order as listed in
 the table above (i.e. `IGNORE` first, then `EOG`, etc, until `EEG`).
+
+Whenever new channels are added within a Luna run (e.g. via `ICA` or
+`COPY`), a new type label will be assigned as appropriate, and the
+corresponding variables (e.g. `${ic}` or `${eeg}`) will be updated.
 
 
 ### Exclude lists
@@ -1627,7 +1633,7 @@ format of output (simple text formatted for human reading), most
 commands adopt the same output framework, such that the same
 information can be channeled to either a text file (described here), a
 database (described [next](destrat.md)) or even an object in R if
-using the Luna [R extension library](../ext/R.md).
+using the Luna [R extension library](../ext/R/index.md).
 
 Using the `HEADERS` command as an example on the first EDF in the [tutorial](../tut/tut1.md) dataset: 
 
@@ -1766,7 +1772,7 @@ of `-o` to _append_ to an existing database.
     of the database output format is that all information (potentially from multiple people) is contained
     in a single place, and can be queried with `destrat`.  Databases
     can also be loaded directly into R, using
-    [`ldb()`](../ext/R.md#ldb). _Disadvantages_ are 1) for very large
+    [`ldb()`](../ext/R/ref.md#ldb). _Disadvantages_ are 1) for very large
     projects or output files, performance can suffer, and 2) to export
     into other software (other than R via _lunaR_), you first need to
     extract the information as an intermediate text file.  Text-table
@@ -1777,7 +1783,7 @@ of `-o` to _append_ to an existing database.
     across individuals: if your project contains 100 individuals,
     you'll have 100 separate subfolders, each with the same text-table
     files.  The _lunaR_ package provides the function
-    [ltxttab()](../ext/R.md#ltxttab) that can help by automatically compiling output across
+    [ltxttab()](../ext/R/ref.md#ltxttab) that can help by automatically compiling output across
     different individuals/subfolders.  
 
     In general, use text-table mode
@@ -1797,9 +1803,14 @@ after manipulating signals, masking epochs, etc, via the
 
 ### Annotations
 
-Some commands, such as [`SPINDLES`](../ref/spindles-so.md#spindles),
-can produce [FTR files](../ref/annotations.md#ftr-files),
-which can be used as annotation files in other Luna analysis (or for
-visualization with [Scope](../ext/scope.md)).
+Some commands, such as [`WRITE-ANNOTS`](../ref/annotations.md#write-annots),
+can produce [.annot files](../ref/annotations.md#annot) containing interval-based annotations.
+
+### Misc text-file dumps
+
+Some commands produce flat-file text output distinct from the usual
+output mechanism (via the database or text-tables, as described
+above), for example `MATRIX` or `ICA`.  These outputs can often be quite large files.
+
 
 

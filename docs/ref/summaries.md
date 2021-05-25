@@ -7,11 +7,13 @@ _Basic commands to give overviews of the structure of an EDF_
 |[`DESC`](#desc)       | Simple description of an EDF, sent to the console |
 |[`SUMMARY`](#summary) | More verbose description, sent to the console | 
 |[`HEADERS`](#headers) | Tabulate (channel-specific) EDF header information | 
+|[`CONTAINS`](#contains) | Simple command to indicate whether ceftain signals are present |
 |[`ALIASES`](#aliases) | Display aliases assigned for channels and annotations |
 |[`TYPES`](#types) | Display current channel _types_ |
 |[`VARS`](#vars) | Display current individual-level variables | 
 |[`TAG`](#tag)         | Generic command to add a tag (level/factor) to the output |
-|[`STATS`](#stats) | Basic signal statistics (min/max, mean, RMS, etc) | 
+|[`STATS`](#stats)     | Basic signal statistics (min/max, mean, RMS, etc) |
+|[`SIGSTATS`](#sigstats)  | Hjorth parameters and other signal statistics |
 
 ## DESC
 
@@ -231,6 +233,140 @@ ID      CH   DMAX  DMIN  PDIM  PMAX  PMIN   SENS     SR   TYPE
 nsrr01  ECG  127   -128  mV    1.25  -1.25  0.00980  250  ECG
 nsrr01  EMG  127   -128  uV    31.5  -31.5  0.24705  125  EMG
 ```
+
+## CONTAINS
+
+_Use the return code mechanism to indicate whether particular signals are present_
+
+This command is primarily intended to be used in the context of
+automated, script-based analyses, to provide a quick way of
+indicating whether particular channels (or sleep stage annotations) are
+present in an EDF.
+
+`CONTAINS` is unusual among Luna commands, in that it uses the _exit
+code_ or _return code_ mechanism to report its findings, to faciliate
+script-based analyses.  Using the bash shell, the default return code
+(i.e. after running any command, not just Luna) is 0, meaning
+"success".  It can be accessed via the `$?` special variable.  For
+signal checking, the following convention is used:
+
+ - 0 : all signals present (in all individuals)
+ - 1 : at least 1 signal present (in all individuals)
+ - 2 : no signals present (in at least one individual)
+
+For stages,
+
+ - 0 : sleep stage annotations present (in all individuals)
+ - 1 : sleep stage annotations absent (in at least one individual)
+
+!!! Windows and other shells 
+    We have not tested this on any Windows machines, but the DOS variable
+    `%errorlevel%` should be the analogue of the Linux/macOS `$?` bash variable.
+    Most shells other than bash support the `$?` variable, although there may be some
+    variations.
+
+
+<h5>Parameters</h5>
+
+This command can be run with _either_ the `sig` or `stages` options:
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `sig` | `sig=${eeg}` | Channels to be checked for presence/absence |
+| `stages`  | | Instead of signals, indicate whether sleep stage annotations are present |
+
+<h5>Output</h5>
+
+The primary output of `CONTAINS` is via the return code, as described
+above (and see example below). In addition, when checking whether the
+EDF contains signals, some additional output is sent to the standard
+output mechanism.
+
+Individual-level output (strata: _none_)
+
+| Variable | Description |
+| ---- | ---- |	
+| `NS_REQ` | Number of requested channels
+| `NS_OBS` | Number of requested channels observed in the EDF |
+| `NS_TOT` | Total number of channels in the EDF |
+
+Channel-level output (option: `sig`, strata: `CH`)
+
+| Variable | Description |
+| ---- | ---- |
+| `PRESENT` | 0/1 variable to indicate whether the requested signal is present |
+
+
+<h5>Output</h5>
+
+
+First checking which signals are present via the `DESC` command:
+
+```
+luna cfs.lst 1 -s DESC
+```
+```
+Signals : C3[128] C4[128] M1[128] M2[128] LOC[128] ROC[128]
+          ECG2[256] ECG1[256] EMG1[256] EMG2[256] EMG3[256] L_Leg[64]
+          R_Leg[64] AIRFLOW[32] THOR_EFFORT[32] ABDO_EFFORT[32] SNORE[256] SUM[32]
+          POSITION[1] OX_STATUS[1] PULSE[1] SpO2[1] NASAL_PRES[64] PlethWV[128]
+          Light[512] HRate[512]
+```
+
+To test whether all/some of the following are present in an automated manner, using `CONTAINS`: here to test
+for `LOC`, `ROC`, `EOG-L` and/or `EOG-R`:
+```
+luna cfs.lst 1 -o out.db -s CONTAINS sig=LOC,ROC,EOG-L,EOG-R
+```
+
+To see the return code in this scenario (which is always from the last command executed):
+```
+echo $?
+```
+```
+1
+```
+which implies at least some of the above were seen.
+
+We can also look at the more detailed output:
+
+```
+destrat out.db +CONTAINS
+```
+```
+ID                 NS_OBS NS_REQ NS_TOT
+cfs-visit5-800002  2      4      26
+```
+
+```
+destrat out.db +CONTAINS -r CH
+```
+```
+ID                   CH         PRESENT
+cfs-visit5-800002    LOC        1
+cfs-visit5-800002    ROC        1
+cfs-visit5-800002    EOG-L      0
+cfs-visit5-800002    EOG-R      0
+```
+
+
+In practice, the `CONTAINS` command is likely only to be used in scripting: e.g.
+
+```
+luna s.lst silent=T -s 'CONTAINS sig=${eeg}'
+
+HAS_EEG=$?
+
+if [[ ${HAS_EEG} -eq 0 ]]; then
+
+  # ...
+  # ...EEG-specific code here...
+  # ...
+
+fi
+```
+
+
 
 ## ALIASES
 
@@ -699,4 +835,53 @@ plot( d$E , d$RMS , col = d$ID , pch=20 , xlab = "Epoch" , ylab = "RMG(ECG)" )
 ```
 
 ![img](../img/ecg-rms.png)
+
+
+
+## `SIGSTATS`
+
+_Epoch-wise Hjorth parameters and other statistics_
+
+This command calculates and reports per-epoch (and whole-signal)
+[Hjorth parameters](https://en.wikipedia.org/wiki/Hjorth_parameters)
+and (optionally) other statistics: signal root mean square (RMS), indices of signal
+clipping (the proportion of points that equal the minimum or maximum
+for that epoch), absolute maximum absolute values and flatness
+(proportion of points of a similar value to the preceding value).
+
+<h5>Parameters</h5>
+
+Core parameters:
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `sig`     | `sig=C3,F3` | Restrict analysis to these channels |
+| `epooch`  |   | Epoch-level output |x
+
+<h5>Output</h5>
+
+Per-channel whole-signal statistics (strata: `CH`)
+
+| Variable | Description |
+| --- | --- |
+| `H1`    | First Hjorth parameter (activity) |
+| `H2`    | Second Hjorth parameter (mobility) |
+| `H3`    | Third Hjorth parameter (complexity) |
+| `CLIP`  | Proportion of clipped sample points |
+| `MAX`   | Proportion of maxed out sample points |
+| `FLAT`  | Proportion of flat sample points |
+| `RMS`   | Signal root mean square |
+
+
+Per-channel epoch-level statistics (strata: `CH` x `E`)
+
+| Variable | Description |
+| --- | --- |
+| `H1`    | First Hjorth parameter (activity) |
+| `H2`    | Second Hjorth parameter (mobility) |
+| `H3`    | Third Hjorth parameter (complexity) |
+| `CLIP`  | Proportion of clipped sample points |
+| `MAX`   | Proportion of maxed out sample points |
+| `FLAT`  | Proportion of flat sample points |
+| `RMS`   | Signal root mean square |
 

@@ -1,294 +1,16 @@
-# lunaR 
-
-_lunaR_ is a package for the [R statistical software
-environment](https://www.r-project.org), which aims to provide a
-simple interface for the Luna library.  Primary use cases are 1) for
-working with individual sleep studies/EDFs, and 2) as a convenient way
-to work with [_destrat_](../luna/args.md#destrat) output databases.
-For larger projects, the command-line version of Luna
-([_lunaC_](../luna/args.md)) will likely be a better option.
-
-!!! hint
-    To install _lunaR_, see the main [installation pages](../download/index.md), or try using the
-    [Dockerized](../download/docker.md) version of Luna.
-
-
-## Overview
-
-This page gives an overview of the core [functions](#functions)
-provided by this package, followed by [examples](#examples) and
-descriptions of some additional [convenience
-functions](#convenience-functions). All examples on the page use the
-[tutorial dataset](../tut/tut1.md), especially the second individual
-(`nsrr02`).  The Luna tutorial also includes [a
-section](../tut/tut4.md) in which all steps are performed in _lunaR_
-as well as _lunaC_.
-
-_lunaR_ is simply an interface to the identical C/C++ library that
-underlies the _lunaC_ command line tool: as such, _lunaC_ and _lunaR_
-are fundamentally similar in most core respects.  The different
-interfaces do mean that some aspects of the workflow differ between the
-two tools, however.  For example, like _lunaC_, _lunaR_ operates on a
-single EDF at a time; unlike the command line tool, however, _lunaR_
-is more interactive, in the sense that the modifiable, _in-memory_
-representation of the EDF typically persists between different _lunaR_
-commands.  We discuss these differences below in more detail.
-
-!!! note 
-    In this documentation, we refer to Luna's R interface as
-    _lunaR_ to distinguish it from the base Luna library and
-    command-line tool, which we're calling _lunaC_.  The actual R package is named `luna`
-    however (as a `lunar` package already exists in
-    [CRAN](https://cran.r-project.org/)), as is the command line
-    you'll actually type (i.e. `luna`) to run _lunaC_.
-
-
-The _L_-functions (i.e. all starting with the letter `l` for Luna) can
-be roughly grouped as follows:
-
-- __attaching an EDF:__ [`lsl()`](#lsl), [`lattach()`](#lattach),
-  [`ledf()`](#ledf), [`lstat()`](#lstat), [`ldrop()`](#ldrop),
-  [`lrefresh()`](#lrefresh)
-
-- __extracting data:__ [`lchs()`](#lchs), [`ldata()`](#ldata),
-  [`ldata.intervals()`](#ldataintervals)  
-
-- __working with annotations:__ [`lannots()`](#lannots),
-  [`lepoch()`](#lepoch), [`letable()`](#letable),
-  [`lstages()`](#lstages), [`ladd.annot()`](#laddannot),
-  [`ladd.annot.file()`](#laddannotfile)
-
-- __running commands:__ [`leval()`](#leval), [`lcmd()`](#lcmd),
-  [`leval.project()`](#levalproject), 
-  [`literate()`](#literate)
-
-- __working with output:__ [`ldb()`](#ldb), [`lx()`](#lx),
-  [`lx2()`](#lx2), [`lid()`](#lid), [`ltxttab()`](#ltxttab)
-
-- __setting variables:__ [`lset()`](#lset), [`lvar()`](#lvar),
-  [`lreset()`](#lreset)
-
-- __convenience/misc:__ [`lstgcols()`](#lstgcols), [`lbands()`](#lbands), [`llog()`](#llog),
-[`le2i`](#le2i), [`lsanitize()`](#lsanitize),
-[`ldenoise()`](#ldenoise), [`lheatmap()`](#lheatmap)
-
-
-The index below gives a listing of all major _lunaR_ functions:
-
-| Function     | Description |
-| ----         | ---- |  
-| [`lsl()`](#lsl)           | Loads a sample list | 
-| [`lattach()`](#lattach)   | Attaches an EDF from a sample list |
-| [`ledf()`](#ledf)         | Attaches an EDF directly |
-| [`lstat()`](#lstat)        | Reports on the currently attached EDF |
-| [`ldrop()`](#ldrop)       | Detaches the current EDF |
-| [`lrefresh()`](#lrefresh) | Reverts to the original attached EDF |
-| [`lchs()`](#lchs)         | Returns a vector of channel names for the attached EDF |
-| [`ldata()`](#ldata)       | Extracts signal (and annotation) data from an EDF for one or more epochs |
-| [`ldata.intervals()`](#ldataintervals)  | Extracts signal (and annotation) data from an EDF for one or more intervals |
-| [`lannots()`](#lannots)   | Returns a vector of annotation class names for the attached EDF |
-| [`lepoch()`](#lepoch)     | Epochs the data |
-| [`letable()`](#letable)   | Returns an _epoch-table_ with information about epochs, masks and annotations |
-| [`lstages()`](#lstages)   | Return vector of sleep stages from annotations |
-| [`ladd.annot()`](#laddannot) | Attaches an new annotation from an R interval list |
-| [`ladd.annot.file()`](#laddannotfile) | Attaches an new annotation from an file |
-| [`leval()`](#leval)       | Evaluates an arbitrary set of Luna commands |
-| [`leval.project()`](#levalproject)       | Evaluates an arbitrary set of Luna commands for all members of a project |
-| [`lcmd()`](#lcmd)         | Reads and parses a Luna command script from a file |
-| [`literate()`](#literate) | Applies an arbitrary R function to signal data, one epoch or interval at a time |
-| [`ldb()`](#ldb)           | Imports data from a [_lout_ database](../luna/destrat.md) as an R list object |
-| [`lx()`](#lx)             | Extracts table(s) from objects returned by `ldb()`, `leval()` or `leval.project() |
-| [`lx2()`](#lx2)           | Like `lx()` but for lists of returned objects |
-| [`lid()`](#lid)           | Extract a particular individual from a returned data frame |
-| [`ltxttab()`](#ltxttab)   | Loads and conconcatenates multiple text-table output files |
-| [`lstgcols()`](#lstgcols) | Maps typical stage labels to colors (for plotting) |
-| [`lbands()`](#lands)      | Splits a signal into five band-pass filtered signals |
-| [`llog()`](#llog)         | Turns Luna's typical console messages on/off | 
-| [`le2i()`](#le2i)         | Converts epochs to intervals |
-| [`lsanitize()`](#lsanitize) | Cleans syntax of command, factor/level and channel names |
-| [`ldenoise()`](#ldenoise) | 1D total variation denoiser |
-| [`lheatmap()`](#lheatmap) | Plots heatmaps, e.g. for spectrograms | 
-
-
-
-
-## Examples
-
-Here, we will briefly step through some of the same steps of the
-[tutorial](../tut/tut3.md#spectral-and-spindle-analyses) using _lunaR_
-instead of `luna`.  See also [this tutorial page](../tut/tut4.md) for a
-fuller application of _lunaR_ to the tutorial data.
-
-We assume that you are running R and the current working directory is
-the one where `tutorial.zip` was unzipped.
-
-```
-library(luna)
-```
-
-Attach the sample-list with [`lsl()`](#lsl):
-```
-sl <- lsl("s.lst")
-```
-```
-3 observations in s.lst 
-```
-
-Attach just the second individual, `nsrr02`, with [`lattach()`](#lattach):
-```
-lattach( sl , "nsrr02" ) 
-```
-```
-nsrr02 : 14 signals, 10 annotations, 09:57:30 duration
-```
-
-We will then use sequential [`leval()`](#leval) commands, to restrict
-analysis to N2 epochs only, band-pass filter the EEG signal,
-automatically scan for epochs with high levels of artifact, and then
-estimate the PSD.  First, we mask out all epochs that are not N2 sleep:
-
-```
-leval( "MASK ifnot=NREM2" )
-```
-```
-nsrr02 : 14 signals, 10 annotations, 09:57:30 duration, 399 unmasked 30-sec epochs, and 796 masked
-```
-Next, we [restructure](../ref/masks.md#restructure) the dataset, to actually remove the non-N2 epochs:
-```
-leval( "RE" )
-```
-```
-nsrr02 : 14 signals, 10 annotations, 03:19:30 duration, 399 unmasked 30-sec epochs, and 0 masked
-```
-Next, we restrict analyses to the EEG channel, by dropping all other channels:
-```
-leval( "SIGNALS keep=EEG" )
-```
-```
-nsrr02 : 1 signals, 10 annotations, 03:19:30 duration, 399 unmasked 30-sec epochs, and 0 masked
-```
-Next, we apply a 0.3-35 Hz bandpass filter:
-```
-leval( "FILTER bandpass=0.3,35 ripple=0.02 tw=0.5" )
-```
-
-Next, we scan for artifacts.  Note, for the prior [`leval()`](#leval) commands,
-we have not been explicitly saving any returned values, as the prior
-commands typically do not return values of interest.  Here we will
-save return values (in a list named `k0`) for future use, however:
-
-```
-k0 <- leval( "ARTIFACTS mask & SIGSTATS epoch mask threshold=3,3,3" ) 
-```
-```
-nsrr02 : 1 signals, 10 annotations, 03:19:30 duration, 368 unmasked 30-sec epochs, and 31 masked
-```
-
-We see that 31 epochs have been masked (out of 399).  You can examine
-the returned `k0` list (with [`lx()`](#lx) or just directly), to see
-the other output of these commands.  We next restructure the dataset one
-more time to remove these masked epochs:
- 
-```
-leval( "RE" )
-```
-```
-nsrr02 : 1 signals, 10 annotations, 03:04:00 duration, 368 unmasked 30-sec epochs, and 0 masked
-```
-Finally, we run the [`PSD`](../ref/power-spectra.md#psd) command, with the `spectrum` option:
-
-```
-k <- leval( "PSD spectrum max=30" ) 
-```
-The returned list has three distinct strata, or data-frames:
-```
-lx(k)
-```
-```
-PSD : CH B_CH CH_F 
-```
-
-Of primary interest, is spectral power (`PSD` variable) stratified by
-frequency (`F`) and channel (`CH`, although note that in this
-particular analysis we only have a single channel, `EEG`):
-
-```
-k$PSD$CH_F
-```
-```
-    CH     F        PSD
-1  EEG  0.00  1.1965277
-2  EEG  0.25 30.2506337
-3  EEG  0.75 62.8448068
-4  EEG  1.25 44.4322119
-5  EEG  1.75 36.9482211
-6  EEG  2.25 26.4534428
-7  EEG  2.75 19.9197660
-8  EEG  3.25 15.1230627
-9  EEG  3.75 12.5903582
-10 EEG  4.25 10.3720280
-11 EEG  4.75  8.4881753
-12 EEG  5.25  7.4004198
-13 EEG  5.75  6.3812719
-14 EEG  6.25  5.8546718
-15 EEG  6.75  5.6997780
-16 EEG  7.25  5.1773553
-17 EEG  7.75  4.9549092
-18 EEG  8.25  4.6586603
-19 EEG  8.75  4.1608020
-20 EEG  9.25  3.7108913
-21 EEG  9.75  3.6358155
-22 EEG 10.25  3.2967826
-23 EEG 10.75  3.0307075
-24 EEG 11.25  2.6924206
-25 EEG 11.75  2.7074242
-26 EEG 12.25  3.8733526
-27 EEG 12.75  4.2031480
-28 EEG 13.25  3.2350931
-29 EEG 13.75  1.7120545
-30 EEG 14.25  1.0612353
-31 EEG 14.75  0.7444655
-32 EEG 15.25  0.5226373
-33 EEG 15.75  0.4335665
-34 EEG 16.25  0.3993188
-35 EEG 16.75  0.3486289
-36 EEG 17.25  0.3470138
-37 EEG 17.75  0.3217134
-38 EEG 18.25  0.2806634
-39 EEG 18.75  0.2613016
-40 EEG 19.25  0.2383480
-41 EEG 19.75  0.2260711
-```
-Plotting this:
-```
-d <- k$PSD$CH_F
-plot( d$F , log(d$PSD) , xlab = "Frequency (Hz)" , ylab = "Power" , col="blue" , lwd=2 , type="l" )
-```
-
-![img](../img/r-psd.png)
-
-!!! hint
-    You can re-run adding the `max=30` parameter to the `PSD` command to obtain results on the same frequency scale as in the tutorial.
-
-
-That completes our simple introduction to using _lunaR_.  As noted
-above, see the final [tutorial page](../tut/tut4.md) for a fuller set
-of examples of using _lunaR_.  The rest of this page contains
-reference documentation for each _lunaR_ function.
-
+# lunaR command reference
 
 ## Attaching EDFs
 
-
 ### `lsl()`
 
-_Imports a Luna [_sample-list_](../luna/args.md#sample-lists) into R_
+_Imports a Luna [_sample-list_](../../luna/args.md#sample-lists) into R_
 
 __Syntax:__ `sl <- lsl( file , path = "" )`
 
 - `file` is a required argument, giving the name of the sample-list file 
 
-- the optional `path` argument mirrors Luna's [`path` command-line option](../luna/args.md#search-paths)
+- the optional `path` argument mirrors Luna's [`path` command-line option](../../luna/args.md#search-paths)
 ```
 > sl <- lsl("s.lst")
 3 observations in s.lst 
@@ -324,7 +46,7 @@ ____
 ### `lattach()`
 
 _Loads an EDF and any associated annotation files from a
-[_sample-list_](../luna/args.md#sample-lists) loaded by
+[_sample-list_](../../luna/args.md#sample-lists) loaded by
 [`lsl()`](#lsl)._
 
 __Syntax:__ `lattach( sl , idx )` 
@@ -375,7 +97,7 @@ __Syntax:__ `ledf( edffile , id = "." , annots = character(0) )`
 
 - `id` is an optional ID that will be associated with this EDF 
 
-- `annots` is an optional vector of one or more annotation filenames (`.xml`, `.ftr`, `.annot` or `.eannot` files, as described [here](../ref/annotations.md))
+- `annots` is an optional vector of one or more annotation filenames (`.xml`, `.ftr`, `.annot` or `.eannot` files, as described [here](../../ref/annotations.md))
 
 __Returns:__ Similar to `lattach()`, which is just a wrapper around the `ledf()` function
 
@@ -494,7 +216,7 @@ plot( d$SEC , d$EEG , type="l" , lwd=0.5 , col="darkgray",ylab="EEG")
 plot( d$SEC , d$EMG , type="l" , lwd=0.5 , col="darkgray",ylab="EMG") 
 plot( d$SEC , d$arousal , type="l" , col="blue" , lwd=2,ylab="Arousal") 
 ```
-![img](../img/ldata.png)
+![img](../../img/ldata.png)
 
 
 !!! warning
@@ -510,7 +232,7 @@ plot( d$SEC , d$arousal , type="l" , col="blue" , lwd=2,ylab="Arousal")
     may be large (i.e. _too_ large), if many epochs, channels and/or annotations are requested... 
 
 
-If different channels have different sampling rates, use the [`RESAMPLE`](../ref/manipulations.md#resample) command to 
+If different channels have different sampling rates, use the [`RESAMPLE`](../../ref/manipulations.md#resample) command to 
 resample one or more channels first.  For example, if the EEG, ECG and EMG have different sampling rates, then this: 
 ```
 d <- ldata( 211:212 , c("EEG" , "ECG" , "EMG" ) , "arousal" )
@@ -523,7 +245,7 @@ Error in ldata(211:212, c("EEG", "ECG", "EMG"), "arousal") :
 __
 
 We can first confirm the different sampling rates, by running
-(_"evaluating"_) the Luna [`HEADERS`](../ref/summaries.md#headers)
+(_"evaluating"_) the Luna [`HEADERS`](../../ref/summaries.md#headers)
 command with [`leval()`](#leval):
 
 ```    
@@ -678,7 +400,7 @@ nsrr02 : 14 signals, 10 annotations, of 09:57:30 duration, 1195 unmasked 30-sec 
 ```
 
 !!! note
-    `lepoch(30)` is identical to using the `leval()` function to evaluate/execute an [`EPOCH`](../ref/epochs.md#epoch) command:
+    `lepoch(30)` is identical to using the `leval()` function to evaluate/execute an [`EPOCH`](../../ref/epochs.md#epoch) command:
     ```
     leval( "EPOCH dur=30" )
     ```
@@ -702,7 +424,7 @@ __Returns:__ a data frame with at least six columns:
 - `E1` epoch number for the original dataset
 - `SEC1` elapsed seconds based on the original data
 - `HMS` clock-time for epoch start
-- `M` flag to indicate whether this epoch is [_masked_](../ref/masks.md) (`1`) or not (`0`)
+- `M` flag to indicate whether this epoch is [_masked_](../../ref/masks.md) (`1`) or not (`0`)
 - any additional columns will be labeled based on the specified annotations, with a flag (`1` or `0`) to indicate whether or not that epoch contains at least one of that annotation class
 
 For example, to look at the first few epochs:
@@ -729,7 +451,7 @@ head(d)
 ```
 
 Using [`leval()`](#leval), we can set a
-[_mask_](../ref/masks.md#mask), for example, to mask everything except
+[_mask_](../../ref/masks.md#mask), for example, to mask everything except
 epochs 2 to 5:
 
 
@@ -759,7 +481,7 @@ That is, the `M` column indicates which epochs are masked with a `1`;
 the current epoch-numbering `E` (of the 4 unmasked epochs) therefore
 starts are what was epoch number `E1` of 2 up to epoch number 5.  (The
 leftmost column of numbers are just the row numbers for the data
-frame.)  One might next [_restructure_](../ref/masks.md#restructure) the dataset, i.e. to actually remove 
+frame.)  One might next [_restructure_](../../ref/masks.md#restructure) the dataset, i.e. to actually remove 
 masked epochs:
 ```
 leval( "RESTRUCTURE" )
@@ -819,7 +541,7 @@ __Syntax:__ `lstages()`
 __Returns:__ this convenience function gives a vector of sleep stage
 labels, i.e. based on attached annotations. For NSRR and other data,
 Luna expects a standard format for stage names, although this can be
-modified.  See [here](../ref/hypnograms.md#stage) for more
+modified.  See [here](../../ref/hypnograms.md#stage) for more
 information. This command is identical to running: 
 ```
 leval("STAGE")$STAGE$E$STAGE 
@@ -868,7 +590,7 @@ _Evaluates a set of Luna commands for the current attached dataset_
 __Syntax:__ `k <- leval( command )`
 
 - `command` is a single string or character vector of [Luna
-  commands](../ref/index.md), or the return value of [`lcmd()`](#lcmd)
+  commands](../../ref/index.md), or the return value of [`lcmd()`](#lcmd)
 
 - as for commands following `-s` when using the command line version
   of luna, different commands must be separated by a `&` character
@@ -885,7 +607,7 @@ k <- leval( cmds )
 
 __Returns:__ a list of data-frames, in which list items are _commands_
 and sub-items are output _strata_, i.e. a similar organization to
-[_destrat_](../luna/args.md#destrat) output (_lout_) databases.  The
+[_destrat_](../../luna/args.md#destrat) output (_lout_) databases.  The
 [`lx()`](#lx) function is designed to facilitate working with these lists, as
 shown below.
 
@@ -942,7 +664,7 @@ List of 4
 
 That is, this performs exactly the same set of operations as the following
 command-line _lunaC_ statement (i.e. when working with the same
-[tutorial](#../tut/tut1.md) dataset):
+[tutorial](../../tut/tut1.md) dataset):
 
 ```
 luna s.lst 2 -o out.db -s "EPOCH & MASK ifnot=NREM2 & RE & PSD sig=EEG epoch spectrum" 
@@ -1081,7 +803,7 @@ __Syntax:__ `lcmd( filename )`
 - `filename` is a required parameter, the name of the file to read
 
 __Returns:__ a vector of Luna commands, parsed from the [command
-file](../luna/args.md#command-files) in a manner that is suitable for
+file](../../luna/args.md#command-files) in a manner that is suitable for
 [`leval()`](#leval) (and [`leval.project()`](#levalproject).  That
 is, blank lines and comments (starting with `%`) are stripped away,
 and multi-line statements are concatenated into a single line.
@@ -1102,7 +824,7 @@ __Syntax:__ `leval.project( sl , command )`
 - `sl` is a required sample-list, as returned by [`lsl()`](#lsl)
 
 - `command` is a single string or character vector of [Luna
-  commands](../ref/index.md), or the return value of [`lcmd()`](#lcmd)
+  commands](../../ref/index.md), or the return value of [`lcmd()`](#lcmd)
 
 __Returns:__ the same list-of-data-frames as returned by
 [`leval()`](#leval), except each data-frame will now contain all
@@ -1200,7 +922,7 @@ must therefore a) know what input to expect, b) appropriately perform
 any calculations and c) store results as desired.
 
 As an example: say that Luna did not have the root mean square (RMS)
-function available in [`SIGSTATS`](../ref/artifacts.md#sigstats), but
+function available in [`SIGSTATS`](../../ref/artifacts.md#sigstats), but
 we wanted to calculate it, epoch-by-epoch for `nsrr02`'s EEG channel.
 We can define a new R function `rms()` that takes a vector `x` and
 returns the root mean square:
@@ -1342,18 +1064,18 @@ and this should equal the vector of values calculated using the `literate()` app
 
 ### `ldb()`      
 
-_Imports the contents of a [_lout_](../luna/args.md#destrat) database_
+_Imports the contents of a [_lout_](../../luna/args.md#destrat) database_
 
 __Syntax:__ `k <- ldb( dbfilename , id = "" )`
 
-- `dbfilename` is the name of a [_lout_](../luna/args.md#destrat) database
+- `dbfilename` is the name of a [_lout_](../../luna/args.md#destrat) database
 
 - optionally, if `id` is a vector of individual/EDF IDs, then only these individuals will be extracted from the database
 
 __Returns:__ a named-list R object, in the same format as
 [`leval()`](#leval)
 
-For example, based on the [tutorial](../tut/tut1.md) data, consider
+For example, based on the [tutorial](../../tut/tut1.md) data, consider
 the following `out.db` file, which will contain results for three
 individuals:
 
@@ -1425,7 +1147,7 @@ __Returns:__ depending on the arguments given, either a data-frame, a list of da
 For example, consider the example given above for the
 [`leval()`](#leval) command, which performed power spectral density
 estimation for the EEG channel, for all N2 sleep for the `nsrr02`
-individual.  Assuming you have the [tutorial](../tut/tut1.md) data in
+individual.  Assuming you have the [tutorial](../../tut/tut1.md) data in
 the current folder, this is generated as follows:
 
 ```
@@ -1590,7 +1312,7 @@ __Returns:__ same output as `lx()`
 This function is designed to work like `lx()` but in the case where
 multiple returned values from `leval()` or similar have been assembled
 as a list of lists. See [this section of the
-tutorial](../tut/tut4.md#putting-it-together) for an explicit example
+tutorial](../../tut/tut4.md#putting-it-together) for an explicit example
 of using `lx2()`.  For example:
 
 ```
@@ -1692,7 +1414,7 @@ __Syntax:__ `ltxttab( root , f , ids = dir( root ) , silent = F )`
 __Returns:__ a `data.frame` containing row-concatenated data from the subfolders of `root`
 
 When using the text-table output form, say `-t out1`, Luna will
-generate a subfolder called `out1`, instead of a [_lout_ database](../luna/destrat.md).  In this folder, each individual/EDF
+generate a subfolder called `out1`, instead of a [_lout_ database](../../luna/destrat.md).  In this folder, each individual/EDF
 processed will have its own subfolder; the results of any commands
 will reside in each subfolder.  For example: 
 
@@ -1799,8 +1521,8 @@ _Sets a (special) variable, similar to lunaC command-line options_
 
 __Syntax:__ `lset( var , val = NULL )` 
 
-- `var` is a required parameter that is _either_ a [_variable_](../luna/args.md#variables) name (if `val` is non-`NULL`), 
- _or_ a list of variable/value pairs, _or_ a filename of a [parameter file](../luna/args.md#parameter-files)
+- `var` is a required parameter that is _either_ a [_variable_](../../luna/args.md#variables) name (if `val` is non-`NULL`), 
+ _or_ a list of variable/value pairs, _or_ a filename of a [parameter file](../../luna/args.md#parameter-files)
 - if `val` is non-`NULL`, then `var` is interpreted as the variable name, which is set to the value of `val`; if `val` equals `"."` this erases the variable `var`
  
 __Returns:__ No return value
@@ -1837,7 +1559,7 @@ Alternatively, using the list syntax form, one could write:
 ```
 lset( list( stage="N2" , excl="arousal_standard" , sig="C3,C4" ) )
 ```
-Alternatively, if these variables were specified in a [parameter file](../luna/args.md#parameter-files), and so 
+Alternatively, if these variables were specified in a [parameter file](../../luna/args.md#parameter-files), and so 
 the _lunaC_ command was:
 ```
 luna s.lst @files/param.txt < cmd.txt
@@ -1967,7 +1689,7 @@ __Syntax:__ `le2i( e , dur=30 , inc=30 )`
 __Returns:__ an interval list, in the format used by `lannots(annot)`
 and `ldata.intervals()`, for example
 
-As illustrated in the _lunaR_ [tutorial](../tut/tut4.md), it is sometimes convenient to express epochs 
+As illustrated in the _lunaR_ [tutorial](../../tut/tut4.md), it is sometimes convenient to express epochs 
 interval lists.  This simple function generates the interval list that matches the specified epochs.  For example, 
 the first four (i.e. `1:4`) epochs assuming default parameters are:
 
@@ -2001,7 +1723,7 @@ __Returns:__ a cleaned string
 
 This function is a wrapper for the R command `gsub("[^[:alnum:]]",
 "_", s)`, which replaces all non-alpha-numeric characters with an
-underscore.  See the Luna _lunaR_ [tutorial](../tut/tut4.md) for a
+underscore.  See the Luna _lunaR_ [tutorial](../../tut/tut4.md) for a
 motivating example.
 
 ```
@@ -2051,10 +1773,10 @@ __Syntax:__ `lbands( l )`
 
 __Returns:__ if the channel `l` exists, this command will generate five new EDF channels that are band-pass filtered versions of the original, for delta, theta, alpha, sigma and beta bands. 
 
-See the [tutorial](../tut/tut4.md#spectral-and-spindle-analyses) for
+See the [tutorial](../../tut/tut4.md#spectral-and-spindle-analyses) for
 an example of the `lbands()` function.  It is simply a wrapper around
-a series of [`COPY`](../ref/manipulations.md#copy) and
-[`FILTER`](../ref/fir-filters.md#filter) commands.  You'll need to edit the function definition, or supply a 
+a series of [`COPY`](../../ref/manipulations.md#copy) and
+[`FILTER`](../../ref/fir-filters.md#filter) commands.  You'll need to edit the function definition, or supply a 
 new one, to get different bands, etc.  (Just type `lbands` at the R command line to see the function definition.)
 
 ____
@@ -2068,29 +1790,8 @@ __Syntax:__ `ldenoise(x , lambda)`
 __Returns:__ a denoised version of `x`
 
 This is a wrapper around the method implemented by the
-[`TV`](../ref/power-spectra.md#tv) command.  See that page for a
+[`TV`](../../ref/power-spectra.md#tv) command.  See that page for a
 description of the method and parameters.
 
 ____
-
-### `lheatmap()`
-
-_A simple heatmap_
-
-__Syntax:__ `lheatmap(x, y , z)` 
-
-- `x`, `y` and `z` are three similarly-sized vectors where `x` and `y` define a rectangular grid of values, and `z` is the _heat_ (i.e. plotted value)
-
-__Returns:__ a heatmap image
-
-This simple wrapper will likely need editing to produce high-quality
-figures, but it might provide a good starting point.  It is designed
-to work with data in the format as returned by `epoch-spectrum` from
-[`PSD`](../ref/power-spectra.md#psd) and
-[`MTM`](../ref/power-spectra.md#mtm), for example:  
-
-```
-d <- lx( k , "PSD" , "CH" , "E", "F" ) 
-lheatmap( d$E , d$F , d$PSD ) 
-```
 

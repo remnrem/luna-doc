@@ -228,7 +228,7 @@ produces a series of statistics that describe different aspects of
 sleep macro-architecture.
 
 ```
-luna s.lst -o stage.db -s "EPOCH & HYPNO"
+luna s.lst -o stage.db -s "EPOCH & HYPNO epoch"
 ```
 
 This generate a large number of variables, as described [here](../ref/hypnograms.md#hypno).
@@ -243,35 +243,38 @@ stage.db: 2 command(s), 3 individual(s), 66 variable(s), 107919 values
 --------------------------------------------------------------------------------
   command #1:	c1	Thu Aug 13 13:40:56 2020	EPOCH	sig=*
   command #2:	c2	Thu Aug 13 13:40:56 2020	HYPNO	sig=*
---------------------------------------------------------------------------------
+-------------------------------------------------------------------------
 distinct strata group(s):
-  commands      : factors           : levels        : variables 
-----------------:-------------------:---------------:---------------------------
-  [EPOCH]       : .                 : 1 level(s)    : DUR INC NE
-                :                   :               : 
-  [HYPNO]       : .                 : 1 level(s)    : MINS_N1 MINS_N2 MINS_N3 MINS_N4
-                :                   :               : MINS_REM NREMC NREMC_MINS PCT_N1
-                :                   :               : PCT_N2 PCT_N3 PCT_N4 PCT_REM PER_SLP_LAT
-                :                   :               : REM_LAT SLP_EFF SLP_EFF2 SLP_LAT
-                :                   :               : SLP_MAIN_EFF T1_LIGHTS_OFF T2_SLEEP_ONSET
-                :                   :               : T3_SLEEP_MIDPOINT T4_FINAL_WAKE
-                :                   :               : T5_LIGHTS_ON TIB TPST TRT TST TWT
-                :                   :               : WASO
-                :                   :               : 
-  [HYPNO]       : E                 : (...)         : CLOCK_HOURS CLOCK_TIME CYCLE CYCLE_POS_ABS
-                :                   :               : CYCLE_POS_REL E_N1 E_N2 E_N3 E_REM
-                :                   :               : E_SLEEP E_WAKE E_WASO FLANKING_SIM
-                :                   :               : MINS N2_WGT NEAREST_WAKE NREM2REM
-                :                   :               : NREM2REM_TOTAL NREM2WAKE NREM2WAKE_TOTAL
-                :                   :               : PCT_E_N1 PCT_E_N2 PCT_E_N3 PCT_E_REM
-                :                   :               : PCT_E_SLEEP PERIOD PERSISTENT_SLEEP
-                :                   :               : STAGE STAGE_N WASO
-                :                   :               : 
-  [HYPNO]       : C                 : 6 level(s)    : NREMC_MINS NREMC_N NREMC_NREM_MINS
-                :                   :               : NREMC_OTHER_MINS NREMC_REM_MINS
-                :                   :               : NREMC_START
-                :                   :               : 
-----------------:-------------------:---------------:---------------------------
+  commands    : factors           : levels        : variables 
+--------------:--------------:---------------:---------------------------
+  [EPOCH]     : .            : 1 level(s)    : DUR INC NE
+              :              :               : 
+  [HYPNO]     : .            : 1 level(s)    : CONF MINS_N1 MINS_N2 MINS_N3 MINS_REM
+              :              :               : NREMC NREMC_MINS OTHR PCT_N1 PCT_N2
+              :              :               : PCT_N3 PCT_REM PER_SLP_LAT REM_LAT
+              :              :               : SLP_EFF SLP_EFF2 SLP_LAT SLP_MAIN_EFF
+              :              :               : T1_LIGHTS_OFF T2_SLEEP_ONSET T3_SLEEP_MIDPOINT
+              :              :               : T4_FINAL_WAKE T5_LIGHTS_ON TIB
+              :              :               : TPST TRT TST TWT WASO
+              :              :               : 
+  [HYPNO]     : E            : (...)         : CLOCK_HOURS CLOCK_TIME CYCLE CYCLE_POS_ABS
+              :              :               : CYCLE_POS_REL E_N1 E_N2 E_N3 E_REM
+              :              :               : E_SLEEP E_WAKE E_WASO FLANKING_ALL
+              :              :               : FLANKING_MIN MINS N2_WGT NEAREST_WAKE
+              :              :               : PCT_E_N1 PCT_E_N2 PCT_E_N3 PCT_E_REM
+              :              :               : PCT_E_SLEEP PERIOD PERSISTENT_SLEEP
+              :              :               : STAGE STAGE_N TOT_NR2R TOT_NR2W
+              :              :               : TOT_R2NR TOT_R2W TOT_W2NR TOT_W2R
+              :              :               : TR_NR2R TR_NR2W TR_R2NR TR_R2W
+              :              :               : TR_W2NR TR_W2R WASO
+              :              :               : 
+  [HYPNO]     : C            : 6 level(s)    : NREMC_MINS NREMC_N NREMC_NREM_MINS
+              :              :               : NREMC_OTHER_MINS NREMC_REM_MINS
+              :              :               : NREMC_START
+              :              :               :
+  [HYPNO]     : PRE POST     : 9 level(s)    : N P P_POST_COND_PRE P_PRE_COND_POST
+              :              :               :
+--------------:--------------:---------------:-------------------------
 ```
 
 The first (`.`) `HYPNO` group is a set of variables with no
@@ -317,7 +320,7 @@ nsrr03   3    137.5       630
 To illustrate extracting epoch-level information: here we consider the
 designated sleep stage (`STAGE` variable), along with the time
 (`CLOCK_TIME`) and a measure of how many nearby epochs had the same
-stage (`FLANKING_SIM`).  The latter is the minimum number of
+stage (`FLANKING_MIN`).  The latter is the minimum number of
 contiguous epochs, either forwards or backwards in time, that are
 similar to the index epoch (truncated at the start and end of the
 recording).  In other words, selecting epochs with 3 or more for this
@@ -326,10 +329,10 @@ after with a similar stage.  This can be used to select periods of
 sleep that are less likely to contain stage transitions, for example.
 
 ```
-destrat stage.db +HYPNO -i nsrr01  -r E  -v STAGE FLANKING_SIM CLOCK_TIME
+destrat stage.db +HYPNO -i nsrr01  -r E  -v STAGE FLANKING_MIN CLOCK_TIME
 ```
 ```
-ID       E      CLOCK_TIME   FLANKING_SIM  STAGE
+ID       E      CLOCK_TIME   FLANKING_MIN  STAGE
 nsrr01   1      21:58:17     0             Wake 
 nsrr01   2      21:58:47     1             Wake 
 nsrr01   3      21:59:17     2             Wake 
@@ -783,7 +786,9 @@ MASK if=wake
 RESTRUCTURE
 FILTER bandpass=0.3,35 ripple=0.02 tw=1
 ARTIFACTS mask
-SIGSTATS mask threshold=3,3,3 epoch
+RESTRUCTURE
+CHEP-MASK ep-th=3,3,3 epoch
+CHEP epochs
 DUMP-MASK
 ```
 
@@ -890,7 +895,9 @@ MASK ifnot=NREM2
 RESTRUCTURE
 FILTER bandpass=0.3,35 ripple=0.02 tw=1
 ARTIFACTS mask
-SIGSTATS epoch mask threshold=3,3,3
+RESTRUCTURE
+CHEP-MASK ep-th=3,3,3
+CHEP epoch
 RESTRUCTURE
 PSD spectrum
 ```
@@ -993,16 +1000,15 @@ Finally, as we noted above, the last line of `cmd/seventh.txt`
 additionally instructed Luna to detect spindles:
 
 ```     
- SPINDLES fc=11,15  ftr-dir=annots/
+ SPINDLES fc=11,15 annot=spindles
 ```
 
 The `fc` options specify the targeted frequencies: slower spindles
-at 11 Hz and faster spindles at 15 Hz.  The `ftr-dir` options request
-that an annotation file be generated (for each individual) to
-represent the spindle calls -- these can be used as filters, or with
-Scope, as we'll see below. To extract the spindle density (count per
-minute, `DENS`) we use the following command:
+at 11 Hz and faster spindles at 15 Hz.  The `annot` options request
+that an annotations be generated (for each individual) to
+represent the spindle calls -- these can be used as filters.
 
+To extract the spindle density (count per minute, `DENS`) we use the following command:
 
 ```
 destrat out.db +SPINDLES -r CH -c F -v DENS -p 2 
@@ -1014,13 +1020,10 @@ nsrr02  EEG   1.36        2.22
 nsrr03  EEG   0.77        0.20
 ```
 
-Because we added the `ftr-dir` option, Luna generated some [_feature
-lists_](../ref/annotations.md#ftr-files) -- a type of annotation
-format -- that represent the spindle calls.  These can be used as
-standard annotation files, by Luna and, as we'll see in the next section, 
-by [_lunaR_](tut4.md).
-
-There are a large number of other options and output variables for the
+Because we added the `annot` option, Luna generated some annotations
+that represent the spindle calls.  These are then saved in the final
+command, `WRITE-ANNOTS` to [.annot](../annotations.md) files.  There
+are a large number of other options and output variables for the
 [`SPINDLES`](../ref/spindles-so.md#spindles) and other commands,
 described in the [Reference](../ref/index.md) pages of this web site.
 

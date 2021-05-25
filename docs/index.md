@@ -5,13 +5,30 @@ analyzing polysomnographic recordings, with a focus on the sleep EEG.
 Primarily oriented around command-line scripting
 ([_lunaC_](luna/args.md)), we are developing various _extensions_,
 including a package for the [R](https://www.r-project.org/)
-statistical package ([_lunaR_](ext/R.md)). Luna is _actively under
+statistical package ([_lunaR_](ext/R/index.md)). Luna is _actively under
 development_ and we welcome feedback.  
 
 The
-__current release is v0.25__ (02-Dec-2020): see [here](updates.md) for
+__current release is v0.25.5__ (24-May-2021): see [here](updates.md) for
 a list of changes/additions.
 
+!!! warning "Documentation for new features"
+    This release is being posted now
+    because we wanted the relatively large number of additions and
+    improvements in the core functionality of Luna (both in terms of
+    speed and robustness) to be made available and the corresponding
+    documentation updated.  See [here](updates.md) for a full list of
+    changes. All core updates have been reflected in these documentation
+    pages.
+
+    This release also contains a number of
+    relatively new, major components (e.g. automated staging, EEG microstate
+    analysis, ICA).  The _documentation_ for many of these newer
+    components (some of which are quite involved) is currently 
+    sparse, or is effectively just a place-holder, however: we antipcate adding
+    fuller documentation and a series of vignettes in the
+    coming weeks.  
+    
 ## Getting started
  
 After [downloading](download/index.md) Luna, the best place to start
@@ -26,7 +43,7 @@ The Luna package comprises a number of components, primarily:
 
 - [_lunaC_](luna/args.md), a command-line interface to the Luna C/C++ library
 
-- [_lunaR_](ext/R.md), a package for the [R statistical software](https://www.r-project.org/)
+- [_lunaR_](ext/R/index.md), a package for the [R statistical software](https://www.r-project.org/)
 
 Both _lunaC_ and _lunaR_ are based on the same underlying Luna
 library: see the [reference overview](ref/index.md) for
@@ -44,13 +61,11 @@ can also compile [from source](download/source.md)):
 
 ![img](img/install1.png)
 
-
-An alternative is to run Luna in a [Docker
-container](download/docker.md).  If you can install Docker on your
-machine, this may be a good route to test-drive Luna.  We've
-generated two Docker containers: both include _lunaC_ and _lunaR_,
-either in the classic R environment, or via
-[RStudio](https://www.rstudio.com):
+An alternative is to run Luna in a [Docker container](download/docker.md).
+If you can install Docker on your machine, this may be a good route to
+test-drive Luna.  We've generated two Docker containers: both include
+_lunaC_ and _lunaR_, either in the classic R environment, or
+via [RStudio](https://www.rstudio.com):
 
 ![img](img/install2.png)
     
@@ -69,7 +84,7 @@ commands. Main areas are summarized below.
     * Spectral analyses
     * Spindle and slow oscillation detection
     * Coherence and cross-frequency coupling 
-    * Basic multi-channnel, topographical analyses
+    * Multi-channnel, topographical analyses
 
 ## Things Luna _doesn't_ aim to do
 

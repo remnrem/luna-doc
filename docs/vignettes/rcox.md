@@ -211,7 +211,7 @@ plot( (1:8000/400), scan( "cz.txt" ),
 
 
 !!! hint "Alternatively: using lunaR" 
-    To simplify matters in this vignette, we are not going to use the [_lunaR_](../ext/R.md) package: instead, we will swap
+    To simplify matters in this vignette, we are not going to use the [_lunaR_](../ext/R/index.md) package: instead, we will swap
     between command-line luna ([_lunaC_](../luna/args.md)) and the R package for any visualization, as above.  However, all the steps performed
     here could be performed using only _lunaR_ if so desired, and in some instances this could be simpler/preferrable. For example: here we attach the correct EDF, extract
     a data-frame `d` that corresponds to 20-seconds of `Cz`, and then plot it:
@@ -303,8 +303,8 @@ composite of a slow 1 Hz sinusoidal oscillation of large amplitude
 We can now perform the same DFT/FFT analysis using Luna.  Although the DFT/FFT is
 core to many methods (and so is implemented internally within Luna)
 there is no formal command that lets users apply the DFT directly to
-signals in an EDF.  In practice, Luna uses Welch's algorithm (in [`PSD`](../../ref/power-spectra/#psd)) or
-multi-tapers (in [`MTM`](../../ref/power-spectra/#mtm)), either of which are generally superior for
+signals in an EDF.  In practice, Luna uses Welch's algorithm (in [`PSD`](../ref/power-spectra/#psd)) or
+multi-tapers (in [`MTM`](../ref/power-spectra/#mtm)), either of which are generally superior for
 sleep EEG data, as _C&F_ note.
 
 For the purpose of this vignette however, we shall uncover a _hidden_
@@ -434,7 +434,7 @@ resolution, but reduced variance of the estimates.   [This](../img/cf/matlab.htm
 the entire Cz channel (all N3 for this individual).
 
 Here we'll apply Luna's default `PSD` command (which implements Welch's method) on the
-same 20-second segment, working directly with the EDF and saving the output in a Luna-format [database](../../luna/args.md#output) (with
+same 20-second segment, working directly with the EDF and saving the output in a Luna-format [database](../luna/args.md#output) (with
 the `-o` option):
 ```
 luna s.lst pp3_N3_mast
@@ -443,7 +443,7 @@ luna s.lst pp3_N3_mast
          MASK sec=1660-1680 & RE & 
          PSD sig=Cz spectrum'
 ```
-To view the results, we use the [`destrat`](../../destrat.md) utility that accompanies Luna (only showing the relevant rows here):
+To view the results, we use the [`destrat`](../luna/destrat.md) utility that accompanies Luna (only showing the relevant rows here):
 ```
 destrat out/welch.db
 ```

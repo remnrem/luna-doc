@@ -21,10 +21,9 @@ following (all of which can be obtained for free):
   Apple's XCode Command Line Tools.  Open a `Terminal` window and type
   (you may get an error if they are already installed; to test whether
   they are already installed.):
-
-```
-xcode-select --install
-```
+  ```
+  xcode-select --install
+  ```
 
 - a __text editor__: ensure you have a text editor that works with
   plain-text files (i.e. __not__ a word processor), either old-school
@@ -37,9 +36,16 @@ xcode-select --install
   _lunaR_ -- but even if you don't plan to use _lunaR_, it will help when
   working with Luna output
 
-- optionally, a __package manager__: to obtain dependent libraries
-  for Luna, a tool like [Homebrew](https://brew.sh) is very useful;
-  follow the instructions on the linked page to install Homebrew
+- optionally, a __package manager__: to obtain dependent libraries for
+  Luna, a tool like [Homebrew](https://brew.sh) is very useful; follow
+  the instructions on the linked page to install Homebrew. It is
+  possible that you may also need to __autotools__ installed to
+  compile some dependent libraries; e.g. on macOS with Homebrew
+  installed, these can be obtained by typing:
+  ```
+  brew install automake autoconf libtool
+  ```
+
 
 ## zlib
 
@@ -59,7 +65,7 @@ or
 apt-get install zlib1g-dev
 ```
 
-Alternatively, obtain the source from the project website: (https://zlib.net)
+Alternatively, obtain the source from the project website: [https://zlib.net](https://zlib.net)
 
 
 ## FFTW3 
@@ -88,7 +94,6 @@ apt-get install libfftw3-dev
 ```
 
 - On a Mac using the [Homebrew](https://brew.sh) package manager, you might try:
-
 ```
 brew install fftw 
 ```
@@ -98,9 +103,9 @@ system-wide, so no special steps will be necessary when compiling
 Luna.
 
 
-__Option 2) Alternatively, compile FFTW from source__
+__Option 2) Compile FFTW from source__
 
-Go to the [FFTW download page](http://www.fftw.org/download.html) to
+Alternatively, go to the [FFTW download page](http://www.fftw.org/download.html) to
 pull the latest source.  The current version used to compile Luna is
 3.3.8, which you can directly download from this link:
 [`http://www.fftw.org/fftw-3.3.8.tar.gz`](http://www.fftw.org/fftw-3.3.8.tar.gz).
@@ -146,7 +151,7 @@ __If FFTW libraries are accessible system-wide, to build luna:__
 ```
 make
 ```
-- On a Mac OSX platform:
+- On macOS:
 ```
 make ARCH=MAC
 ```
@@ -171,12 +176,9 @@ well as `destrat` and some other files.  Test these by typing
 ./luna 
 ```
 
-
 ```
-===================================================================
-+++ luna | v0.9, 12-Feb-2019 | starting process 2019-02-21 14:57:44
-===================================================================
-usage: luna [sample-list|EDF] [n1] [n2] [@param-file] [sig=s1,s2] [v1=val1] < command-file
+usage:
+ luna [sample-list|EDF] [n1] [n2] [@parameters] [sig=s1,s2] [v1=val1] < commands
 ```
 
 and
@@ -241,8 +243,9 @@ Assuming that works, then once installed you should subsequently be able to run 
 library(luna)
 ```
 ```
-** lunaR v0.24.1 28-Aug-2020
-** luna v0.24.1 28-Aug-2020
+
+** lunaR v0.25.5 31-Mar-2021
+** luna v0.25.5 31-Mar-2021
 ```
 If you specified an alternate library location, you'll need to add that too here:
 ```
@@ -257,12 +260,17 @@ library(luna,lib.loc="~/my-Rlib")
     git clone https://github.com/remnrem/luna.git
     ```
 
-    Install the package, where if needed, `FFTW` is set to the location where you
+    Install the package by running:
+    ```
+    R CMD INSTALL luna
+    ```
+
+    If needed, you can set `FFTW` to the location where you
     compiled FFTW as follows:
     ```
     FFTW=/Users/joe/fftw R CMD INSTALL luna
     ```
-    This should then allow you to attach the lunaR library in R:
+    If the above works, this will allow you to attach the _lunaR_ library in R:
     ```
     library(luna)
     ```

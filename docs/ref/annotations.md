@@ -7,13 +7,16 @@ to EDFs, and how to view and summarize their contents._
 | Command  | Description |
 |---|---|
 | [Luna annotations](#luna-annotations) | Overview of annotations in Luna | 
-| [NSRR XML files](#nsrr-xml-files) | Format of NSRR XML annotation files |
-| [`--xml`](#-xml) | Quickly view an NSRR XML annotation file |
-| [.annot files](#annot-files) | `.annot` file format |
+| [.annot files](#annot-files) | `.annot` file format (_the preferred Luna annotation format_) |
 | [.eannot files](#eannot-files) | `.eannot` file format |
-| [FTR files](#ftr-files) | Format of FTR annotation files |
+| [NSRR XML files](#nsrr-xml-files) | NSRR XML annotation files |
+| [`--xml`](#-xml) & [`--xml2`](#-xml2) | View NSRR XML annotation files |
 | [`ANNOTS`](#annots)       | Tabulate all annotations |
+| [`WRITE-ANNOTS`](#writeannots) | Write annotations as `.annot` or `.xml` |
 | [`SPANNING`](#spanning)   | Report on _coverage_ of annotations |
+| [`A2S`](#a2s)  | Add a 0/1 signal based on an annotation |
+| [`S2A`](#s2a)  | Add an annotation based on ranged values of a signal |
+
 
 ## Luna annotations
 
@@ -44,14 +47,13 @@ This table summarizes these levels of annotation:
 | _instance_ names | ID (or non-unique label) for each instance | Spindle number <br>(or type of spindle) | `spindle-1, spindle-2`, ... <br>(or `fast-spindle`, `slow-spindle`) | 
 | _instance meta data_ | Associated information | Duration, amplitude, etc,<br> for an individual spindle | `dur=0.88` `amp=12.2` `frq=11.1` |
 
-
 Annotations can be represented in a number of different file formats, all described below:
 
-- [NSRR-format XML](#nsrr-xml-files) files, where each _ScoredEvent_ parent node in one XML is treated as a distinct annotation _class_
-- [`.annot`](#annot-files) files, where each `name` in the header specifies a distinct annotation _class_
+- [`.annot`](#annot-files) files, where each row describes an event/interval and any associated meta-data (including times, channels, etc)
 - [`.eannot`](#eannot-files) files containing simple per-epoch labels, where each distinct label is treated as a distinction annotation _class_ 
-- [EDF+ Annotations](#edf-annotations-channel), where annotations are embedded in the EDF as a separate channel
-- [FTR](#ftr) files, where each FTR file is a single annotation _class_, within which the instance IDs are the row-level labels in that file
+- [EDF+ Annotations](#edf-annotations-channel), where annotations are embedded in the EDF as separate channels
+- [Luna-format XML](#luna-xml-files) files 
+- [NSRR-format XML](#nsrr-xml-files) files, where each _ScoredEvent_ parent node in one XML is treated as a distinct annotation _class_
 
 !!! note 
     Currently masks only operate on _class_ and _instance_ level
@@ -61,6 +63,456 @@ Annotations can be represented in a number of different file formats, all descri
     [`annot`](../luna/args.md#annot) option works at the _class_ level
     only.  That is, either all _instances_ of a given _class_ are
     loaded in, or none are.
+
+## .annot files 
+
+_Generic annotation files_
+
+This is the preferred (and most flexible) annotation format for
+generic event/interval-based annotations. These are text-based,
+tab-delimited files that containing _interval-level_ annotations.
+
+!!! note
+    `.annot` files should be plain-text but need not have the
+    `.annot` file extension.  Any annotation file that is neither
+    `.xml` nor `.eannot` is assumed to be of generic `.annot`
+    file format.
+
+An `.annot` file can describe one or more annotations _classes_. Each
+class can have one or more _instances_, where each _instance_
+corresponds to an interval of time and a single row of the `.annot`
+file.
+
+The full `.annot` specification involves six fields, given as tab (or whitespace) delimited
+columns. At its minimal specification, the `.annot` format is a simple three-column
+file, which by default, specifies an annotation class and start/stop times, e.g.:
+```
+annot1   10.20    12.50
+```
+In this example, this _data-rows_ specifies an annotation of class `annot1` that starts at 10.2 seconds (elapsed time
+from EDF start) and lasts 2.3 seconds, ending at 12.5 seconds.
+
+There are numerous options and alternatives the supplement this basic format, as outlined below:
+
+ - [Column formats](#columnformats) : full (six-column) versus reduced (3 or 4 column) formats
+ - [Headers](#headers) : optional rows prior to data rows
+ - [Time-encoding specifications](#timeencoding) : different ways to specify the start/stop times of intervals/events
+
+### Columns
+
+The full (internal) representation of annotation as is follows:
+
+| Column | Description | Default |
+|---- | ---- | ---- | 
+| `class` | Annotation class | Required |
+| `instance` | Instance ID | If not used, specify `.` |
+| `channel` | Channel(s) | If not applicable, specify `.` |
+| `start` | Start time | Required: see [time-encoding specifications](#timeencoding) below |
+| `stop` | Stop time |  See [time-encoding specifications](#timeencoding) below |
+| `meta` | Meta-data | If not present, specfiy `.` |
+
+This six-column format is the recommended format, and is what is written by the `WRITE-ANNOTS` command.
+
+For convenience, Luna also allows reduced 3-column and 4-column formats which skip certain columns
+(implicitly, it sets the value to `.` for the corresponding 6-column version).
+
+If only four columns are present, they must be as follows:
+
+| Column | Description | Default |
+|---- | ---- | ---- | 
+| `class` | Annotation class | Required |
+| `instance` | Instance ID | If not used, specify `.` |
+| `start` | Start time | Required: see [time-encoding specifications](#timeencoding) below |
+| `stop` | Stop time |  See [time-encoding specifications](#timeencoding) below |
+
+If only three columns are present, they must be as follows:
+
+| Column | Description | Default |
+|---- | ---- | ---- | 
+| `class` | Annotation class | Required |
+| `start` | Start time | Required: see [time-encoding specifications](#timeencoding) below |
+| `stop` | Stop time |  See [time-encoding specifications](#timeencoding) below |
+
+Rows with diferent numbers of columns from 6, 4 or 3 will be reported as errors.
+
+### Headers
+
+Optionally, `.annot` files can have multiple header rows (the _preamble_) that define the
+classes in that file.  Each of these header rows starts with a `#` character and
+contains between one to three `|`-delimited fields, which are class
+_name_, _description_ and _meta-data types_ respectively. For example
+
+```
+# a1 
+# a2 | Unlike the first, this annotation has a description field
+# a3 | This one also specifies meta-data types | val1[txt] val2[num] val3[bool]
+```
+
+In the contrived example above, there are three annotation classes:
+`a1`, `a2` and `a3`.  Only `a2` and `a3` have description fields. If
+an annotation class includes [meta-data](#meta-data) (i.e. `a3`), it
+must be first defined in a header row.
+
+
+Optionally, `.annot` files can also contain a second type of header row, 
+prior to any _data-row_, which specifies and labels the subsequent columns.
+_If_ this row exists, it must exactly conform to one of the following
+(which also acts as an internal check on the ordering of columns and
+general correctness of the file):
+
+For the six-column format:
+```
+class  instance  channel  start  stop  meta
+```
+For the four-column format:
+```
+class  instance  start  stop
+```
+For the three-column format:
+```
+class  start  stop
+```
+
+It is expected that subsequent data rows adopt the same column format.
+This then allows R (or other packages) to read the `.annot` file as a
+tab/whitespace-delimited table, with the columns given these variable
+names, e.g. using the `read.table()` function.  As, by default,
+`read.table()` ignores comment lines beginning with `#`, this will
+skip the preamble:
+
+```
+d <- read.table( "file.annot" , header=T )
+```
+
+### Time encoding
+
+The `.annot` file recognizes various ways to specify start and stop
+times for each annotation. These formats can be mixed-and-matched
+within a single `.annot` file.
+
+ - __Elapsed seconds:__ this is the default - any numerical value is interpreted as seconds elapsed relative from the EDF start time (i.e. as specified in the EDF header)
+
+ - __Clock-time:__ any times with the format _hh:mm:ss_ or _hh.mm.ss_ are assumed to be 24-hour clock-times. These can include fractions of a second, e.g. `23:03:01.524` (which is also the same as `23.03.01.524`, i.e. if the EDF `.` character is used to delimit hours, minutes and seconds insted of the colon (`:`) character)
+
+ - __Elapsed hh:mm:ss:__ any time starting `0+` is assumed to be an elapsed time specified in _hh:mm:ss_ format rather than a clock-time, e.g. `0+00:00:30`, `0+00:01:00` corresponds to 30 and 60 seconds past the EDF start
+
+ - __Epoch-encoding:__ instead of elapsed or clock times, it is also possible to specify start and stop times in terms of epochs by starting entries with the `e` character: see below for more details
+ 
+Furrther, __stop times__ can take one of two additonal encodings: 
+
+ - __Durations:__ if the stop time starts with `+` it is interpreted as the duration of the interval, rather than the end.  This can be used for any type of start time (elapsed seconds or clock-time). i.e.
+ ```
+ annot1   10.00   +5
+ ```
+ is the same as
+ ```
+ annot1   10.00  15.00
+ ```
+
+ - __Until next annotation:__ if the stop time is an ellipsis (`...`), this means that this annotation spans until the start of the next annotation _listed in that file_ (or the end of the EDF, if this is the last row).   Naturally, this assumes the annotation in the next row starts after the start of the current row.  This can be convenient if only changes in sleep stage are specified at irregular intervals: i.e. 
+ ```
+ annot1   10.00   ...
+ annot1   15.00   ...
+ annot2   22.00   30.30
+ ```
+ is the same as
+ ```
+ annot1   10.00   15.00
+ annot1   15.00   22.00
+ annot2   22.00   30.00
+ ```
+ 
+
+<h5>Order of annotations</h5>
+
+The order of annotations is generally irrelevant in `.annot`
+files. (The one exception is when using the `...` stop-time encoding,
+which relies on the next row in that same file, irrespective of what
+annotation class it is, or whether there is another intervening
+annotation elsewhere in the file).
+
+Luna can read from multiple annotation files for a given individual;
+further, the same annotation classes can be present in more than one
+file.  Internally, all annotations will be merged into a single set of
+annotations, irrespective of which file they were read from.
+
+
+<h5>Interval encoding</h5>
+
+Intervals are defined to be inclusive of the _start_ but exclusive of
+the _stop_, i.e. the interval from _a_ to _b_ is _[a,b)_.  In other
+words, _b_ is the first point just past the end of the interval. Interval
+duration is therefore defined as _b-a_.  This means that two 30-second
+epochs specified below are non-overlapping epochs: rather, they are
+contiguous despite `30.00` appearing in both definitions:
+
+``` 
+class1	interval1   0.00 30.00 
+class1 	interval2  30.00 60.00 
+``` 
+
+
+<h5>Epoch encoding</h5>
+
+_Epoch encoding_ is provided as a convenience feature as many
+annotations are in fact specified in terms of regular-sized epochs and
+it might be awkward to always have to list the start and stop times of
+each epoch.  These codes (that start with the characters `e:` to
+distinguish them from times in seconds) are converted to the
+equivalent _interval_ when reading the file. 
+ 
+If the value in the start or stop column begins with the characters
+`e:`, then Luna assumes that epoch-notation is being used to specify the
+interval.  By default, Luna assumes non-overlapping 30-second epochs,
+whereby `e:1`, `e:2`, `e:3`, etc, refer to the first, second, third,
+etc, epochs.   If the stop column also starts `e:` then Luna assumes the interval is 
+from the start for the first epoch to the end of the second epoch.  Otherwise, the stop column
+should be set to missing (`.`) 
+
+For example, the following three lines specify identical intervals:
+```
+class1       instance1       0        30
+class1       instance1       e:1      .
+```
+Similarly, these two lines are equivalent to each other:
+```
+class1       instance1       30       120
+class1       instance1       e:2      e:4
+```
+
+Different epochs definitions can be specified by explicitly appending the epoch
+duration (in seconds) and increment (in seconds) as colon-delimited
+values, as shown in the Table below.  
+
+| Example | Description | Implied interval (sec) |
+| ---- | ---- | -----|
+| `e:2` | Second epoch; non-overlapping 30-second epochs | _[30.0,60.0)_ |
+| `e:2:20` | Second epoch; non-overlapping 20-second epochs | _[20.0,40.0)_ |
+| `e:2:30:15` | Second epoch; 50% overlapping 30-second epochs | _[15.0,45.0)_ |
+
+If not specified, the increment is assumed to be the same as the epoch
+duration, i.e. no overlap of consecutive epochs.
+
+!!! note 
+    As epochs are defined within the `.annot` file itself, the
+    actual EDF need not be epoched (i.e. from the
+    [`EPOCH`](epochs.md#epoch) command). In fact, the EDF may even
+    have epochs of a different duration specified. Also, unlike
+    [`.eannot`](#eannot-files) files, not every epoch needs to be
+    specified in an `.annot` file, i.e. if there are 1200 epochs, you
+    do not need to have exactly 1200 rows in this file. This is
+    because instances specified with epoch-encoding are automatically
+    converted to interval-encoding upon loading.
+
+
+<h5>Time resolution and floating-point accuracy</h5>
+
+By default, Luna rounds all times read in annotation files to seconds
+with 4 decimal places. This level of temporal resolution (which should
+be sufficient for all PSG/EEG contexts) is imposed in order to avoid
+precision issues that are inherent in representing floating-point numbers digitally.
+
+That is, unlike integers, many real number do not have an exact
+internal floating-point representation: for example, 15.24 seconds may
+internally be represented as 15.23333333333339 or (depending on the
+platform or what prior conversions were done) 15.2400000000001, etc.
+Internally, Luna uses a 64-bit integer time-track (in which each
+time-point by default reflects 1e-9 seconds) to determine, e.g.,
+whether intervals overlap or not.  In both cases, 15.23333333333339
+and 15.2400000000001 will therefore be mapped to the same time-point
+up to 4 decimal places accuracy: i.e. `15240000000` rather than
+`15239999999`, etc.  This makes downstream handling of intervals more
+robust.
+
+
+### Data rows
+
+Subsequent _data_ rows of the `.annot` file specify instances of one
+of these three classes, along with the necessary meta-data in the case
+of `a3`. For example, in six-column format, the full file might read:
+
+```
+# a1 
+# a2 | Unlike the first, this annotation has a description field
+# a3 | This one also specifies meta-data types | val1[txt] val2[num] val3[bool]
+class  instance  channel   start    stop     meta
+a1     i1        .         10.00    15.00    .
+a1     i2        .         92.10    105.22   .
+a1     i3        .         108.5    123.11   .
+a2     .         .         e:2      .        .
+a2     .         .         e:7      .        .
+a2     .         .         e:10     e:12     .
+a3     A         C3        0        +30      W|0.88|Y
+a3     A         C3,C4     30       +30      W|0.98|Y
+a3     B         C4        60       +30      N1|0.23|N
+```
+
+That is, each _data_ row specifies one annotation of the previously defined classes `a1`, `a2`, and `a3`.  
+
+- first column: _class name_ matches one of the header rows (i.e. `a1`, `a2` or `a3` in this example); if a new class is encountered, it is added on-the-fly
+- second column: _instance ID_ that can be unique or not with respect to its annotation class (or even missing, as for `a2`)
+- third column: _channel IDs_ can be optinally specified, if they are relevant. e.g. for events detected on a given channel(s).
+- fourth and fifth column(s): these define the interval for this annotation instance, as described above
+- sixth column: either missing (period, `.`) or, if the header specified _meta-data_ for that annotation _class_ (as for `a3` above), then these must be listed in a pipe-delimited format, in
+  the same order as they were declared in the header/preamble.  
+
+As noted above, this example also uses different ways to specify start/stop times. You can mix and match these different formats with the same annotation
+class. (In the example above, we map them to `a1`, `a2`, and `a3` simply to make the example clearer.)
+
+The same information could also be represented in a reduced format (i.e. without header rows or extra columns) but of course some information would be lost (e.g. meta-data and channels for `a3`, and instance IDs):
+
+```
+a1   10.00    15.00
+a1   92.10    105.22
+a1   108.5    123.11
+a2   e:2      .
+a2   e:7      .
+a2   e:10     e:12
+a3   0        +30
+a3   30       +30
+a3   60       +30
+```
+
+### Meta-data
+
+As illustrated abiove, in the original example the `a3` class also expects some _meta-data_ for
+each _instance_: three variables named `var1`, `var2` and `var3`, each with a specified _type_.
+
+The following types are currently available in Luna:
+
+| Type | Description |
+| ---- | ---- | 
+| `num` | Numeric (i.e. any floating point number) |
+| `int` | Integer |
+| `bool` | Boolean yes/no, true/false (with values `y`, `yes`, `Y` or `1` versus `n`, `N`, `no` or `0`) |
+| `txt` | Any text string |
+
+
+!!! Note
+    Currently, no Luna commands use annotation meta-data. 
+
+
+## .eannot files 
+
+This is the simplest format for epoch-level annotations.  Epoch
+annotations in `.eannot` files are simple labels attached to
+individual epochs.  The format is as follows:
+
+- one row per epoch
+- each row contains a single label, that is attached to that epoch
+- for each distinct label in the file, a new annotation _class_ is generated
+- each _instance_ is assigned the same ID as the label name (i.e. same as the _class_ name)
+
+When an `.eannot` is specified in the
+[_sample-list_](#../luna/args.md#sample-lists), it is attached prior
+to loading the EDF.  By default, Luna assumes epochs are 30-seconds in
+duration and do not overlap when using `.eannot` files.
+
+!!! hint
+    To work with `.eannot` files but use different epoch definitions, you have three options: 
+
+    1. use the [`EPOCH`](epochs.md#epoch) and
+    [`EPOCH-ANNOT`](epochs.md#epoch-annot) commands to attach the file
+    _after_ initially attaching the EDF (i.e. instead of specifying
+    the `.eannot` file in the sample-list)
+
+    2. Set the special variable
+    [`epoch-len`](../luna/args.md#epoch-len) variable if the `.eannot`
+    is specified in the sample list (i.e. and so loaded when the EDF
+    is first attached, prior to running any `EPOCH` command)
+    
+    3. Use the `e:` epoch encoding notation in a generic `.annot` file instead, as described above.
+
+
+Unlike other types of annotation, these can be loaded via a Luna
+command, [`EPOCH-ANNOT`](epochs.md#epoch-annot), potentially _after_
+the EDF has been loaded and manipulated.  In that case, i.e. when using the
+`EPOCH-ANNOT` command, the number of rows (epochs) in the `.eannot`
+file must match the number of epochs that currently exist in the
+in-memory representation of the EDF (i.e. which may be different from
+the on-disk version).
+
+A common use of an `.eannot` file could be to store manually-scored sleep stages: 
+
+```
+wake
+wake
+N1
+N1
+wake
+N1
+N1
+N2
+N2
+... (etc) ...
+```
+where the number of rows of this file corresponds to the number of 30-second epochs in the EDF.  One could then use these annotations in a [`MASK`](masks.md#mask) command, such as:
+```
+MASK if=wake
+RESTRUCTURE
+```
+to exclude `wake` epochs from analysis.
+
+
+## Luna XML files
+
+Luna uses a version of the NSRR annotation format that is similar to
+the NSRR XML format, but is designed to be completely interchangeable
+with the `.annot` format. This is the format generated by the
+[`WRITE-ANNOTS`](#write-annots) command when the `xml` option is
+specified.
+
+First, the preamble, with all information encapsulated in an `Annotations` parent node:
+
+```
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<Annotations>
+
+ <SoftwareVersion>luna-v0.25</SoftwareVersion>
+
+ <StartTime> xxx </StartTime>
+ <Duration> xxx </Duration>
+ <DurationSeconds> xxx </DurationSeconds>
+ <EpochLength>30</EpochLength>
+```
+
+Second, the definition of each annotation class present in the `Classes` and `Class` tags:
+
+```
+<Classes>
+
+<Class>
+   <Name>Annotation Class Name</Name>
+   <Description>Annotation Description</Description>
+    <Variable name="name1" type="num">Numeric variable label</Variable>
+    <Variable name="name2" type="num">Numeric variable label</Variable>
+    <Variable name="name3" type="num">Numeric variable label</Variable>
+</Class>
+
+</Classes>
+```
+
+Finally, each instance is listed in the next `Instances` and `Instance` tags:
+
+```
+<Instances>
+
+ <Instance>
+  <Class>Recording Start Time</Class>
+    <Name>Recording Start Time</Name>
+    <Start>0</Start>
+    <Duration>32820.0</Duration>
+    <Channel>Optional channel label(s)</Channel>
+    <Value var="name1">0.1</Value>
+    <Value var="name2">0.2</Value>
+    <Value var="name3">0.3</Value>
+ </Instance>
+
+</Instances>
+
+</Annotations>
+```
 
 
 ## NSRR XML files
@@ -98,7 +550,7 @@ luna --xml my-annotations.xml
 
 Alternatively, use `--xml2` to report _all_ entries in any XML, along with the full, original XML document tree structure:
 
-## EDF+ Annotations channel
+## EDF+ Annotations
 
 
 for -s ' MASK ... '
@@ -234,307 +686,6 @@ luna ma0844az_1-1+.edf -o out.db  -s  ' MASK mask-ifnot=edf_annot[HVT_00:30|HVT_
     we would be able to use this second (more readable) form.   Neither quotes nor braces are needed in the simpler format first given above.
 
 
-## .annot files 
-
-_Generic annotation files_
-
-Text-based, tab-delimited files that can contain either
-_interval-level_ annotations: that is, internally, annotations that
-reflect an interval of time along with certain meta-data.
-
-!!! note 
-    `.annot` files should be plain-text but need not have the
-    `.annot` file extension.  Any annotation file that is neither
-    `.xml`, `.ftr` nor `.eannot` is assumed to be of generic `.annot`
-    file format.
-
-An `.annot` file can describe one or more annotations _classes_. Each
-class can have one or more _instances_, where each _instance_
-corresponds to an interval of time and a single row of the `.annot`
-file.  `.annot` files require header rows that first define the
-classes in that file.  Each header row starts with a `#` character and
-contains between one to three `|`-delimited fields, which are class
-_name_, _description_ and _meta-data types_ respectively. For example
-
-```
-# a1 
-# a2 | Unlike the first, this annotation has a description field
-# a3 | This annotation also specifies meta-data types | val1[txt] val2[num] val3[bool]
-```
-
-In the contrived example above, there are three annotation classes:
-`a1`, `a2` and `a3`.  Only `a2` and `a3` have description fields
-(these are currently not used, but will feature in Scope as labels for
-visualizations).  The `a3` class also expects some _meta-data_ for
-each _instance_: three variables named `var1`, `var2` and `var3`, each with a specified _type_. 
-
-| Type | Description |
-| ---- | ---- | 
-| `num` | Numeric (i.e. any floating point number) |
-| `int` | Integer |
-| `bool` | Boolean yes/no, true/false (with values `y`, `yes`, `Y` or `1` versus `n`, `N`, `no` or `0`) |
-| `txt` | Any text string |
-
-Subsequent _data_ rows of the `.annot` file specify instances of one
-of these three classes, along with the necessary meta-data in the case
-of `a3`. For example:
-
-```
-a1	i1	10.00	15.00	
-a1	i2	92.10	105.22	
-a1	i3	108.5	123.11
-a2	.	e:2
-a2	.	e:7
-a2	.	e:10	e:12
-a3	A	0	30	W	0.88	Y
-a3	A	30	60	W	0.98	Y
-a3	B	60	90	N1	0.23	N
-```
-
-That is, the each _data_ row must be at least three tab-delimited columns:
-
-- first column: _class name_ that must match one of the header rows (i.e. `a1`, `a2` or `a3` in this example)
-- second column: _instance ID_ that can be unique or not with respect to its annotation class (or even missing, as for `a2`)
-- third (and fourth) column(s): these define the interval for this annotation instance, as described below
-- remaining columns: if the header specified _meta-data_ for that annotation _class_, these values must be listed here, in the same order as specified in the header row
-
-As in the example above, there are three different ways to define
-intervals in an `.annot` file:
-
-- start and stop _times in seconds_ in columns 3 and 4 (as for `a1` above)
-- a single _epoch code_ in column 3, starting with `e:` (as for `a2` above)
-- a pair of _epoch codes_ in columns 3 and 4, both starting with `e:` (as for `a3` above)
-
-You can mix and match these different formats with the same annotation
-class. In the example above, we map them to `a1`, `a2`, and `a3`
-simply to make the example clearer.
-
-<h5>Interval encoding</h5>
-
-Defining intervals by start and stop times in seconds is the most
-flexible: these annotations can take on any values that can be smaller
-than an epoch, or can span multiple epochs.
-
-Intervals are defined to be inclusive of the _start_ but exclusive of
-the _stop_, i.e. the interval from _a_ to _b_ is _[a,b)_.  In other
-words, _b_ is the first point past the end of the interval. Interval
-duration is therefore defined as _b-a_.  This means that two 30-second
-epochs specified below are non-overlapping epochs: rather, they are
-contiguous despite `30.00` appearing in both definitions:
-
-``` 
-class1	interval1   0.00 30.00 
-class1 	interval2  30.00 60.00 
-``` 
-
-<h5>Epoch encoding</h5>
-
-_Epoch encoding_ is provided as a convenience feature as many
-annotations are in fact specified in terms of regular-sized epochs and
-it might be awkward to always have to list the start and stop times of
-each epoch.  These codes (that start with the characters `e:` to
-distinguish them from times in seconds) are converted to the
-equivalent _interval_ when reading the file. 
- 
-If the value in the third or fourth column starts with the characters
-`e:`, then Luna assumes that epoch-notation is being used to specify the
-interval.  By default, Luna assumes non-overlapping 30-second epochs,
-whereby `e:1`, `e:2`, `e:3`, etc, refer to the first, second, third,
-etc, epochs.   If the fourth column also starts `e:` then Luna assumes the interval is 
-from the start for the first epoch to the end of the second epoch.   
-
-For example, the following two lines specify identical intervals:
-```
-class1       instance1       0        30
-class1       instance1       e:1
-```
-as do these two lines:
-```
-class1       instance1       30       120
-class1       instance1       e:2      e:4
-```
-
-Different epochs definitions can be specified by explicitly appending the epoch
-duration (in seconds) and increment (in seconds) as colon-delimited
-values, as shown in the Table below.  
-
-| Example | Description | Implied interval (sec) |
-| ---- | ---- | -----|
-| `e:2` | Second epoch; non-overlapping 30-second epochs | _[30.0,60.0)_ |
-| `e:2:20` | Second epoch; non-overlapping 20-second epochs | _[20.0,40.0)_ |
-| `e:2:30:15` | Second epoch; 50% overlapping 30-second epochs | _[15.0,45.0)_ |
-
-If not specified, the increment is assumed to be the same as the epoch
-duration, i.e. no overlap of consecutive epochs.
-
-!!! note 
-    As epochs are defined within the `.annot` file itself, the
-    actual EDF need not be epoched (i.e. from the
-    [`EPOCH`](epochs.md#epoch) command). In fact, the EDF may even
-    have epochs of a different duration specified. Also, unlike
-    [`.eannot`](#eannot-files) files, not every epoch needs to be
-    specified in an `.annot` file, i.e. if there are 1200 epochs, you
-    do not need to have exactly 1200 rows in this file. This is
-    because instances specified with epoch-encoding are automatically
-    converted to interval-encoding upon loading.
-
-## .eannot files 
-
-This is the simplest format for epoch-level annotations.  Epoch
-annotations in `.eannot` files are simple labels attached to
-individual epochs.  The format is as follows:
-
-- one row per epoch
-- each row contains a single label, that is attached to that epoch
-- for each distinct label in the file, a new annotation _class_ is generated
-- each _instance_ is assigned the same ID as the label name (i.e. same as the _class_ name)
-
-When an `.eannot` is specified in the
-[_sample-list_](#../luna/args.md#sample-lists), it is attached prior
-to loading the EDF.  By default, Luna assumes epochs are 30-seconds in
-duration and do not overlap when using `.eannot` files.
-
-!!! hint
-    To work with `.eannot` files but use different epoch definitions, you have three options: 
-
-    1. use the [`EPOCH`](epochs.md#epoch) and
-    [`EPOCH-ANNOT`](epochs.md#epoch-annot) commands to attach the file
-    _after_ initially attaching the EDF (i.e. instead of specifying
-    the `.eannot` file in the sample-list)
-
-    2. Set the special variable
-    [`epoch-len`](../luna/args.md#epoch-len) variable if the `.eannot`
-    is specified in the sample list (i.e. and so loaded when the EDF
-    is first attached, prior to running any `EPOCH` command)
-    
-    3. Use the `e:` epoch encoding notation in a generic `.annot` file instead, as described above.
-
-
-Unlike other types of annotation, these can be loaded via a Luna
-command, [`EPOCH-ANNOT`](epochs.md#epoch-annot), potentially _after_
-the EDF has been loaded and manipulated.  In that case, i.e. when using the
-`EPOCH-ANNOT` command, the number of rows (epochs) in the `.eannot`
-file must match the number of epochs that currently exist in the
-in-memory representation of the EDF (i.e. which may be different from
-the on-disk version).
-
-A common use of an `.eannot` file could be to store manually-scored sleep stages: 
-
-```
-wake
-wake
-N1
-N1
-wake
-N1
-N1
-N2
-N2
-... (etc) ...
-```
-where the number of rows of this file corresponds to the number of 30-second epochs in the EDF.  One could then use these annotations in a [`MASK`](masks.md#mask) command, such as:
-```
-MASK if=wake
-RESTRUCTURE
-```
-to exclude `wake` epochs from analysis.
-
-
-## FTR files
-
-_Feature_ files are a simple annotation format generated by Luna 
-after certain commands (e.g. the `ftr` option of the 
-[`SPINDLES`](spindles-so.md#spindles)).  Their filenames must conform to a special format:
-
-```
-id_{indiv_id}_feature_{label}.ftr 
-``` 
-
-where `{indiv_id}` should be replaced by the individual/EDF ID, and
- `{label}` should be replaced by the name of the feature. (Note, IDs
- and feature labels can contain underscore characters, but they should
- not contain the phrase `_feature_`.)  
-
-For example:
-
-
-```
-id_subj00001_feature_spindles11hz.ftr 
-```
-
-means that the contents of this file are the annotation class
-`spindles11hz` for the individual/EDF with ID `subj00001`.
-
-If the sample-list points to a folder, e.g. 
-```
-id001	/path/to/id001.edf     /path/to/annots/
-```
-or a global [`annot-folder`](../luna/args.md#annotations) 
-folder is specified via the command-line or parameter file, e.g. 
-```
-luna s.lst annot-folder=/path/to/annots/ < command.txt 
-```
-
-then all FTR files that match the ID of the EDF being processed are
-loaded.  
-
-!!! Hint
-    To turn off automatic loading of all FTR files, add the
-    following to the command line
-
-    ```
-    luna s.lst ftr=N < commands.txt
-    ```
-    or set that variable in a [parameter file](../luna/args.md#parameter-files)
-    ```
-    ftr    N
-    ```
-
-FTR files have the following format:
-
-- tab-delimited plain-text
-- no header line
-- creates a single annotation _class_ with the name from the FTR filename (i.e. after `_feature_`)
-- columns 1 and 2 are interval start and stop in [_time-point_](../luna/args.md#time-points) units of each _instance_
-- column 3 is a text label that specifies the _instance_ ID
-- further columns are _key=value_ pairs become instance _meta-data_ (all encoded as string values)
-
-For example, for the file `id_subj00001_feature_spindles.ftr`:
-```
-20733175781250       20733707031250       sp-1   amp=3.34   dur=0.53   frq=11.21   nosc=6
-21057488281250       21058015625000       sp-2   amp=4.59   dur=0.53   frq=11.29   nosc=6
-21139898437500       21140558593750       sp-3   amp=3.59   dur=0.66   frq=10.54   nosc=7
-... (etc) ...
-```
-
-These lines list information on detected spindles; here only three
-spindles are listed, labeled `sp-1`, `sp-2`, etc.  Each spindle has
-some arbitrary information encoded, on spindle amplitude (`amp`),
-duration (`dur`), frequency (`frq`) and number of oscillations
-(`nosc`).  Currently, these additional fields (column 4 onwards) are
-not used internally by Luna.  They are, however, displayed when
-looking at annotations in [Scope](../ext/scope.md) for example,
-and are accessible when using the Luna [R extension library](../ext/R.md).
-
-When loaded in, the annotation _class_ will be `spindles`.  There will
-be as many _instances_ as rows in the FTR file, and the instance IDs
-will be the third column of the FTR file (`sp-1`, `sp-2`, etc).  As
-noted, instance IDs need not be unique, and they can be included in [`MASK`](masks.md#mask) 
-commands.
-
-!!! note 
-    Although not currently used, there are two reserved keywords
-    for FTR meta-data that will have special meanings, i.e. in future releases of
-    Scope. These _key_ values are `_rgb_` (which expects a RGB value,
-    encoded 0..255) and `_value`, which expects a floating-point
-    number that will be taken to be a primary value, e.g. the one that
-    will be used if plotting annotations in certain contexts.
-    ```
-    _rgb=255,255,255
-    ```
-    ```
-    _value=0.234
-    ```
 
 ## ANNOTS
 
@@ -608,6 +759,28 @@ Per-epoch _instance-level_ annotation tabulation (strata: `E` x `INTERVAL` x `IN
 <h3>Example</h3>
 
 _to be added_
+
+
+## WRITE-ANNOTS
+
+Luna assumes that annotation data may arrive in subtly different
+formats: the generic `.annot` format tries to make some allowances for
+this, by making it easier to convert to .annot, for example:
+ 
+ - using _hh:mm:ss_ versus _elapsed second_ versus _epoch encoding_
+ - ellipses to indicate that start continues until the next point
+ - the _class_ versus _instance_ ID distinction
+ - optional headers and columns (e.g. for channels or meta-data)
+
+When writing `.annot` files, Luna always adheres to a standard, full specification however:
+ 
+ - full six-columns
+ - all headers present
+ - explicit start and stop times for annotations (although these can either be in elapsed seconds or clocktime)
+ - ordered by time of occurrence 
+ - all annotations (or a specified subset therefore) are written to a single file
+
+This file can be iether `.annot` or (Luna) `.xml` format.
 
 
 ## SPANNING
@@ -762,3 +935,28 @@ nsrr01  NREM4     1       30
 nsrr01  hypopnea  1       15.3
 ```
 
+
+## A2S
+
+_Add a signal based on an annotation_
+
+Adds a signal that is either 0 or 1, based on whether that sample point is spanned by an annotation or not.
+
+| Option | Example | Description |
+| ---- | ---- | ---- |
+| `annot` | `arousal` | Name of annotation to select |
+| `sr`    | `100` | Sample rate of new signal |
+| `label` | `A` | Optionally, a name for the signal (otherwise is set to `annot` value) |
+
+
+## S2A
+
+_Add an annotation based on a signal_
+
+Adds a signal that is either 0 or 1, based on whether that sample point is spanned by an annotation or not.
+
+| Option | Example | Description |
+| ---- | ---- | ---- |
+| `annot` | `arousal` | Name of annotation to select |
+| `sr`    | `100` | Sample rate of new signal |
+| `label` | `A` | Optionally, a name for the signal (otherwise is set to `annot` value) |

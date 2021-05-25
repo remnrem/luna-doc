@@ -18,6 +18,8 @@ _high-pass_, _band-pass_ or _band-stop_ filter.
 
 <h3>Parameters</h3>
 
+Core parameters are as follows:
+
 | Parameter | Example | Description |
 | --- | --- | --- |
 | `sig`     | `sig=C3,F3` | Restrict analysis to these channels | 
@@ -25,10 +27,28 @@ _high-pass_, _band-pass_ or _band-stop_ filter.
 | `lowpass`  | `lowpass=35` | Low-pass filter with cutoff of 35 Hz |
 | `highpass` | `highpass=0.3` | High-pass filter between 0.3 and 35 Hz |
 | `bandstop` | `bandstop=55,65` | Band-stop filter between 0.3 and 35 Hz |
-| | | 
+| `fft`      | | Use FFT to implement the filter rather than time-domain convolution |
+
+By default, the `FILTER` command uses the Kaiser window approach to define the filter, which requires the two following parameters:
+
+| Parameter | Example | Description |
+| --- | --- | --- |
 | `ripple`   | `ripple=0.02` | Ripple (as a proportion) |
 | `tw`       | `tw=1` | Transition width (in Hz) | 
 
+
+Alternatively, it is possible to a) read the FIR coefficients in from a file, or b) use the window method to design a FIR with
+a fixed filter order, using either a Bartlett, Hann, Blackman or rectangular window:
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `file`   | `file=fir1.txt` | Read FIR coefficients from a file |
+| | | | 
+| `order`  | `order=30` | Fix the FIR filter order |
+| `rectangular` | | Specify a rectangular window |
+| `bartlett` | | Specify a Bartlett window |
+| `hann` | | Specify a Hann window |
+| `blackman` | | Specify a Blackman window |
 
 <h3>Output</h3>
 
@@ -47,7 +67,7 @@ designed via the Kaiser window method with a ripple parameter
 FILTER sig=C3 bandpass=0.3,35 ripple=0.01 tw=0.5
 ```
 
-In this second example, we use [_lunaR_](../ext/R.md) to copy a
+In this second example, we use [_lunaR_](../ext/R/index.md) to copy a
 signal, apply different bandpass filters to each duplicate
 (corresponding to delta, theta, alpha, sigma and beta frequency bands)
 and then plot the results.  Here we use the individual `nsrr02` from
@@ -86,7 +106,7 @@ By the end, the message in the console reads:
 ```
 nsrr02 : 6 signals, 10 annotations, 09:57:30 duration
 ```
-Using [`lchs()`](../ext/R.md#lchs), we confirm that all channels have been appropriately added:
+Using [`lchs()`](../ext/R/ref.md#lchs), we confirm that all channels have been appropriately added:
 ```
 lchs()
 ```
@@ -102,7 +122,7 @@ leval( "FILTER sig=EEG_SIGMA bandpass=12,15 tw=1 ripple=0.02" )
 leval( "FILTER sig=EEG_BETA  bandpass=15,30 tw=1 ripple=0.02" )
 ```
 
-We then epoch the data using [`lepoch()`](../ext/R.md#lepoch):
+We then epoch the data using [`lepoch()`](../ext/R/ref.md#lepoch):
 ```
 ne <- lepoch()
 ```
@@ -110,7 +130,7 @@ ne <- lepoch()
 nsrr02 : 6 signals, 10 annotations, 09:57:30 duration, 1195 unmasked 30-sec epochs, and 0 masked
 ```
 
-We can use the [`ldata()`](../ext/R.md#ldata) function to pull out epochs of data for all 6 signals (i.e. as specified by giving `lchs()` as the second argument),  e.g. here for epoch 135:
+We can use the [`ldata()`](../ext/R/ref.md#ldata) function to pull out epochs of data for all 6 signals (i.e. as specified by giving `lchs()` as the second argument),  e.g. here for epoch 135:
 ```
 d <- ldata( 135 , lchs() )
 ```
@@ -175,9 +195,22 @@ run without a sample-list or EDF (see the example below).
 | `lowpass` | `lowpass=35` | Low-pass filter with cutoff of 35 Hz |
 | `highpass` | `highpass=0.3` | High-pass filter with cutoff of 0.3 Hz |
 | `bandstop` | `bandstop=55,65` | Band-stop filter between 0.3 and 35 Hz |
-| | | 
+
+The FIR design design approaches are as for the `FILTER` command: either through the window method
+(with either a Kaiser window -- `tw` and `ripple` -- or fixing the FIR `order`) or reading from a file:
+
+| Parameter | Description |
+| --- | --- | 
 | `ripple`   | Ripple (as a proportion) |
 | `tw`       | Transition width (in Hz) | 
+| | | 
+| `file`     | Read FIR coefficients from a file |
+| | |
+| `order`    | Fix FIR order |
+| `rectangular` | Specify a rectangular window |
+| `bartlett` | Specify a Bartlett window |
+| `hann` | Specify a Hann window |
+| `blackman` | Specify a Blackman window |
 
 
 <h5>Output</h5>

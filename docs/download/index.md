@@ -1,6 +1,6 @@
 # Downloads
 
-<p align="right"><em>Current Luna release: <b>v0.24</b> (28-Aug-2020)</em></p>
+<p align="right"><em>Current Luna release: <b>v0.25.5</b> (31-Mar-2021)</em></p>
 
 ## Installation options 
 
@@ -32,10 +32,6 @@ three basic ways to obtain Luna:
     [Dockerized](docker.md) version of Luna to provide a complete
     environment in which Luna can operate best.  Currently, it is the only way that you can use _lunaR_ on Windows too.
 
-!!! warning
-    While Luna is still under heavy development, not all
-    options will be supported or up-to-date at all times for all platforms.
-
 
 ## Data resources
 
@@ -45,6 +41,7 @@ and resources to support working with [NSRR data](../nsrr.md).
 
 ## Changelog and known issues
 
-For technical notes about releases, known issues and other compilation
-options, see [this page](misc.md).
+For recent changes and additions in the latest version, see the [CHANGELOG](../updates.md) page.
+
+For any known issues impacting the current release, see [this page](misc.md).
 

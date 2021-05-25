@@ -2,7 +2,7 @@
 # /R/epeat
 
 In this final section, we'll repeat the steps of the previous three
-tutorial pages, but using [_lunaR_](../ext/R.md) instead of
+tutorial pages, but using [_lunaR_](../ext/R/index.md) instead of
 [_lunaC_](../luna/args.md).  That is, these sections mirror the
 sections from the past three tutorials, and we'll try to accomplish
 the same goals but by different means..
@@ -113,14 +113,14 @@ library(luna)
 
 To mirror the previous operations, we must first load a
 [_sample-list_](../luna/args.md#sample-lists) with _lunaR_'s
-[`lsl()`](../ext/R.md#lsl) function:
+[`lsl()`](../ext/R/ref.md#lsl) function:
 
 ```
 sl <- lsl( "s.lst" )
 ```
 
 This function returns the sample-list as an R _list_ object, here
-named `sl`.  We can use _lunaR_'s [`lattach()`](../ext/R.md#lattach)
+named `sl`.  We can use _lunaR_'s [`lattach()`](../ext/R/ref.md#lattach)
 function to start working with the first individual, `nsrr01`, by
 passing by the sample-list and the ID (or the line number) of the
 individual we want to attach:
@@ -135,8 +135,8 @@ lattach( sl , "nsrr01" )
 Mirroring how _lunaC_ processes a _script_ (i.e. a set of Luna
 [commands](../ref/index.md) either after the `-s` option or from a
 [_command file_](../luna/args.md#command-files)), in _lunaR_ we can
-use the [`leval()`](../ext/R.md/#leval) (or
-[`leval.project()`](../ext/R.md#levalproject)) commands to process
+use the [`leval()`](../ext/R/ref.md/#leval) (or
+[`leval.project()`](../ext/R/ref.md#levalproject)) commands to process
 Luna commands such as `DESC`.  As for _lunaC_, the `DESC` command just
 displays some information on the terminal, rather than sending output
 to the formal output mechanism (i.e. a _lout_ database).  The same is
@@ -326,7 +326,7 @@ which contains the six variables including the mean (`MEAN`) along with
 names(d)
 ```
 ```
-[1] "ID"     "CH"     "MAX"    "MEAN"   "MEDIAN" "MIN"    "RMS"    "SD"    
+[1] "ID"     "CH"     "MAX"    "MEAN"   "MEDIAN" "MIN"    "RMS"    "SKEW"  
 ```
 Using R's basic row/column subsetting functions, we can pull out the required information as follows:
 ```
@@ -340,9 +340,9 @@ d[ d$CH %in% c("ECG","EMG","SaO2") , c("ID","CH","MEAN") ]
 16 nsrr01  EMG -6.855696298
 17 nsrr02  EMG -0.609767419
 18 nsrr03  EMG  3.013591554
-37 nsrr01 SaO2 76.924249248
-38 nsrr02 SaO2 77.872634923
-39 nsrr03 SaO2 65.082851007
+37 nsrr01 SaO2 76.926126702
+38 nsrr02 SaO2 77.874804354
+39 nsrr03 SaO2 65.084439075
 ```
 
 
@@ -367,7 +367,7 @@ lattach( sl , 1 )
 ```
 ```
 nsrr01 : 14 signals, 11 annotations, 11:22:00 duration
-```		
+```
 
 To see what those annotations classes are, we can use the [`lannots()`](^lannots) command:
 ```
@@ -638,12 +638,11 @@ are currently just for NREM1 sleep:
 lx( k , "STATS" )
 ```
 ```
-      ID  CH STAGE    MAX     MEAN  MEDIAN      MIN    RMS     SD
-1 nsrr01 EEG NREM1  59.31 -0.29545 -0.4901  -81.862  7.354  7.349
-2 nsrr02 EEG NREM1  49.50  0.00717  0.4901  -72.058 10.361 10.361
-3 nsrr03 EEG NREM1 125.00  0.19837  0.4901 -124.019 12.302 12.300
+ID     CH  STAGE    MAX   MEAN  MEDIAN      MIN    RMS    SKEW
+nsrr01 EEG NREM1  59.31 -0.295 -0.4901  -81.862  7.354   0.015
+nsrr02 EEG NREM1  49.50  0.007  0.4901  -72.058 10.361  -0.487
+nsrr03 EEG NREM1 125.00  0.198  0.4901 -124.019 12.302  -0.461
 ```
-
 
 To obtain the values for other sleep stages, we can just repeat the
 above procedures.  To facilitate this, and to make the output easier to
@@ -1157,7 +1156,7 @@ NREM1 NREM2 NREM3 NREM4   REM  wake
 Running the [`HYPNO`](../ref/hypnograms.md#hypno) command for all three individuals:
 
 ```
-k <- leval.project( sl , "HYPNO" )
+k <- leval.project( sl , "HYPNO epoch" )
 ```
 Here we extract individual-level results (i.e. from the baseline or `BL` strata ):
 ```
@@ -1593,12 +1592,13 @@ MASK if=wake
 RESTRUCTURE
 FILTER bandpass=0.3,35 ripple=0.02 tw=1
 ARTIFACTS mask
-SIGSTATS mask threshold=3,3,3 epoch
+CHEP-MASK ep-th=3,3,3
+CHEP epochs
 DUMP-MASK
 ```
 
 See [`ARTIFACTS`](../ref/artifacts.md#artifacts) and
-[`SIGSTATS`](../ref/artifacts.md#sigstats) for details.
+[`CHEP-MASK`](../ref/artifacts.md#chep-mask) for details.
 
 Because the previous `cmd/fifth.txt` script modified the internal EDF, we need to reattach or _refresh_ it:
 
@@ -1685,7 +1685,7 @@ plot( m$E , m$H3 , pch = 20 , xlab="Epoch" , ylab="H3" , col = m$EMASK + 1)
 ![img](../img/rt15.png)
 
 From looking at `d`, we see that epoch #220 is one of the masked
-epochs.  To view it, we can use the [`ldata()`](../ext/R.md#ldata) function.  Naturally, we 
+epochs.  To view it, we can use the [`ldata()`](../ext/R/ref.md#ldata) function.  Naturally, we 
 first need to refresh the EDF or clear the mask (i.e. as it is currently masked):
 
 ```
@@ -1720,10 +1720,13 @@ MASK ifnot=NREM2
 RESTRUCTURE
 FILTER bandpass=0.3,35 ripple=0.02 tw=1
 ARTIFACTS mask
-SIGSTATS epoch mask threshold=3,3,3
+RESTRUCTURE
+CHEP-MASK ep-th=3,3,3
+CHEP epochs
 RESTRUCTURE
 PSD spectrum
-SPINDLES fc=11,15  ftr-dir=annots/
+SPINDLES fc=11,15  annots=spindles/
+WRITE-ANNOTS annot=spindles file=edfs/spindles-^.annot
 ```
 
 We'll first reset all environment variables:
@@ -1824,15 +1827,14 @@ There are many variables in the output, but here we restrict to spindle density 
 d[ , c("ID","CH","F","DENS") ]
 ```
 ```
-
       ID   CH  F      DENS
-1 nsrr01 EEG1 11 0.7188755
-2 nsrr02 EEG1 11 1.3641304
-3 nsrr03 EEG1 11 0.7716049
+1 nsrr01 EEG1 11 0.7223301
+2 nsrr02 EEG1 11 1.2708861
+3 nsrr03 EEG1 11 0.7019499
 
-4 nsrr01 EEG1 15 0.6506024
-5 nsrr02 EEG1 15 2.2228261
-6 nsrr03 EEG1 15 0.1975309
+4 nsrr01 EEG1 15 0.6330097
+5 nsrr02 EEG1 15 2.0151899
+6 nsrr03 EEG1 15 0.1838440
 ```
 
 We've now completed the steps of the previous _lunaC_ tutorial.  As
@@ -1878,7 +1880,7 @@ k <- leval( lcmd( "cmd/seventh.txt" ) )
     ```
     Error in leval(lcmd("cmd/seventh.txt")) : 
        problem flag set: likely no unmasked records left? run lrefresh()
-    ```	       
+    ```      
     one possibility is that you forgot to include and/or reset the
     necessary variables via `lset()`; if in doubt, running `lreset()`,
     `lrefresh()` and repeating the commands is always a good idea.
@@ -1910,10 +1912,10 @@ table( d$F )
 ```
 ```
  11  15 
-251 409 
+251 398 
 ```
 
-In other words, we detected 409 fast (15 Hz) spindles and 251 slow (11
+In other words, we detected 398 fast (15 Hz) spindles and 251 slow (11
 Hz) spindles.  That variable `START` (and `START_SP`) reflects the
 time in seconds (and in sample-points based on the current internal
 EDF) on when each spindle started; `STOP` variables are similarly
@@ -1938,37 +1940,31 @@ points( d15$START/3600 , rep( 15, length(d15$START) ) ,
 
 ![img](../img/rt19.png)
 
-The `ftr-dir` option we used for the `SPINDLES` command means that
-Luna will have written an [FTR annotation
-file](../ref/annotations.md#ftr-files) (or _feature_ file) to the
-`annots/` folder.  We can load those FTR files in as new annotations
-to be attached to the current EDF.  (Luna will complain if the implied
-ID in the FTR file name does not match the ID of the attached EDF):
-
+The `annot` option we used for the `SPINDLES` command means that
+Luna will have written an [.annot file](../ref/annotations.md#annot) to the
+`edfs/` folder.  We can load those annotation files in as new annotations
+to be attached to the current EDF.  
 ```
-ladd.annot.file( "annots/id_nsrr02_feature_spindles-EEG1-wavelet-11.ftr")
-ladd.annot.file( "annots/id_nsrr02_feature_spindles-EEG1-wavelet-15.ftr")
+ladd.annot.file( "edfs/spindles-nsrr01.annot" ) 
 ```
 
-Now, when we ask for a list of attached annotations, we'll see two new ones:
+Now, when we ask for a list of attached annotations, we'll see a new one, `spindles`:
 
 ```
 lannots()
 ```
 ```
- [1] "NREM1"                    "NREM2"                   
- [3] "NREM3"                    "REM"                     
- [5] "apnea_obstructive"        "arousal_standard"        
- [7] "artifact_SpO2"            "desat"                   
- [9] "hypopnea"                 "spindles-EEG1-wavelet-11"
-[11] "spindles-EEG1-wavelet-15" "wake"                    
+ [1] "NREM1"             "NREM2"             "NREM3"            
+ [4] "REM"               "apnea_obstructive" "arousal_standard" 
+ [7] "artifact_SpO2"     "desat"             "hypopnea"         
+[10] "spindles"          "wake"             
 ```
 
 Here we'll focus on the fast spindles; for convenience, we'll save the
 long annotation name as the variable `sp.label`:
 
 ```
-sp.label <- "spindles-EEG1-wavelet-15"
+sp.label <- "spindles"
 ```
 
 We'll then use the `lannots()` function with a annotation _class_ name
@@ -1978,14 +1974,14 @@ specified, to get a list of intervals for that annotation:
 sp.intervals <- lannots( sp.label )
 ```
 
-This list is 409 elements in length, i.e. corresponding to the 409
+This list is 998 elements in length, i.e. corresponding to the 998
 spindles detected above:
 
 ```
 length(sp.intervals)
 ```
 ```
-[1] 409
+[1] 998
 ```
 
 Taking a peak at the contents of `sp.intervals`, we see each item is a
@@ -1998,22 +1994,15 @@ head( sp.intervals )
 
 ```
 [[1]]
-[1] 2747.856 2748.408
+[1] 2706.560 2707.168
 
 [[2]]
-[1] 3023.120 3023.696
+[1] 2751.304 2751.888
 
 [[3]]
-[1] 3025.256 3027.160
+[1] 2764.040 2764.584
 
-[[4]]
-[1] 3832.944 3833.488
-
-[[5]]
-[1] 3849.080 3849.744
-
-[[6]]
-[1] 3940.672 3941.232
+...
 ```
 
 Note: this information is naturally the same as we saw in the output of
@@ -2041,7 +2030,8 @@ the 98th, with `sp.intervals[99]`:
 d <- ldata.intervals( sp.intervals[ 98 ], chs="EEG1", annots=sp.label, w=5 )
 ```
 
-The resulting data-frame is 1350 rows (from `dim(d)`), i.e. which,
+<!---
+The resulting data-frame is 1391 rows (from `dim(d)`), i.e. which,
 given a sample rate of 125 Hz, corresponds to 10.8 seconds (5*2 seconds
 plus a spindle of length 0.8 seconds):
 
@@ -2059,53 +2049,35 @@ k$SPINDLES$CH_F_SPINDLE$DUR[ k$SPINDLES$CH_F_SPINDLE$F==15 ][ 98 ]
 [1] 0.8
 ```
 
+--->
+
+
 Looking at the `d` data frame returned by `ldata.intervals()`:		
 
 ```
 head(d)
 ```
 ```
-                 INT      SEC      EEG1 spindles_EEG1_wavelet_15
-1 13207.62->13218.42 13207.62 -17.24692                        0
-2 13207.62->13218.42 13207.62 -18.13499                        0
-3 13207.62->13218.42 13207.63 -19.53948                        0
-4 13207.62->13218.42 13207.64 -22.50293                        0
-5 13207.62->13218.42 13207.65 -25.08025                        0
-6 13207.62->13218.42 13207.66 -25.50981                        0
+               INT      SEC      EEG1 spindles
+1 4216.96->4228.09 4216.960   1.24806        0
+2 4216.96->4228.09 4216.968 -14.29313        0
+3 4216.96->4228.09 4216.976 -24.55900        0
+4 4216.96->4228.09 4216.984 -27.47900        0
+5 4216.96->4228.09 4216.992 -23.01936        0
+6 4216.96->4228.09 4217.000 -13.69465        0
 ```
 
 The annotation field (final column) is `0` or `1` to indicate the
 presence or absence of that annotation (i.e. a fast spindle) at that
 sample-point.  
 
-!!! note 
-    Note the variable name: `spindles_EEG1_wavelet_15`
-    which is slightly different from the original `sp.label` which has
-    minus symbols in it.  As mentioned above, Luna _sanitizes_
-    channel, factor/level and annotation names when creating variables
-    in R data-frames, to simplify working with them downstream.  The
-    convenience function [`lsanitize()`](../ext/R.md/lsanitize)
-    recapitulates these changes, i.e. and so can be used to ensure
-    correspondence downstream, as we'll see.
-
-    ```
-    lsanitize( sp.label )
-    ```
-    ```
-    spindles_EEG1_wavelet_15
-    ```
-
-    (Why didn't we just use underscores in naming the FTR file, as it
-    was generated by _lunaC_?  Fair point, this is something we should probably 
-    change...)
- 
 
 To plot this spindle, we could use something like the following:
 
 ```
 par(mfcol=c(2,1) , mar=c(2,4,0,0) )
 plot( d$EEG1 , type="l" , xaxt = 'n' , yaxt='n' , axes=F , ylab="EEG1" )
-plot( d[, lsanitize( sp.label ) ] , type="l" , lwd=2 , col="blue" , xaxt='n' , yaxt='n' , axes=F, ylab="15Hz spindles" )
+plot( d[, sp.label ] , type="l" , lwd=2 , col="blue" , xaxt='n' , yaxt='n' , axes=F, ylab="Spindles" )
 ```
 
 ![img](../img/rt20.png)
@@ -2165,6 +2137,8 @@ plot( d$EEG1_beta  ,  type="l" , col=rgb(100,0,100,150,max=255) , axes=F , ylab=
 
 ![img](../img/rt21.png)
 
+(_Note:_ the above image is from a prior run with a different spindle example from the above: we'll fix these
+tutorial pages soonish.)
 
 Finally, rather than having to manually re-run this code for each
 spindle, we can use the `literate()` function of Luna to automate this
@@ -2202,6 +2176,9 @@ this case (`w=8`), and then pass it to the newly-defined `f1()` function:
 literate( f1 , chs= lchs() , annots= sp.label ,  by.annot= sp.label , w = 8 ) 
 ```
 
+!!! warning
+    TODO: falling at the lasy hurdle... the above command is broken for this example...  need to fix. 
+
 You could imagine easily adding some code to save each plot, or to make multiple plots
 per page, etc, for easy reviewing of all spindles detected in an EDF.   Some example below:
 
@@ -2219,7 +2196,7 @@ That's the end of the tutorial.  If this was your first pass, there
 may have been a lot of material. Consult the [command
 reference](../ref/index.md) for more details about specific commands.
 And visit these pages for more details on using
-[_lunaC_](../luna/args.md) and [_lunaR_](../ext/R.md).
+[_lunaC_](../luna/args.md) and [_lunaR_](../ext/R/index.md).
 
 ----
 

@@ -17,8 +17,8 @@ _Export sleep stage information_
 This command simply writes sleep stage information (e.g. as encoded by
 an NSRR [XML annotation file](annotations.md#nsrr-xml-files)) to a
 database.  Internally, it creates a single annotation class called
-`SleepStage`, with instances that correspond to wake, `N1`, `N2`,
-`N3`, `REM`, `?` and `L` (_Lights On_).  The [`HYPNO`](#hypno) command
+`SleepStage`, with instances that correspond to `W`, `N1`, `N2`,
+`N3`, `R`, `?` and `L` (_Lights On_).  The [`HYPNO`](#hypno) command
 does the same but additionally computes a large number of other
 statistics.  Unlike `HYPNO` however, the `STAGES` command can be run
 after epochs have been [masked out](masks.md).  In contrast, `HYPNO`
@@ -36,12 +36,15 @@ summary statistics on sleep macro architecture.
 
 | Parameter | Example | Description |
 | ---- | ---- | ---- | 
-| `wake`| `wake=W`    | Set the annotation class for _wake_ epochs |
+| `W`   | `W=wake`    | Set the annotation class for _wake_ epochs |
 | `N1`  | `N1=NREM1`  | Set the annotaiton class for _N1_ epochs |
 | `N2`  | `N2=NREM2`  | Set the annotaiton class for _N2_ epochs |
 | `N3`  | `N3=NREM3`  | Set the annotaiton class for _N3_ epochs |
-| `REM` | `REM=REM`   | Set the annotaiton class for _REM_ epochs |
+| `R`   | `R=REM`   | Set the annotaiton class for _REM_ epochs |
 | `?`   | `?=UNKNOWN` | Set the annotation class for _unscored/unknown_ epochs |
+| `dump` | | Write stage labels to standard out (minimal output )|
+| `eannot` | `eannot=s.txt` | Write stage labels to a file |
+
 
 <h5>Output</h5>
 
@@ -54,8 +57,8 @@ summary statistics on sleep macro architecture.
 
 
 __Numeric stage encoding:__ The `STAGE_N` encoding is designed to help
-with quickly plotting a hypnogram: `wake` is 1, `NREM1`, `NREM2` and
-`NREM3` are -1, -2 and -3 respectively; `REM` is 0; unknown is 2. As
+with quickly plotting a hypnogram: `W` is 1, `NREM1`, `NREM2` and
+`NREM3` are -1, -2 and -3 respectively; `R` is 0; unknown is 2. As
 such, something like the following R command can produce a
 hypnogram-like representation of the night:
 
@@ -65,8 +68,8 @@ plot( d$E , d$STAGE_N )
 
 <h5>See also</h5>
 
-The [`lstages()`](../ext/R.md#lstages) function in
-[_lunaR_](../ext/R.md) provides a quick way to run the `STAGE` command
+The [`lstages()`](../ext/R/ref.md#lstages) function in
+[_lunaR_](../ext/R/index.md) provides a quick way to run the `STAGE` command
 for a single EDF, returning just a vector of stage names.
 
 
@@ -77,8 +80,9 @@ _Estimates multiple summary statistics based on the hypnogram_
 As [`STAGE`](#stage) does, this command expects manual sleep stages
 to be present as an [_annotation_](annotations.md).  `HYPNO` produces
 individual-level summary statistics (e.g. total sleep time, percent in
-each sleep stage, etc) and epoch-level output (e.g. cumulative elapsed
-sleep duration, etc).  In addition, NREM sleep cycles are calculated
+each sleep stage, etc), epoch-level output (e.g. cumulative elapsed
+sleep duration, etc) and stage transition counts/probabilities.
+In addition, NREM sleep cycles are calculated
 based on a modified heuristic following [Feinberg and
 Floyd](https://www.ncbi.nlm.nih.gov/pubmed/220659).
 
@@ -112,12 +116,15 @@ least ten minutes of uninterrupted sleep.
 | Parameter | Example | Description |
 | ---- | ---- | ---- | 
 | `file` | `file=hypno.txt` | Optionally, read stage information from a file |
-| `wake`| `wake=W` | Set the annotation class for _wake_ epochs |
+| `W`| `W=wake` | Set the annotation class for _wake_ epochs |
 | `N1`  | `N1=NREM1` | Set the annotaiton class for _N1_ epochs |
 | `N2`  | `N2=NREM2` | Set the annotaiton class for _N2_ epochs |
 | `N3`  | `N3=NREM3` | Set the annotaiton class for _N3_ epochs |
-| `REM` | `REM=REM` | Set the annotaiton class for _REM_ epochs |
+| `R` | `REM=REM` | Set the annotaiton class for _REM_ epochs |
 | `?`   | `?=UNKNOWN` | Set the annotation class for _unscored/unknown_ epochs |
+| `epoch` | | Display epoch-level output |
+| `req-pre-post` | `req-pre-post=5` | For epoch-level transition flags, only consider _post_ transition stage `FLANKING_ALL` values equal to or greater than this number of epochs (default 4) |
+| `flanking-collapse-nrem` | `flanking-collapse-nrem=F`|  Collapse all NREM stages when considering flanking epoch similarity (default `T`) |
 
 
 <h5>Output</h5>
@@ -158,9 +165,11 @@ Individual-level summary statistics (strata: _none_)
 | | |
 | `NREMC` | Number of sleep cycles |
 | `NREMC_MINS` | Mean duration of each sleep cycle |
+| | |
+| `CONF` | The number of epochs with conflicting stage assignments (e.g. if overlapping staging) | 
+| `OTHR` | Number of epochs with a nonstandard/missing stage annotation |
 
-
-Epoch-level output (strata: `E`)
+Epoch-level output (option: `epoch`, strata: `E`)
 
 | Variable | Description |
 | --- | --- |
@@ -186,13 +195,17 @@ Epoch-level output (strata: `E`)
 |`PCT_E_REM`| Cumulative elapsed REM as proportion of total REM sleep |
 |`PCT_E_SLEEP`| Cumulative elapsed sleep as proportion of total sleep |
 | | |
-|`FLANKING_SIM` | The number minimum number of similarly-staged epochs going either forwards or backwards | 
+|`FLANKING_MIN` | The minimum number of similarly-staged epochs going either forwards or backwards |
+|`FLANKING_ALL` | The total number of similar epochs in this stretch of similar epochs |
+| | |
 |`N2_WGT`| Score to indicate ascending versus descending N2 sleep (see below) | 
 |`NEAREST_WAKE`| Number of epochs (forward or backwards) since nearest wake epoch (see below) |
-|`NREM2REM`| Number of epochs from this N2 epoch to the N2/REM transition (see below) |
-|`NREM2REM_TOTAL`| Total number of contiguous N2 epochs until a REM transition (see below) |
-|`NREM2WAKE`|  Number of epochs from this N2 epoch to the N2/Wake transition (see below) |
-|`NREM2WAKE_TOTAL`| Total number of contiguous N2 epochs until a Wake transition (see below) |
+| | | 
+|`TR_NR2R` | Number of epochs from this NREM epoch to a REM transition (see below) |
+|`TOT_NR2R` | Total number of contiguous NREM epochs followed by REM (see below) |
+|`TR_NR2W` | Number of epochs from this NREM epoch to a wake transition (see below) |
+|`TOT_NR2W` | Total number of contiguous NREM epochs followed by wake (see below) |
+| ... | _Similar `TR_` and `TOT_` variables defined for other transitions |
 | | |
 |`CYCLE`| Cycle number, if this epoch is in a sleep cycle | 
 |`CYCLE_POS_ABS`| Absolute position of this epoch in the current NREM cycle (mins) |
@@ -210,12 +223,21 @@ Information on each NREM sleep cycle (strata: `C`)
 | `NREMC_REM_MINS` | Duration of REM in this cycle (mins) |
 | `NREMC_OTHER_MINS` | Minutes of wake and unscored epochs |
 
+Transition probabilities (strata: `PRE` x `POST`)
+
+| Variable | Description |
+| --- | --- |
+| `N` | Count of transitions | 
+| `P` | Joint probability |
+| `P_PRE_COND_POST` | Conditional probability P( pre stage | post stage ) |
+| `P_POST_COND_PRE` | Conditional probability P( post stage | pre stage ) |
+
 
 <h5>Example</h5>
 
 Here we run `HYPNO` on `nsrr02` from the [tutorial](../tut/tut1.md) data:
 ```
-luna s.lst nsrr02 -o out.db -s "HYPNO" 
+luna s.lst nsrr02 -o out.db -s HYPNO epoch 
 ```
 
 The baseline, individual-level output for `HYPNO` contains summaries
@@ -323,32 +345,94 @@ average of these scores.  Epochs that are, e.g., less than -0.5 might
 be called _descending_, whereas epochs that are greater than +0.5
 might be called _ascending_.
 
+__Transition and flanking epoch defintions:__ 
 
-__Stage transition metrics:__ Luna currently has a set of somewhat
-idiosyncratic and incomplete stage transition metrics, that were
-implemented for the specific purpose of considering transitions out of
-N2 sleep into REM or wake.  As they stand, they are unlikely to be of
-use for most users, but are noted here for completeness.  _In the
-future we will add more complete epoch-level metrics and individual
-summaries (i.e. a basic transition matrix)._ As it stands, for N2
-epochs followed by REM, `NREM2REM` shows the number of N2 epochs until
-a REM epoch; `NREM2REM_TOTAL` shows the total number of contiguous N2
-epochs up until that point.  The N2/wake variables are defined
-similarly.
+The epoch-level variables `TR_NR2R`, `TR_NR2W`, etc, coumt the number
+of epochs of NREM sleep remaining until a transition to some other state (REM or wake respectively).
+Similar variables are defined for transitions from REM and wake.   The corresponding `TOT_` variables indicate
+the total number of NREM epochs in that segment - i.e. and so can be used to select "stable" periods of some state
+of a minimum duration prior to a transition to some other state.   As noted above, the `HYPNO` option `req-pre-post`
+option can be used to specify a minimum duration of the _post_ stage in order to trigger these flags; by default this is 4 epochs (2 minutes).
+That is, is epoch 1227 below was in fact back to `N2` sleep, then the command would not have flagged these earlier N2 epochs as being
+_prior to wake_.
 
 ```
- STAGE   NREM2REM   NREM2REM_TOTAL
-  ..............
-  ... cont'd ...
-  ..............
-    REM         0                0
-  NREM2         5                5
-  NREM2         4                5
-  NREM2         3                5
-  NREM2         2                5
-  NREM2         1                5
-    REM         0                0
-  ..............
-  ... cont'd ...
-  ..............
+     E       STAGE   TOT_NR2R  TOT_NR2W   TR_NR2R   TR_NR2W
+     ...
+     1220    N2      0         22         0         5
+     1221    N2      0         22         0         4
+     1222    N2      0         22         0         3
+     1223    N2      0         22         0         2
+     1224    N2      0         22         0         1
+     1225    W       0         0          0         0
+     1226    W       0         0          0         0
+     1227    W       0         0          0         0
+     1228    W       0         0          0         0
+     1229    W       0         0          0         0
+     ...
 ```
+
+To illustarte the use of the _flanking_ similar epochs: 
+
+
+```
+      E       FLANKING_ALL    FLANKING_MIN    STAGE
+      ...
+      648     2               0               N2
+      649     2               0               N2
+      650     3               0               W
+      651     3               1               W
+      652     3               0               W	
+      653     1               0        	      N2
+      654     1       	      0       	      W	
+      655     15      	      0       	      N2
+      656     15      	      1       	      N2
+      657     15      	      2       	      N2
+      658     15      	      3       	      N2
+      659     15      	      4       	      N2
+      660     15      	      5       	      N2
+      661     15      	      6       	      N2
+      662     15      	      7       	      N2
+      663     15      	      6       	      N2
+      664     15      	      5       	      N2
+      665     15      	      4       	      N2
+      666     15      	      3       	      N2
+      667     15      	      2       	      N2
+      668     15      	      1       	      N2
+      669     15      	      0       	      N2
+      670     40      	      0       	      N3
+      671     40      	      1       	      N3
+      672     40      	      2       	      N3
+...
+```
+
+i.e. in the above, we see a group of 15 N2 epochs (thus `FLANKING_ALL` is 15 for those N2 epochs); the `FLANKING_MIN` essentially shows how close
+each of those N2 epochs is to some other non-N2 epoch.   Thus can be used to select out epochs that fulfil certain criteria, i.e. if one then wants
+to look at other epoch-level signal properties as a function of stable stage and/or stage transitions.    The above was run with the option `flanking-collapse-nrem=F`
+which enforces a distinction between N1, N2 and N3 epochs.   The default is actually to treat these all as similar (for the purpose of evaluating flanking epochs only), i.e. without the above option, the output for these epochs would instead be:
+
+```
+       E       FLANKING_ALL    FLANKING_MIN    STAGE
+       ...
+       654     1               0               W 
+       655     80      	       0       	       N2
+       656     80      	       1       	       N2
+       657     80      	       2       	       N2
+       658     80      	       3       	       N2
+       659     80      	       4       	       N2
+       660     80      	       5       	       N2
+       661     80      	       6       	       N2
+       662     80      	       7       	       N2
+       663     80      	       8       	       N2
+       664     80      	       9       	       N2
+       665     80      	       10      	       N2
+       666     80      	       11      	       N2
+       667     80      	       12      	       N2
+       668     80      	       13      	       N2
+       669     80      	       14      	       N2
+       670     80      	       15      	       N3
+       671     80      	       16      	       N3
+       672     80      	       17      	       N3
+       ...
+```
+i.e. implying a much larger group of 80 NREM epochs (which go way beyond epoch 672 here).

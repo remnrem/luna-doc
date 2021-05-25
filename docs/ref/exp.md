@@ -11,39 +11,30 @@
 
 |Command |Description |	       
 |---|---|
-| [`ICA`](#ica)    | Independent component analysis |  
-| [`CLOCS`](#clocs)    | Specify channel topographic locations |
-| [`INTERPOLATE`](#interpolate)    | Spherical spline interpolation |
 | [`L1OUT`](#l1out)    | Leave-one-out interpolation-based signal check |
-| [`SL`](#sl) | Surface Laplacian spatial filter |
 | [`EMD`](#emd)    | Empirical mode decomposition |
 | [`ED`](#ed)      | Diagnostic for electrical bridging |
 | [`POL`](#pol)    | Polarity check heuristic for sleep EEG |
 | [`FIP`](#fip)    | Frequency-interval plots | 
-| [`EXE`](#exe)    | Epoch-wise distance/similarity matrix | 
-| [`TSLIB`](#tslib) | Build library for SSS |
-| [`SSS`](#sss) | Simple sleep stager | 
+| [`HR`](#hr)                 | Estimate per-epoch heart rate from ECG |
+| [`SPIKE`](#spike)           | Create a synthetic signal by combining part of one signal with another |
+| [`ZR`](#zr)   |  Calculate per-epoch Z-ratio |
 
 
-## `ICA`
 
-_Independent components analysis_
+<h5>Parametes</h5>
 
-To be completed: a wrapper around the
-[fastICA](https://research.ics.aalto.fi/ica/fastica/) C/C++ package,
-to provide
-[ICA](https://en.wikipedia.org/wiki/Independent_component_analysis)
-functionality.
+| Option | Description | 
+| ---- | ---- | 
+| `signal` | Specify which channels/signals to include |
 
+<h5>Outputs</h5>
 
-## `CLOCS`
+_to be completed_
 
-_Specify channel topographic locations_
+<h5>Example</h5>
 
-
-## `INTERPOLATE`
-
-_Spherical spline interpolation_
+_to be completed_
 
 
 ## `L1OUT`
@@ -51,19 +42,12 @@ _Spherical spline interpolation_
 _Leave-one-out interpolation-based signal check_
 
 
-## `SL`
-
-_Surface Laplacian spatial filter_
-
-
 ## `EMD`
 
 _Empirical mode decomposition_
 
-
 Empirical mode decomposition, or the Hilbert-Huang transform
-(described
-[here](https://en.wikipedia.org/wiki/Hilbert%E2%80%93Huang_transform))
+(described [here](https://en.wikipedia.org/wiki/Hilbert%E2%80%93Huang_transform))
 
 ## `ED`
 
@@ -88,21 +72,37 @@ _Frequency-interval plots_
 Experimental method, to be completed.
 
 
-## `EXE`
+## `HR`
 
-_Calculates an epoch-by-epoch permutation distribution entropy similarity matrix_
+_A modified Pan-Tompkins algorithm for detect R peaks in the ECG_
 
-To be completed.
+_to be completed_
 
-## `TSLIB`
 
-_Generates a time-series libary to be used with the [`SSS`](#sss)_
+## `SPIKE`
 
-To be completed.
+_Merges two signals_
 
-## `SSS`
+| Parameter | Example | Description |
+| ---- | ---- | ---- |
+|`from` | | Original _from_ signal |
+|`to`   | | Original _to_ signal |
+|`new`  | | Label for new signal|
+|`wgt`  | | Weight | 
 
-_Simple Sleep Stager_
+_to be completed_
 
-A basic k-NN (k-nearest neighbor algorithm) for supervised sleep stage classificaiton.
+## `ZR`
 
+_Calculates per-epoch Z-ratio_
+
+Implementation of a simple heuristic designed to index sleep depth, as
+described
+[here](https://www.ncbi.nlm.nih.gov/pubmed/8746389). Requires epoched
+30-second EEG data.  It is based on frequency ranges, which are
+different from Luna's default band definitions:
+
+- delta: 0.5 to 2hz
+- theta: 2.5 to 7.5 Hz
+- alpha: 8 to 12.5 Hz
+- beta: 13 to 30 Hz

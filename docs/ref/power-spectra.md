@@ -48,7 +48,7 @@ of the epoch-level estimates.
 | `epoch` | `epoch` | Output epoch-level band power estimates |
 | `epoch-spectrum` | `epoch-spectrum` | Output epoch-level power spectra |
 | `dB` | `dB` | Give power in dB units |
-| `bin` | `bin=1` | Set bin size for power spectra (default is 0.5 Hz, 0 means no binning) |
+| `peaks` | `peaks` | Reports statistics on extreme peaks/spikes in the PSD |
 
 In addition to the primary parameters above, there are a number of
 other, more detailed parameters (that can probably be ignored by most
@@ -70,6 +70,13 @@ users), as described in this table:
     If the `EPOCH` size is set to a small value (i.e. under 4
     seconds) you will need to adjust the parameters of Welch's method
     accordingly.
+
+<h6>Cache options</h6>
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+|`cache-metrics` | `cache-metrics=c1`  | Cache `PSD` by `F` and `CH` (e.g. for `PSC`) |
+
 
 <h5>Band definitions</h5>
 
@@ -205,9 +212,9 @@ To look at per-epoch estimates of band power for all N2 and N3 sleep:
 luna s.lst 2 sig=EEG -o out2.db -s "MASK if=wake & RE & PSD epoch"
 ```
 
-For a change, here we'll use [_lunaR_](../ext/R.md) to directly load
+For a change, here we'll use [_lunaR_](../ext/R/index.md) to directly load
 `out2.db` into the [R statistical package](https://www.r-project.org).
-If you have R and [lunaR](../ext/R.md) installed, then at the R prompt:
+If you have R and [lunaR](../ext/R/index.md) installed, then at the R prompt:
 
 ```
 library(luna)
@@ -279,19 +286,27 @@ domain, along with considerations for specifying the time half
 bandwidth product (`nw`) and the number of tapers (`t`). (By default,
 `MTM` will always use `2nw-1` tapers.)
 
+As currently specified, the `MTM` command does not use the standard epoch mechanism for output. Rather,
+it is based on the concept of _segments_, which define the window of spectral analysis.  These may be much smaller than a typical
+epoch (e.g. 1 second) and one may wish to have highly overlapping segments in a sliding-window style of analysis.   Because of this,
+it is more efficient (internally) to use a different mechanism.  By default, segments are defined to be 30 seconds, and to
+step in increments of 30 seconds, so for all intents and purposes, this will be identical to (default) epoch specification. 
+
 <h5>Parameters</h5>
 
 | Parameter | Example | Description |
 | ----- | ------ | ------ |
-| `sig`   | `sig=C3,C4` | Analysis of only these signals |
-| `epoch` | `epoch` | Perform epoch-level as well as whole-signal analyses |
-| `epoch-only`| `epoch-only` | Only perform epoch-level analyses |
-| `nw`    | `nw=4` | Time half bandwidth product (default 3, typically: 2, 5/2, 3, 7/2, or 4) | 
-| `t`     | `t=7` | Number of tapers (default 2*`nw`-1, i.e. 5) |
-| `max`   | `max=25` | Maximum frequency for power spectra (default is 20Hz) |
-| `bin`   | `bin=1` | Bin size for power spectra |
-| `full-spectrum` | `full-spectrum` | Report the full spectra rather than binning (same as `bin=0`) |
-| `dB`    | `dB` | Report power in dB units |
+| `sig`   | `C3,C4` | Which signals to analyse |
+| `epoch` |  | Report epoch-level results (nb. actually _segments_, see above) |
+| `nw`    | `4` | Time half bandwidth product (default 3, typically: 2, 5/2, 3, 7/2, or 4) | 
+| `t`     | `7` | Number of tapers (default 2*`nw`-1, i.e. 5) |
+| `segment-sec` | 30 | Segment size (default 30 seconds) |
+| `segment-inc` | 30 | Segment increment/step (default 30 seconds) |
+| `min`   | `0.5` | Maximum frequency for power spectra (default is 20Hz) |
+| `max`   | `25` | Maximum frequency for power spectra (default is 20Hz) |
+| `dB`    |   | Report power in dB units |
+| `dump-tapers` | | Report the taper coefficients in the output |
+| `mean-center` | | Mean center segments prior to analysis | 
 
 <h5>Output</h5>
 
@@ -301,51 +316,50 @@ Whole-signal power spectra (strata: `CH` x `F`)
 | ----- | ----- | 
 | `MTM` | Absolute spectral power via the multitaper method |
 
-Epoch-level power spectra (potion: `epoch` or `epoch-only`, strata: `E` x `CH` x `F`)
+
+Epoch-level (_segment_) power spectra (option: `epoch`, strata: `SEG` x `CH` x `F`)
 
 | Variable | Description |
 | ----- | ----- | 
-| `MTM` | Absolute spectral power via the multitaper method |
+| `MTM` | Spectral power via the multitaper method |
+
 
 <h5>Example</h5>
 
-
-To compare results for the N2 power spectra, from `PSD` and `MTM`
-commands executed on the second individual from the tutorial
-(`nsrr02`).  Here we'll use _lunaR_ (instead of the command-line version, _lunaC_)
-for this example (it could be run in either).  In R:
+To compare results for the N2 power spectra up to 20 Hz, from `PSD` and `MTM`
+for the three tutorial individuals:
 
 ```
-sl <- lsl( "s.lst" ) 
+luna s.lst -o out.db -s ' MASK ifnot=NREM2
+                        & RE
+			& PSD sig=EEG dB spectrum max=20
+			& MTM sig=EEG dB tw=15 max=20'
+```
 
-lattach( sl , "nsrr02" ) 
-
-k <- leval( "MASK ifnot=NREM2 & RE & PSD sig=EEG bin=0.5 spectrum & MTM sig=EEG bin=0.5" )
-
-luna s.lst -o out.db -s "MASK ifnot=NREM2 & RE & PSD sig=EEG bin=0.5 spectrum dB & MTM sig=EEG bin=0.5 dB" 
-
+This gives some output describing the properties of the MT analysis in the console:
+```
+ CMD #4: MTM
+   options: dB=T max=20 sig=EEG tw=15
+  assuming all channels have the same sample rate of 125Hz:
+    time half-bandwidth (nw) = 15
+    number of tapers         = 29
+    spectral resolution      = 1Hz
+    segment duration         = 30s
+    segment step             = 30s
+    FFT size                 = 4096
+    number of segments       = 375
+    adjustment               = none
+  processed channel(s): EEG
 ```
 
 ```
 k <- ldb( "out.db" )
 ```
-```
-read data on 3 individuals
-```
-
-```
-lx(k)
-```
-```
-MASK : EPOCH_MASK 
-MTM : CH_F 
-PSD : CH B_CH CH_F 
-RE : BL 
-```
 
 ```
 mtm <- lx( k , "MTM" , "CH" , "F" )
 psd <- lx( k , "PSD" , "CH" , "F" )
+
 ```
 
 ```
@@ -361,35 +375,55 @@ legend(12,20,c("MTM","PSD"),fill=c("purple","orange"))
 
 ![img](../img/mtm1.png)
 
+
 As expected, in this particular scenario and with long signals, both
-methods produce similar results.  Note the difference in the first
-plot (`nsrr01`) at the lower frequency range is due to the slightly
-different way in which Luna estimates whole-signal (or, in this case,
-all-N2) power: for `PSD`, these estimates are the mean of per-epoch
-estimates, whereas they are calculated directly for `MTM`.  The former
-approach implicitly removes any gross trends across the night.
-Naturally, it is easy to take the mean of per-epoch MTM estimates, or
-to apply other methods such as detrending or a high-pass filter to
-remove these very slow components, if so desired.  In the future,
-we'll add extended tutorial-like work-cases to this website, to
-further explore the properties of these approaches on real data.
+methods produce similar results.
 
-----
+------
 
-As a second example: here is an application of MTM on a smaller
+As a second example, here is a whole-night MT spectrogram, performed within lunaR:
+
+```
+library(luna)
+lattach( lsl( "s.lst" ) , 1 ) 
+k <- leval( "MTM sig=EEG tw=15 max=30 epoch dB" ) 
+```
+
+Examing the output:
+
+```
+lx(k)
+```
+```
+MTM : CH_F CH_F_SEG 
+```
+
+And plotting a heatmap:
+
+```
+d <- k$MTM$CH_F_SEG
+lheatmap( d$SEG , d$F , d$MTM ) 
+```
+
+![img](../img/mtm3.png)
+
+------
+
+As a third example: here is an application of MTM on a smaller
 segment of data (a single epoch), which shows sleep spindles in the
 MTM spectrogram (plotting the results in the range of 8 to 20 Hz), generated by the commands:
 
 ```
-EPOCH dur=2.5 inc=0.02 & MTM epoch nw=5 max=30 bin=0 dB
+MTM segment-sec=2.5 segment-inc=0.02 epoch nw=5 max=30 dB
 ```
 
-Note the use of a small (2.5 seconds) epoch size, which is shifted
+Note the use of a small (2.5 seconds) segment size, which is shifted
 only 0.02 seconds at a time, and so gives a considerable smoothing of
 estimates in the time domain (which may or may not be desirable,
 depending on the goal of the analysis.)
 
 ![img](../img/mtm2.png)
+
 
 
 ## `MSE`
@@ -495,7 +529,7 @@ representation of the EDF, with `_hilbert_mag` and (optionally)
 
 <h5>Example</h5>
 
-Using [_lunaR_](../ext/R.md), with `nsrr02` attached, we will use the filter-Hilbert method to 
+Using [_lunaR_](../ext/R/index.md), with `nsrr02` attached, we will use the filter-Hilbert method to 
 get the envelope of a sigma-filtered EEG signal.  After attaching the sample, we then drop all signals
 except the one of interest:
 
@@ -666,7 +700,7 @@ echo "fc=11 cycles=12 fs=200" | luna --cwt -o out.db
 echo "fc=15 cycles=12 fs=200" | luna --cwt -a out.db 
 ```
 
-Using [_lunaR_](../ext/R.md) to view the output:
+Using [_lunaR_](../ext/R/index.md) to view the output:
 
 ```
 k <- ldb("out.db")
@@ -748,7 +782,7 @@ luna s.lst sig=EEG -o out.db
       & PSD spectrum"
 ```
 
-Using [_lunaR_](../ext/R.md) to visualize the normalized and raw power spectra (in R):
+Using [_lunaR_](../ext/R/index.md) to visualize the normalized and raw power spectra (in R):
 
 ```
 k <- ldb( "out.db" )
@@ -840,7 +874,7 @@ the _in-memory_ representation of the signal.
 !!! note 
     Given that this is not something one typically wants to
     perform on raw physiological signals, a more common use-case may
-    be via [_lunaR_](../ext/R.md) however, where the `ldenoise()`
+    be via [_lunaR_](../ext/R/index.md) however, where the `ldenoise()`
     function provides a simple interface for _any_ time series.  
     It is mentioned here only for completeness.
 
@@ -851,7 +885,7 @@ the _in-memory_ representation of the signal.
 | `sig` | `sig=EEG` | Optional specification of signals (otherwise applied to all signals) |
 | `lambda` | `lambda=10` | Smoothing parameter (0 to infinity) |  
 
-See the description of [`ldenoise()`](../ext/R.md#ldenoise) for using
+See the description of [`ldenoise()`](../ext/R/ref.md#ldenoise) for using
 this function with _lunaR_.  Higher values of _lambda_ put more weight
 on minimizing variation in the new signal, i.e. producing a more
 flattened representation.  The exact choice of _lambda_ will depend on
@@ -864,7 +898,7 @@ No output other than modifying the _in-memory_ representation of the signal.
 
 <h3>Example</h3>
 
-Using [_lunaR_](../ext/R.md) to plot delta power across sleep epochs
+Using [_lunaR_](../ext/R/index.md) to plot delta power across sleep epochs
 and fit a de-noised line using `ldenoise()` (which invokes `TV`), to the 
 `nsrr02` individual from the [tutorial](../tut/tut1.md) dataset:
 
@@ -880,7 +914,7 @@ d <- k$PSD$B_CH_E
 d <- d[ d$B == "DELTA" , ] 
 ```
 
-Also get sleep stages via the [`lstages()`](../ext/R.md#lstages) function:
+Also get sleep stages via the [`lstages()`](../ext/R/ref.md#lstages) function:
 
 ```
 ss <- lstages()
@@ -893,7 +927,7 @@ d1 <- ldenoise( d$PSD , lambda = 10 )
 ```
 
 Plotting the original and de-noised versions, also using the
-convenience [`lstgcols()`](../ext/R.md#lstgcols) function:
+convenience [`lstgcols()`](../ext/R/ref.md#lstgcols) function:
 
 ```
 plot( d$PSD, col=lstgcols(ss), pch=20, xlab="Sleep Epochs", ylab="Delta power (dB)" ) 

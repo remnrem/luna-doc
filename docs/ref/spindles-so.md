@@ -155,6 +155,14 @@ Most users will not need to alter these.
 | `win`    | `win=0.2` | Smoothing window for wavelet coefficients (default 0.1 seconds) |
 | `local`  | `local=120` | Use local window (in seconds) to define baseline for spindle detection | 
 
+<h6>Cache options</h6>
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+|`cache` | `cache=w1` | Cache CWT coefficients per sample point (e.g. for `TLOCK`) |
+|`cache-peaks` | `cache-peaks=p1` | Cache spindle peaks (sample points) (e.g. for `TLOCK`) |
+|`cache-metrics` | `cache-metrics=c1`  | Cache (currently) `DENS`, `DUR`, `AMP` and `ISA_S` (e.g. for `PSC`) |
+
           
 <h3>Outputs</h3>
 
@@ -271,8 +279,8 @@ nsrr02  EEG   11   1.378    0.847   11.280
 nsrr02  EEG   15   2.090    0.847   13.475
 ```
 
-We will further query the output using [_lunaR_](../ext/R.md) and
-[`ldb()`](../ext/R.md#ldb). In R:
+We will further query the output using [_lunaR_](../ext/R/index.md) and
+[`ldb()`](../ext/R/ref.md#ldb). In R:
 
 ```
 library(luna)
@@ -363,7 +371,7 @@ spindle corresponds to a brief increase in sigma power:
 ![img](../img/spindle.png)
 
 !!! note
-    Primarily in the context of [_lunaR_](../ext/R.md), in the near future
+    Primarily in the context of [_lunaR_](../ext/R/index.md), in the near future
     we'll be adding tutorials and helper functions to facilitate automatically making
     these types of plots quickly for all spindles in a dataset.
 
@@ -438,7 +446,7 @@ artifact detection in place), adding the `empirical` threshold:
 luna s.lst sig=EEG -o out.db -s "MASK ifnot=NREM2 & RE & SPINDLES fc=11,15 empirical" 
 ```
 
-In [_lunaR_](../ext/R.md), we use [`ldb()`](../ext/R.md#ldb) to load the resulting `out.db` file:
+In [_lunaR_](../ext/R/index.md), we use [`ldb()`](../ext/R/ref.md#ldb) to load the resulting `out.db` file:
 
 ```
 k <- ldb("out.db")
@@ -596,7 +604,7 @@ QC filtering, so that we can see what some spindles that would not otherwise hav
 with the default threshold (`q=0`) look like.  Finally, the `ftr` option writes out two files
 that detail where spindles occur.
 
-In [_lunaR_](../ext/R.md):
+In [_lunaR_](../ext/R/index.md):
 ```
 library(luna)
 lattach( lsl( "s.lst" ) , 2 )
@@ -659,7 +667,7 @@ lo15 <- sample(d$SPINDLE[ d$Q < 0 & d$F == 15 ])[1:5]
 hi15 <- sample(d$SPINDLE[ d$Q > 1 & d$F == 15 ])[1:5]
 ```
 
-Using [_lunaR_](../ext/R.md) functions, we can then write a function
+Using [_lunaR_](../ext/R/index.md) functions, we can then write a function
 to plot the raw EEG signal for each spindle, with a 4-second flanking
 window on either side:
 
@@ -961,7 +969,7 @@ nsrr02	EEG	15	4	14.015
 nsrr02	EEG	15	5	14.181
 ```
 
-To plot the mean signal time-locked to each spindle peak (in [_lunaR_](../ext/R.md)):
+To plot the mean signal time-locked to each spindle peak (in [_lunaR_](../ext/R/index.md)):
 
 ```
 k <- ldb("out.db")
@@ -979,11 +987,10 @@ for (f in c(11,15)) {
 ![img](../img/tlock.png)
 
 
-
 ### Annotations
 
 Luna can generate [FTR](annotations.md#ftr-files) files representing the spindles detected in
-a given run.  These can subsequently be attached to an EDF via [_lunaR_](../ext/R.md), for example,
+a given run.  These can subsequently be attached to an EDF via [_lunaR_](../ext/R/index.md), for example,
 in order to visualize spindles, as in the examples [above](#quality-metrics).
 
 <h5>Parameters</H5>

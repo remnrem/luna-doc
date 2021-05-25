@@ -6,6 +6,10 @@ workflows, of various features of Luna, as well as their application
 to [NSRR](../nsrr.md) and other data.
 
 
+- [Artifact rejection for hdEEG sleep data](chep.md), by Nataliia Kozhemiako (May 2021)
+
+- [Working with discontinuous EDFs and annotations](annots.md), by Shaun Purcell (February 2021)
+
 - [Cox & Fell's _Analyzing human sleep EEG_](rcox.md), by Shaun Purcell & Roy Cox (August 2020)
 
 - [NSRR whole-dataset visualizations](dataplots.md), by Shaun Purcell (January 2020)
@@ -15,7 +19,6 @@ to [NSRR](../nsrr.md) and other data.
 - [EEG polarity issues in the NSRR](nsrr-polarity.md), by Shaun Purcell and Michael Prerau (April 2019)
 
 - [UMAP clustering of NSRR data](nsrr-umap.md), by Shaun Purcell (April 2019)
-
 
 
 

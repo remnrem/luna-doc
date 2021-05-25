@@ -45,7 +45,7 @@ distribution of cross-channel correlations (`C3` by `C4`, each
 referenced to the contralateral mastoid) in individuals from the above
 studies.  (Actually, the _MESA_ study is not included in this first
 set of correlational analyses, as it does not have a `C3` channel.)
-Using the [`CORREL`](../ref/cross-signal-analyses.md#correl) command, we
+Using the [`CORREL`](../ref/cc.md#correl) command, we
 observed the following:
 
 ![img](../img/pol-correl1.png)
