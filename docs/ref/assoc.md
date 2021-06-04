@@ -289,7 +289,7 @@ ltopo.xy( c=d$CH, x=d$F, y=d$S, z=d$S, pch=20, col=rbpal, cex=0.4, xline=15, yli
 ```
 then produces this plot where the Y-axis and also color-scaling show this scaled verson of the empirical significance:
 
-![img](../../img/cpt1.png)
+![img](../img/cpt1.png)
 
 Directly examining the `PC` column, we see there are 46 variables significant at 0.05 after correction:
 ```

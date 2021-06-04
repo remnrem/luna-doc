@@ -124,7 +124,7 @@ We can visualize the PSD of the ICs by extracting the information in
 destrat out.db +PSD -r F CH > psd.out
 
 ```
-combined with the topographics of the ICs, and then use lunaR's [`ltopo.rb()`](../ext/R/vis.md#ltoporb) or similar functions to view these:
+combined with the topographics of the ICs, and then use lunaR's [`ltopo.rb()`](../ext/R/viz.md#ltoporb) or similar functions to view these:
 
 ![img](../img/ica/ica.png)
 

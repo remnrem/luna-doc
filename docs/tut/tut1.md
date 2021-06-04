@@ -9,7 +9,7 @@ back over the same material, but aiming to give more context and
 detail.  The [third section](tut3.md) extends the range of commands
 towards some more genuinely useful analyses of the sleep EEG.  The
 [final section](tut4.md) performs the same steps but using
-[_lunaR_](../ext/R.md) instead of [_lunaC_](../luna/args.md).   
+[_lunaR_](../ext/R/index.md) instead of [_lunaC_](../luna/args.md).   
 
 !!! note "Data used in this tutorial"
     This tutorial, based on
