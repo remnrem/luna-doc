@@ -8,6 +8,8 @@ site_author: S. M. Purcell
 
 theme:
     name: 'material'
+    logo: 'img/logo.png'
+    favicon: 'img/favicon.png'
     palette:
       primary: 'indigo'
       accent: 'indigo'
