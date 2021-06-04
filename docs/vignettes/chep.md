@@ -19,8 +19,14 @@ visualization) as applied to a hdEEG sleep study.
 We will use a 57-channel EEG dataset that combines manually-scored N2
 and N3 sleep stages (in 30-second epochs).  These EEG data are
 referenced to linked mastoids and have been previously band-pass
-filtered 0.3-35 Hz and downsampled to 100 Hz.  The list of channels,
-length of the recording, the sampling rate can be checked
+filtered 0.3-35 Hz and downsampled to 100 Hz. 
+
+| ZIP archive (180.7Mb) containing the EDF can be downloaded here |
+| --------------------------------------------------------------- |
+| <http://zzz.bwh.harvard.edu/dist/luna/chep-vig.zip>             |
+
+After downloading and unzipping the data, we can check the list of channels,
+length of the recording, the sampling rate 
 with [`DESC`](../ref/summaries.md#desc) command:
 
 ```
@@ -206,9 +212,7 @@ the bad channels to be re-interpolated.   We'll make two changes to the above Lu
 
 ```
 luna Subj1.edf -o chep_bchs.db -s ' CHEP-MASK ch-th=2
-                                  & CHEP channels=0.3
-                                         black-and-white
-                                         save=bad.chep'
+                                  & CHEP channels=0.3 black-and-white save=bad.chep'
 ```
 
 
@@ -326,17 +330,16 @@ mask as two intrinsically different entities, but where the latter can be set th
 by using the `CHEP epochs` command:
 
 ```
-luna Subj1.edf -o ss_psd4.db
-               -s ' CHEP-MASK ch-th=2
-                  & CHEP channels=0.3
-                  & CLOCS file=clocs 
-                  & INTERPOLATE
-                  & CHEP clear
-                  & CHEP-MASK ep-th=4,4
-                  & CHEP epochs dump 
-                  & RESTRUCTURE
-                  & SIGSTATS epoch
-                  & PSD spectrum max=35'
+luna Subj1.edf -o ss_psd4.db -s ' CHEP-MASK ch-th=2
+                                & CHEP channels=0.3
+                                & CLOCS file=clocs 
+                                & INTERPOLATE
+                                & CHEP clear
+                                & CHEP-MASK ep-th=4,4
+                                & CHEP epochs dump 
+                                & RESTRUCTURE
+                                & SIGSTATS epoch
+                                & PSD spectrum max=35'
 ```
 
 !!! Note "Using `TAG`s to track output"
