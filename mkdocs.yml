@@ -8,6 +8,11 @@ site_author: S. M. Purcell
 
 theme:
     name: 'material'
+
+    features:
+        - navigation.tabs
+        - navigation.top
+    
     palette:
       primary: 'indigo'
       accent: 'indigo'

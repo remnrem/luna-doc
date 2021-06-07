@@ -9,9 +9,23 @@ Current stable version: __v0.25.5__ (main [downloads](download/index.md) page)
 
 ## v0.26
 
+_New commands_
+
+ - new `REBASE` command, which adopts the `SOAP`](ref/suds.md#soap) framework to (probabilistically) re-estimate sleep stages using a different epoch duration (e.g. to translate from 20-second manually scored datasets to 30-second epochs) given a) manual staging in the original epoch duration, and b) one or more signals (i.e. EEG) that are expected to encode sleep stage information well (i.e. have a high kappa from the original `SOAP` command).
+
+_Modifications and fixes_
+
+ - `MS` has new `add-spc-sig` option to add spatial correlations as new EDF channels (instead of 0/1 binary variable, as per `add-sig`)
+
+- `MS` has new `canonical` option to specify a file
+
+- `MS` solutions now always have a header row; you cannot extract based on sol=file,A,B,C,D ; also, 'unassigned' states are labeled 1,2,3, etc not A,B,C,...
+
+
 - [ midflight ] adding `ORDER` command (or that command-line 'sig' sets order)
 
 - loops in scripts [todo]
+
 - channel range selector [C3][C4] .. use same syntax as [C3][1..4] .. will have to wait and expand on a per-EDF basis ... 
 
 - add EDF+ to EDF converter  (zero-pad and add MASK for discontinuities)

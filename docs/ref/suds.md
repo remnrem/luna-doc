@@ -8,6 +8,7 @@ _Prediction and evaluation of sleep stages_
 | Command | Description | 
 | ---- | ------ | 
 | [`SOAP`](#soap) | Single-observation accuracies and probabilities |
+| [`REBASE`](#rebase) | Use SOAP to translate between epoch lengths (e.g. 20 to 30 second manual staging) | 
 | [`RESOAP`](#resoap) | Iterative SOAP fitting for semi-automated staging | 
 | [`MAKE-SUDS`](#make-suds) | Create a training library given staged data |
 | [`--copy-suds`](#copysuds) | Copy/reformat a training library |
@@ -30,6 +31,22 @@ _to be completed_
 
 _to be completed_
 
+
+## REBASE
+
+_Translate existing (manual) staging between different epoch durations (e.g. from 20 second to 30 seconds epoch) using the SOAP model_
+
+<h5>Parameters</h5>
+
+_to be completed_
+
+<h5>Output</h5>
+
+_to be completed_
+
+<h5>Example</h5>
+
+_to be completed_
 
 
 ## RESOAP

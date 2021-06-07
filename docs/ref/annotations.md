@@ -782,6 +782,7 @@ When writing `.annot` files, Luna always adheres to a standard, full specificati
 
 This file can be iether `.annot` or (Luna) `.xml` format.
 
+To output only a subset of annotations, add the `annot` option to `WRITE-ANNOTS`.
 
 ## SPANNING
 
