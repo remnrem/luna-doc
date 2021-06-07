@@ -152,7 +152,7 @@ types of data/different modes of artifact.
 
 Finally, the see the underlying Hjorth statistics used in the outlier
 detection, you would need to use the
-[`SIGSTATS`](summaried.md#sigstats) command:
+[`SIGSTATS`](summaries.md#sigstats) command:
 
 ```
 luna s.lst 1 sig=EEG -o hjorth.db -s 'SIGSTATS sig=EEG epoch'

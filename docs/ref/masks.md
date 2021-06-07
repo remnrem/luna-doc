@@ -1112,7 +1112,7 @@ only to epochs, meaning that _all_ channels in a given epoch are
 either flagged as masked or unmasked.
 
 For high-density EEG or other types of study, this may not be optimal, particularly if one
-intends to [`INTERPOLATE`](cross-signal-analyses.md#interpolate)
+intends to [`INTERPOLATE`](spatial.md#interpolate)
 partially bad signals based on neighboring signals.  This can be
 accomplished using _CHEP_ (CHannel/EPoch) masks, to specify whether a
 given channel/epoch combination is _masked_ (i.e. bad) or _unmasked_

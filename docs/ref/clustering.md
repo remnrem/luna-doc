@@ -218,7 +218,7 @@ with a lot of recurrent artifact (right dendrogram).
 
 A second class of application is to sanity check channels from polysomnography (PSG) studies.   Different types of channels (EEG, EMG, ECG, respiratory, etc)
 will typically have somewhat distinctive _signatures_ in terms of the permutation distributions (here using a fixed sample rate across different
-channels (via the [`RESAMPLE` command](../manipulations.md#resample)) to allow distances across different types of channels:
+channels (via the [`RESAMPLE` command](manipulations.md#resample)) to allow distances across different types of channels:
 
 ![img](../img/exe8.png)
 

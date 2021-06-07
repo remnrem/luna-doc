@@ -878,7 +878,7 @@ plot( seq(1/125,30,1/125), s, type="l", ylim=c(-125, 125 ) ,
 
 
 !!! info
-    [_lunaR_](../ext/R.md) provides a far easier means to directly import raw signal data into R, that does
+    [_lunaR_](../ext/R/index.md) provides a far easier means to directly import raw signal data into R, that does
     not involve intermediate text file; we'll consider this explicitly in the [next](tut4.md) tutorial section. 
  
 
@@ -1022,7 +1022,7 @@ nsrr03  EEG   0.77        0.20
 
 Because we added the `annot` option, Luna generated some annotations
 that represent the spindle calls.  These are then saved in the final
-command, `WRITE-ANNOTS` to [.annot](../annotations.md) files.  There
+command, `WRITE-ANNOTS` to [.annot](../ref/annotations.md) files.  There
 are a large number of other options and output variables for the
 [`SPINDLES`](../ref/spindles-so.md#spindles) and other commands,
 described in the [Reference](../ref/index.md) pages of this web site.

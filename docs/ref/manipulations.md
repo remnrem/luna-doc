@@ -944,7 +944,7 @@ Main arguments
 | `align` | `align=N1,N2,N3,R,W,?` | Annotations to align epochs by |
 | `annot-out` | `annot-out=annots/^.annot` | Write (realigned) annotations | 
 
-Other arguments as required by the [`WRITE` command](../outputs.md#write)
+Other arguments as required by the [`WRITE` command](outputs.md#write)
 
 | Parameter | Description |
 | ---- |  ---- |
