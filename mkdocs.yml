@@ -1,4 +1,4 @@
-site_name: Luna
+site_name: 'Luna'
 
 site_url: http://zzz.bwh.harvard.edu/luna
 
@@ -38,9 +38,9 @@ extra_css:
   - 'stylesheets/extra.css'
       
 nav:
- - Overview: 'index.md'
-
- - Updates: 'updates.md'
+ - Home:
+     - Overview: 'index.md'
+     - Updates: 'updates.md'
 
  - Tutorial: 
      - 'Quick start': 'tut/tut1.md'
@@ -48,7 +48,12 @@ nav:
      - 'Deeper dive': 'tut/tut3.md'
      - '/R/epeat': 'tut/tut4.md'
 
- - lunaC: 'luna/args.md'
+ - lunaC:
+    - 'Overview' : 'luna/args.md'
+    - 'Output': 'luna/destrat.md'
+    - 'dmerge': 'merge/merge.md'
+    - 'dmerge example': 'merge/merge-example.md'
+
 
  - lunaR:
     - Overview: 'ext/R/index.md'
@@ -56,12 +61,7 @@ nav:
     - Reference: 'ext/R/ref.md'
     - Plotting: 'ext/R/viz.md'
     
- - Output:
-    - 'Luna output': 'luna/destrat.md'
-    - 'dmerge': 'merge/merge.md'
-    - 'dmerge example': 'merge/merge-example.md'
-    
- - Reference: 
+ - Commands:
     - 'Overview': 'ref/index.md'
     - 'Summaries': 'ref/summaries.md'
     - 'Annotations': 'ref/annotations.md'
@@ -86,19 +86,26 @@ nav:
     - 'Association' : 'ref/assoc.md'
     - 'Experimental ': 'ref/exp.md'
  
- - NSRR: 'nsrr.md'
+ - NSRR:
+    - 'Working with NSRR data' : 'nsrr.md'
+    - 'NAP web portal' : 'nap.md' 
 
- - NAP: 'nap.md' 
-
- - Vignettes: 'vignettes/index.md'
+ - Vignettes: 
+    - 'Index' : 'vignettes/index.md'
+    - 'Artifacts' : 'vignettes/chep.md'
+    - 'EDF+D & annotations' : 'vignettes/annots.md'
+    - 'Cox & Fell' : 'vignettes/rcox.md'
+    - 'Visualizing NSRR data' : 'vignettes/dataplots.md'
+    - 'Compressed EDFs' : 'vignettes/edfz.md'
+    - 'EEG polarity' : 'vignettes/nsrr-polarity.md'
+    - 'UMAP clustering' : 'vignettes/nsrr-umap.md'
 
  - Downloads:
     - 'Overview': 'download/index.md'
     - 'Binaries': 'download/exec.md'
     - 'Source': 'download/source.md'
+    - 'Docker': 'download/docker.md'
     - 'Data': 'download/data.md'
     - 'Notes': 'download/misc.md'
-
- - 'Docker': 'download/docker.md'
 
  - FAQ: 'faq.md'
