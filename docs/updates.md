@@ -21,6 +21,7 @@ _Modifications and fixes_
 
 - `MS` solutions now always have a header row; you cannot extract based on sol=file,A,B,C,D ; also, 'unassigned' states are labeled 1,2,3, etc not A,B,C,...
 
+- new `cmp-maps` command for microstates
 
 - [ midflight ] adding `ORDER` command (or that command-line 'sig' sets order)
 

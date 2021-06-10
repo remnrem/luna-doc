@@ -1548,8 +1548,8 @@ via a [parameter file](#parameter-files):
 | `alpha` | Alpha power band (default 8-12 Hz) |
 | `sigma` | Sigma power band (default 12-15 Hz) |
 | `beta`  | Beta power band (default 15-30 Hz) |
-| `gamma` | Gamma power band (default 30-1000 Hz) |
-| `total` | Total power band, denominator for relative power (default 0-1000 Hz) |
+| `gamma` | Gamma power band (default 30-50 Hz) |
+| `total` | Total power band, denominator for relative power (default 0.5-50 Hz) |
 
 For example, to change the definition of sigma power to 11 to 15 Hz (instead of 12 to 15 Hz):
 
