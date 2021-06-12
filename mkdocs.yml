@@ -41,6 +41,16 @@ nav:
  - Home:
      - Overview: 'index.md'
      - Updates: 'updates.md'
+     - Tutorial: 'tut/tut1.md'
+     - lunaC: 'luna/args.md'
+     - lunaR: 'ext/R/index.md'
+     - Commands: 'ref/index.md'
+     - NSRR: 'nsrr.md'
+     - Vignettes: 'vignettes/index.md'
+     - Downloads: 'download/index.md'
+     - FAQ: 'faq.md'
+
+ - Updates: 'updates.md'
 
  - Tutorial: 
      - 'Quick start': 'tut/tut1.md'
