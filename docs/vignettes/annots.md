@@ -743,7 +743,7 @@ N1     .      .     34    64     .
 Although there are a few workarounds possible here (e.g. setting
 epoch duration equal to 1 second, removing the first 4 seconds and
 writing a new EDF, etc), the easiest remedy is to use the new `offset`
-or `start-annot` options for the `EPOCH` command.  Rather than always
+or `align` options for the `EPOCH` command.  Rather than always
 having epochs start at the first observed record (i.e. 0 seconds in a
 continuous EDF) this starts defining epochs at some later time, still
 shifting each epoch forward by the `inc` parameter (which by
@@ -771,11 +771,11 @@ test01  9   9  20:12:40  244.00->274.00  259    244   274
 ...
 ```
 
-Alternatively, the `start-annot` option will do the same as `offset` but will automatically select the offset
+Alternatively, the `align` option will do the same as `offset` but will automatically select the offset
 to be the start time of the first instance of any of the listed annotations: i.e. here will be 4.0 when `W` occurs:
 
 ```
-luna s.lst -s ‘EPOCH start-annot=W,N1,N2,N3,R,U verbose & HYPNO’
+luna s.lst -s 'EPOCH align=W,N1,N2,N3,R,U verbose & HYPNO'
 ```
 
 ## EDF record alignment
