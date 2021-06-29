@@ -1023,10 +1023,10 @@ To extract the spindle density (count per minute, `DENS`) we use the following c
 destrat out.db +SPINDLES -r CH -c F -v DENS -p 2 
 ```
 ```
-ID      CH    DENS.F_11   DENS.F_15
-nsrr01  EEG   0.72        0.65
-nsrr02  EEG   1.36        2.22
-nsrr03  EEG   0.77        0.20
+ID     CH   DENS.F_11  DENS.F_15
+nsrr01 EEG  0.73       0.64
+nsrr02 EEG  1.29       2.06
+nsrr03 EEG  0.72       0.19
 ```
 
 Because we added the `annot` option, Luna generated some annotations
