@@ -11,9 +11,20 @@ Current stable version: __v0.25.5__ (main [downloads](download/index.md) page)
 
 _New commands_
 
- - new `REBASE` command, which adopts the `SOAP`](ref/suds.md#soap) framework to (probabilistically) re-estimate sleep stages using a different epoch duration (e.g. to translate from 20-second manually scored datasets to 30-second epochs) given a) manual staging in the original epoch duration, and b) one or more signals (i.e. EEG) that are expected to encode sleep stage information well (i.e. have a high kappa from the original `SOAP` command).
+- added `EVAL` `interval` command to generate new interval-level annotations based on eval expressions
+
+- _eval_ syntax takes `{` and `}` instead of `'` to delimit strings;  allows nesting, but can also be handy on the command line (i.e. if already using `-s ''` form)
+
+- added `drop` and `keep` to `PSC`
+
+- added `import=file.txt` command to `CACHE` to read from destrat output; can take `factros` and `v` param (as well as reqired `cache=`)
+
+- new `REBASE` command, which adopts the `SOAP`](ref/suds.md#soap) framework to (probabilistically) re-estimate sleep stages using a different epoch duration (e.g. to translate from 20-second manually scored datasets to 30-second epochs) given a) manual staging in the original epoch duration, and b) one or more signals (i.e. EEG) that are expected to encode sleep stage information well (i.e. have a high kappa from the original `SOAP` command).
 
 _Modifications and fixes_
+
+ - `.annot` format now allows key=value meta-data specified; also, you can have fewer than expected (but not more); assumes order is as header;  all
+ fields still are required to be in the header;   now WRITE-ANNOTS always writes as key=value meta data
 
  - `MS` has new `add-spc-sig` option to add spatial correlations as new EDF channels (instead of 0/1 binary variable, as per `add-sig`)
 

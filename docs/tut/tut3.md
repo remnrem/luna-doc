@@ -786,7 +786,6 @@ MASK if=wake
 RESTRUCTURE
 FILTER bandpass=0.3,35 ripple=0.02 tw=1
 ARTIFACTS mask
-RESTRUCTURE
 CHEP-MASK ep-th=3,3,3 epoch
 CHEP epochs
 DUMP-MASK
@@ -801,13 +800,24 @@ luna s.lst 1 sig=EEG -o mask.db < cmd/sixth.txt
 ```
  ... cont'd ...
  CMD #5: ARTIFACTS
- masked 12 of 887 epochs, altering 12
+   options: mask=T sig=EEG
+  masked 12 of 887 epochs, altering 12
  ..................................................................
- CMD #6: SIGSTATS
- RMS/Hjorth filtering EEG, threshold +/-3 SDs: removed 21 of 875 epochs of iteration 1
- RMS/Hjorth filtering EEG, threshold +/-3 SDs: removed 9 of 854 epochs of iteration 2
- RMS/Hjorth filtering EEG, threshold +/-3 SDs: removed 5 of 845 epochs of iteration 3
- Overall, masked 35 of 875 epochs (RMS:6, CLP:0, ACT:20, MOB:12, CMP:3)
+ CMD #6: CHEP-MASK
+   options: ep-th=3,3,3 epoch=T sig=EEG
+  within-channel/between-epoch outlier detection, ep-th = 3,3,3
+   iteration 1: removed 21 channel/epoch pairs this iteration (21 in total)
+   iteration 2: removed 9 channel/epoch pairs this iteration (30 in total)
+   iteration 3: removed 5 channel/epoch pairs this iteration (35 in total)
+ ..................................................................
+ CMD #7: CHEP
+   options: epochs=T sig=EEG
+  masking epochs with >0% masked channels: 35 epochs
+  CHEP summary:
+   35 of 887 channel/epoch pairs masked (4%)
+   35 of 887 epochs with 1+ masked channel, 35 with all channels masked
+   1 of 1 channels with 1+ masked epoch, 0 with all epochs masked
+ ..................................................................
  ... cont'd ...
 ```
 
@@ -895,7 +905,6 @@ MASK ifnot=NREM2
 RESTRUCTURE
 FILTER bandpass=0.3,35 ripple=0.02 tw=1
 ARTIFACTS mask
-RESTRUCTURE
 CHEP-MASK ep-th=3,3,3
 CHEP epoch
 RESTRUCTURE

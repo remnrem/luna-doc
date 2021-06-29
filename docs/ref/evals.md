@@ -510,7 +510,7 @@ parsed as a valid expression : yes
 return value                 : true
 return value (as T/F)        : true
 
-assigned meta-data           : J=1;K=2
+assigned meta-data           : J=true;K=2
 ```
 
 As described below, assigned variables are added as meta-data to that
