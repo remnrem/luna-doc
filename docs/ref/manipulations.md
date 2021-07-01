@@ -821,7 +821,7 @@ conflicts were found, e.g.:
   set epochs to default 30 seconds, 1186 epochs
   *** found 37 epoch(s) of 1186 with conflicting spanning annotations
   *** check that epochs and annotations align as intended
-  *** see EPOCH 'start-annot' or 'offset' options
+  *** see EPOCH 'align' or 'offset' options
 ```
 and write `CONF` variable to the standard output.
 
@@ -832,7 +832,7 @@ luna s.lst -s 'EPOCH offset=4 & HYPNO`
 ```
 or automatically with respect to a set of annotations (i.e. making the offset equal to the start of the first of these annotions encountered):
 ```
-luna s.lst -s 'EPOCH start-annot=N1,N2,N3,R,W,? & HYPNO'
+luna s.lst -s 'EPOCH align=N1,N2,N3,R,W,? & HYPNO'
 ```
 
 <h6>EDF record size and epoch duration</h6>
