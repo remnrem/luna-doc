@@ -1142,7 +1142,7 @@ mask.
 | `bad-channels` | C3,C5 | Manually specify bad channels |
 | `epochs` | 0.1,2 | Mask epochs with >10% bad channel, or 2 or more bad channels<br>(expects 0, 1 or 2 arguments) |  
 | `channels` | 0.5,10 | Mask channels with >50% bad epochs, or 10 or more bad epochs<br>(expects 1 or 2 arguments) |
-| `drop-channel` | 0.5,10 | Drop (rather than mask) channels such channels |
+| `drop-channels` | 0.5,10 | Drop (rather than mask) channels such channels |
 | `black-and-white`| | When setting bad channels, make all epochs in good channels good |
 | `dump` | | Write current CHEP mask to output |
 | `save` | `file.txt` | Write CHEP mask to `file.txt` |

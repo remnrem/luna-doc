@@ -23,6 +23,10 @@ _New commands_
 
 _Modifications and fixes_
 
+ - optionally make `CONTAINS` command skip to next EDF (rather than alter the return code) [ if option `skip` ]
+
+ - check for whether an ID contains the ID-wildcard character (by default, ^) and reports an error if it does;  added the `wildcard` option to specify an alternate character
+ 
  - `.annot` format now allows key=value meta-data specified; also, you can have fewer than expected (but not more); assumes order is as header;  all
  fields still are required to be in the header;   now WRITE-ANNOTS always writes as key=value meta data
 
