@@ -11,23 +11,6 @@ development_ and we welcome feedback.
 The
 __current release is v0.25.5__ (24-May-2021): see [here](updates.md) for
 a list of changes/additions.
-
-!!! warning "Documentation for new features"
-    This release is being posted now
-    because we wanted the relatively large number of additions and
-    improvements in the core functionality of Luna (both in terms of
-    speed and robustness) to be made available and the corresponding
-    documentation updated.  See [here](updates.md) for a full list of
-    changes. All core updates have been reflected in these documentation
-    pages.
-
-    This release also contains a number of
-    relatively new, major components (e.g. automated staging, EEG microstate
-    analysis, ICA).  The _documentation_ for many of these newer
-    components (some of which are quite involved) is currently 
-    sparse, or is effectively just a place-holder, however: we antipcate adding
-    fuller documentation and a series of vignettes in the
-    coming weeks.  
     
 ## Getting started
  

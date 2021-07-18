@@ -11,6 +11,14 @@ Current stable version: __v0.25.5__ (main [downloads](download/index.md) page)
 
 _New commands_
 
+ - need to change S2A docs
+
+ - new `ZC` zero-centre command
+ 
+ - new `HEAD` command -- shows one epoch of data (requires same SR for selected channels)
+
+ - added 1,2,5, and 10-percentiles to `STATS` 
+ 
 - added `EVAL` `interval` command to generate new interval-level annotations based on eval expressions
 
 - _eval_ syntax takes `{` and `}` instead of `'` to delimit strings;  allows nesting, but can also be handy on the command line (i.e. if already using `-s ''` form)
@@ -23,6 +31,43 @@ _New commands_
 
 _Modifications and fixes_
 
+ - PLANNED: amend annots when force-edf (from EDF+D to +C/EDF)
+ 
+ - (for .annot only) added `align-annots` option : given list of annots (or *) for all,  align-annots-on=N1,N2, etc...
+   if not specified, find first instance of this annot, then align with 1 second boundary ( or align-annots-res=X if given)
+   align /all/ annots with this offset (bound at 0)
+   - expect a subsequent EPOCH to these, then MASK then WRITE those epochs/records (i.e. skip any records beforehand) 
+
+ - added `MASK epoch=all` to set a MASK but have it all empty ; i.e. trim records not in an epoch
+ 
+ - added `skip-sl-annots` to skip all SL-attached annotations; i.e. if want to only load from a new annot file
+ 
+ - allow sample list to have a comma-delim list of annotations, or '.' to denote no data - i.e. this way we can
+   have a fixed width sample list (col = 3 ) making it easier to read; note, lunaR (lsl() is broken if < 3 cols after first five rows) 
+ 
+ - new `+` and `-` options to turn on/off includes (e.g. alias, remap) ;  note, variable must be specified *before* the relevant @include, i.e. as variables defined in left-to-right order
+ 
+- new `annot-whitelist` option which means that annots are only accepted if they appear on the remap list (either as aliases or primaries); also, `annot-unmapped` to skip if the annot IS on the whitelist
+
+ - added a check for whether there are '|' chars in annotation primary names (in a `remap`)
+ 
+ - changed `epoch-check` to accept number of .eannot epochs that are different from expected; default is 5;  only stops is absolute greater than this; otherwise writes warning to log;  i.e. set to 0 for an exact match
+ 
+ - annotation times can include AM/PM modifiers (otherwise assumed 24-hour clock)
+ 
+ - if remapping an annotation to `ABD/DEF|XYZ` form (i.e. with a / delimiter) then for class XYZ, it is set to `ABC` and instance ID is set to `DEV`.  If there was an existing instance value (non-null), a text meta-tag of `_inst=` is added.  The delimiter character can be changed with class-inst-delimiter=X; this only works for annot files currently.  
+ 
+ 
+ - added `pick` option to `SIGNALS` to pick first of pick=a,b,c that is present, and drop the rest;  can map with 'rename' to rename the pick 
+
+ - `CANONICAL` does not now need an explicit GROUP to be specified; the
+   file must still have a first col, it is just ignored now;   also, new 'drop-originals' option to drop all original (non-CANONICAL)
+    signals after making the new signals;  matches case-insentive
+ 
+ - added `combine-annots` option (which accepts a char, also :: '_' by default ) ; this makes class = class_inst (and sets inst to '.' ) 
+ 
+ - `--kmer` command takes options `req-len` (only analyse first N sequences) and `indiv-enrichment`
+ 
  - optionally make `CONTAINS` command skip to next EDF (rather than alter the return code) [ if option `skip` ]
 
  - check for whether an ID contains the ID-wildcard character (by default, ^) and reports an error if it does;  added the `wildcard` option to specify an alternate character
