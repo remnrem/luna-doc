@@ -88,7 +88,7 @@ ind <- order(chep$E, chep$CH)
 axis(2,at=seq(0,1,length.out=length(unique(chep$CH))),
      labels=unique(chep$CH[ind]), las=2 , cex.axis = 0.6) 
 title(main="CHEP mask", cex.main=2, xlab="epochs",line=0.5, cex.lab=2)
-bad_chs <- unique(chep$CH[chep$CHEP > 0])
+bad_chs <- toupper(unique(chep$CH[chep$CHEP > 0]))
 
 # extract PSD for frequency bins cleaned data
 psd_cln = d_cln$PSD$CH_F
