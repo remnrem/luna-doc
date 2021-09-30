@@ -9,6 +9,12 @@ Current stable version: __v0.25.5__ (main [downloads](download/index.md) page)
 
 ## v0.26
 
+ - fixed 'flanked=W,1' mask option 
+
+ - changed 'canonical sigs' to allow whitespace, fill in if only 3 fields give (or 4,5); respects order of canonicals (i.e. rather than alphabetical)
+  which allows 'staged' additons (i.e. map S1, then S2 then S3 = S1 - S2 ) 
+
+ 
 _New commands_
 
  - need to change S2A docs

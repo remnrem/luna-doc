@@ -49,7 +49,8 @@ nav:
      - Vignettes: 'vignettes/index.md'
      - Downloads: 'download/index.md'
      - FAQ: 'faq.md'
-
+     - Contact: 'contact.md'
+     
  - Updates: 'updates.md'
 
  - Tutorial: 
@@ -119,3 +120,5 @@ nav:
     - 'Notes': 'download/misc.md'
 
  - FAQ: 'faq.md'
+
+ - Contact: 'contact.md'
