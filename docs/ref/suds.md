@@ -19,15 +19,15 @@ _Prediction and evaluation of sleep stages_
 
 _Single observation stage accuracies and probabilities_
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 _to be completed_
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 _to be completed_
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 _to be completed_
 
@@ -36,15 +36,15 @@ _to be completed_
 
 _Translate existing (manual) staging between different epoch durations (e.g. from 20 second to 30 seconds epoch) using the SOAP model_
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 _to be completed_
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 _to be completed_
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 _to be completed_
 
@@ -53,15 +53,15 @@ _to be completed_
 
 _Iterative restaging of partially staged data_
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 _to be completed_
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 _to be completed_
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 _to be completed_
 
@@ -73,7 +73,7 @@ _Generate a training dataset_
 
 _to be completed_
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 _to be completed_
 
@@ -84,15 +84,15 @@ _to be completed_
  _Copies a SUDS training library from text to binary format, or vice versa_
 
 
-<h5>Parametes</h5>
+<h3>Parametes</h3>
 
 _to be completed_
 
-<h5>Outputs</h5>
+<h3>Outputs</h3>
 
 _to be completed_
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 _to be completed_
 
@@ -102,15 +102,15 @@ _to be completed_
 _Staging using the Dynamics of Sleep_
 
 
-<h5>Parametes</h5>
+<h3>Parametes</h3>
 
 _to be completed_
 
-<h5>Outputs</h5>
+<h3>Outputs</h3>
 
 _to be completed_
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 _to be completed_
 

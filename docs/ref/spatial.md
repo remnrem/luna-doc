@@ -4,7 +4,7 @@ _Commands to apply spatial filtering and interpolation to dense EEG data_
 
 | Command | Description | 
 | ---- | ------ | 
-| Special variables | Built-in vraiables, such as `${frontal}` |
+| [Special variables](#special-variables) | Built-in variables, such as `${frontal}` |
 | [`CLOCS`](#clocs)     | Specify EEG channel locations |
 | [`SL`](#sl)           | Surface Laplacian spatial filtering |
 | [`INTERPOLATE`](#int) | Epoch-wise interpolation of bad channels |

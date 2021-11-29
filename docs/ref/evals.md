@@ -5,37 +5,41 @@ _Here we describe_ eval _expressions: what they are and how they can be used_
 | Command  | Description |
 |---|---|
 | [_Eval_ expressions](#eval-expressions) | Overview of _eval_ expressions |
-| [`EVAL`](#eval) | Command to evaluate annotation-based general general expressions |
+| [`EVAL`](#eval) | Evaluate annotation-based general expressions |
+|[`TRANS`](#trans)  | Arbitrary transformations of signal data |
 
 !!! warning "Advanced material" 
     This page can likely be skipped on the
     first pass through of this documentation.  The material provided
-    here provides some flexible ways to work with annotations, but
-    most simple tasks can be accomplished using the simpler
+    here provides some flexible ways to work with annotations and signals. For annotations, most
+    simple tasks can be accomplished using the simpler
     [mask](masks.md) syntax.
 
 ## Eval expressions
 
 Luna provides a mechanism for on-the-fly evaluation and assignment of
-annotation-based expressions: _eval_ expressions.  These expressions
+signal-based and annotation-based expressions: _eval_ expressions.  These expressions
 can either be used to specify [_masks_](masks.md) via the
 [`MASK`](masks.md#mask) command, or (as described here) with the
 [`EVAL`](#eval) command, which can be used to generate new epoch-wise
-annotations. These expressions allow for:
+annotations.  Alternatively, with the [`TRANS`](#trans) command, you can create
+or modify existing channels (and/or create arbitrary interval-based annotations
+from these).  These expressions allow for:
 
  - a flexible way to mask epochs based on annotation data
  - evaluation of logical and arithmetic expressions
  - creation of new meta-data variables on-the-fly
+ - creation of new channels, or modofying channels on-the-fly
 
 In short, these expressions allow [_variables_](#variables) based on
-attached annotation data to be manipulated via a range of [_functions
+attached signal and annotation data to be manipulated via a range of [_functions
 and operators_](#operators-and-functions) in
 [_multi-component_](#multi-component-expressions) expressions, which are
 evaluated to return a true/false (Boolean) result (used in the case of
-the `MASK` command) as well as [_assigning new
+the `MASK` command), or numeric vector (as for `TRANS`), as well as [_assigning new
 variables_](#assignments) (which is the focus of the `EVAL` command).
 
-<h5>Testing expressions with the <tt>--eval</tt> option</h5>
+<h3>Testing expressions with the <tt>--eval</tt> option</h3>
 
 You can use the `--eval` option to test out simple expressions on the
 command-line, to get a sense of how expressions work.  Here, the
@@ -402,6 +406,10 @@ between the two sides (which may be vectors of different lengths).
 | `exp(x)`    |  exponent of `x` |
 | `rnd()`     | random float between 0 and 1 | 
 | `rand(x)`   | random integer between 1 and x |
+| `floor(x)`  | round `x` down |
+| `round(x)`  | round `x` to nearest integer |
+| `abs(x)`    | absolute value of `x` |
+
 
 ##### Conditionals
 
@@ -439,16 +447,21 @@ with a default value of 0.5; otherwise, it will be kept as is.
 | `int(x)` | `int(1,2,3)` | `[1,2,3]` | Integer vector | Generate a new 3-element integer array |
 | `num(x)` | `num(1,2.5,3)` | `[1,2.5,3]` | Float vector | Generate a new 3-element floating-point array |
 | `txt(x)` | `txt('A','B','C')` | `['A','B','C']` | Text vector |  Generate a new 3-element text array |
-| `bool(x)` | `bool(T,F,T)` | `[T,F,T]` | Boolean vector  | Generate a new 3-element Boolean array  |
+| `bool(x)` | `bool(1,0,1)` | `[true,false,true]` | Boolean vector  | Generate a new 3-element Boolean array  |
 | `[ ]`     | `a=int(8,10,12) ; a[2]` | `10` | All | Index array elements |
 | `min(x)` | `min(int(-1,2,8))` | `-1` | All | Minimum value in any array |
 | `min(x)` | `min(int(-1,2,8))` | `8` | All | Maximum value in any array |
 | `sum(x)` | `sum(int(-1,2,8))` | `9` | Integer, numeric and bool | Sum of values in an array |
 | `mean(x)` | `mean(int(-1,2,8) )` | `3` | Integer, numeric and bool | Mean of values in an array |
+| `sd(x)`   | `sd(int(-1,2,8) )` | `4.58` | Integer, numeric and bool | SD of values in an array |
 | `sort(x)` | `sort(txt('C','A','B'))` | `['A','B','C']` | All | Sorts values in an array |
 | `c(x,y)` | `c('A',txt('B','C'))` | `['A','B','C']` | All similar types | Concatenates scalars and/or arrays |
 | `size(x)` | `size(txt('A','B','C'))` | `3` | All | Size of an array |
 
+<!---
+| `rep(x,n)` | `rep( 1 , 3 )` | `[1,1,1]` | Vector | Repeat `x` `n` times |
+| `seq(x,y,i)` | `seq( 1 , 3 )` | `[1,2,3]` | Vector | Generate vector with sequence `x` to `y`, increment `i` |
+--->
 
 #### Complex expressions
 
@@ -540,6 +553,49 @@ meta-data.
     `myannot.a1`.  In other words, you cannot change any existing
     annotation within an _eval_ expression, you can only generate new
     annotations.
+
+##### Vector assignments
+
+You can assign to a subset of a vector, using the form _X[index] = Y_.  As above, the index can be a boolean vector (with the same length as _X_, or
+an integer (1-based) vector or scalar.
+
+
+Assuming that `A=int(2,2,2,2)`, then:
+
+| Function | Resulting value for `A` |
+| ---- | ---- |
+| `A[2] = 99` | `A = 2,99,2,2` |
+| `A[ int(2,3) ] = 99` | `A = 2,99,99,2` |
+| `A[ int(2,3) ] = int( 99,100 )` | `A = 2,99,100,2` |
+| `A[ int(2,3) ] = int( 99,100,101 )` | _error, not allowed as replacement is different length vector_ |
+| `A[bool(1,0,1,1)] = 99` | `A = 99,2,99,99` | 
+| `A = 99` | `A = 99,99,99,99` |
+
+Note how the last example generates a vector of length `A`, rather
+than a scalar, as `A` is originally a vector, i.e. this is equivalent
+to `A[ bool(1,1,1,1) ] = 99`
+
+As above, you can use the `--eval` option to test the syntax:
+
+```
+echo " A=int(2,2,2,2) ; A[2] = 99   " | luna --eval 
+```
+```
+parsed as a valid expression : yes
+return value                 : true
+return value (as T/F)        : true
+assigned meta-data           : A=2,99,2,2
+```
+
+Vector assignment is primarily of use when using the `TRANS` command, e.g. for replace all values above 100 with 100:
+```
+X[ X > 100 ] = 100 
+```
+
+In the above, assuming `X` is a vector, the expression `X>100`
+evaluates to a boolean vector; this is then used to indicate a subset
+of the `X` vector (i.e. all values above 100); and a scalar (`100`) is
+assigned to each of these values.
 
 
 ##### Multi-component expressions
@@ -718,3 +774,439 @@ _to be added_
     If it is difficult to figure out why something doesn't seem
     to work, use the [`--eval`](#eval-expressions) function to test
     out how the commands work.  
+
+
+
+## TRANS
+
+Based on the [_eval expression_ syntax](#eval-expressions), the `TRANS`
+command allows for on-the-fly transformations for signal data, to
+create or modify existing signals, or to create new annotations based
+on arbitrary expressions based on one or more signals. Specifically, this command:
+ 
+   - evaluates arbitrary, multi-part logical/numeric expressions,
+     with (conditional) assignments, functions and vector/scalar
+     support
+
+   - returns new/updated channels given 1 or more input channels
+
+   - alternatively, it returns annotations based on a boolean vector return
+     value (i.e. length = # of sample points in signal), if used with `annot`
+
+For example, one might use this command to rescale, threshold or
+normalize signals (as demonstrated below), or to derive new channels based
+on logical and numerical functions applied to one or more existing signals.
+
+The primary operatorion performed by `TRANS` is to bind whole signals
+(i.e. EDF channels) to vector variables within an expression (i.e. if
+the variable in the expression has the same label as the EDF channel
+name).  These vectors can then be flexibly transformed within the
+expression.  The _return value_ of the expression (i.e. the final
+thing evaluated in the context of a multi-part expression) then
+populates the single, specified EDF channel, or
+alternatively, creates a new interval-annotation.
+
+
+<h3>Parameters</h3>
+
+| Option | Example | Description | 
+| ---- | ----- | ----- | 
+| `sig` | `C3`  | Specify either a single existing, or new, signal |
+| `expr` | `abs(C3)>100` | Evaluate this _expression_ |
+| `annot` | `A1` | Generate a new annotation `A1` given the expression |
+| `verbose` | | Verbose output mode |
+
+
+<h3>Outputs</h3>
+
+Other than modifying the _in-memory_ representation of the EDF, there
+is no further output (except some notes written to the log).
+
+<h3>Examples</h3>
+
+Here we give some examples of using `TRANS`, including (data-dependent) rescaling and thresholding, 
+other numeric functions, incorporating annotations (via `A2S`), incorporating individual-level variables, 
+and deriving annotations rather than creating/modifying channels.
+
+Note that in these examples, one would normally add subsequent commands too, 
+e.g. to analyse or output the derived channels or annotations.
+
+!!! hint "Sample rates" 
+    All `TRANS` expressions must contain at least
+    one channel; if containing multiple channels, then all must have
+    the same sample rate (i.e. to ensure that the corresponding vectors
+    in the `TRANS` expression have similar lengths.
+
+
+#### Basic transformations
+
+Consider a signal `SpO2` that we want to rescale from being a
+percentage to a proportion, i.e. divide by 100. First, we can confirm
+the scale of this channel, using the `STATS sig=SpO2`:
+
+```
+MIN    0
+MAX    100
+MEAN   78.72
+```
+
+To use `TRANS` to convert this channel (and then subsequently confirm the change with `STATS`) we can write:
+
+```
+luna s.lst -s ' TRANS sig=SpO2 expr=" SpO2 = SpO2 / 100 " & STATS sig=SpO2 '
+```
+The key part is:
+```
+TRANS sig=SpO2 expr=" SpO2 = SpO2 / 100 " 
+```
+Note the use of double-quotes to enclose the expression (versus the use of single quotes (following `-s`) to enclose
+the entire Luna command, in the full command above). 
+
+After running this command, the log may show something like:
+
+```
+  evaluating expression  :  SpO2 = SpO2 / 100 ; SpO2
+  attaching SpO2 for 15581600 sample-points...
+  returned 15581600 sample-points
+  updating SpO2...
+```
+
+As expected, the output of `STATS` now reflects the modification of
+the `SpO2` channel performed by the prior `TRANS` command:
+
+```
+MIN    0
+MAX    1
+MEAN   0.7872
+```
+
+
+We can also implement data-dependent rescaling: for example, some EDFs
+may have 0-1 scaling for a given signal, but some may have 0-100
+scaling (i.e. proportion versus percentage).  One way to have a single
+expression (assuming that we always expect to see values near the
+maximum):
+
+```
+TRANS sig=SpO2 expr=" MX = max( abs( SpO2 ) ) ;
+                      SC = ifelse( MX > 1 , 1 , 100 ) ;
+                      SpO2 = SpO2 * SC "
+```
+
+in the above, we define a new scalar variable `MX` which is the
+maxmimum absolute value of the `SpO2` signal.  It then defines a
+_scaling factor_ (a scalar variable called `SC`) that is `1.0` if the
+original `SpO2` signal contains a maximum absolute value greater than
+`1.0` (i.e. and so is presumably not a proportion); otherwise, if it
+_presumably_ is a proportion, then `SC` is set to `100`.  The `SpO2`
+signal is then multiplied by this scaling factor (i.e. either
+unchanged, or scaled by a factor of 100) and assigned back to itself.
+In this way, all final `SpO2` values should be on the percentage
+(0-100) scale, irrespective of the inputs.  (Note: as noted, this
+particular example assumes that a signal with a maximum less than 1.0
+is _not_ a percentage, e.g. 0.5; this use is simply intended to
+illustrate `TRANS` syntax).
+
+
+As other example of signal modification, we can _threshold_ a variable between certain min/max values, 
+which illustrates the use of conditional vector subsetting - i.e. the assignment to 0 or 100 only applies
+to the element of `SpO2` that meet the relevant condition:
+```
+TRANS sig=SpO2 expr=" SpO2[ SpO2 > 100 ] = 100 ; SpO2[ SpO2 < 0 ] = 0 " 
+```
+
+We can also create new channels, e.g. re-referencing here by the average of two mastoids:
+```
+TRANS sig=C3LM expr=" C3LM = C3 – ( M1 + M2 ) / 2 "
+```
+Note that, in this above example, `C3LM` did not necessarily exist in the original EDF - here, it 
+would be generated as a new channel.
+
+
+#### EDF channel modification 
+
+Note that `TRANS` only updates/modifies one channel at a time: the one
+specified by `sig`.  Any other modifications of a channel within the
+expression are restricted to the scope of the expression only, as this cartoon illustrates:
+
+![img](../img/trans.png)
+
+
+To illustrate this further, look at this multi-part expression that involves two signals: `TcCO2` as well as `SpO2`:
+
+```
+TRANS sig=SpO2 expr=" TcCO2 = log( TcCO2 ) ; SpO2[ TcCO2 > 10 ] = 0 "
+```
+
+This will set the EDF channel `SpO2` to 0 if the log of the `TcCO2` is above 10.  Of note, in the above expression:
+ 
+ - we see that `TcCO2` (or any other EDF channel) can be used in an expression without having to explicitly name it via `sig`.
+
+ - _within the scope of this expression_, `TcCO2` is modified
+ (i.e. log-scaled), and the modified `TcCO2` is used to
+ conditionally modify `SpO2` (i.e. setting elements to 0).
+
+ - however, only the modified `SpO2` will be returned from the `TRANS`
+ command and update the (internal) EDF.  Changes to the
+ `TcCO2` variable are not permanent.
+
+ - if you wanted to modify multiple channels, one could use sequential `TRANS` commands (in the same Luna run) with differnt `sig` values: 
+   ```
+   TRANS sig=TcCO2 expr=" TcCO2 = log( TcCO2 ) "
+   ```
+   ```
+   TRANS sig=SpO2 expr=" SpO2[ TcCO2 > 10 ] = 0 "
+   ```
+
+
+
+!!! info "Additional notes on syntax"
+    You can skip this box on a first pass.  There are a few (potentially subtle) points to note in the above.  The log printed the expression being evaluated, which
+    was modified by adding a final component (i.e. the _return value_) that was the named channel (`SpO2`). That
+    is,
+    ```
+    SpO2 = SpO2 / 100 
+    ```
+    became
+    ```
+    SpO2 = SpO2 / 100 ; SpO2
+    ```
+    In this way, Luna ensures that the value returned by `TRANS` (which is the value
+    assigned to the EDF channel `SpO2`) is the whole
+    vector from the expression (named `SpO2`), as the last expression
+    `SpO2` evaluates to itself.
+
+    Because of the prior point, the assignment of new values must be done explicitly: 
+    ``` 
+    expr=" SpO2 = SpO2 / 100 "
+    ```
+    i.e. the following would __not__ work:
+    ``` 
+    expr=" SpO2 / 100 "
+    ```
+    Note that, within the context of the expression, `SpO2` is a variable (vector)
+    that is initiated with all the values of the EDF signal of the same
+    name.  It can be modified one or more times as part of the expression; 
+    the actual EDF signal will only be modified if it is explicitly returned by the expression, however.  
+
+    To make the final point clearer: say the EDF has a channel `TcCO2`
+    as well as `SpO2`.  We can use the values from that channel within the expression, if desired,
+    e.g.  setting `SpO2` to `0.0` if `TcCO2` is negative:
+
+    ```
+    TRANS sig=SpO2 expr=" SpO2[ TcCO2 < 0 ] = 0 " 
+    ```
+
+    Internally, this is modified to the following (because `sig` was set to `SpO2`):
+
+    ```
+    TRANS sig=SpO2 expr=" SpO2[ TcCO2 < 0 ] = 0 ; SpO2 "
+    ```
+    which means that the actual `SpO2` EDF channel will be updated accordingly. However, 
+    the following expression _would not_ result in the `TcCO2` EDF channel being modified (nor the `SpO2` channel, for that matter), 
+    despite `TcCO2` potentially being assigned values of 0 for some elements:
+
+    ```
+    TRANS sig=SpO2 expr=" TcCO2[ SpO2 < 0 ] = 0 "
+    ```
+    Why?  Because only the single EDF channel specified by `sig` is
+    modified (updated, or created, if it doesn't already exist).
+    Internally, this expression expands to:
+    ```
+    TRANS sig=SpO2 expr=" TcCO2[ SpO2 < 0 ] = 0 ; SpO2 "
+    ```
+    meaning that the _return value_ is the vector `SpO2` (which technically does "update" the  
+    EDF `SpO2` channel, but only to values that were identical to the original values).
+
+
+  
+
+#### Numeric functions
+
+
+We can apply various numerical transformations: e.g. here applying a square root transformation, but excepting 
+any negative values (which  would otherwise generate undefined values) by using the _vector subset_ syntax (with `[` and `]`):
+``` 
+TRANS sig=Flow expr=" Flow[ Flow > 0 ] = sqrt( Flow[ Flow > 0 ] ) " 
+```
+Here we standardize a channel (i.e. subtract mean, divide by the standard deviation), which shows these built-in functions:
+```
+TRANS sig=ZEEG expr=" ZEEG = ( C4 – mean( C4 ) ) / sd( C4 ) " 
+```
+
+Note that Luna does not currently explicitly flag if numerical errors
+occur within `TRANS` expressions: e.g. if `sd(C4)` above is infact
+`0.0`.  Therefore, either use these expressions when you are confident this is not the case;  or
+make the expression check this explicitly: e.g. 
+
+```
+TRANS sig=Z expr=" S = sd(SpO2 ) ;
+                   S = ifelse( S == 0 , 1 , S ) ;
+                   Z = ( SpO2 - mean( SpO2 ) ) / S "
+```
+
+
+
+#### Individual variables
+
+To incorporate (individual-level) Luna variables (e.g. either defined on the command-line, within the script, or from a file
+via the [`vars`](../../luna/args/#individual-variables) option, you can use the usual `${var}` syntax.  These variables are expanded prior to the expression being evaluated. 
+
+```
+luna s.lst f=100 -s 'TRANS sig=C3 expr=" C3 = C3 * ${f} " '
+```
+would show in the log that `${f}` has already been swapped in before the expression is evaluated:
+```
+ CMD #1: TRANS
+   options: expr=" C3 = C3 * 100 " sig=C3
+```
+
+Alternatively, to include variables that may differ between different
+individuals, you can use [`vars`](../../luna/args/#individual-variables) : i.e. the following assumes that
+`file.txt` has columns `ID` and also `t` to define `${t}` for each
+individual:
+
+```
+luna s.lst vars=file.txt -s ‘ TRANS sig=S1 expr=" S1[ S1 > ${t} ] = 0 " ‘
+```
+
+#### Including annotations
+
+To include annotations in a `TRANS` expression, you need to first use the [`A2S`](annotations.md#a2s) command to create a channel that 
+represents the presence or absence of that annotation.   Currently it is not possible to directly include numeric meta-data from annotations
+as parts of `TRANS` expressions.
+
+#### Deriving annotations
+
+If instead of specifying `sig` one specifies `annot` for a `TRANS` command, instead of creating/modifying a new signal, 
+`TRANS` will generate a new annotation, that is derived from evaluating the return value of the expression as a boolean vector. 
+
+```
+luna s.lst -s 'TRANS annot=EXC expr=" SpO2 < 10 || ! SpO2_Status "  
+               MASK if=EXC  & RESTRUCTURE ' 
+```
+
+In the above example, we create a new annotation `EXC` and then subsequently exclude any epoch that has at least one `EXC` annotation present.
+
+#### Label sanitization
+
+Channel labels such as `C3-M1` would create a problem for `TRANS`, i.e. given that `-` is interpreted as a _minus_ operator, it
+would be ambiguous as to whether the expression `C3-M1` means simply
+_this channel_ versus `C3` _minus_ `M1`.  (Even if `C3` and `M1` didn't
+exist separately as other channels in the EDF, this would still cause an
+issue as the command allows for arbitrary variables to be defined on-the-fly
+(e.g. as intermediates), which could include `C3` and/or `M1`.) 
+
+The solution is for Luna to _sanitize_ channel labels such as `C3-M1`
+prior to sending them to this command: i.e. _within the
+expression_,`C3-M1` becomes `C3_M1`: 
+
+``` 
+TRANS sig=C3-M1 expr=" C3_M1 * 1000 " 
+``` 
+
+The log output notes this mapping: 
+
+``` 
+evaluating expression : C3_M1 = C3_M1 * 1000 ; C3_M1 
+attaching C3-M1 (mapped to C3_M1) for 15581600 sample-points...  
+```
+
+
+!!! info
+    Note that as of v0.26, Luna now sanitizes all channel and annotation labels by default.   They above note is therefore only relevant if `sanitize=F` has been set.  
+
+
+
+
+
+
+### Numeric resolution
+
+Due to the finite 16-bit numerical resolution of EDFs, but that all
+   internal Luna numerical operations use 64-bit floating point
+   representations, the output may sometimes be (trivially) different
+   from expected, e.g. even following a self-assignment `SpO2 = SpO2`.
+
+
+### Sample rates
+
+Luna will check that the new, assigned signal matches the expected
+signal (if it exists) in terms of length / sample rate.  
+
+For example, consider that the signal `SpO2` exists in the EDF, but `Z` does not. 
+
+That is, if
+you tried to assign a single scalar value to a channel, something like
+the following warning would be emitted:
+
+The following is __not valid__ as it does not involve any existing channel:
+
+```
+TRANS sig=Z expr=" Z = 2 " 
+```
+```
+error : no channels attached: i.e. no sample rate value attached
+```
+
+In contrast, if that channel exists, it is valid to assign a scalar to a vector: here, every
+sample of `SpO2` is set to the same value (2)
+```
+TRANS sig=SpO2 expr=" SpO2 = 2 "
+```
+
+However, it is not permissable to assign a different length vector to a channel/vector: e.g. 
+```
+TRANS sig=SpO2 expr=" SpO2 = int(1,2,3)  " 
+```
+```
+error : assigning vector of different length not valid
+```
+
+Finally, note that this is valid:
+```
+TRANS sig=SpO2 expr=" SpO2 = mean(SpO2) "
+```
+but this similar command _is not_:
+```
+TRANS sig=Z expr=" Z = mean(SpO2) "
+```
+The latter will give the warning:
+```
+  attaching SpO2 for 15581600 sample-points...
+  returned 1 sample-points
+  creating new channel Z...
+ observed n = 1 but expected = 19477 * 800 = 15581600
+error : internal error: problem with length of input data
+```
+In this example, the sample rate is 400 Hz and the EDF record duration is 2 seconds, thus the 800 above (and 19477 is the number of records). 
+
+What accounts for the different behavior here?  This is because
+vectors cannot change their length (or become scalars) in eval
+expressions.  Thus, when assigned the mean (a scalar) to `SpO2` (which
+is already a vector of correct length, i.e. 15,581,600 points), Luna
+will set every value of that vector to the same value.  When that vector is 
+returned from `TRANS`, it will match the length of the EDF signal (also named `SpO2`) 
+and so is valid.    In contrast, as `Z` does not exist prior to `TRANS`, it will not be initiated 
+with any fixed value.  Therefore, after the assignment `Z` is truly a scalar, and so cannot be passed 
+back to the EDF channel.   
+
+To state the same thing schematically, consider a toy-example:
+```
+ EDF : X = [ 1 , 2 , 3 ] 
+
+   TRANS sig=X expr=" X = mean(X) " 
+      - X initiated as [ 1 , 2 , 3 ] 
+      - mean of X calculated as 2 (scalar)
+      - after the assignment, X --> [ 2 , 2 , 2 ] 
+      - [ 2, 2, 2 ] is returned and matches length of original EDF X
+
+   TRANS sig=Z expr=" Z = mean(X) " 
+      - X initiated as [ 1 , 2 , 3 ] 
+      - mean of X calculated as 2 (scalar)
+      - after the assignment, Z --> 2 (scalar)
+      - 2 (scalar) is returned but does not match length of original EDF X 
+```
+
+        
+                     

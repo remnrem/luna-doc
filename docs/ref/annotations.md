@@ -941,7 +941,10 @@ nsrr01  hypopnea  1       15.3
 
 _Add a signal based on an annotation_
 
-Adds a signal that is either 0 or 1, based on whether that sample point is spanned by an annotation or not.
+The `A2S` command makes a binary (0/1) EDF channel corresponding to
+one or more annotation(s), i.e. whether that sample-point is spanned
+by that annotation or not.
+
 
 | Option | Example | Description |
 | ---- | ---- | ---- |
@@ -954,10 +957,202 @@ Adds a signal that is either 0 or 1, based on whether that sample point is spann
 
 _Add an annotation based on a signal_
 
-Adds a signal that is either 0 or 1, based on whether that sample point is spanned by an annotation or not.
+The complement to `A2S`, the `S2A` command makes an annotation
+corresponding to ranged intervals in an EDF channel.  For example,
+sometimes body position is encoded as a signal with values `0`,
+`1`, `2` or `3`, e.g. for supine, non-supine, left, right.  The `S2A`
+command can make an annotation that represents the same information
+(e.g. and be saved with `WRITE-ANNOTS` or used in a `MASK`, etc.)
+
+<h5>Parameters</h5>
 
 | Option | Example | Description |
 | ---- | ---- | ---- |
-| `annot` | `arousal` | Name of annotation to select |
-| `sr`    | `100` | Sample rate of new signal |
-| `label` | `A` | Optionally, a name for the signal (otherwise is set to `annot` value) |
+| `sig` | `C3` | Name of signal |
+| `encoding` | `S,0,NS,1,L,2,R,3` | Signal encoding (see below) |
+| `encoding2` | `X,5,10,Y,20,30` | Alternate encoding (see below ) |
+| `class` | `position` | Make one annotation class (e.g. `position`) w/ labels as instance IDs |
+| `span-gaps` | | How to handle signal discontinuities |
+
+<h5>Output</h5>
+
+A new annotation is added to the internal store for this individual;
+otherwise, no explicit output is generated except for some notes to
+the log/console.
+
+
+<h5>Example</h5>
+
+In the NSRR [CFS](http://sleepdata.org/datasets/cfs/) dataset, body
+position is encoded as an EDF channel called `POSITION`.  In
+contrast, some other NSRR studies encode body position as an
+[annotation](#luna-annotations) separate from the EDF.
+
+First, to confirm the contents of this channel, we might extract `POSITION`
+to a text file for one individual:
+
+```
+luna cfs.lst 1 -s MATRIX min file=pos.txt sig=POSITION
+```
+
+Plotting the values in `pos.txt`, we see that this signal contains
+only 4 discrete values, here plotted across the night:
+
+![img](../img/s2a.png)
+
+as tabulated here:
+
+```
+cat pos.txt | sort | uniq -c
+```
+
+```
+30655 0
+ 1059 1 
+   66 2
+ 5930 3
+```
+
+(i.e. the `uniq -c` command counts 30,655 instances of `0`, 1,059
+instances of `1`, etc).
+
+Let's say the CFS encoded body positions supine, non-supine, left and
+right as 0, 1, 2 and 3 respectively.  To generate annotations based on this signal, 
+we can use the `S2A` command:
+```
+luna cfs.lst -s ' S2A sig=POSITION encoding=S,0,NS,1,L,2,R,3
+                  WRITE-ANNOTS file=pos-^.annot '
+```
+
+The generated `.annot` file(s) (note: using `^` swaps in the
+individual's ID to make a filename unique to that individual) might
+look like:
+
+```
+# L
+# NS
+# R
+# S
+class  instance   channel     start       stop        meta
+S      .          POSITION    0.000       7939.000    .
+R      .          POSITION    7939.000    7940.000    .
+S      .          POSITION    7940.000    7941.000    .
+R      .          POSITION    7941.000    7943.000    .
+... cont'd ...
+```
+
+That is: four new annotations (`S`, `NS`, `L` and `R`) have been generated from the values of the `POSITION` channel, as specified by 
+the `encoding` argument of `S2A`, which takes one or more label/value pairs as above (i.e. _S=0_, _NS=1_, etc).
+
+Note that EDF is a floating-point numeric format, and depending on the
+encoding of the EDF (physical and digital min/max in the headers), or
+whether the channel has been processed or copied, etc, then the values
+`0`, `1`, `2` and `3` might not be numerically exactly 0.0, 1.0, etc
+(i.e. given finite, 16-bit resolution of EDFs, where it typically is
+irrelevant whether an EEG signal amplitude is, say, 15.08 microvolts
+versus 15.07995 microvolts, as this level of numerical difference is
+below the measurement accuracy of the original data).
+
+In this type of scenario, where categorical (integer) information is
+being represented by an inherently floating-point format, these
+numerical differences might matter, however.  Because of this, for a
+value such as `1`, the default `encoding` actually matches on a window
+of `1.00` plus or minus `0.05` (i.e. `0.95` to `1.05`). This is clear
+in the output sent to the log file:
+
+```
+CMD #1: S2A
+   options: encoding=S,0,NS,1,L,2,R,3 sig=POSITION  
+  encoding 4 annotation instances
+  added 9 intervals for L based on 1.95 <= POSITION <= 2.05
+  added 19 intervals for NS based on 0.95 <= POSITION <= 1.05
+  added 26 intervals for R based on 2.95 <= POSITION <= 3.05
+  added 37 intervals for S based on -0.05 <= POSITION <= 0.05
+```
+
+If for some reason this is not appropriate, or if you wish to match
+larger intervals to a given annotation, then you can use the alternate
+encoding specification, via the `encoding2` option (instead of
+`encoding`).  The `encoding2` argument takes two forms; the first takes 
+triplets of _{label, value, window}_:
+
+```
+encoding2=S,0,+0.05,NS,1,+0.05,L,2,+0.05,R,3,+0.05’
+```
+The above is identical to the first example that used `encoding`
+above; the point of this form is that you can specify values other
+than 0.05 as the window size (note the use of `+` is necessary to
+invoke this mid-point, window width encoding, i.e. `+0.05` and not
+just `0.05`).
+ 
+The second form of `encoding2` takes a lower and upper bound (rather
+than a mid-point and window width).  For example, to give a different
+example:
+
+```
+encoding2=X,5,10,Y,20,30’
+```
+
+which implies _X_ maps to values between 5.0 and 10.0, whereas _Y_
+maps to values between 20.0 and 30.0.  Note that not all values have
+to be covered (i.e. those points, such as a value of 15, 
+would have neither an `X` nor `Y` annotation assigned to span that point).  
+Note that the above form would of course be
+identical to:
+```
+encoding2=X,7.5,+2.5,Y,15,+5
+```
+
+---
+
+In the first example, `S2A` will by default add four new annotation
+classes: `S`, `NS`, `L` and `R` corresponding to the labels in the
+`encoding`.  As noted in the example above, the instance IDs
+will be blank (`.`).  If you instead added:
+
+```
+class=pos
+```
+then only a single `pos` annotation would be added, and the instance
+IDs would encode the _type_ of position. i.e. the above example would
+become:
+
+```
+# pos
+class  instance   channel     start       stop        meta
+pos    S          POSITION    0.000       7939.000    .
+pos    R          POSITION    7939.000    7940.000    .
+pos    S          POSITION    7940.000    7941.000    .
+pos    R          POSITION    7941.000    7943.000    .
+...
+```
+Which you choose is simply a matter of preference over how you like annotations to be structured.
+
+Finally, by default if an EDF contains gaps (i.e. if it is an EDF+D,
+or if it has been internally restructured via `MASK/RE` commands, etc)
+then any new annotations will also stop/restart at those gaps.  If the
+`span-gaps` option is given, then the generated annotations will not
+stop/restart at gaps, but will (guess what...)  span those gaps
+instead. For example, consider a dummy signal `S` with these time
+points (`T`) and a gap (discontinuity) between time-points 4 and 8
+(i.e. no valid values for `S`):
+
+```
+ T = 1 2 3 4 5 6 7 8 9 
+ S = 1 1 3 3 . . . 3 3
+```
+
+If `1` maps to `NS` and `3` maps to `R` as above, then by default the annotations generated would be: 
+```
+ class  start   stop
+ NS     1       2
+ R      3       4
+ R      8       9
+```
+However, with `span-gaps` addded, then we would see:
+```
+ class  start   stop
+ NS     1       2
+ R      3       9
+```
+

@@ -61,14 +61,13 @@ Hub](https://hub.docker.com)) and create a containerized version of
 Luna:
 
 ```
-docker run -it remnrem/luna
+docker run --rm -it remnrem/luna /bin/bash
 ``` 
 
-!!! hint
-    There are two Docker images available on Docker Hub: this one, and a second `remnrem/lunars` that 
-    offers RStudio alongside Luna, and is designed to be used via a browser window.  For users who are more 
-    comfortable with the type of environment offer by [RStudio](http://www.rstudio.com), you might want to skip 
-    ahead to [this section](#luna-and-rstudio).
+The `remnrem/luna` Docker image contains luna pre-installed within a
+Linux environment.  It also includes R with [lunaR](../ext/R.md)
+pre-installed: both base R and [RStudio](http://www.rstudio.com), as
+described [below](#luna-and-rstudio).
 
 You should see something like the following:
 
@@ -225,7 +224,7 @@ an image that bundles RStudio with a pre-installed version of _lunaC_
 and _lunaR_.  To obtain this:
 
 ```
-docker run  -e PASSWORD=abc123 -p 8787:8787 remnrem/lunars
+docker run  -e PASSWORD=abc123 -p 8787:8787 remnrem/luna
 ```
 
 If this command is successful, then after it downloads and installs, you will be able 
@@ -248,9 +247,6 @@ The commands for mapping local folders to the Docker container
 so that your output will be saved back on the host machine) are the
 same as for the standard Luna image.
 
-## _moonshine_
-
-
 ## _luna.docker_ 
 
 For Linux and Mac OS machines with the
@@ -261,7 +257,7 @@ Docker [documentation](https://docs.docker.com/get-started/) for full
 details on using Docker.
 
 Download the script `luna.docker` from
-[here](http://zzz.bwh.harvard.edu/dist/luna/luna.docker), save it in
+[here](https://raw.githubusercontent.com/remnrem/luna-docker/master/luna.docker), save it in
 your path (e.g. see `echo $PATH`) and set permissions to be executable, e.g.:
 ```
 chmod +x /usr/local/bin/luna.docker
@@ -423,11 +419,11 @@ At the Command Prompt, to open a new container and map the `D:\luna`
 folder on the host to `/data/` in the container, and `C:\mydata\work` to `/data1` type:
 
 ```
-docker run --rm -it -v D:/luna:/data -v C:/mydata/work:/data1 remnrem/luna
+docker run --rm -it -v D:/luna:/data -v C:/mydata/work:/data1 remnrem/luna /bin/bash
 ```
 
 By default, the container has folders `/data`, `/data1` and `/data2`
-to allow three voumes to be mounted, i.e.  folders on the host machine
+to allow three volumes to be mounted, i.e.  folders on the host machine
 to be shared with the Luna container.
 
 __LunaRStudio__ 
@@ -436,7 +432,7 @@ At the Command Prompt, to open a new container and map the `D:\luna`
 folder on the host to `/data/` in the container, type:
 
 ```
-docker run --rm -e PASSWORD=abc123 -p 8787:8787 -v D:/luna:/data remnrem/lunars 
+docker run --rm -e PASSWORD=abc123 -p 8787:8787 -v D:/luna:/data remnrem/luna 
 ```
 
 and then open your web-browser at `http://localhost:8787` and enter
@@ -498,7 +494,9 @@ __Hints__
 
 
 ## Reference: Dockerfile
-  
-For reference, see [Docker Hub](https://hub.docker.com/u/remnrem) for
-`remnrem/luna` and `remnrem/lunars` (or `remnrem/moonshine`)
-Dockerfiles and containers.
+
+This [github repository](https://github.com/remnrem/luna-docker)
+contains the latest version of the `Dockerfile`, and the corresponding
+`luna.docker` wrapper.  Pre-built images are sent to the
+``remnrem/luna` [Docker Hub page](https://hub.docker.com/u/remnrem)
+for distribution.

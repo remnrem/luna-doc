@@ -96,7 +96,7 @@ per-spindle statistics, as well as per-epoch counts of spindles.
 
 ### Basic usage
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 The most basic parameter is `fc`, which specifies the target frequency
 (or frequencies) for the wavelet(s).  Combined with the `cycles`
@@ -409,7 +409,7 @@ representing points where a spindle is present (and where we will
 expect higher values of the wavelet coefficient). 
 
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | --- | --- | --- |
@@ -418,7 +418,7 @@ expect higher values of the wavelet coefficient).
 | `verbose-empirical` | `verbose-empirical` | Output extensive information on threshold estimation | 
 
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 Individual-level output (option: `empirical`, strata: `F` x `CH`)
 
@@ -436,7 +436,7 @@ Between-class variance over range of thresholds (option: `empirical`, strata: `T
 | `SIGMAB` | Between-class variance for given threshold |
 
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 Here we use this approach on the three tutorial individuals: we run a
 basic command to estimate spindles (for all NREM2 sleep, with no other
@@ -773,7 +773,7 @@ spindle frequencies, with weights given by the ISA of each spindle).
 This is output for each spindle and also used to generate a
 frequency-conditioned estimate of _m_-spindle density. 
  
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | --- | --- | --- |
@@ -794,7 +794,7 @@ Secondary parameters:
 | `window` | `window=0.5` | Set window around each spindle when defining temporal overlap |
 | `hms` | `hms` | Show clock-time of each _m_-spindle |
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 Individual-level summaries of _m_-spindles (option: `collate`, strata: _none_)
 
@@ -843,7 +843,7 @@ Additional output (option: `hms`, strata: `MSPINDLE` or `CH` x `MSPINDLE`))
 | `MSP_STOP_HMS`  | Merged spindle stop clock-time |
 
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 ```
 luna s.lst 2 sig=EEG -o out.db -s "MASK ifnot=NREM2 & RE & \
@@ -908,7 +908,7 @@ The `tlock` option produces an averaged EEG signature of detected
 spindles, synced to the spindle peak (point of max peak-to-peak
 amplitude).
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | --- | --- | --- |
@@ -920,7 +920,7 @@ Instantaneous frequency is estimated via the filter-Hilbert method,
 where the filter is <em>F<sub>C</sub></em> +/- _H_ Hz (where _H_ is
 set by `if-frq`, default 2). 
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 Instantaneous frequency (_IF_) per spindle (option: `if`, strata: `CH` x `F` x `SPINDLE`)
 
@@ -934,7 +934,7 @@ Mean _IF_ stratified by relative location in spindle (option: `if`, strata `CH` 
 | ---- | ---- |
 | `IF` | Mean frequency of all spindles, per relative position within the spindle (five bins) |
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 With the [tutorial](../tut/tut1.md) data:
 ```
@@ -993,7 +993,7 @@ Luna can generate [FTR](annotations.md#ftr-files) files representing the spindle
 a given run.  These can subsequently be attached to an EDF via [_lunaR_](../ext/R/index.md), for example,
 in order to visualize spindles, as in the examples [above](#quality-metrics).
 
-<h5>Parameters</H5>
+<h3>Parameters</H3>
 
 | Parameter | Example | Description |
 | --- | --- | --- |
@@ -1001,7 +1001,7 @@ in order to visualize spindles, as in the examples [above](#quality-metrics).
 | `ftr-dir`   | `ftr-dir=/path/to/folder` | Folder for FTR files |
 | `show-coef` | `show-coef`               | Flag to request (very verbose) coefficient output (to `stdout`) | 
 
-<h5>Output</H5>
+<h3>Output</H3>
 
 The `ftr` option generates one file per channel/target frequency
 combination, with a filename in the form:
@@ -1056,7 +1056,7 @@ precise temporal association with spindle peak and SO phase _within_
 detected SOs.
 
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 For the primary parameters of the SO detection heuristic, see the section 
 on the [`SO` command](#so) below.  These include:
@@ -1075,7 +1075,7 @@ has additional parameters for the analysis of spindle/SO coupling:
 | `perm-whole-trace` |  | Do not use within-epoch shuffling |
 | `stratify-by-phase` | | Additional overlap statistics per 20-degree SO phase bin |
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 The `so` option of the `SPINDLES` command produces the same set of
 outputs as the `SO` command (see [below](#so)), describing the
@@ -1140,7 +1140,7 @@ Spindle/SO phase coupling (option: `so` `verbose-coupling`, strata: `CH` x `F` x
 | `SOTL_CWT` | Time-locked mean spindle wavelet coefficient |
 
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 Here we consider spindle/SO coupling for the second individual from
 the tutorial data.  We'll only consider NREM2 sleep, for fast (15 Hz
@@ -1346,7 +1346,7 @@ SO-overlapping ones) does not appear to give stronger results
 (although, not the asymptotic p-values are high in each case).
 
 
-<h5>Verbose coupling output</h5>
+<h3>Verbose coupling output</h3>
 
 The `verbose-coupling` option, along with `so`, produces some additional tables/output strata that can be used to generate plots describing the nature of spindle/SO coupling:
 
@@ -1500,7 +1500,7 @@ _frequency parameters_) and then applies a series of _time_ and
 _amplitude_ criteria to identify individual SOs. Either absolute (fixed) or
 adaptive (relative) amplitude thresholds can be specified.
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 The example section below illustrates the application of these parameters, which determine what constitutes a _detected_ SO.
 

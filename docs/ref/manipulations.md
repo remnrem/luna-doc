@@ -13,12 +13,14 @@ _Commands to alter basic properties of the EDF and the signals therein_
 |[`uV`](#uv) | Rescale units to uV |
 |[`mV`](#mv) | Rescale units to mV |
 |[`FLIP`](#flip) | Flip polarity of signal | 
+|[`ZC`](#zc) | Mean-center signal |
+|[`ROBUST-NORM`](#robust-norm) | Robust normalisation |
 |[`EDF`](#edf) | Force EDF (versus EDF+) state |
 |[`TIME-TRACK`](#time-track) | Add a time-track to an EDF |
 |[`RECORD-SIZE`](#record-size) | Change EDF record size |
 |[`ALIGN`](#align) | Realign EDF records, annotations and epochs |
 |[`ANON`](#anon)       | Strip ID information from EDF header |
-|[`SIGGEN`](#siggen) | Generate/spike in artificial test signals |
+
 
 ## SIGNALS
 
@@ -87,7 +89,7 @@ One or more new channels are created in the _in-memory_ representation
 of the EDF.  Aside from a note in the log, there is no formal
 (destrat-based) output for this command.
 
-<h4>Example</h4>
+<h3>Example</h3>
 
 To extract one channel (`EEG`) from an original EDF, and then duplicate it:
 
@@ -525,7 +527,7 @@ _Flips the polarity of a signal_
 
 Multiplies every sample value of a signal by -1.
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | --- | --- | --- |
@@ -602,6 +604,134 @@ id001    1   0   8  0.03125       2.05909
     biosignals, if they are recorded with sensible physical and
     digital min/max values to reflect the dynamic range of the signal.
 
+
+
+
+## ZC
+
+_Mean-center a signal_
+
+Subtracts the mean from a signal, either based on the entire duration or performed epoch-by-epoch.  The latter may
+be more appropriate if there are large changes in the scale/mean of the signal across the recording.
+
+<h3>Parameters</h3>
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `sig` | `C3,C4` | Signals to flip |
+| `epoch` |  | Perform mean-centering epoch-by-epoch |
+
+<h3>Output</h3>
+
+No output, other than a message to the log and an updated in-memory signal.
+
+<h3>Example</h3>
+
+Consider the `SpO2` signal, 
+```
+luna s.lst -s 'STATS sig=SpO2'
+```
+which has a mean as follows:
+```
+MEAN   94.1955
+```
+
+First adding the `ZC` command: 
+```
+luna s.lst -s 'ZC sig=SpO2 & STATS sig=SpO2'
+```
+we now see the mean is (effectively) zero:
+```
+MEAN   -0.000734802
+```
+
+Note that, due to EDF's 16-bit floating-point accuracy, the mean will
+not be numerically exactly 0.00 (i.e. as internally, the signal is
+written back to the internal, in-memory EDF at the end of the `ZC`
+command, before being re-read by `STATS`).
+
+
+## ROBUST-NORM 
+
+_Standardizes a signal using a robust approach_
+
+Normalizes a signal, using as measures of central tendency and spread
+the median and an estimate of the SD based on the inter-quartile range
+( 0.7413 times _IQR_ ).  Additionally, this command can winsorize a
+signal (and optiomally re-normalize after winsorization, to ensure
+(non-robust) mean/SD of 0/1).  This can be performed either on the whole signal, or
+epoch-by-epoch.
+
+<h3>Parameters</h3>
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `sig` | `C3,C4` | Signals to flip |
+| `epoch` |  | Perform mean-centering epoch-by-epoch |
+| `center` | 'F' | Perform median-centering (default: true ) |
+| `scale` | 'F' | Perform rescaling (default: true ) |
+| `winsor` | 0.05 | Winsorize the signal, e.g at 5th percentile (default: none) |  
+| `second-norm` | | Perform a second round of normalization after winsorization (default: no) | 
+
+<h3>Output</h3>
+
+No output, other than a message to the log and an updated in-memory signal.
+
+<h3>Example</h3>
+
+Consider the `SpO2` signal, 
+```
+luna s.lst -s 'STATS sig=SpO2'
+```
+which has a mean as follows:
+```
+MEAN   94.1955
+```
+and is also very highly skewed:
+```
+SKEW   -8.02593
+```
+
+If, for some reason, one wanted to normalize this measure, we can use `ROBUST-NORM`, also adding `winsor=0.05` to
+winsorize the signal at the 5th (and 95th) percentiles:
+
+```
+luna s.lst -s 'ROBUST-NORM sig=SpO2 winsor=0.05 & STATS sig=SpO2'
+```
+
+From the subsequent `STATS` output, we can see the mean and SD are closer to 0 and 1 respectively, and (due to the winsorization), the
+signal is also much less skewed:
+```
+MEAN    -0.80652
+SKEW    -0.4575
+SD      2.05714
+```
+Here, the mean and SD are still quite different from 0 and 1 - which naturally reflects the fact that we used robust measures of central tendency and spread (median and IQR-based estimate of the SD) rather than the typical mean and SD.  If we look at the percentiles from the `STATS` command, we see the median (`P50`) is effectively 0 (save for numerical rounding):
+```
+P01	-5.39593
+P02	-5.39593
+P05	-5.39593
+P10	-4.04687
+P20	-2.69795
+P30	-1.3489
+P40	-1.3489
+P50	-9.67455e-05
+P60	-9.67455e-05
+P70	-9.67455e-05
+P80	1.48381
+P90	1.48381
+P95	2.83286
+P98	2.83286
+P99	2.83286
+```
+This above also shows the impact of winsoriation, e.g. `P01`, `P02` and `P05` are all identical now. 
+
+If for some reason it is important to further rescale the signal to have mean and SD of 0 and 1 more precisely, then add the option `second-norm` to `ROBUST-NORM`.  This results in the following mean and SD: 
+```
+MEAN   -5.44263e-06
+SD     0.999983
+```
+
 ## EDF
 
 _Sets/forces EDF status for a EDF+_
@@ -614,17 +744,17 @@ This command downcasts an EDF+ to a standard EDF file.  This means that
 
  - if the `force` option is given, then the conversion to EDF is done _even if the EDF+D actually contains gaps_.
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Parameter | Description
 | ---- | ---- |
 | `force` | Change a EDF+D to EDF even if it actually contains gaps |
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 No output other than changing the internal status of the EDF
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 _to be added_
 
@@ -935,7 +1065,7 @@ have to select the closest next signal, so there will be a slight
 shift in the timings of signals.  If this matters, you can first
 resample all signals to align to the new offset perfectly.
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 Main arguments
 
@@ -952,12 +1082,12 @@ Other arguments as required by the [`WRITE` command](outputs.md#write)
 | `edf-dir` | New EDF directory |
 
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 The `ALIGN` command forces a `WRITE` of the EDF; also, annotation files can be output, with the
 annotations correctly altered to specify onset relative to the new EDF start.
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 _to be added_
 
@@ -1025,38 +1155,4 @@ set to missing:
 luna s.lst -s "ANON & WRITE edf-dir=edfs/ edf-tag=anon sample-list=s2.lst" 
 ```
 
-## SIGGEN
-
-_Generate, or add-in, artificial test signals_
-
-This is a simple command to generate test signal data (on top of an existing EDF).  Currently, it
-only generates sine wave signals.
-
-<h5>Parameters</h5>
-
-| Parameter | Example | Description |
-| ---- | ----- | ----- |
-| `sig` | `sig=C3,C4` | Signals to be modified |
-| `sine` | `sine=10,20` | Generate a sine wave with specified frequency (10 Hz), amplitude (20 units) and optionally phase |
-| `clear` | | If present, clear the signal before adding in this component |
-
-
-<h5>Output</h5>
-
-No new output, this command just modifies the internal signal data.
-
-<h5>Example</h5>
-
-
-To generate a sine wave in the signal `C3` (first clearing that signal):
-
-```
-luna s.lst -o out.db -s ' MASK ifnot=NREM2 & RE
-                          SIGGEN sig=C3 clear sine=10,100 
-                          MTM sig=C3 '
-```
-
-Plotting the output of `MTM`:
-
-![img](../img/siggen.png)
 

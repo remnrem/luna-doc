@@ -85,7 +85,7 @@ nav:
     - 'Artifacts': 'ref/artifacts.md'
     - 'Hypnograms': 'ref/hypnograms.md'
     - 'SUDS': 'ref/suds.md'
-    - 'Spectral analyses': 'ref/power-spectra.md'
+    - 'Time/freq. analyses': 'ref/power-spectra.md'
     - 'Spindles/SO ': 'ref/spindles-so.md'
     - 'Coupling/connectivity': 'ref/cc.md'
     - 'Interval-based': 'ref/intervals.md'
@@ -95,6 +95,8 @@ nav:
     - 'EEG microstates': 'ref/ms.md'
     - 'Clustering': 'ref/clustering.md'
     - 'Association' : 'ref/assoc.md'
+    - 'Simulation' : 'ref/simul.md'
+    - 'Helpers' : 'ref/helpers.md'
     - 'Experimental ': 'ref/exp.md'
  
  - NSRR:
@@ -103,6 +105,7 @@ nav:
 
  - Vignettes: 
     - 'Index' : 'vignettes/index.md'
+    - 'EEG microstates' : 'vignettes/microstates.md'
     - 'Artifacts' : 'vignettes/chep.md'
     - 'EDF+D & annotations' : 'vignettes/annots.md'
     - 'Cox & Fell' : 'vignettes/rcox.md'

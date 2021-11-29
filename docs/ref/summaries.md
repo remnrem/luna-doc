@@ -7,7 +7,7 @@ _Basic commands to give overviews of the structure of an EDF_
 |[`DESC`](#desc)       | Simple description of an EDF, sent to the console |
 |[`SUMMARY`](#summary) | More verbose description, sent to the console | 
 |[`HEADERS`](#headers) | Tabulate (channel-specific) EDF header information | 
-|[`CONTAINS`](#contains) | Simple command to indicate whether ceftain signals are present |
+|[`CONTAINS`](#contains) | Simple command to indicate whether certain signals are present |
 |[`ALIASES`](#aliases) | Display aliases assigned for channels and annotations |
 |[`TYPES`](#types) | Display current channel _types_ |
 |[`VARS`](#vars) | Display current individual-level variables | 

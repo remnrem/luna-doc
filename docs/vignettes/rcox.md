@@ -301,18 +301,17 @@ composite of a slow 1 Hz sinusoidal oscillation of large amplitude
 (10).
 
 We can now perform the same DFT/FFT analysis using Luna.  Although the DFT/FFT is
-core to many methods (and so is implemented internally within Luna)
-there is no formal command that lets users apply the DFT directly to
-signals in an EDF.  In practice, Luna uses Welch's algorithm (in [`PSD`](../ref/power-spectra/#psd)) or
+core to many methods, in practice Luna uses Welch's algorithm (in [`PSD`](../ref/power-spectra/#psd)) or
 multi-tapers (in [`MTM`](../ref/power-spectra/#mtm)), either of which are generally superior for
-sleep EEG data, as _C&F_ note.
+sleep EEG data, as _C&F_ note. 
 
 For the purpose of this vignette however, we shall uncover a _hidden_
 Luna option (actually an internal, debugging feature), which provides
 direct access to the FFT algorithm via the `-d` option, albeit
-applying it only to a single signal read from standard
-input.  From the section above, we've already written the signal to the
-file `s1.txt`, and so we can run the following, where the second
+applying it only to a single signal read from standard input. (The
+[`FFT`](../ref/power-spectra.md#fft) command does the same for EDF
+signals.)  From the section above, we've already written the signal to
+the file `s1.txt`, and so we can run the following, where the second
 parameter is the sample rate, 400 Hz:
 
 ```

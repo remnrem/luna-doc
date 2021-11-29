@@ -1,6 +1,6 @@
 # Downloads
 
-<p align="right"><em>Current Luna release: <b>v0.25.5</b> (31-Mar-2021)</em></p>
+<p align="right"><em>Current Luna release: <b>v0.26</b> (29-Nov-2021)</em></p>
 
 ## Installation options 
 
@@ -16,7 +16,7 @@ three basic ways to obtain Luna:
 
 - or as a [Docker container](docker.md), which allows any machine with
   [Docker](http://www.docker.com) installed on it to run Luna (both
-  _lunaC_ and _lunaR_) and comes with R (or RStudio) and the tutorial data pre-installed.
+  _lunaC_ and _lunaR_) and comes with R (and RStudio) and the tutorial data pre-installed.
 
 
 !!! hint "Advice for Linux"

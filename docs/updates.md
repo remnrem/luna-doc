@@ -1,107 +1,160 @@
 
 # Updates, additions and fixes
 
-Current stable version: __v0.25.5__ (main [downloads](download/index.md) page)
+Current stable version: __v0.26__ (main [downloads](download/index.md) page)
 
 <!--
- - Development version: __v0.26__ ([source only](http://github.com/remnrem/luna-base))
- - Known issues: [this page](known-issues.md)
+IN FLIGHT
+- [ midflight ] adding `ORDER` command (or that command-line 'sig' sets order)
+- loops in scripts [todo]
+- channel range selector [C3][C4] .. use same syntax as [C3][1..4] .. will have to wait and expand on a per-EDF basis ... 
+- add EDF+ to EDF converter  (zero-pad and add MASK for discontinuities)
+ add an explicit COUPL command that uses caches
+ - __Global coherence statistics__ via the [`SYNC` command](ref/cc.md#sync)  
 
-## v0.26
+  - ??PLANNED: amend annots when force-edf (from EDF+D to +C/EDF)
+  
+-->
 
- - fixed 'flanked=W,1' mask option 
+## v0.26 (29-Nov-2021)
 
- - changed 'canonical sigs' to allow whitespace, fill in if only 3 fields give (or 4,5); respects order of canonicals (i.e. rather than alphabetical)
-  which allows 'staged' additons (i.e. map S1, then S2 then S3 = S1 - S2 ) 
-
- 
 _New commands_
 
- - need to change S2A docs
+ - [`TRANS`](ref/evals.md#trans) supports arbitrary transformations of signal data
 
- - new `ZC` zero-centre command
+ - [`SIMUL`](ref/simul.md#simul) simulates time-series data given a power spectrum
+
+ - [`FFT`](ref/power-spectra.md#fft) performs basic discrete Fourier transform (DFT) via the FFT
+
+ - [`HEAD`](ref/outputs.md#head) shows one epoch of data (requires same SR for selected channels)
+
+ - [`ZC`](ref/manipulations.md#zc) mean-centers signals, and [`ROBUST-NORM`](ref/manipulations.md#robust-norm)
+   performs robust normalization (by median & IQR)
+
+ - upated the [`EMD`](ref/power-spectra.md#emd) (empirical mode decomposition) command 
  
- - new `HEAD` command -- shows one epoch of data (requires same SR for selected channels)
+ - [`--merge`](ref/helpers.md#-merge) to concatenate multiple EDFs; currently, only concatenates identical files
 
- - added 1,2,5, and 10-percentiles to `STATS` 
+ - [`--repath`](ref/helpers.md#-repath) convenience sample-list function
  
-- added `EVAL` `interval` command to generate new interval-level annotations based on eval expressions
+ - prototype [`ALTER`](ref/artifacts.md#alter) command to perform reference-channel, regression-based artifact removal
 
-- _eval_ syntax takes `{` and `}` instead of `'` to delimit strings;  allows nesting, but can also be handy on the command line (i.e. if already using `-s ''` form)
+ - [`REBASE`](ref/suds.md#rebase), which adopts the
+   [`SOAP`](ref/suds.md#soap) framework to (probabilistically)
+   re-estimate sleep stages using a different epoch duration (e.g. to
+   translate from 20-second manually scored datasets to 30-second
+   epochs) given a) manual staging in the original epoch duration, and
+   b) one or more signals (i.e. EEG) that are expected to encode sleep
+   stage information well (i.e. have a high kappa from the original
+   `SOAP` command).
 
-- added `drop` and `keep` to `PSC`
 
-- added `import=file.txt` command to `CACHE` to read from destrat output; can take `factros` and `v` param (as well as reqired `cache=`)
+_Annotation format modifications/extensions_
 
-- new `REBASE` command, which adopts the `SOAP`](ref/suds.md#soap) framework to (probabilistically) re-estimate sleep stages using a different epoch duration (e.g. to translate from 20-second manually scored datasets to 30-second epochs) given a) manual staging in the original epoch duration, and b) one or more signals (i.e. EEG) that are expected to encode sleep stage information well (i.e. have a high kappa from the original `SOAP` command).
+ - `.annot` format now allows key=value meta-data to be specified; also, you
+ can have fewer meta-data terms than expected (but not more), assuming order is as
+ header; all fields still are required to be in the header; now
+ WRITE-ANNOTS always writes meta-data as _key=value_ pairs
 
-_Modifications and fixes_
+- new `+` and `-` options to turn on/off @includes (e.g. `alias`,
+    `remap`); note, the variable must be specified __before__ the
+    relevant @include on the command line, i.e. as command-line
+    arguments are processed in left-to-right order
 
- - PLANNED: amend annots when force-edf (from EDF+D to +C/EDF)
+  - added a check for pipe (`|`) characters in annotation primary names (in a `remap`)
+
+  - annotation times can now include AM/PM modifiers (otherwise assumes 24-hour clock)
+
+  - new `annot-whitelist` option, such that annotations are only accepted if they appear in the `remap` list (either as aliases or primaries);
+
+  - new `annot-unmapped` option to skip if the annotation _is_ on the whitelist (i.e. complement of behavior with `annot-whitelist` alone)
+
+  - if remapping an annotation to `ABD/DEF|XYZ` form (i.e. with a `/`
+    delimiter) then for the class `XYZ`, it is set to `ABC` and
+    instance ID is set to `DEF`.  If there was an existing instance
+    value (non-null), a text meta-tag of `_inst=` is added.  The
+    delimiter character can be changed from `/` with
+    `class-inst-delimiter=X` (although this only works for annot files
+    currently, and is not generally recommended, i.e. as
+    _sanitization_ of labels respects `/` for annotations, etc)
+   
+ - added `combine-annots` option to merge _class_ and _instance_
+   identifiers. It accepts a character argument but is `_` by default
+   ); this sets the annotation `class` to `class_inst` (and sets
+   `inst` to '.' )
+
+ - added the `skip-sl-annots` option to skip all SL-attached
+   annotations; i.e. if wanting to only load annotations from an
+   alternate, explicitly referenced annot file
+
+ - added the `interval` option to the `EVAL` command, to generate new
+   interval-level annotations based on eval expressions
+
+_EEG microstates_
+
+ - `MS` has new `add-spc-sig` option to add spatial correlations as new EDF channels (instead of 0/1 binary variable, as per `add-sig`)
+
+ - `MS` has new `canonical` option to specify a file definining canonical microstates
+
+ - `MS` solutions now always have a header row; you cannot extract based on sol=file,A,B,C,D; also, 'unassigned' states are labeled 1,2,3, etc not A,B,C,...
+
+ - new `--cmp-maps` command to compare (spatial correlation) EEG microstates
+
+ - `--kmer` command takes options `req-len` (only analyse first _N_ sequences) and `indiv-enrichment`
+
+
+_Other fixes, minor modifications and new features_
+
+ - added ability to specify an empty EDF (`--nr`, `--rs` and filename equals '.' ) 
+
+ - added 1st, 2nd, 5th and 10th percentiles to `STATS` 
+
+ - fixed bug in `flanked` mask option (e.g. `flanked=W,1`)
+
+ - made `CANONICAL` definition file format more flexible: 1) it now allows
+   whitespace, not just tab-delimitation; 2) only the first three
+   fields are required now; if not given, the latter fields/columns
+   will be set to `.`; 3) `CANONICAL` now respects the order of
+   canonical signals (i.e. rather than processing things
+   alphabetical); this allows _multi-stage_ definitions, e.g. to first
+   map `S1`, then `S2`, and then apply a rule such as `S3 = S1 - S2`.
+ 
+ - _eval_ syntax takes `{` and `}` instead of `'` to delimit strings;
+  it allows nesting, but can also be handy on the command line
+  (i.e. if already using `-s ''` form)
+
+ - added `drop` and `keep` options to the `PSC` command
+
+ - added `import=file.txt` command to `CACHE` to read from destrat output; can take `factors` and `v` param (as well as required `cache=`)
+
+ - added `MASK epoch=all` to set a MASK but have it all empty ; i.e. to trim records not in an epoch
  
  - (for .annot only) added `align-annots` option : given list of annots (or *) for all,  align-annots-on=N1,N2, etc...
    if not specified, find first instance of this annot, then align with 1 second boundary ( or align-annots-res=X if given)
    align /all/ annots with this offset (bound at 0)
-   - expect a subsequent EPOCH to these, then MASK then WRITE those epochs/records (i.e. skip any records beforehand) 
+  >> - expect a subsequent EPOCH to these, then MASK then WRITE those epochs/records (i.e. skip any records beforehand) 
 
- - added `MASK epoch=all` to set a MASK but have it all empty ; i.e. trim records not in an epoch
- 
- - added `skip-sl-annots` to skip all SL-attached annotations; i.e. if want to only load from a new annot file
- 
- - allow sample list to have a comma-delim list of annotations, or '.' to denote no data - i.e. this way we can
-   have a fixed width sample list (col = 3 ) making it easier to read; note, lunaR (lsl() is broken if < 3 cols after first five rows) 
- 
- - new `+` and `-` options to turn on/off includes (e.g. alias, remap) ;  note, variable must be specified *before* the relevant @include, i.e. as variables defined in left-to-right order
- 
-- new `annot-whitelist` option which means that annots are only accepted if they appear on the remap list (either as aliases or primaries); also, `annot-unmapped` to skip if the annot IS on the whitelist
+ - added `pick` option to `SIGNALS` to pick first of pick=a,b,c that is present, and drop the rest;  can map with 'rename' to rename the pick
 
- - added a check for whether there are '|' chars in annotation primary names (in a `remap`)
- 
- - changed `epoch-check` to accept number of .eannot epochs that are different from expected; default is 5;  only stops is absolute greater than this; otherwise writes warning to log;  i.e. set to 0 for an exact match
- 
- - annotation times can include AM/PM modifiers (otherwise assumed 24-hour clock)
- 
- - if remapping an annotation to `ABD/DEF|XYZ` form (i.e. with a / delimiter) then for class XYZ, it is set to `ABC` and instance ID is set to `DEV`.  If there was an existing instance value (non-null), a text meta-tag of `_inst=` is added.  The delimiter character can be changed with class-inst-delimiter=X; this only works for annot files currently.  
- 
- 
- - added `pick` option to `SIGNALS` to pick first of pick=a,b,c that is present, and drop the rest;  can map with 'rename' to rename the pick 
 
- - `CANONICAL` does not now need an explicit GROUP to be specified; the
+ 
+ - allow sample-lists to have a comma-delim list of annotations, or
+   '.' to denote no data; in this way, we can have a fixed width
+   sample list (i.e. three tab-delimited columns), making it easier to
+   parse (case in point: _lunaR_ `lsl()` was broken if fewer than 3
+   columns were found after first five rows, reflecting how R
+   `read.table()` works)
+ 
+  - `CANONICAL` does not now need an explicit GROUP to be specified; the
    file must still have a first col, it is just ignored now;   also, new 'drop-originals' option to drop all original (non-CANONICAL)
     signals after making the new signals;  matches case-insentive
- 
- - added `combine-annots` option (which accepts a char, also :: '_' by default ) ; this makes class = class_inst (and sets inst to '.' ) 
- 
- - `--kmer` command takes options `req-len` (only analyse first N sequences) and `indiv-enrichment`
- 
- - optionally make `CONTAINS` command skip to next EDF (rather than alter the return code) [ if option `skip` ]
+  
+ - changed `epoch-check` to accept number of .eannot epochs that are different from expected; default is 5;  only stops is absolute greater than this; otherwise writes warning to log;  i.e. set to 0 for an exact match
+   
+ - `CONTAINS` can now skip to the next EDF (rather than alter the return code), if the option `skip` is given
 
  - check for whether an ID contains the ID-wildcard character (by default, ^) and reports an error if it does;  added the `wildcard` option to specify an alternate character
  
- - `.annot` format now allows key=value meta-data specified; also, you can have fewer than expected (but not more); assumes order is as header;  all
- fields still are required to be in the header;   now WRITE-ANNOTS always writes as key=value meta data
-
- - `MS` has new `add-spc-sig` option to add spatial correlations as new EDF channels (instead of 0/1 binary variable, as per `add-sig`)
-
-- `MS` has new `canonical` option to specify a file
-
-- `MS` solutions now always have a header row; you cannot extract based on sol=file,A,B,C,D ; also, 'unassigned' states are labeled 1,2,3, etc not A,B,C,...
-
-- new `cmp-maps` command for microstates
-
-- [ midflight ] adding `ORDER` command (or that command-line 'sig' sets order)
-
-- loops in scripts [todo]
-
-- channel range selector [C3][C4] .. use same syntax as [C3][1..4] .. will have to wait and expand on a per-EDF basis ... 
-
-- add EDF+ to EDF converter  (zero-pad and add MASK for discontinuities)
-
-add an explicit COUPL command that uses caches
-
-- __Global coherence statistics__ via the [`SYNC` command](ref/cc.md#sync)  
-
--->
 
 
 ## v0.25.5 (24-May-2021)

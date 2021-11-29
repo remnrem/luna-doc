@@ -8,8 +8,9 @@ _Commands to perform artifact detection/correction_
 | [`ARTIFACTS`](#artifacts)   | Per-epoch Buckelmueller et al. (2006) artifact detection | 
 | [`LINE-DENOISE`](#line-denoise) | Line denoising via spectrum interpolation |
 | [`SUPPRESS-ECG`](#suppress-ecg) | Correct cardiac artifact based on ECG | 
+| [`ALTER`](#alter) | Reference-channel regression-based artifact correction | 
 
-## `CHEP-MASK`
+## CHEP-MASK
 
 _Epoch-wise Hjorth parameters and other statistics_
 
@@ -51,7 +52,7 @@ A few notes on using `CHEP-MASK` to detect outlying epochs:
   in a given epoch that are a) above a certain absolute value (`max`), that are clipped (`clipped`)
   or flat (`flat`). 
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 Core parameters:
 
@@ -72,7 +73,7 @@ Additional options:
 | `max` | `max=200,0.05` | Flag epochs with this proportion of points with absolute value above 200 |
 
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 The `CHEP-MASK` command only alters the _CHEP_ mask and writes some
 information to the console.  No other output is generated.  Use the
@@ -80,7 +81,7 @@ information to the console.  No other output is generated.  Use the
 summary statistics on the number of epochs/channels masked, etc.
 
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 See [this vignette](../vignettes/chep.md) for an application of `CHEP-MASK` to hdEEG data.
 
@@ -205,7 +206,7 @@ electrodes were removed from the scalp). As expected, these have been
 flagged as likely artifact.
 
 
-## `ARTIFACTS`
+## ARTIFACTS
 
 _Applies an artifact detection algorithm for EEG data_
 
@@ -220,7 +221,7 @@ epoch), an epoch is flagged to be masked if either the delta power is
 more than 2.5 times the local average (from the sliding window) or the
 beta power is more than 2.0 times the local average.
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | --- | --- | --- |
@@ -228,7 +229,7 @@ beta power is more than 2.0 times the local average.
 | `verbose` | `verbose` | Report epoch-level statistics |
 | `no-mask` | `no-mask` | Run, but do not set any masks |
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 Channel-level output (strata: `CH`):
 
@@ -253,7 +254,7 @@ Epoch-level output (option: `verbose`, strata: `CH` x `E`):
 |`BETA_MASK` | Masked based on beta power? |
 |`MASK` | Whether the epoch is masked |
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 Taking the same EEG channel from the first tutorial EDF as in the
 `SIGSTATS` example above:
@@ -322,7 +323,7 @@ Briefly, this approach works as follows:
  - apply the inverse FFT to obtain a corrected time-domain signal
 
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | ---- | ----- | ----- |
@@ -330,11 +331,11 @@ Briefly, this approach works as follows:
 | `f` | `20,40,60` | One or more target frequencies to set to missing and interpolate |
 | `w` | `1,0.5`     | Bandwidth of noise and neighbour intervals |
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 No output, just modifies the internal signals.
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 Here is one example recording with considerable line noise: the raw
 signal (left panel) for a single epoch, and the equivalent frequency
@@ -407,7 +408,7 @@ also estimates heart rate per-epoch, and flags values likely to
 represent artifact. If needed, channels will be resampled to have
 similar sampling rates (to be set to the value of the parameter `sr`).
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | ---- | ----- | ----- |
@@ -415,7 +416,7 @@ similar sampling rates (to be set to the value of the parameter `sr`).
 | `sr` | `sr=125` | Set the sample rate that all channels should to resampled to |
 | `no-suppress` | `no-suppress` | Run the command but do not alter any EEG channels |
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 Individual-level summaries (strata: _none_):
 
@@ -447,7 +448,7 @@ Details of artifact signature (strata: `CH` x `SP`)
 | `ART` | For each sample point in a 2-second window, the estimated correction factor |
 
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 Here we look at individual `nsrr02` from the
 [tutorial](../tut/tut1.md) data, to identify and remove possible 
@@ -522,3 +523,164 @@ other datasets.  That is, as usual, your mileage may vary...
     of contamination.  The actual _signatures_ (i.e. the R-peak
     sync'ed averaged EEG) can be viewed by looking at the `ART`
     variable, which is a channel by sample-point (`CH` x `SP`) metric.
+
+
+## ALTER
+
+_Simple regression-based or EMD approaches to handle certain artifacts_
+
+This command runs in one or two modes:
+
+ - using explicit signals in the EDF as _correctors_ (`corr`),
+   i.e. proxies of any artifact in the target (`sig`) channel(s), and
+   regressing out those components, following the approach outlined [here](https://pubmed.ncbi.nlm.nih.gov/15210288/).  By default, the correction
+   is performed in 5 second segments, as a sliding window with increment 2.5 seconds (i.e. 50% overlap).  The final signal is based on weighted combinations of the overlapping estimates, to avoid edge artifacts in
+   the reconstructed signal.
+
+ - alternatively, applying EMD to the target (`sig`) channel, and
+ subtracting components that are highly correlated with any of the
+ _corrector_ channels; or, if `emd-corr` option is present, also
+ performing EMD on each _corrector_ channel and removing any `sig` 
+ components that are highly correlated with one or more of the _corrector_ (`corr`)
+ components.  
+
+By default, the regression-based approach uses segments of 5 seconds,
+with 2.5 second overlap.  The EMD-based approach uses non-overlapping
+30-second segments.  For now, we suggest using the regression-based
+mode of `ALTER`.
+
+All sample rates must be similar for `sig` and `corr` channels.
+
+!!! note
+    This command is explicitly called _ALTER_ rather than _CORRECT_ or some such...   That is,
+    depending on the the nature of the signals and the artifact, there is no guarantee that this approach will
+    correctly remove the true, underlying sources of artifact.
+
+
+<h3>Paramters</h3>
+
+| Option | Example | Description |
+| ---- | ---- | ---- |
+| `sig` | `C3` | Signal to be altered |
+| `corr` | `LOC,ROC` | Signals to be used as references (i.e. proxies of artifact) |
+| `segment-sec` | 10 | Segment size (default: 5 seconds for regression mode, 30 seconds for EMD mode) |
+
+For the EMD-based method, there are the following additional parameters:
+
+| Option | Example | Description |
+| ---- | ---- | ---- |
+| `emd` | `10` | Use EMD components of `sig` as references (instead of `corr` channels) |
+| `th` | `0.9` | EMD-channel correlation threshold (default: 0.9) |
+| `emd-corr` | | Perform EMD on corrector signals (`corr`) also | 
+
+
+<h3>Output</h3>
+
+No output is generated, other than the in-memory channels specified by `sig` being altered.
+
+<h3>Examples</h3>
+
+We'll use a combination of real and simulated data to show how the
+`ALTER` command works.  Note that, in practice, real artifacts
+(complex phenomena not necessarily well-captured by any one channel
+or component) are much more likely to be difficult to correct.  That is, the performance
+in this toy dataset is __not__ likely to be indicative of how well it performs on real data, e.g.
+with EMG, EOG or ECG artifact in the EEG.
+
+We'll take 10 minutes of N2 data from a random study:
+
+```
+luna cfs.lst 1 -s ' MASK ifnot=N2
+                    RE
+                    REFERENCE sig=C3 ref=M2
+                    SIGNALS keep=C3
+                    MASK random=20 & RE
+                    WRITE force-edf edf-dir=tmp '
+```
+
+
+We'll use the [`SIMUL`](simul.md#simul) command to spike in an
+artifactual signal (a simple sine wave) into the real EEG signal.
+Below, we'll call the original signal `S1`; the artifact is `X1`; the
+contaminated signal is `S2 = S1 + X1`; the _cleaned_ signal is `S3`,
+which is intended to have the component due to `X1` removed.  That is, we run `S3` (which is `S1` plus `X1`)
+through the `ALTER` command, to see whether it removes this simple source of artifact:
+
+```
+luna tmp/file.edf -o out.db alias="S1|C3" \
+  -s ' SIMUL sig=X1 frq=25 psd=2 sr=128
+       TRANS sig=S2 expr=" S2 = S1 + X1 "
+       TRANS sig=S3 expr=" S3 = S2 "
+       ALTER sig=S3 corr=X1       
+       COH spectrum max=50 
+       PSD spectrum max=50 dB '
+```
+
+After running `ALTER`, we run `COH` and `PSD` to generate power spectra and coherence statistics for all signals.  Here are the resulting power spectra: 
+
+
+![img](../img/alter1.png)
+
+The final signal (`S3`) has clearly had the major source of artifact removed (versus the contaminated `S2` signal), and shows a spectrum that is effectively identical to the
+original signal, `S1`. 
+
+Looking at the coherence statistics from [`COH`](cc.md#coh), we see a
+_very_ strong source of contamination around 25 Hz, which is the
+frequency of the simulated `X1` artifact signal.  This has effectively
+been completely removed in the altered signal (cohernece between `S3`
+and `X1`).  Note that some coherence values are not defined here, as
+the power for the (artificial) `X1` signal (a simple sine wave) is
+effectively zero there, meaning that the coherence statistic is not
+defined.)
+
+![img](../img/alter2.png)
+
+Inasmuch as the _corrector_ channels provide an accurate proxy for the
+contamination observed in the target signal, this simple
+regression-based approach should, in principle, perform well.
+Naturally, seeing how it performs with realistic channels (e.g. to
+remove EMG artifact from the EEG, etc) may vary from dataset to dataset.
+We'll add a future _vignette_ to explore some of these issues in real data.
+
+
+<!---
+
+R
+library(luna)
+k <- ldb( "out.db" )
+
+# coherence
+d <- k$COH$CH1_CH2_F
+par(mfcol=c(1,5))
+frame()
+with( subset(d , d$CH1 == "S1" & d$CH2 == "X1" ) , plot( F , COH , type="l" , xlab="Frequency (Hz)" , xlim=c(0,50) , ylab="Coherence" , ylim=c(0,1) , col="blue" , lwd=2 , main = "coh(S1,X1)" ) )
+with( subset(d , d$CH2 == "S2" & d$CH1 == "X1" ) , plot( F , COH , type="l" , xlab="Frequency (Hz)" , xlim=c(0,50) , ylab="Coherence" , ylim=c(0,1) , col="red" , lwd=2 , main = "coh(S2,X1)" ) )
+with( subset(d , d$CH2 == "S3" & d$CH1 == "X1" ) , plot( F , COH , type="l" , xlab="Frequency (Hz)" , xlim=c(0,50) , ylab="Coherence" , ylim=c(0,1) , col="green" , lwd=2 , main = "coh(S3,X1)" ) )
+
+d <- k$PSD$CH_F
+
+par(mfcol=c(1,4))
+
+with( subset(d , d$CH == "S1" ) , plot( F , PSD , type="l" , xlab="Frequency (Hz)" , xlim=c(0,50) , ylab="Power (dB)" ,  col="blue" , lwd=2 , main="Original (S1)" ) )
+with( subset(d , d$CH == "X1" ) , plot( F , PSD , type="l" , xlab="Frequency (Hz)" , xlim=c(0,50) , ylab="Power (dB)" ,  col="gray" , lwd=2 , main="Artifact (X1)" ) )
+with( subset(d , d$CH == "S2" ) , plot( F , PSD , type="l" , xlab="Frequency (Hz)" , xlim=c(0,50) , ylab="Power (dB)" ,  col="red" , lwd=2 , main="Contaminated (S2 = S1 + X1)" ) )
+with( subset(d , d$CH == "S3" ) , plot( F , PSD , type="l" , xlab="Frequency (Hz)" , xlim=c(0,50) , ylab="Power (dB)" ,  col="green" , lwd=2 , main="Altered (S3 = S2 - X1 )" ) )
+
+
+# correl:
+tmp1/cfs-visit5-800002.edf	S1	S2	0.367191652649541
+tmp1/cfs-visit5-800002.edf	S1	S3	0.906897059243483
+
+# EMD approach
+#  doesn't work as well (for this simple example)
+
+luna tmp1/cfs-visit5-800002.edf -o out.db alias="S1|C3" \
+  -s ' SIMUL sig=X1 frq=25 psd=2 sr=128
+       TRANS sig=S2 expr=" S2 = S1 + X1 "
+       TRANS sig=S3 expr=" S3 = S2 "
+       ALTER sig=S3 corr=X1 emd=5 th=0
+       CORREL
+       COH spectrum max=50
+       PSD spectrum max=50 dB '
+
+--->

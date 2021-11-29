@@ -7,11 +7,13 @@ power spectral density estimation_
 |---|---|
 | [`PSD`](#psd)         | Welch's method for power spectral density estimation |
 | [`MTM`](#mtm)         | Multi-taper method for power spectral density estimation |
-| [`MSE`](#mse)         | Multi-scale entropy statistics | 
-| [`LZW`](#lzw)         | LZW compression (information content) index |
+| [`FFT`](#fft)         | Basic discrete Fourier transform of a signal |
 | [`HILBERT`](#hilbert) | Hilbert transform |
 | [`CWT`](#cwt)         | Continuous wavelet transform |
 | [`CWT-DESIGN`](#cwt-design) | Complex Morlet wavelet properties |
+| [`EMD`](#emd)        | Empirical mode decomposition |
+| [`MSE`](#mse)         | Multi-scale entropy statistics | 
+| [`LZW`](#lzw)         | LZW compression (information content) index |
 | [`1FNORM`](#1fnorm)         | Remove the _1/f_ trend from a signal | 
 | [`TV`](#tv)                 | Total variation denoiser |
 | [`ACF`](#acf) | Autocorrelation function |
@@ -39,7 +41,7 @@ the output database.  The _overall_ estimate of the PSD is the average
 of the epoch-level estimates.
 
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | ---- | ---- | ---- |
@@ -78,7 +80,7 @@ users), as described in this table:
 |`cache-metrics` | `cache-metrics=c1`  | Cache `PSD` by `F` and `CH` (e.g. for `PSC`) |
 
 
-<h5>Band definitions</h5>
+<h3>Band definitions</h3>
 
 Luna uses the following band definitions: 
 
@@ -98,7 +100,7 @@ Luna uses the following band definitions:
 In addition, `SLOW_SIGMA` and `FAST_SIGMA` are defined as 12-13.5 Hz
 and 13.5-15 Hz respectively.  
 
-<h5>Outputs</h5>
+<h3>Outputs</h3>
 
 
 Channel-level information (strata: `CH`)
@@ -136,7 +138,7 @@ Epoch-level spectral power by frequency bin (option: `epoch-spectrum`, strata: `
 | `PSD` | Absolute spectral power |
 
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 Here we calculate band power and the PSD for
 [tutorial](../tut/tut1.md) individual `nsrr01`, for all N2 and all N3
@@ -146,8 +148,8 @@ command, rather than `-o`.  We also add a `TAG` command to
 disambiguate the output:
 
 ```
-luna s.lst 2 sig=EEG -o out.db -s "EPOCH & MASK ifnot=NREM2 & RE & TAG SS/N2 & PSD spectrum"
-luna s.lst 2 sig=EEG -a out.db -s "EPOCH & MASK ifnot=NREM3 & RE & TAG SS/N3 & PSD spectrum"
+luna s.lst 2 sig=EEG -o out.db -s 'EPOCH & MASK ifnot=NREM2 & RE & TAG SS/N2 & PSD spectrum'
+luna s.lst 2 sig=EEG -a out.db -s 'EPOCH & MASK ifnot=NREM3 & RE & TAG SS/N3 & PSD spectrum'
 ```
 Here we see that all output for `PSD` has an additional `SS` (sleep stage) stratifier:
 ```
@@ -209,7 +211,7 @@ compared to N2 (50%) for this individual.
 To look at per-epoch estimates of band power for all N2 and N3 sleep:
 
 ```
-luna s.lst 2 sig=EEG -o out2.db -s "MASK if=wake & RE & PSD epoch"
+luna s.lst 2 sig=EEG -o out2.db -s 'MASK if=wake & RE & PSD epoch'
 ```
 
 For a change, here we'll use [_lunaR_](../ext/R/index.md) to directly load
@@ -292,7 +294,7 @@ epoch (e.g. 1 second) and one may wish to have highly overlapping segments in a 
 it is more efficient (internally) to use a different mechanism.  By default, segments are defined to be 30 seconds, and to
 step in increments of 30 seconds, so for all intents and purposes, this will be identical to (default) epoch specification. 
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | ----- | ------ | ------ |
@@ -308,7 +310,7 @@ step in increments of 30 seconds, so for all intents and purposes, this will be 
 | `dump-tapers` | | Report the taper coefficients in the output |
 | `mean-center` | | Mean center segments prior to analysis | 
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 Whole-signal power spectra (strata: `CH` x `F`)
 
@@ -324,7 +326,7 @@ Epoch-level (_segment_) power spectra (option: `epoch`, strata: `SEG` x `CH` x `
 | `MTM` | Spectral power via the multitaper method |
 
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 To compare results for the N2 power spectra up to 20 Hz, from `PSD` and `MTM`
 for the three tutorial individuals:
@@ -425,82 +427,60 @@ depending on the goal of the analysis.)
 ![img](../img/mtm2.png)
 
 
+## `FFT`
 
-## `MSE`
+_Applies the basic discrete Fourier transform to a signal_
 
-_Calculates per-epoch multi-scale entropy statistics_
+In contrast to Welch ([`PSD`](#psd)) or multi-taper ([`MTM`](#mtm))
+approaches, the `FFT` performs that same function (for a single, real,
+1-dimensional signal) as the `fft()` function in R or Matlab, i.e.
+the DFT with no windowing or tapering, and which will have as many
+points as there are samples.  As such, this is intended for use with
+simple/short signals, where one wants this exact quantity, e.g. if
+validating a computation, as we did [here](simul.md#simul).  For real
+data (especially long, whole night recordings), `PSD` and `MTM` will
+provide better estimates of the power spectrum.
 
+!!! info
+    Practically, for very long signals, `FFT` will return a very large/dense spectrum, which
+    might make the `destrat` output mechanism struggle;  if you really want this, run with the `-t` command-line option
+    to produce [text table outputs](../../luna/args.md#text-tables).
 
-This function estimates multi-scale entropy (MSE) as described in the
-approach of [Costa et al](https://physionet.org/physiotools/mse/tutorial/), which is based
-on the concept of [sample entropy](https://en.wikipedia.org/wiki/Sample_entropy).
-
-In short, there are two steps: first, the time series is
-coarse-grained, dependent on scale parameter `s` (typically varied
-between 1 and 20); second, sample entropy is calculated for each
-coarse-grained time series, dependent on parameters `m` and `r`.
-Parameters `m` and `r` define the pattern length and the similarity
-criterion respectively, with default values of 2 and 0.15
-respectively. Smaller values of (multi-scale) entropy indicate more
-self-similarity and less noise in a signal.
-
-<h5>Parameters</h5>
-
-| Parameter | Example | Description |
-| ---- | ----- | ----- | 
-| `m` | `m=3` | Embedding dimension (default 2) |
-| `r` | `r=0.2` | Matching tolerance in standard deviation units (default 0.15) |
-| `s` | `s=1,15,2` | Consider scales 1 to 15, in steps of 2 (default 1 to 10 in steps of 1) | 
-| `verbose` | `verbose` | Emit epoch-level MSE statistics |
-
-
-<h5>Outputs</h5>
-
-MSE per channel and scale (strata: `CH` x `SCALE`)
-
-| Variable | Description |
-| ----- | ------ |
-| `MSE` | Multi-scale entropy |
-
-Epoch-level MSE per channel and scale (option: `verbose`, strata: `E` x `CH` x `SCALE`)
-
-| Variable | Description |
-| ----- | ------ |
-| `MSE` | Multi-scale entropy |
-
-
-
-## `LZW`
-
-_Calculate per-epoch LZW compression index_
-
-Lempel–Ziv–Welch (LZW) is a commonly used data compression algorithm,
-which can be applied to coarse-grained sleep signals to provide a
-quantitative metric (the ratio of the size of the compressed signal
-versus the original signal) of the amount of non-redundant information
-in a signal.
-
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Parameter | Example | Description |
-| ---- | ----- | ----- | 
-| `nsmooth` | `nsmooth=2` | Coarse-graining parameter (similar to scale `s` in `MSE`) |
-| `nbins` | `nbins=5` | Matching tolerance in standard deviation units (default 10) |
-| `epoch` | `epoch` | Emit epoch-level LZW statistics |
+| ---- | ---- | ----- |
+| `sig` | `C3,C4` | Which signal(s) to analyse |
+| `verbose` | | Output additional variables (see below) |
 
-<h5>Outputs</h5>
+<h3>Output</h3>
 
-LZW per channel (strata: `CH`)
-
-| Variable | Description |
-| ----- | ------ |
-| `LZW` | Compression index |
-
-Epoch-level LZW per channel and scale (option: `epoch`, strata: `E` x `CH`)
+Whole-signal power spectra (strata: `CH` x `F`)
 
 | Variable | Description |
-| ----- | ------ |
-| `LZW` | Compression index |
+| ----- | ----- |
+| `PSD` | Raw power spectral density |
+| `DB` | 10log10(PSD) |
+
+Optional output (option: `verbose`, strata: `CH` x `F`)
+
+| Variable | Description |
+| ----- | ----- |
+| `RE` | Real part of the DFT |
+| `IM` | Imaginary part of the DFT |
+| `UNNORM_AMP` | Unnormalized amplitude |
+| `NORM_AMP` | Normalized amplitude |
+
+<h3>Examples</h3>
+
+This command is a wrapper around the same FFT/DFT analysis performed by the `fft` command line function:
+
+```
+luna -d fft 100 < data.txt
+```
+
+See [this vignette](../../vignettes/rcox/#spectral-analyses) for a description of the outputs, and an example of usage (i.e. here, the
+only difference is that `FFT` command operates on EDF channels, whereas the example above is based on reading a text file.)
 
 
 ## `HILBERT`
@@ -510,7 +490,7 @@ _Applies filter-Hilbert transform to a signal, to estimate envelope and instanta
 This function can be used to generate the envelope of a (band-pass
 filtered) signal.
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | ---- | ---- | ----- | 
@@ -521,13 +501,13 @@ filtered) signal.
 | `tag` | `tag=v1` | Additional tag to be added to the new signal |
 | `phase` | `phase` | Generate a second new signal with instantaneous phase |
 
-<h5>Outputs</h5>
+<h3>Outputs</h3>
 
 No formal output, other than one or two new signals in the _in-memory_
 representation of the EDF, with `_hilbert_mag` and (optionally)
 `_hilbert_phase` suffixes.
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 Using [_lunaR_](../ext/R/index.md), with `nsrr02` attached, we will use the filter-Hilbert method to 
 get the envelope of a sigma-filtered EEG signal.  After attaching the sample, we then drop all signals
@@ -607,7 +587,7 @@ insight into the performance of `SPINDLES` under different
 circumstances.
 
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | ---- | ---- | ----- | 
@@ -617,7 +597,7 @@ circumstances.
 | `tag`    | `tag=v1` | Additional tag to be added to the new signal |
 | `phase`  | `phase` | Generate a second new signal with wavelet's phase |
 
-<h5>Outputs</h5>
+<h3>Outputs</h3>
 
 No formal output, other than one (or two) new signals appended to the
 _in-memory_ representation of the EDF.
@@ -681,7 +661,7 @@ To display the properties of a wavelet with center frequency of 15 hz
 and 12 cycles, applied to a signal with sample rate of 12 Hz.
 
 ```
-luna s.lst 1 -o out.db -s "CWT-DESIGN fc=15 cycles=12 fs=200" 
+luna s.lst 1 -o out.db -s 'CWT-DESIGN fc=15 cycles=12 fs=200'
 ```
 
 !!! Note
@@ -742,6 +722,205 @@ ID      PARAM    FWHM_F  FWHM_LWR  FWHM_UPR
 .   15_12_200  3.003003  13.51351  16.51652
 ```
 
+## `EMD`
+
+_Empirical mode decomposition_
+
+Empirical mode decomposition, or the Hilbert-Huang transform
+(described
+[here](https://en.wikipedia.org/wiki/Hilbert%E2%80%93Huang_transform)). Currently,
+EMD is applied to the entire duration of the recording (i.e. it does
+not work epoch-wise).
+
+<h3>Parameters</h3>
+
+| Option | Example | Description |
+| ---- | ---- | --- |
+| `sig` | `C3` | Specify the channels to which EMD will be applied |
+| `tag` | `EMD` | Change the default `_IMF_N` tag, e.g. `C3_IMF_1` to `C3_EMD_1` | 
+| `sift` | 20 | Maximum number of sifting iterations (default: 20) | 
+| `imf` | 10 | Number of intrinsic mode functions to extract (default: 10) |
+
+<h3>Outputs</h3>
+
+There is no formal output from the EMD command, other than generating new channels
+that are added to the in-memory EDF.  That is, the intrinsic mode functions (up to `imf` of them) are 
+written to the EDF as new channels (with the same sample
+rate as the original signal) and given suffixes `_IMF_1`, `_IMF_2`,
+etc.  The residual component is given the suffix `_IMF_0`.
+
+
+<h3>Example</h3>
+
+Here we use the [`SIMUL`](simul.md#simul) command to generate 5
+minutes of a simple, stationary signal, that comprises three
+independent sine-waves, at 2, 7 and 15 Hz, with power of 1, 1 and 2
+units, respectively.
+
+```
+luna . --nr=300 --rs=1 -o out.db \
+       -s ' SIMUL frq=2,7,15 psd=1,1,2 sig=S1 sr=100
+            EMD sig=S1 imf=3
+            FFT
+            MATRIX file=s1.txt'
+```
+
+The `EMD` command by default takes requires the channel(s) (`sig`) to be
+specified.  In this example, because we know there are only three
+components, we set `imf` to 3 (the default is to return 10
+components). Note that the first three components will be identical
+whether or not `imf` is specified, as this option only impacts what
+is output (and the residual component).
+
+The `FFT` command performs a
+DFT, for the original signal `S1` but also the new
+signals attached by `EMD`: namely, `S1_IMF_1`, `S1_IMF_2` and
+`S1_IMF_3`.  Finally, the `MATRIX` command dumps the raw signals to a
+file `s1.txt` (for plotting).
+
+After running the above, we can first look at the raw signals (in `s1.txt`), for the original simulated signal `S1` (here
+showing just two seconds of the recording):
+
+![img](../img/emd1.png)
+
+and likewise for the three components extracted by `EMD`:
+
+![img](../img/emd2.png)
+
+It does indeed look as though `EMD` has extracted three sine waves,
+with the first being the fastest (as expected given the sifting/EMD
+algorithm) and also of greater amplitude (as expected given the
+simulation).
+
+We can look at the spectral properties of the original signal and the EMD-derived components.  As expected, the original signal
+has power at exactly 2, 7 and 15 Hz (in a ratio of 1:1:2):
+
+![img](../img/emd4.png)
+
+Performing the FFT separately on each component, we see that EMD has in this instance successfully isolated the three simulated components:
+
+![img](../img/emd3.png)
+
+
+!!! note
+    In practice, although EMD can be more appropriate for working
+    with nonlinear and nonstationary signals compared to other
+    time/frequency decomposition methods, there can still be issues,
+    e.g. arising from boundary effects or highly variably signals, as
+    discussed
+    [here](https://www.nature.com/articles/s41598-020-72193-2).
+    Simply put, like most things, EMD is not guaranteed to magically
+    work as expected every time...
+
+
+<!--
+R
+d <- read.table("s1.txt", header=T, stringsAsFactors=F)
+par(mfcol=c(1,3))
+frame()
+plot( seq(0,2,0.01) , d$S1[ 1000:1200 ] , type="l" , col="purple" , lwd=2 , xlab="Time (secs)" , ylab="Amplitude" , ylim=c(-0.25,0.25) )
+frame()
+plot( seq(0,2,0.01) , d$S1_IMF_1[ 1000:1200 ] , type="l" , col="blue" , lwd=2 , xlab="Time (secs)" , ylab="Amplitude" , ylim=c(-0.15,0.15) , main="IMF1" )
+plot( seq(0,2,0.01) , d$S1_IMF_2[ 1000:1200 ] , type="l" , col="blue" , lwd=2 , xlab="Time (secs)" , ylab="Amplitude" , ylim=c(-0.15,0.15) , main="IMF2" )
+plot( seq(0,2,0.01) , d$S1_IMF_3[ 1000:1200 ] , type="l" , col="blue" , lwd=2 , xlab="Time (secs)" , ylab="Amplitude" , ylim=c(-0.15,0.15) , main="IMF3" )
+
+library(luna)
+k <- ldb("out.db")
+d <-  k$FFT$CH_F
+frq <- sort( unique( d$F ) )
+par(mfcol=c(1,3))
+frame()
+plot( frq , d$PSD[ d$CH == "S1" ] , type="b" , pch=20 , col="purple" , ylim=c(0,3.5) , ylab="Power" , xlab="Frequency (Hz)", main="S1")
+abline(h=c(1,2,3) , lty=2 , col="gray" )
+frame()
+
+par(mfcol=c(1,3))
+plot( frq , d$PSD[ d$CH == "S1_IMF_1" ] , type="b" , pch=20 , col="blue" , ylim=c(0,3.5) , ylab="Power", main="IMF1" , xlab="Frequency (Hz)" )
+abline(h=c(1,2) , lty=2 , col="gray" )
+plot( frq , d$PSD[ d$CH == "S1_IMF_2" ] , type="b" , pch=20 , col="blue" , ylim=c(0,3.5) , ylab="Power", main="IMF2" , xlab="Frequency (Hz)" )
+abline(h=c(1,2) , lty=2 , col="gray" )
+plot( frq , d$PSD[ d$CH == "S1_IMF_3" ] , type="b" , pch=20 , col="blue" , ylim=c(0,3.5) , ylab="Power", main="IMF3" , xlab="Frequency (Hz)" )
+abline(h=c(1,2) , lty=2 , col="gray" )
+
+-->
+
+
+## `MSE`
+
+_Calculates per-epoch multi-scale entropy statistics_
+
+
+This function estimates multi-scale entropy (MSE) as described in the
+approach of [Costa et al](https://physionet.org/physiotools/mse/tutorial/), which is based
+on the concept of [sample entropy](https://en.wikipedia.org/wiki/Sample_entropy).
+
+In short, there are two steps: first, the time series is
+coarse-grained, dependent on scale parameter `s` (typically varied
+between 1 and 20); second, sample entropy is calculated for each
+coarse-grained time series, dependent on parameters `m` and `r`.
+Parameters `m` and `r` define the pattern length and the similarity
+criterion respectively, with default values of 2 and 0.15
+respectively. Smaller values of (multi-scale) entropy indicate more
+self-similarity and less noise in a signal.
+
+<h3>Parameters</h3>
+
+| Parameter | Example | Description |
+| ---- | ----- | ----- | 
+| `m` | `m=3` | Embedding dimension (default 2) |
+| `r` | `r=0.2` | Matching tolerance in standard deviation units (default 0.15) |
+| `s` | `s=1,15,2` | Consider scales 1 to 15, in steps of 2 (default 1 to 10 in steps of 1) | 
+| `verbose` | `verbose` | Emit epoch-level MSE statistics |
+
+
+<h3>Outputs</h3>
+
+MSE per channel and scale (strata: `CH` x `SCALE`)
+
+| Variable | Description |
+| ----- | ------ |
+| `MSE` | Multi-scale entropy |
+
+Epoch-level MSE per channel and scale (option: `verbose`, strata: `E` x `CH` x `SCALE`)
+
+| Variable | Description |
+| ----- | ------ |
+| `MSE` | Multi-scale entropy |
+
+
+
+## `LZW`
+
+_Calculate per-epoch LZW compression index_
+
+Lempel–Ziv–Welch (LZW) is a commonly used data compression algorithm,
+which can be applied to coarse-grained sleep signals to provide a
+quantitative metric (the ratio of the size of the compressed signal
+versus the original signal) of the amount of non-redundant information
+in a signal.
+
+<h3>Parameters</h3>
+
+| Parameter | Example | Description |
+| ---- | ----- | ----- | 
+| `nsmooth` | `nsmooth=2` | Coarse-graining parameter (similar to scale `s` in `MSE`) |
+| `nbins` | `nbins=5` | Matching tolerance in standard deviation units (default 10) |
+| `epoch` | `epoch` | Emit epoch-level LZW statistics |
+
+<h3>Outputs</h3>
+
+LZW per channel (strata: `CH`)
+
+| Variable | Description |
+| ----- | ------ |
+| `LZW` | Compression index |
+
+Epoch-level LZW per channel and scale (option: `epoch`, strata: `E` x `CH`)
+
+| Variable | Description |
+| ----- | ------ |
+| `LZW` | Compression index |
+
 
 ## 1FNORM
 
@@ -773,13 +952,13 @@ Using the [tutorial](../tut/tut1.md) dataset and [_lunaC_](../luna/args.md) to r
 
 ```
 luna s.lst sig=EEG -o out.db 
-  -s "MASK ifnot=NREM2 \
-      & RE \
-      & TAG NORM/no \
-      & PSD spectrum \
-      & 1FNORM \
-      & TAG NORM/yes \
-      & PSD spectrum"
+  -s 'MASK ifnot=NREM2 
+      RE 
+      TAG NORM/no 
+      PSD spectrum 
+      1FNORM 
+      TAG NORM/yes 
+      PSD spectrum '
 ```
 
 Using [_lunaR_](../ext/R/index.md) to visualize the normalized and raw power spectra (in R):

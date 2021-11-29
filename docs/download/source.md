@@ -5,22 +5,19 @@
 To compile luna from source, you'll need a system capable of
 configuring and compiling C/C++ code, and for the dependent libraries,
 ideally some kind of package manager.  The instructions below refer to
-Unix-like operating systems, namely Linux and Mac OS.  
+Unix-like operating systems, namely Linux and macOS.  
 
 !!! hint "Please note..."
-    We're still in the process of optimizing the installation
-    process, especially for _lunaR_ which is not guaranteed to work
-    seamlessly on all platforms....  If you are having trouble
-    installing _lunaC_ or _lunaR_, try working with the 
-    [Docker container](docker.md) for now.
+    If you are having trouble
+    installing _lunaC_ or _lunaR_, you might try working with the 
+    [Dockerized version](docker.md) instead.
 
 Before attempting to compile Luna, please ensure that you have the
 following (all of which can be obtained for free):
 
-- a __C/C++ compiler__: on Mac OSX, this can be achieved by installing
+- a __C/C++ compiler__: on macOS, this can be achieved by installing
   Apple's XCode Command Line Tools.  Open a `Terminal` window and type
-  (you may get an error if they are already installed; to test whether
-  they are already installed.):
+  (you may get an error message if they are in fact already installed):
   ```
   xcode-select --install
   ```
@@ -163,7 +160,7 @@ in `/home/joe/fftw/`, then set the `FFTW` variable equal to that location:
 ```
 make FFTW=/home/joe/fftw/
 ```
-- On a Mac OSX platform
+- On a macOS platform
 ```
 make ARCH=MAC FFTW=/home/joe/fftw/
 ```
@@ -202,85 +199,77 @@ subsequently run luna by typing `luna` in any folder.
 
 Make sure you are running a relatively recent version of R (which can
 be [downloaded here](https://www.r-project.org)): _lunaR_ was
-developed on version 3.5.1.  To install, if you have the `devtools`
-package, you might try this:
+developed on version 3.5.1.
 
+You can obtain source code directly:
 ```
-library(devtools)
-```
-
-<!---
-Next, set an environment variable to `LUNA_BASE` point to the location of `luna-base`:
-```
-Sys.setenv( LUNA_BASE="/home/joe/luna-base/" ) 
-```
---->
-
-
-Optionally, if you manually installed FFTW in a nonstandard location, 
-then set a `FFTW` environment variable too:
-
-```
-Sys.setenv( FFTW="/home/joe/fftw/" ) 
+git clone https://github.com/remnrem/luna.git
 ```
 
-Then run the following command to pull the package source from a
-[Github](http://github.org) and compile it:
-
+Install the package by running:
 ```
-devtools::install_github( "remnrem/luna" ) 
+R CMD INSTALL luna
 ```
 
-If there is an issue with permissions, you might need to write this to
-an alternate local library, e.g. assuming the `~/my-Rlib` folder exists:
-
+If needed, you can set `FFTW` to the location where you
+compiled FFTW as follows:
 ```
-devtools::install_github( "remnrem/luna" , lib="~/my-Rlib" ) 
+FFTW=/Users/joe/fftw R CMD INSTALL luna
 ```
-
-Assuming that works, then once installed you should subsequently be able to run only this command to start the library:
+If the above works, this will allow you to attach the _lunaR_ library in R:
 ```
 library(luna)
 ```
+If you don't have permission to write to the main R library, try creating a separate folder as follows:
 ```
+mkdir ~/Rlib
 
-** lunaR v0.25.5 31-Mar-2021
-** luna v0.25.5 31-Mar-2021
+FFTW=/Users/joe/fftw R CMD INSTALL --library=~/my-Rlib luna
+```    
+Then, when in R, you'll need to call:
 ```
-If you specified an alternate library location, you'll need to add that too here:
-```
-library(luna,lib.loc="~/my-Rlib")
-```
+library(luna, lib.loc="~/my-Rlib")
+```    
 
 
-!!! note
+!!! note "Installing with `devtools`"
 
-    Alternatively, (e.g. if you have trouble with `devtools`), you can obtain source code directly:
+    Alternatively, you can try using the `devtools` R package to install _lunaR_.  
     ```
-    git clone https://github.com/remnrem/luna.git
+    library(devtools)
+    ```
+    If you manually installed FFTW to a nonstandard location, 
+    then set the `FFTW` environment variable too:
+
+    ```
+    Sys.setenv( FFTW="/home/joe/fftw/" ) 
     ```
 
-    Install the package by running:
+    Then run the following command to pull the package source from a
+    [Github](http://github.org) and compile it:
+
     ```
-    R CMD INSTALL luna
+    devtools::install_github( "remnrem/luna" ) 
     ```
 
-    If needed, you can set `FFTW` to the location where you
-    compiled FFTW as follows:
+    If there is an issue with permissions, you might need to write this to
+    an alternate local library, e.g. assuming the `~/my-Rlib` folder exists:
+
     ```
-    FFTW=/Users/joe/fftw R CMD INSTALL luna
+    devtools::install_github( "remnrem/luna" , lib="~/my-Rlib" ) 
     ```
-    If the above works, this will allow you to attach the _lunaR_ library in R:
+
+    Assuming that works, then once installed you should subsequently be able to run only this command to start the library:
     ```
     library(luna)
     ```
-    As above, if you don't have permission to write to the main R library, try creating a separate folder as follows:
     ```
-    mkdir ~/Rlib
-    
-    FFTW=/Users/joe/fftw R CMD INSTALL --library=~/my-Rlib luna
-    ```    
-    Then, when in R, you'll need to call:
+    ** lunaR v0.25.5 31-Mar-2021
+    ** luna v0.25.5 31-Mar-2021
     ```
-    library(luna, lib.loc="~/my-Rlib")
-    ```    
+    If you specified an alternate library location, you'll need to add that too here:
+    ```
+    library(luna,lib.loc="~/my-Rlib")
+    ```
+
+

@@ -99,7 +99,9 @@ to System Settings / Security & Privacy tab and click the _Open Anyway_ button, 
 
 ![img](../img/mac-install2.png)
 
-You'll then see a further dialog box pop up, where you should click "Open".  This will allow luna to run on the command line.   
-Do likewise for destrat (and behead).  You only need to do this once per new installation.
-Alternatively, you could always [compile from source](source.md), or use [Docker](docker.md) instead.
+You'll then see a further dialog box pop up, where you should click
+"Open".  This will allow luna to run on the command line.  Do likewise
+for destrat (and behead).  You only need to do this once per new
+installation.  Alternatively, you could always [compile from
+source](source.md), or use [Docker](docker.md) instead.
 

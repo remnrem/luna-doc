@@ -6,6 +6,7 @@ _Commands to rewrite EDFs and signals/annotations in other text-based formats_
 |---|---|
 | [`WRITE`](#write)    | Write a new EDF file | 
 | [`MATRIX`](#matrix)  | Dump signals (and annotations) to a file  |  
+| [`HEAD`](#head)      | Show a small interval of signal data |
 | [`DUMP-RECORDS`](#dump-records)| Dump annotations and signals, by EDF record | 
 | [`RECS`](#recs)| Dump basic information on EDF record structure | 
 | [`SEGMENTS`](#segments)| Dump (discontinuous EDF+) intervals |
@@ -207,6 +208,63 @@ will add two columns `X` and `Y`.  For each sample point, these
 columns will have a `0` or `1` value to indicate whether or not that
 annotation was present at that point.
 
+## HEAD
+
+_Writes a small amount of signal data to standard output_ 
+
+This command is useful to sanity-check signals and epochs, by
+outputting just a small amount of data (e.g. a few seconds worth)
+for one or more channels, for a given epoch.
+
+If multiple channels are output, they must all have the same sample
+rate.
+
+<h5>Parameters</h5>
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `sig` | `C3,C4` | Show these channels (default: all channels) | 
+| `epoch` | `100` | Show epoch 100 (default: first epoch) |
+| `sec`  | `0.5` | Only show a fixed duration (secs) of the epoch (default: whole epoch) |
+
+<h5>Output</h5>
+
+All output is sent to the console (`stdout`) and so can be redirected,
+etc.  Output is tab-delimited; the first three columns are `T`
+(elapsed seconds from start of EDF), `SEC` (elapsed seconds in this
+segment of data) and `SP` (sample point in this segment of data,
+starting at 0).  The subsequent columns are for the requested channels.
+
+
+<h5>Example</h5>
+
+To output 0.05 second's worth of data for two EOG channels, from a particular epoch of an EDF (here, 222):
+
+```
+luna s.lst 1 -s HEAD epoch=222 sig=EOG_L,EOG_R sec=0.05 > o.txt
+```
+```
+T          SEC         SP      EOG_L       EOG_R
+6630       0           0    -8.21123    -6.37973
+6630       0.00390625  1    -7.72283    -5.52503
+6630.01    0.0078125   2    -6.68498    -4.30403
+6630.01    0.0117188   3    -5.76923    -3.20513
+6630.02    0.015625    4    -4.91453    -2.71673
+6630.02    0.0195312   5    -3.26618    -2.47253
+6630.02    0.0234375   6   -0.457875    -1.98413
+6630.03    0.0273438   7     2.28938    -1.31258
+6630.03    0.03125     8     3.93773   -0.763126
+6630.04    0.0351562   9     4.30403  -0.0915751
+6630.04    0.0390625   10    4.18193    0.763126
+6630.04    0.0429688   11    3.99878     1.43468
+6630.05    0.046875    12    3.87668     1.67888
+```
+
+
+!!! note
+    Note that `T` may have limited numerical precision in the output.
+    This command is intended for quick reviews of signals (i.e. to see
+    units, scales, etc). 
 
 ## DUMP-RECORDS
 
@@ -218,10 +276,10 @@ dumps detailed information about the signals and annotations to
 
 <h5>Parameters</h5>
 
-| Parameter | Example | Description |
-| --- | --- | --- |
-| `no-signals` | `no-signals` | Do not show signal data |
-| `no-annots` | `no-annots` | Do not show annotation information |
+| Parameter | Description |
+| --- | --- |
+| `no-signals` | Do not show signal data |
+| `no-annots` | Do not show annotation information |
 
 <h5>Output</h5>
 

@@ -12,7 +12,6 @@
 |Command |Description |	       
 |---|---|
 | [`L1OUT`](#l1out)    | Leave-one-out interpolation-based signal check |
-| [`EMD`](#emd)    | Empirical mode decomposition |
 | [`ED`](#ed)      | Diagnostic for electrical bridging |
 | [`POL`](#pol)    | Polarity check heuristic for sleep EEG |
 | [`FIP`](#fip)    | Frequency-interval plots | 
@@ -22,32 +21,11 @@
 
 
 
-<h5>Parametes</h5>
-
-| Option | Description | 
-| ---- | ---- | 
-| `signal` | Specify which channels/signals to include |
-
-<h5>Outputs</h5>
-
-_to be completed_
-
-<h5>Example</h5>
-
-_to be completed_
-
-
 ## `L1OUT`
 
 _Leave-one-out interpolation-based signal check_
 
 
-## `EMD`
-
-_Empirical mode decomposition_
-
-Empirical mode decomposition, or the Hilbert-Huang transform
-(described [here](https://en.wikipedia.org/wiki/Hilbert%E2%80%93Huang_transform))
 
 ## `ED`
 
