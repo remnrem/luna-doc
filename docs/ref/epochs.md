@@ -141,7 +141,7 @@ apply multiple sets of annotations to epochs with multiple
 The behavior of this command similar but not identical to what would
 happen if the `.eannot` file were directly specified in the
 [_sample-list_](../luna/args.md#sample-lists) (i.e. as any other XML,
-FTR or `.annot` annotation file).  As this command can be performed
+`.annot` annotation file).  As this command can be performed
 after the EDF has been loaded and manipulated (e.g. via
 [`RESTRUCTURE`](manipulations.md#restructure)), the number of epochs
 (i.e. rows in the file) should _match exactly_ the number of epochs
@@ -159,7 +159,7 @@ EDF (typically with the default 30-second epochs).
 
 
 !!! danger "Make sure to use plain-text files"
-    As with all input to Luna, except the EDF itself, It is
+    As with all input to Luna, except the EDF itself, it is
     critical that the annotation file be a simple, plain-text file
     with no special encodings, not RTF (rich text format, etc).
     Please see [this FAQ](../faq.md#windows-line-endings).

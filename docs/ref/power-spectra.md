@@ -50,7 +50,8 @@ of the epoch-level estimates.
 | `epoch` | `epoch` | Output epoch-level band power estimates |
 | `epoch-spectrum` | `epoch-spectrum` | Output epoch-level power spectra |
 | `dB` | `dB` | Give power in dB units |
-| `peaks` | `peaks` | Reports statistics on extreme peaks/spikes in the PSD |
+| `peaks` | `peaks` | Reports statistics on extreme peaks (spikes) ( see section below for more options/details ) | 
+| `slope` | `30,45` | Estimate spectral slope ( see section below for more options/details ) | 
 
 In addition to the primary parameters above, there are a number of
 other, more detailed parameters (that can probably be ignored by most
@@ -265,6 +266,210 @@ sample estimates:
        cor 
 -0.3599995 
 ```
+
+### Peaks/spikes
+
+Here we review two options that perform post-processing of power
+spectra derived from `PSD`: `peaks` and `slope`.
+
+The `peaks` option gives diagnostics that indicate likely sharp
+_peaks_ in the power spectra, e.g. as caused by line noise rather than
+genuine physiological oscillatory activity, which tends to produce
+smoother "bumps", even though those are often called peaks in the
+literature (e.g. alpha or sigma).
+
+| Option | Example | Description |
+| ---- | ---- | ---- |
+| `peaks` | | Perform peaks analysis |
+| `epoch-peaks` | | Perform peaks analysis epoch-by-epoch |
+| `peaks-window` | `7` | Size of median filter used by `peaks` (default: 11 sample points) |
+| `peaks-frq` | `30,45` | Set lower and upper bounds for the peaks analysis (default: whole spectrum) |
+| `peaks-verbose` | | Give verbose output from `peaks` (show smoothed spectra, etc) |
+
+
+
+Here we take some real N2 EEG signals, and estimate the power spectra via the Welch method:
+
+```
+luna s.lst -o out.db
+           -s ' MASK ifnot=N2 & RE & uV sig=C3
+                PSD  sig=C3 max=50 spectrum dB '
+```
+
+We'll also look at the same signal, but with some artifact spiked in, using the [`SIMUL`](simul.md#simul) command
+to introduce artificial spectral peaks (spikes) at these frequencies (i.e. as might reflect contamination from non-physiological
+sources), at 5 Hz intervals from 15 Hz up to 45 Hz:
+
+```
+luna s.lst -o out2.db
+           -s ' MASK ifnot=N2 & RE & uV sig=C3
+                SIMUL frq=15,20,25,30,35,40,45 psd=500,500,500,500,500,500,500 add sig=C3
+                PSD  sig=C3 max=50 spectrum dB'
+```
+Note that the `add` option for `SIMUL` adds the simulated signal onto the existing (real) `C3` signal.
+
+Plotting the resulting power spectra from both runs, we can clearly see the super-imposed artifact resulting in a more _spiky_ or _peaked_ spectrum:
+
+![img](../img/peaks0.png)
+
+<!----
+k <- ldb( "out.db" )
+k2 <- ldb( "out2.db" )
+d <- k$PSD$CH_F
+d2 <- k2$PSD$CH_F 
+par(mfcol=c(1,4))
+frame()
+plot( d$F , d$PSD , type="l" , ylim=c(-20 , 35 ) , xlab="Frequency (Hz)" , main="Original" , ylab="Power" , col="#1e6b33" )
+plot( d2$F , d2$PSD , type="l" , ylim=c(-20 , 35 ) , xlab="Frequency (Hz)" , main="With artifact" , ylab="Power" , lwd=1, col="purple" )
+frame()
+--->
+
+
+We can use the `peaks` option to provide one simple way of quantifying the extent of _peakedness_, by adding `peaks` to the `PSD` command.
+By default, this would use the full spectrum to derive peak statistics: for this particular metric, it can be a good idea to avoid the lower frequenies that often contain
+true bumps/peaks, e.g. resulting from oscillatory activity at those frequencies, and so we'll use the `peaks-frq` option instead to explicitly set the frequency range
+used for the assessment of peaks: in this case 20 to 50 Hz.   We'll also add the `peaks-verbose` option to get additional output to make the plots below.  The `PSD` command
+now reads as follows:
+
+```
+  PSD sig=C3 max=50 spectrum dB peaks-frq=20,50 peaks-verbose '
+```
+Extracting the relevant channel-specific metrics, the peaks algorithm results in two metrics: `KURT` and `SPK`: for the original data:
+
+```
+destrat out.db +PSD -r CH | behead
+```
+```
+     CH   C3                  
+   KURT   0.317643047723098   
+    SPK   0.747317003553891   
+```
+
+And for the data with spikes introduced, we see these metics are much higher:
+
+
+
+```
+     CH   C3                  
+   KURT   24.053679807259     
+    SPK   5.39341010843361    
+```
+
+Both measures are based on the folllowing heuristic:
+
+  - take the log-scaled power spectrum (between the frequencies specified by `peaks-frq`) and scale it between 0.0 and 1.0
+
+  - detrend this spectrum (DT: detrended spectum) and then apply a smoothing median filter (with `peaks-window` sample points) to give a smoothed spectrum (SM)
+
+  - calculate the differece (DF) between DT and SM
+
+  - estimate the kurtosis of DF (which is the `KURT` metric) and the `SPK` (spikiness) as the sum of absolute values of the derivative of DF (`sum( abs(diff(DF))`) 
+
+The kurtosis estimate is normalized to have an expected value of 0 for
+normal distributions (i.e. subtract 3.0); larger positive values
+indicate greater spikiness in the spectrum.  Likewise, greater values
+of `SPK` reflect higher spikiness.  The two metrics difference a
+little, in that the latter is more sensitive to having many but
+smaller peaks (i.e. summing over all differences), whereas the `KURT`
+metric is more sensitive to a single, strong outlier.  These metrics
+do not have directly interpreted scales (e.g. they may depend on
+sample rate, etc) but are designed to provide rankings across multiple
+studies, to identifier outliers, with respect to the extent of spectral spikes.
+
+Adding the `peaks-verbose` option gives additional output (stratified by both `CH` and `F`) that directly give the `DT`, `SM` and `DF` spectra
+as described above:   plotting these for the first instance: (black = DT, blue = SM):
+
+![img](../img/peaks1.png)
+
+Whereas, for the second instance (with the spikes introduced), we see greater values for `DF` (note the different x-axis for the rightmost plot, versus above):
+
+![img](../img/peaks2.png)
+
+
+If this approach is including true _bumps_ as outliers/spikes here,
+you can try reducing `peaks-window` from the default of 11 (the number
+of bins in the spectrum over which to do median smoothing), which
+basically requires that sharper peaks by doing less smoothing.
+
+
+<!----
+k <- ldb( "out.db" )
+d <- k$PSD$CH_F 
+
+par(mfcol=c(1,3))
+plot( d$F , d$DT , type="l" , ylim=c(-0.5 , 0.6 ) , xlab="Frequency (Hz)" , ylab="Detrended (DT), smoothed (SM) PSD" ) 
+lines( d$F , d$SM , ylim=c(-0.5 , 0.6 ) , col="blue" , lwd=2 )
+
+plot( d$F , d$DF , type="l" , ylim=c(-0.5 , 0.6 ) , xlab="Frequency (Hz)" , ylab="Difference = DT - SM" ) 
+abline(h=0,lty=2,col="lightgray")
+
+hist( d$DF , xlim=c(-0.6 , 0.6 ) , breaks=20 , col="gray" , xlab="Frequency (Hz)" , ylab="Difference" , main="" ) 
+abline(v=0,lty=2,col="lightgray")
+
+---->
+
+
+### Spectral slopes
+
+Given a power spectrum (or multiple epoch-wise power spectra) for an
+individual/channel, we can estimate the _spectral slope_ as the
+log-log linear regression of power on frequency.  For an example of
+using Luna to estimate the spectral slope, see
+[Kozhemiako et al (2021)](https://www.biorxiv.org/content/10.1101/2021.11.08.467763v1).
+
+This is achieved by adding `slope` to the `PSD` command, and giving
+the frequency interval over which the slope should be estimated.  See
+the references in the abovementioned pre-print to see other
+applications of the spectral slope to sleep data, and justification
+for looking at particular frequency ranges (i.e. in the above work,
+30-45 Hz).
+
+The other options are as follows:
+
+| Option | Example | Description |
+| ---- | ---- |	---- |	
+| `slope` | `30,45` | Estimate spectral slope in this frequency range |
+| `slope-th` | `2` | Threshold to remove points when estimating slope (default: 3)  | 
+| `slope-th2` | `2` | Threshold to remove epochs when summarizing slopes over all epochs (default: 3) |
+| `epoch-slope` | | Display epoch-by-epoch slope estimates |
+
+Luna fits the linear model of log power regressed on log frequency.
+After fitting an initial model, it identifies any points (frequency
+bins) that have residual values greater or less than the `slope-th`
+threshold.  This helps to avoid spikes in the power spectrum having
+undue leverage on the overall slope estimate.  You can also use the
+[`peaks`](#peaksspikes) metrics above to flag studies that might have
+issues with respect to spikes.  After removing any outlier points,
+Luna refits the model: the estimated slope is `SPEC_SLOPE`, and the
+number of data points used to estimate it is in `SPEC_SLOPE_N`.  If
+looking at a 30-45 Hz (inclusive) slope with a spectral resolution of
+0.25 Hz, this gives an expected 61 points; the number may be lower is
+points were removed for being outliers.
+
+!!! info "Avoiding periodic acticvity that will bias spectral slope estimates" 
+    This simple implementation for estimating the spectral slope is not suitable for
+    frequency ranges where one expects strong oscillatory activity, e.g. the sigma band
+    during sleep, if it is to be interpreted as an index of the aperiodic component of the power spectrum.
+    The frequency range 30-45 Hz tends to be freely of such activity and also avoids frequencies with
+    common line noise (50/60 Hz) artifacts.   As such, it is not recommended that this be used as a general
+    method (unless other procedures have first been applied to remove oscillatory components from the signal).
+        
+Assuming multiple epochs are present in the data, Luna will also
+estimate the slope epoch-by-epoch.  The mean, median and the SD of these
+epoch-by-epoch slopes are given in `SPEC_SLOPE_MN`, `SPEC_SLOPE_MD`
+and `SPEC_SLOPE_SD` respectively.  When combining these epoch-wise
+slopes, Luna will first remove epochs that have slope estimates that
+are outliers as defined by the `slope-th2` (default = 3 SD).
+
+Spectral slope outputs: (strata: `CH`)
+
+| Value | Description |
+| ---- | ---- |
+| `SPEC_SLOPE` | Spectral slope of the average power spectrum |
+| `SPEC_SLOPE_N` | Number of data points in the final model |
+| `SPEC_SLOPE_MN` | Mean slope (over all epochs) |
+| `SPEC_SLOPE_MD` | Median slope (over all epochs) |
+| `SPEC_SLOPE_SD` | Slope SD (over all epochs) |
 
 
 

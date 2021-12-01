@@ -18,13 +18,15 @@ IN FLIGHT
 
 ## v0.26 (29-Nov-2021)
 
-_New commands_
+_New functionality_
 
  - [`TRANS`](ref/evals.md#trans) supports arbitrary transformations of signal data
 
  - [`SIMUL`](ref/simul.md#simul) simulates time-series data given a power spectrum
 
- - [`FFT`](ref/power-spectra.md#fft) performs basic discrete Fourier transform (DFT) via the FFT
+ - [`PSD`] has [`peaks`](ref/power-spectra.md#peaksspikes) and [`slope`](ref/power-spectra.md#spectral-slopes) options
+ 
+- [`FFT`](ref/power-spectra.md#fft) performs basic discrete Fourier transform (DFT) via the FFT
 
  - [`HEAD`](ref/outputs.md#head) shows one epoch of data (requires same SR for selected channels)
 
@@ -38,6 +40,8 @@ _New commands_
  - [`--repath`](ref/helpers.md#-repath) convenience sample-list function
  
  - prototype [`ALTER`](ref/artifacts.md#alter) command to perform reference-channel, regression-based artifact removal
+
+ - `peaks` and `slope` options for `PSD` and `MTM`
 
  - [`REBASE`](ref/suds.md#rebase), which adopts the
    [`SOAP`](ref/suds.md#soap) framework to (probabilistically)
@@ -109,6 +113,8 @@ _Other fixes, minor modifications and new features_
 
  - added 1st, 2nd, 5th and 10th percentiles to `STATS` 
 
+ - added _transition frequency_ to slow oscillation output (`SPINDLES`, `SO`)
+
  - fixed bug in `flanked` mask option (e.g. `flanked=W,1`)
 
  - made `CANONICAL` definition file format more flexible: 1) it now allows
@@ -135,8 +141,6 @@ _Other fixes, minor modifications and new features_
   >> - expect a subsequent EPOCH to these, then MASK then WRITE those epochs/records (i.e. skip any records beforehand) 
 
  - added `pick` option to `SIGNALS` to pick first of pick=a,b,c that is present, and drop the rest;  can map with 'rename' to rename the pick
-
-
  
  - allow sample-lists to have a comma-delim list of annotations, or
    '.' to denote no data; in this way, we can have a fixed width
@@ -149,7 +153,10 @@ _Other fixes, minor modifications and new features_
    file must still have a first col, it is just ignored now;   also, new 'drop-originals' option to drop all original (non-CANONICAL)
     signals after making the new signals;  matches case-insentive
   
- - changed `epoch-check` to accept number of .eannot epochs that are different from expected; default is 5;  only stops is absolute greater than this; otherwise writes warning to log;  i.e. set to 0 for an exact match
+ - changed `epoch-check` to accept number of `.eannot` epochs that are
+   different from expected; default is 5; only stops is absolute
+   greater than this; otherwise writes warning to log; i.e. set to 0
+   for an exact match
    
  - `CONTAINS` can now skip to the next EDF (rather than alter the return code), if the option `skip` is given
 
@@ -203,8 +210,6 @@ _Other new commands/functionality_
  
  - Find peaks in signals and subsequently produced peak-locked averages across other channels, via the [`PEAKS` command](ref/intervals.md#peaks) 
    and the [`TLOCK` command](ref/intervals.md#tlock) 
-
- - Added a `peaks` option to the `PSD` command
 
  - Cross-correlation and phase synchrony metrics, via the new [`TSYNC` command](ref/cc.md#tsync)
 

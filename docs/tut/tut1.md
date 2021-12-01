@@ -123,7 +123,7 @@ information (the _log_) to the console/terminal, as follows:
 
 ```
 ===================================================================
-+++ luna | v0.24, 12-Aug-2020 |  starting 13-Aug-2020 11:13:59  +++
++++ luna | v0.26.0, 11-Nov-2021 | starting 01-Dec-2021 11:13:58  +++
 ===================================================================
 input(s): s.lst
 output  : .
@@ -131,21 +131,21 @@ commands: c1	DESC
 
 ___________________________________________________________________
 Processing: nsrr01 [ #1 ]
- duration: 11.22.00 ( clocktime 21.58.17 - 09.20.17 )
+ duration: 11.22.00 | 40920 secs ( clocktime 21.58.17 - 09.20.16 )
 
  signals: 14 (of 14) selected in a standard EDF file:
-  SaO2 | PR | EEG(sec) | ECG | EMG | EOG(L) | EOG(R) | EEG
+  SaO2 | PR | EEG_sec_ | ECG | EMG | EOG_L_ | EOG_R_ | EEG
   AIRFLOW | THOR_RES | ABDO_RES | POSITION | LIGHT | OX_STAT
 
  annotations:
-  NREM1 (x109) | NREM2 (x523) | NREM3 (x16) | NREM4 (x1)
-  REM (x238) | apnea_obstructive (x37) | arousal_standard (x194) | artifact_SpO2 (x59)
-  desat (x254) | hypopnea (x361) | wake (x477)
+  N1 (x109) | N2 (x523) | N3 (x17) | R (x238)
+  W (x477) | apnea/obstructive (x37) | arousal (x194) | artifact/SpO2 (x59)
+  desat (x254) | hypopnea (x361)
 
  variables:
-  airflow=AIRFLOW | ecg=ECG | eeg=EEG(sec),EEG | effort=THOR_RES,A...
-  emg=EMG | eog=EOG(L),EOG... | hr=PR | light=LIGHT | oxygen=SaO2,OX_STAT
-  position=POSITION
+  airflow=AIRFLOW | ecg=ECG | eeg=EEG_sec_,EEG | effort=THOR_RES,A...
+  emg=EMG | eog=EOG_L_,EOG... | hr=PR | id=nsrr01 | light=LIGHT
+  oxygen=SaO2,OX_STAT | position=POSITION
  ..................................................................
  CMD #1: DESC
 
@@ -155,7 +155,7 @@ ___________________________________________________________________
 ...processed 3 EDFs, done.
 ...processed 1 command set(s),  all of which passed
 -------------------------------------------------------------------
-+++ luna | finishing 13-Aug-2020 11:13:59                       +++
++++ luna | finishing 01-Dec-2021 11:13:59                       +++
 ===================================================================
 ```
 
@@ -213,7 +213,80 @@ slightly different format.
     the ID specified in the first column of the sample list.  (When
     running without a sample list, the `ID` is simply the filename.)
 
+
+## Label remapping and sanitization
+
+The labels for channels and annotations that Luna reports above are
+actually not the original ones in the EDF/XML files.  Rather, they (by
+default) go through a process of remapping and sanitization to make
+labels that are more consistent (for NSRR data, at least) and easier
+to work with.
+
+!!! note "Data harmonization in the NSRR"
+    To get a sense of why harmonization is important for NSRR studies, see the first couple of sections of 
+    [this post](https://gitlab-scm.partners.org/zzz-public/nsrr/-/blob/master/common/harm-principles.md).
+
+Specifically, Luna (by default) will:
+
+ - change different flavors of NSRR annotation label that mean to same
+ thing (e.g. `Arousal ()`, `Arousal|Arousal (STANDARD)`, etc) to a
+ single term (`arousal`); this behavior can be turned off with the
+ `nsrr-remap=F` flag
  
+ - replace all spaces in channel and annotation names with an
+   underscore (e.g. `THOR RES` to `THOR_RES`); this behavior can be
+   turned off with the `keep-spaces=F` flag
+
+ - in addition to the prior point, Luna will also _sanitize_ special
+   characters in labels that are likely to cause problems downstream,
+   such as `-` or `*`, replacing these with underscores also; this
+   behavior can be turned off with the `sanitize=F` flag
+
+Running the same command but with these flags set (and also just running for the first individual in the sample list):
+
+```
+luna s.lst 1 nsrr-remap=F sanitize=F keep-spaces=T -s DESC 
+```
+The console now prints the "original" labels:
+```
+ signals: 14 (of 14) selected in a standard EDF file:
+  SaO2 | PR | EEG(sec) | ECG | EMG | EOG(L) | EOG(R) | EEG
+  AIRFLOW | THOR RES | ABDO RES | POSITION | LIGHT | OX STAT
+
+ annotations:
+  Arousal () (x194) | Hypopnea (x361) | NREM1 (x109) | NREM2 (x523)
+  NREM3 (x16) | NREM4 (x1) | Obstructive Apnea (x37) | REM (x238)
+  SpO2 artifact (x59) | SpO2 desaturation (x254) | wake (x477)
+```
+i.e. versus Luna's default representation:
+```
+ signals: 14 (of 14) selected in a standard EDF file:
+  SaO2 | PR | EEG_sec_ | ECG | EMG | EOG_L_ | EOG_R_ | EEG
+  AIRFLOW | THOR_RES | ABDO_RES | POSITION | LIGHT | OX_STAT
+
+ annotations:
+  N1 (x109) | N2 (x523) | N3 (x17) | R (x238)
+  W (x477) | apnea/obstructive (x37) | arousal (x194) | artifact/SpO2 (x59)
+  desat (x254) | hypopnea (x361)
+```
+
+For example:
+ - `Obstructive Apnea` becomes `apnea/obstructive`
+ - `NREM2` becomes `N2`
+ - `THOR RES` becomes `THOR_RES`
+ - `EOG(L)` becomes `EOG_L_` (because `sanitize` is true by default)
+
+Why do we make these changes?  Because, similar to R or Matlab, Luna
+is fundamentally a command-line tool and so uses text input to specify
+operations. As such, having spaces or special characters creates many
+unnecessary problems (e.g. for commands such as
+[`TRANS`](ref/evals.md#trans) that can perform general arithmetic
+operations on signals, which would make the expression `C3-M2`
+ambiguous). See this
+[FAQ](../faq.md#spaces-and-special-characters-in-labels) for the
+rationale for making labels more _machine-readable_.
+
+
 ## Signal summary statistics
 
 Turning to the signals contained in each EDF, here we use the `STATS`
@@ -381,17 +454,17 @@ distinct strata group(s):
 
 See [`ANNOTS`](../ref/annotations.md#annots) for a description of the
 output _strata_ from this command.  As an example, to get the count
-(`COUNT`) of obstructive apnea events (`apnea_obstructive` level of
+(`COUNT`) of obstructive apnea events (`apnea/obstructive` level of
 the `ANNOT` factor):
 
 ```
-destrat annot.db +ANNOTS -r ANNOT/apnea_obstructive -v COUNT
+destrat annot.db +ANNOTS -r ANNOT/apnea/obstructive -v COUNT
 ```
 ```
 ID      ANNOT                   COUNT
-nsrr01  apnea_obstructive       37
-nsrr02  apnea_obstructive       5
-nsrr03  apnea_obstructive       163
+nsrr01  apnea/obstructive       37
+nsrr02  apnea/obstructive       5
+nsrr03  apnea/obstructive       163
 ```
 
 To count only apneas that occur during REM sleep, we can _epoch_ the
@@ -400,7 +473,7 @@ add a _mask_ (the [`MASK`](../ref/masks.md#mask) command) based on the
 staging information in the XML:  
 
 ```
-luna s.lst -o annot.db -s "EPOCH & MASK ifnot=REM & ANNOTS"
+luna s.lst -o annot.db -s 'EPOCH & MASK ifnot=R & ANNOTS'
 ```
 
 !!! note "Specifying multiple commands after `-s`" 
@@ -414,15 +487,15 @@ luna s.lst -o annot.db -s "EPOCH & MASK ifnot=REM & ANNOTS"
 Using _destrat_ to extract the `COUNT` variable once more:
 
 ```
-destrat annot.db +ANNOTS -r ANNOT/apnea_obstructive -v COUNT
+destrat annot.db +ANNOTS -r ANNOT/apnea/obstructive -v COUNT
 ```
 
 we obtain the number of events during REM: 
 
 ```
 ID      ANNOT                   COUNT
-nsrr01  apnea_obstructive       27
-nsrr02  apnea_obstructive       3
+nsrr01  apnea/obstructive       27
+nsrr02  apnea/obstructive       3
 ```
 
 There is no output for the last individual `nsrr03`, as he or she did
@@ -433,7 +506,7 @@ _any_ overlap with a REM epoch, in this example.  To include only
 events that _start_ during a REM epoch, add the `start` option:
 
 ```
-luna s.lst -o annot.db -s "EPOCH & MASK ifnot=REM & ANNOTS start"
+luna s.lst -o annot.db -s 'EPOCH & MASK ifnot=REM & ANNOTS start'
 ```
 
 ```
@@ -489,7 +562,7 @@ level is specified as a _variable_, in the form `${variable}`.  A
 specific value for `${stage}` is given on the command line when Luna
 is invoked, as below.  The next command _masks_ (that is, excludes)
 any epoch which _does not_ have an annotation that matches
-`${stage}`.  That is, if `${stage}` is `NREM2`, then only NREM2
+`${stage}`.  That is, if `${stage}` is `N2`, then only N2
 epochs are included in the analysis.  After setting mask values for
 one or more epochs, the `RESTRUCTURE` command removes any masked
 epochs. Finally, the `STATS` command is invoked, but this time it
@@ -499,13 +572,13 @@ The `first.txt` _script_ is given as the input to Luna (i.e. using
 the _standard input_ redirection operator, `<` ).  We specify that
 the output should go to a database called `out.db`, by virtue of the
 `-o` option.  We set define the value of the _stage_ variable
-(here as `NREM1`), which will be expected when processing the
+(here as `N1`), which will be expected when processing the
 `TAG` and `MASK` commands. Finally, we set a special variable,
 `sig`, which instructs Luna to only consider the first EEG
 channel (labeled `EEG`, as indicated by the `DESC` command):
 
 ```
-luna s.lst -o out.db stage=NREM1 sig=EEG < cmd/first.txt
+luna s.lst -o out.db stage=N1 sig=EEG < cmd/first.txt
 ```
 
 We now run Luna three more times, for the remaining sleep
@@ -513,13 +586,13 @@ stages. However, instead of using the `-o` flag (which always creates
 a new database), we'll use `-a` which _appends_ output to an existing
 database.  In this way, the `rms.db` database will accumulate all output.
 ```
-luna s.lst -a out.db stage=NREM2 sig=EEG < cmd/first.txt
+luna s.lst -a out.db stage=N2 sig=EEG < cmd/first.txt
 ```
 ```
-luna s.lst -a out.db stage=NREM3 sig=EEG < cmd/first.txt
+luna s.lst -a out.db stage=N3 sig=EEG < cmd/first.txt
 ```
 ```
-luna s.lst -a out.db stage=REM sig=EEG  < cmd/first.txt
+luna s.lst -a out.db stage=R sig=EEG  < cmd/first.txt
 ```
 
 To view the contents of `out.db`, we run `destrat`:
@@ -539,7 +612,6 @@ out.db: 20 command(s), 3 individual(s), 19 variable(s), 222 values
 
  ... cont'd ...
 
-
 --------------------------------------------------------------------------------
 distinct strata group(s):
   commands      : factors           : levels        : variables 
@@ -548,11 +620,14 @@ distinct strata group(s):
                 :                   :               : 
   [MASK]        : STAGE EMASK       : 4 level(s)    : N_MASK_SET N_MASK_UNSET 
                 :                   :               : N_MATCHES N_RETAINED 
-                :                   :               : N_TOTAL N_UNCHANGED
+                :                   :               : N_TOTAL  N_UNCHANGED
                 :                   :               : 
-  [RESTRUCTURE] : STAGE             : 4 level(s)    : DUR1 DUR2 NR1 NR2
+  [RESTRUCTURE] : STAGE             : 4 level(s)    : DUR1 DUR2 NA NR1 NR2 NS
                 :                   :               : 
-  [STATS]       : CH STAGE          : 4 level(s)    : MAX MEAN MEDIAN MIN RMS SKEW
+  [STATS]       : CH STAGE          : 4 level(s)    : MAX MEAN MIN P01 P02 P05 
+                :                   :               : P10 P20 P30 P40 P50 P60 
+                :                   :               : P70 P80 P90 P95 P98 P99 
+                :                   :               : RMS SD SKEW
                 :                   :               : 
 ----------------:-------------------:---------------:---------------------------
 ```
@@ -562,8 +637,8 @@ database, a list of the commands and their time-stamps, and the
 _strata_ groups in this database.
 
 The `TAG` command specified that a user-defined stratum, called
-`STAGE`, be added to the output.  This was set to either `NREM1`,
-`NREM2`, etc, corresponding to the sleep stage values in the XML
+`STAGE`, be added to the output.  This was set to either `N1`,
+`N2`, etc, corresponding to the sleep stage values in the XML
 file.  There are therefore 4 _levels_ for the _factor_
 `STAGE`. We can view the RMS statistics, which are grouped by
 channel (`CH`) and sleep stage (`STAGE`), as follows:
@@ -572,7 +647,7 @@ channel (`CH`) and sleep stage (`STAGE`), as follows:
 destrat out.db +STATS -r CH -c STAGE -v RMS -p 3
 ```
 ```
-ID     CH  RMS.STAGE_NREM1 RMS.STAGE_NREM2 RMS.STAGE_NREM3 RMS.STAGE_REM
+ID     CH  RMS.STAGE_N1    RMS.STAGE_N2    RMS.STAGE_N3    RMS.STAGE_R
 nsrr01 EEG 7.355           10.646          13.250          7.564
 nsrr02 EEG 10.362          14.742          20.055          14.146
 nsrr03 EEG 12.302          14.497          18.980          NA
@@ -595,24 +670,24 @@ destrat out.db +STATS -r CH -c STAGE -v RMS -p 3 | behead
 ```
                        ID   nsrr01              
                        CH   EEG                 
-          RMS.STAGE_NREM1   7.355               
-          RMS.STAGE_NREM2   10.646              
-          RMS.STAGE_NREM3   13.250              
-            RMS.STAGE_REM   7.564               
+             RMS.STAGE_N1   7.355               
+             RMS.STAGE_N2   10.646              
+             RMS.STAGE_N3   13.250              
+              RMS.STAGE_R   7.564               
 
                        ID   nsrr02              
                        CH   EEG                 
-          RMS.STAGE_NREM1   10.362              
-          RMS.STAGE_NREM2   14.742              
-          RMS.STAGE_NREM3   20.055              
-            RMS.STAGE_REM   14.146              
+             RMS.STAGE_N1   10.362              
+             RMS.STAGE_N2   14.742              
+             RMS.STAGE_N3   20.055              
+              RMS.STAGE_R   14.146              
 
                        ID   nsrr03              
                        CH   EEG                 
-          RMS.STAGE_NREM1   12.302              
-          RMS.STAGE_NREM2   14.497              
-          RMS.STAGE_NREM3   18.980              
-            RMS.STAGE_REM   NA                  
+             RMS.STAGE_N1   12.302              
+             RMS.STAGE_N2   14.497              
+             RMS.STAGE_N3   18.980              
+              RMS.STAGE_R   NA                  
 ```
 
 
@@ -626,22 +701,22 @@ destrat out.db +RESTRUCTURE -c STAGE -v DUR2 | behead
 ```
 ```
                        ID   nsrr01              
-         DUR2.STAGE_NREM1   3270                
-         DUR2.STAGE_NREM2   15690               
-         DUR2.STAGE_NREM3   480                 
-           DUR2.STAGE_REM   7140                
+            DUR2.STAGE_N1   3270                
+            DUR2.STAGE_N2   15690               
+            DUR2.STAGE_N3   480                 
+             DUR2.STAGE_R   7140                
 
                        ID   nsrr02              
-         DUR2.STAGE_NREM1   330                 
-         DUR2.STAGE_NREM2   11970               
-         DUR2.STAGE_NREM3   5550                
-           DUR2.STAGE_REM   3600                
+            DUR2.STAGE_N1   330                 
+            DUR2.STAGE_N2   11970               
+            DUR2.STAGE_N3   5550                
+             DUR2.STAGE_R   3600                
 
                        ID   nsrr03              
-         DUR2.STAGE_NREM1   1560                
-         DUR2.STAGE_NREM2   11250               
-         DUR2.STAGE_NREM3   630                 
-           DUR2.STAGE_REM   0                   
+            DUR2.STAGE_N1   1560                
+            DUR2.STAGE_N2   11250               
+            DUR2.STAGE_N3   630                 
+             DUR2.STAGE_R   0                   
 
 ```
 
@@ -661,7 +736,7 @@ see this is noted here also:)
 Looking at the results for the stage-specific RMS analysis, even
 without filtering and artifact detection of this signal, the results
 seem plausible: we generally see higher RMS, corresponding to more
-activity due to large amplitude slow waves during NREM3 sleep.  We
+activity due to large amplitude slow waves during N3 sleep.  We
 return to this theme when considering spectral analyses of the EEG,
 below.
 

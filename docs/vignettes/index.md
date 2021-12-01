@@ -6,6 +6,8 @@ workflows, of various features of Luna, as well as their application
 to [NSRR](../nsrr.md) and other data.
 
 
+- [EEG microstate analysis](microstates.md), by Lei Wang (Nov 2021)
+
 - [Artifact rejection for hdEEG sleep data](chep.md), by Nataliia Kozhemiako (May 2021)
 
 - [Working with discontinuous EDFs and annotations](annots.md), by Shaun Purcell (February 2021)

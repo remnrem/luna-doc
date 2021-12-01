@@ -893,8 +893,8 @@ TRANS sig=SpO2 expr=" MX = max( abs( SpO2 ) ) ;
                       SpO2 = SpO2 * SC "
 ```
 
-in the above, we define a new scalar variable `MX` which is the
-maxmimum absolute value of the `SpO2` signal.  It then defines a
+In the above, we define a new scalar variable `MX` which is the
+maximum absolute value of the `SpO2` signal.  It then defines a
 _scaling factor_ (a scalar variable called `SC`) that is `1.0` if the
 original `SpO2` signal contains a maximum absolute value greater than
 `1.0` (i.e. and so is presumably not a proportion); otherwise, if it

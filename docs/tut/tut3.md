@@ -17,11 +17,11 @@ with the `epoch` option, in order to generate per-epoch statistics.
 This section also illustrates working with the text output format.
 
 ```
-luna s.lst 2 sig=EMG,ECG -s "EPOCH & STATS epoch" > res.txt
+luna s.lst 2 sig=EMG,ECG -s 'EPOCH & STATS epoch' > res.txt
 ```
 ```
 ===================================================================
-+++ luna | v0.24, 12-Aug-2020 |  starting 13-Aug-2020 13:34:38  +++
++++ luna | v0.26.0, 11-Nov-2021 | starting 01-Dec-2021 11:08:09 +++
 ===================================================================
 input(s): s.lst
 output  : .
@@ -31,22 +31,22 @@ commands: c1	EPOCH
 
 ___________________________________________________________________
 Processing: nsrr02 [ #2 ]
- duration: 09.57.30 ( clocktime 21.18.06 - 07.15.36 )
+ duration: 09.57.30 | 35850 secs ( clocktime 21.18.06 - 07.15.35 )
 
  signals: 2 (of 14) selected in a standard EDF file:
   ECG | EMG
 
  annotations:
-  NREM1 (x11) | NREM2 (x399) | NREM3 (x185) | REM (x120)
-  apnea_obstructive (x5) | arousal_standard (x51) | artifact_SpO2 (x34) | desat (x66)
-  hypopnea (x101) | wake (x480)
+  N1 (x11) | N2 (x399) | N3 (x185) | R (x120)
+  W (x480) | apnea/obstructive (x5) | arousal (x51) | artifact/SpO2 (x34)
+  desat (x66) | hypopnea (x101)
 
  variables:
-  ecg=ECG | emg=EMG
+  ecg=ECG | emg=EMG | id=nsrr02
  ..................................................................
  CMD #1: EPOCH
    options: sig=ECG,EMG
- set epochs, length 30 (step 30), 1195 epochs
+ set epochs, length 30 (step 30, offset 0), 1195 epochs
  ..................................................................
  CMD #2: STATS
    options: epoch=T sig=ECG,EMG
@@ -57,7 +57,7 @@ ___________________________________________________________________
 ...processed 1 EDFs, done.
 ...processed 1 command set(s),  all of which passed
 -------------------------------------------------------------------
-+++ luna | finishing 13-Aug-2020 13:34:40                       +++
++++ luna | finishing 01-Dec-2021 11:08:14                       +++
 ===================================================================
 ```
 
@@ -192,8 +192,8 @@ This is the breakdown of epochs by each sleep stage for this individual:
 table(ss$STAGE)
 ```
 ```
-NREM1 NREM2 NREM3   REM  wake 
-   11   399   185   120   480 
+ N1  N2  N3   R   W 
+ 11 399 185 120 480 
 ```
 
 If you previously closed the R session, you'll need to rerun the
@@ -228,7 +228,7 @@ produces a series of statistics that describe different aspects of
 sleep macro-architecture.
 
 ```
-luna s.lst -o stage.db -s "EPOCH & HYPNO epoch"
+luna s.lst -o stage.db -s 'EPOCH & HYPNO epoch'
 ```
 
 This generate a large number of variables, as described [here](../ref/hypnograms.md#hypno).
@@ -561,21 +561,23 @@ luna s.lst @cmd/vars.txt sig=EEG1,EEG2 < cmd/fourth.txt
 ```
 ```
 Processing: nsrr01 [ #1 ]
- duration: 11.22.00 ( clocktime 21.58.17 - 09.20.17 )
+ duration: 11.22.00 | 40920 secs ( clocktime 21.58.17 - 09.20.16 )
 
  signals: 2 (of 14) selected in a standard EDF file:
   EEG2 | EEG1
 
  annotations:
-  NREM1 (x109) | NREM2 (x523) | NREM3 (x16) | NREM4 (x1)
-  REM (x238) | apnea_obstructive (x37) | arousal_standard (x194) | artifact_SpO2 (x59)
-  desat (x254) | hypopnea (x361) | wake (x477)
+  N1 (x109) | N2 (x523) | N3 (x17) | R (x238)
+  W (x477) | apnea/obstructive (x37) | arousal (x194) | artifact/SpO2 (x59)
+  desat (x254) | hypopnea (x361)
 
  variables:
-  eeg=EEG2,EEG1
+  eeg=EEG2,EEG1 | id=nsrr01
  ..................................................................
  CMD #1: mV
    options: sig=EEG1,EEG2
+  rescaled EEG1 to mV
+  rescaled EEG2 to mV
  ..................................................................
  CMD #2: RESAMPLE
    options: sig=EEG1,EEG2 sr=100
@@ -584,22 +586,21 @@ Processing: nsrr01 [ #1 ]
  ..................................................................
  CMD #3: FILTER
    options: bandpass=0.3,35 ripple=0.02 sig=EEG1,EEG2 tw=1
- filtering channel EEG1
- filtering channel EEG2
+  filtering channel(s): EEG1 EEG2
  ..................................................................
  CMD #4: REFERENCE
    options: ref=EEG1 sig=EEG2
- referencing EEG2 with respect to EEG1
+  referencing EEG2 with respect to EEG1
  ..................................................................
  CMD #5: WRITE
    options: edf-dir=newedfs/ edf-tag=v2 sample-list=new.lst sig=EEG1,EEG2
- appending newedfs/learn-nsrr01-v2.edf to sample-list new.lst (dropping any annotations)
+  appending newedfs/learn-nsrr01-v2.edf to sample-list new.lst (dropping any annotations)
+  no epoch mask set, no restructuring needed
 nsrr01	WRITE	.	.	NR1	40920
 nsrr01	WRITE	.	.	NR2	40920
 nsrr01	WRITE	.	.	DUR1	40920
 nsrr01	WRITE	.	.	DUR2	40920
-  resetting EDF start time from 21.58.17 to 21.58.17
- saved new EDF, newedfs/learn-nsrr01-v2.edf
+  saved new EDF, newedfs/learn-nsrr01-v2.edf
 
 ___________________________________________________________________
 ```
@@ -697,7 +698,7 @@ Running just for the first individual, the command file
 
 ```
 EPOCH 
-MASK if=wake
+MASK if=W
 RESTRUCTURE
 FILTER bandpass=0.3,35 ripple=0.02 tw=1
 SIGSTATS epoch
@@ -724,7 +725,7 @@ destrat artifact.db
 artifact.db: 5 command(s), 1 individual(s), 16 variable(s), 2677 values
 --------------------------------------------------------------------------------
   command #1:	c1	Thu Aug 13 13:45:19 2020	EPOCH	sig=EEG
-  command #2:	c2	Thu Aug 13 13:45:19 2020	MASK	if=wake sig=EEG
+  command #2:	c2	Thu Aug 13 13:45:19 2020	MASK	if=W sig=EEG
   command #3:	c3	Thu Aug 13 13:45:19 2020	RESTRUCTURE	sig=EEG
   command #4:	c4	Thu Aug 13 13:45:19 2020	FILTER	bandpass=0.3,35 ripple=0.02 sig=EEG tw=1
   command #5:	c5	Thu Aug 13 13:45:20 2020	SIGSTATS	epoch=T sig=EEG
@@ -782,7 +783,7 @@ have masked some).
 
 ```
 EPOCH 
-MASK if=wake
+MASK if=W
 RESTRUCTURE
 FILTER bandpass=0.3,35 ripple=0.02 tw=1
 ARTIFACTS mask
@@ -863,7 +864,7 @@ of the flagged epochs, as you can see by examining the output of
 `DUMP-MASK` above.
 
 ```
-luna s.lst 1 sig=EEG -s "EPOCH & MASK epoch=220 & MATRIX file=eeg.txt minimal"
+luna s.lst 1 sig=EEG -s 'EPOCH & MASK epoch=220 & MATRIX file=eeg.txt minimal'
 ```
 
 This is a plain-text file with one number (sample-point) per row.  We
@@ -978,7 +979,7 @@ this command estimates the PSD without any prior filtering:
 
 ```
 luna s.lst @cmd/vars.txt sig=EEG1,EEG2 -o psd-all.db \
-   -s "EPOCH & MASK if=wake & PSD spectrum max=62"
+   -s 'EPOCH & MASK if=W & PSD spectrum max=62'
 ```
 
 ```
@@ -1005,11 +1006,13 @@ especially `EEG2` reveals other artifacts (below).  Depending on the
 type of analyses one wishes to perform, careful filtering and/or
 artifact detection/correction will be important.
 
-Finally, as we noted above, the last line of `cmd/seventh.txt`
-additionally instructed Luna to detect spindles:
+Finally, as we noted above, the last two lines of `cmd/seventh.txt`
+additionally instructed Luna to detect spindles and then write them to a file (where the `^` indicates the
+individual ID is to be swapped in):
 
 ```     
- SPINDLES fc=11,15 annot=spindles
+SPINDLES fc=11,15 annot=spindles
+WRITE-ANNOTS file=spindles-^.txt annot=spindles no-specials
 ```
 
 The `fc` options specify the targeted frequencies: slower spindles
@@ -1031,8 +1034,25 @@ nsrr03 EEG  0.72       0.19
 
 Because we added the `annot` option, Luna generated some annotations
 that represent the spindle calls.  These are then saved in the final
-command, `WRITE-ANNOTS` to [.annot](../ref/annotations.md) files.  There
-are a large number of other options and output variables for the
+command, `WRITE-ANNOTS` to [.annot](../ref/annotations.md) files.
+
+```
+head spindles-nsrr01.txt 
+```
+```
+# spindles | Spindle intervals
+class      instance   channel   start      stop        meta
+spindles   15         EEG       2706.560   2707.176    .
+spindles   11         EEG       2834.640   2835.224    .
+spindles   15         EEG       2868.120   2868.752    .
+spindles   11         EEG       2868.832   2869.656    .
+spindles   15         EEG       2870.896   2871.408    .
+spindles   15         EEG       2905.008   2905.696    .
+spindles   15         EEG       2949.696   2950.520    .
+spindles   11         EEG       2969.200   2969.768    .
+...
+```
+
+There are a large number of other options and output variables for the
 [`SPINDLES`](../ref/spindles-so.md#spindles) and other commands,
 described in the [Reference](../ref/index.md) pages of this web site.
-

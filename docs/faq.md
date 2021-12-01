@@ -164,25 +164,50 @@ tr -d '\r' < infile.txt > outfile.txt
 
 
 
-### Spaces or special characters in channel names or annotations
+### Spaces and special characters in labels
 
-As of v0.24, Luna will automatically convert spaces channel labels and
-annotation labels to a different character (underscore, `_`), to
-facilitate working in a command line (or R) environment with these
-labels.  See [here](luna/args.md#spaces-in-channel-and-annotation-names).  The
-text below shows different approaches to using aliases, to effectively
-remove spaces (or any other spaceial character) in a channel name.
+Luna will automatically convert spaces channel and annotation labels
+to a different character (underscore, `_`), to facilitate working in a
+command line (or R) environment with these labels.  See
+[here](luna/args.md#spaces-in-channel-and-annotation-names).
 
-Set an signal [alias](luna/args.md#alias) in a [_parameter
-file_](luna/args.md#parameter-files). If the original label is `REF
-X1`, for example, enter the line:
+By default, spaces are converted to underscores (unless `keep-spaces=T`),
+as are special characters (unless `sanitize=F`).   Special characters in
+this context are:
+```
+ (space) - + / \ * < > = & ^ ! @ # $ % ( )
+```
+The following are _not_ converted, as they are already treated as special delimiters by Luna:
+```
+ " ' | ,
+```
+
+That is, by default the label `EEG C3-M2` will become `EEG_C3_M2`.
+This facilitates working with channels as variable names in subsequent
+applications: e.g. [`TRANS`](ref/evals.md#trans) commands, or for
+processing output in R, for example, if variable/columns are labelled
+by the `CH` name.  Despite the convention of using labels such as `EEG
+C3-M2` in the EDF specification, this is not convenient for automated
+processing of data, thus Luna's approach to a) allow those names as inputs, but
+also b) by default, change them on-the-fly.
+
+As Luna parses command files by whitespace, it is necessary to handle spaces in labels 
+explicitly.  If you've turned off the above options (`keep-spaces=T` and `sanitize=F`)
+then you have to explicitly place quotes around labels with spaces: e.g.
+```
+STATS sig="THOR RES",SpO2
+```
+Otherwise, the command would be parsed as `sig=THOR` (which would not match any channel) a
+and `RES,SpO2` (which would be ignored).
+
+If you are using the `-s` option to specify a commands directly as
+arguments to Luna, you can quote the term with a space in it;  this assumes the
+entire expression will be in single-quotes (which it should be, to avoid the shell
+interpreting characters such as `&`, `$`, etc):
 
 ```
- alias     REF|"REF X1"
-```
-
-to create a new label alias `REF` which can be used, e.g. on the
-command line, instead of `REF X1`.
+luna s.lst -o out.db -s ' EPOCH & MASK if="REM sleep|5" '
+``` 
 
 Similarly, if masking on an annotation with a space, you need to put
 quotes around it. For example, the NSRR annotation for REM sleep has
@@ -193,19 +218,37 @@ file use:
 MASK if="REM sleep|5" 
 ```
 
-Alternatively, use the [`remap`](luna/args.md#remapping-annotations) option.
-
-If you are using the `-s` option to specify a commands directly as
-arguments to Luna, you will likely already be using quotes for the
-entire command, thus you need to escape those additional quotes: i.e.
+Alternatively, you can alias or remap labels as they are initially
+read by Luna, to control more explicitly any renaming meaning that
+Luna does not have to do this automatically. For example, to change a signal `REF X1` to simply `REF`, one can 
+set an signal [`alias`](luna/args.md#alias) in a [_parameter
+file_](luna/args.md#parameter-files):
 
 ```
-luna s.lst -o out.db -s "EPOCH & MASK if=\"REM sleep|5\""  
-``` 
+ alias     REF|"REF X1"
+```
 
-In general, this can get a bit messy.  Therefore, 1) use command files
-for most things, not `-s`,  2) use
-[_aliases_](luna/args.md#aliases), and 3) [sensible](#advice-on-channel-names) channel labels and
+Note how we put `REF X1` in quotes, to assist the parsing of this
+term.  All subequent commands can now reference `REF` instead of `REF
+X1`.
+
+Paralleling the use of `alias` for channels, you can
+use the [`remap`](luna/args.md#remapping-annotations) option for annotations:
+```
+remap     REM|"REM sleep|5"
+```
+Again, note the use of quotes around `REM sleep|5` as both spaces and `|` are special characters (here, `|` is used to delimit different annotations that would be mapped 
+to the same term, e.g.:
+```
+remap     REM|"REM sleep|5"|R|Stage_REM|"Stage REM"|5
+```
+i.e. the above maps five different labels to `REM`; to make it clearer, below we add spaces to show the different terms:
+```
+       REM   <-  REM sleep|5     or     R     or     Stage_REM     or     Stage REM      or     5
+```
+
+In general, we suggest you use [_aliases_](luna/args.md#aliases) and [_remapping_](luna/args.md#remapping-annotations) if
+Luna's defaults don't work, but try to use [sensible](#advice-on-channel-names) channel labels and
 annotation names whenever possible.
 
 
@@ -217,9 +260,14 @@ accept spaces and characters such as `+ - * % ( ) . `, etc, in channel
 names, we advise against them if you wish to use `destrat` and other
 tools such as `R` to process results downstream.
 
-That is, for any output that is stratified by channel (`CH`), you may
+!!! info
+    As as v0.26, Luna will automatically _sanitize_ (replace the above
+    type of special characters with underscores) channel and annotation
+    labels (unless you set `sanitize=F`).
+
+For any output that is stratified by channel (`CH`), you may
 wish to create a dataset where each channel corresponds to a
-column/variable in the output.  If a variable name is, for example,
+column/variable in the output.  Without sanitization of labels, if a variable name is, for example,
 `SIGMA`, then using a command like 
 
 ``` 
@@ -245,75 +293,75 @@ to write d$"C3-M2", or find other work-arounds, etc).
 
 To avoid this, use [_aliases_](luna/args.md#aliases).
 
-PS. for other reasons, always good advice to avoid special characters in IDs
-too... just stick to alpha-numeric characters and underscores.
+PS. for other reasons, always good advice to avoid special characters
+in IDs too... just stick to alpha-numeric characters and underscores.
+In particular, the `^` character which is the reserved symbol
+(meaning, within a script, "swap in the ID").
+
 
 ### Variables and special characters when using  `-s`
 
-It may be necessary to use quotes, or escape special characters such
-as `$` if specifying Luna commands on the command line after `-s` (instead
-from standard input), to stop the shell from processing those as shell
-directives.
+When writing Luna script on the command line, i.e. directly after `-s`
+(rather than having Luna read in a script from a file or pipe), it may
+be necessary to handle special characters that the shell (assuming a
+`bash` shell here) might try to interpret different.  For example, `&`
+would mean to run the prior command in the background; `*` would be
+expanded to match all files in the current directory, etc.
 
-Use quotes to avoid `&` or `|` being interpreted as special characters
+The easiest way to handle most scenarios is to use single-quotes around all Luna commands,
+in this example, to avoid `&` or `|` being interpreted as special characters
 by the shell, e.g.:
 
 ```
- luna s.lst -s "EPOCH & STATS sig=EEG1|EEG & ANNOTS" 
+ luna s.lst -s 'EPOCH & STATS sig=EEG1|EEG & ANNOTS' 
 ```
 
-Also, if using Luna [variables](luna/args.md#variables) after `-s`, you will need to make 
-sure the shell does not interpret the `$` as a shell variable.  For example, if using `bash`, 
-then use single quotes instead of double quotes.  That is, this will _not_ work:
+By using single-quotes, this tells the shell not to interpret the
+characters there in any way.  As such, the input to Luna will be what
+you'd expect, i.e. the text written _as is_ above.
 
-```
- luna s.lst -s "EPOCH & STATS sig=${eeg}" 
-```
-as there is no shell variable called `${eeg}`,  whereas this will:
+One possbile exception is if you want to include shell variables in a
+Luna script.   It is important to understand this distinction between _shell_
+variables and _Luna_ variables, as they have similar syntax (`${var}`).  However,
+these are distinct entities, even if they share the same label.
 
+To set a shell variable, e.g. on the shell command line:
 ```
- luna s.lst -s 'EPOCH & STATS sig=${eeg}'
-```
-(because `${eeg}` is a special Luna variable that is automatically defined based on channel names).
-
-It is important to understand this distinction between _shell_
-variables and _Luna_ variables: i.e. these are distinct entities, even
-if they share the same label. If you want to pass a shell variable
-into a script as a Luna variable (either via `-s` or using a command file), you
-need to define this Luna variable prior to the `-s` statements, setting it to the
-shell variable value: e.g. say you define a bash (shell) variable `s` as follows:
-
-```
-s="C3"
-```
-To use this shell variable in a Luna script, you could do one of two things: use double quotes, so that
-the `${s}` variable that is expanded will be the shell variable:
-
-```
-luna s.lst -s "EPOCH & STATS sig=${s}" 
-```
-Note that this version does not use a Luna variable,
-rather it is identical to typing the following on the command line (i.e. this is what Luna 'sees'):
-```
-luna s.lst -s "EPOCH & STATS sig=C3" 
+eeg=XYZ
 ```
 
-Alternatively, if using single-quotes (e.g. because the script had other Luna variables) you have to
-define the Luna variable first:
+If there was a channel named `XYZ`, you use the following Luna commands:
 ```
-luna s.lst s=${s} -s 'EPOCH & STATS sig=${s}'
+luna s.lst -s STATS sig=${eeg}
 ```
-In the above, the first instance of `${s}` refers to the shell variable, i.e. it is the same as typing `s=C3`.   The second
-instance of `${s}` is instead interpreted as a Luna variable, as it is in single quotes and so not expanded by the shell.
-In this case, it has been set to `C3`.   The Luna variable need not have the same name: i.e. the following is functionally identical:
+or 
 ```
-luna s.lst myvar=${s} -s 'EPOCH & STATS sig=${myvar}'
+luna s.lst -s "STATS sig=${eeg}"
 ```
-Finally, even if the shell variable `${s}` exists, the following would _not_ work:
+In both cases, `${eeg}` will be replaced with `XYZ` _before_ Luna even sees any input/commands.
+
+In contrast, the following would produce different behavior:
 ```
-luna s.lst -s 'EPOCH & STATS sig=${s}'
+luna s.lst -s 'STATS sig=${eeg}'
 ```
-i.e. because there is no `${s}` Luna variable defined as on this run.
+as now the shell does not try to expand the _shell variable_ `${eeg}` (because it is enclosed within _single_ quotes).   Rather, now, Luna will read `${eeg}` and 
+interpret it as a Luna variable.   (In this case, `${eeg}` is a special Luna variable that is expanded to all channels that have a label matching typical EEG channel names.)
+
+
+If you did want to pass a shell variable into a script using `-s`, the best way is to define it explicitly prior to the `-s` script.   Say we have a shell variable `${v}`:
+```
+luna s.lst v=${v} -s 'STATS sig=${v}'
+```
+The initial assignment sets a Luna variable (that happens to be called `v`) equal to the shell variable `v`; then within the script, it is the Luna variable that is used.   To make this 
+clearer, we could give a different label to the Luna variable, but the behavior would be identical:
+```
+luna s.lst w=${v} -s 'STATS sig=${w}'
+```
+Note that even if the shell variable `${s}` exists, the following would _not_ work:
+```
+luna s.lst -s 'STATS sig=${s}'
+```
+as there is no Luna variable named `${s}`.  (The example above with `${eeg}` was a special case of a _pre-populated_ Luna variable.) 
 
 
 !!! Note "String literals"

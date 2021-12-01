@@ -95,7 +95,7 @@ to stop the `&` being interpreted as a shell directive. For example,
 here we run two commands: `EPOCH` and `STATS`.
 
 ```
-luna s.lst -s "EPOCH len=20 & STATS epoch" > res.txt
+luna s.lst -s 'EPOCH len=20 & STATS epoch' > res.txt
 ```
 
 By default, all commands are assumed to come from _standard input_,
@@ -159,22 +159,22 @@ ubiquitous [awk](https://www.gnu.org/software/gawk/manual/gawk.html#Getting-Star
 tool:
 
 ```
-awk ' $5 == "MEAN" { print $1, $3, $6 } ' res.txt
+awk ' $5 == "MEAN" && $4 == "." { print $1, $3, $6 } ' res.txt
 ```
 ```
-nsrr01	 CH/SaO2	76.9242
-nsrr01	 CH/PR		57.3485
-nsrr01	 CH/EEG(sec)	1.18558
-nsrr01	 CH/ECG		0.00939557
-nsrr01	 CH/EMG		-6.8557
-nsrr01	 CH/EOG(L)	0.472551
-nsrr01	 CH/EOG(R)	0.321447
-nsrr01	 CH/EEG		-0.301199
-nsrr01	 CH/AIRFLOW	0.0664418
+nsrr01    CH/SaO2      76.9242
+nsrr01    CH/PR        57.3485
+nsrr01    CH/EEG_sec_   1.18558
+nsrr01    CH/ECG        0.00939557
+nsrr01    CH/EMG       -6.8557
+nsrr01    CH/EOG_L_     0.472551
+nsrr01    CH/EOG_R_     0.321447
+nsrr01    CH/EEG       -0.301199
+nsrr01    CH/AIRFLOW    0.0664418
 ... (cont'd)
 ```
 
-## Using `destrat`
+## Using destrat
 
 If the `-o` argument is given to Luna, instead of the column-based
 text output format described above, all output is sent to a _lout_
@@ -186,7 +186,7 @@ programs or spreadsheets.  For example, consider the following
 command:
 
 ```
-luna s.lst sig=EEG,ECG,EMG -o out.db -s "EPOCH & STATS epoch" 
+luna s.lst sig=EEG,ECG,EMG -o out.db -s 'EPOCH & STATS epoch'
 ```
 
 This generates a database, named `out.db` as requested.  The
@@ -197,23 +197,27 @@ destrat out.db
 ```
 ```
 --------------------------------------------------------------------------------
-out.db: 2 command(s), 3 individual(s), 15 variable(s), 70731 values
+out.db: 2 command(s), 3 individual(s), 31 variable(s), 247401 values
 --------------------------------------------------------------------------------
-  command #1:	c1	Thu Aug 13 13:30:19 2020	EPOCH	sig=ECG,EEG,EMG
-  command #2:	c2	Thu Aug 13 13:30:19 2020	STATS	epoch=T sig=ECG,EEG,EMG
+  command #1:	c1	Wed Dec  1 10:51:05 2021	EPOCH	sig=ECG,EEG,EMG
+  command #2:	c2	Wed Dec  1 10:51:05 2021	STATS	epoch=T sig=ECG,EEG,EMG
 --------------------------------------------------------------------------------
 distinct strata group(s):
-  commands      : factors           : levels        : variables 
-----------------:-------------------:---------------:---------------------------
-  [EPOCH]       : .                 : 1 level(s)    : DUR INC NE
-                :                   :               : 
-  [STATS]       : CH                : 3 level(s)    : MAX MEAN MEDIAN MEDIAN.MEAN MEDIAN.MEDIAN
-                :                   :               : MEDIAN.RMS MEDIAN.SKEW MIN NE NE1
-                :                   :               : RMS SKEW
-                :                   :               : 
-  [STATS]       : E CH              : (...)         : MAX MEAN MEDIAN MIN RMS SKEW
-                :                   :               : 
-----------------:-------------------:---------------:---------------------------
+  commands   : factors    : levels     : variables 
+-------------:------------:------------:---------------------------
+  [EPOCH]    : .          : 1 level(s) : DUR INC NE
+             :            :            : 
+  [STATS]    : CH         : 3 level(s) : MAX MEAN MEDIAN.MEAN MEDIAN.MEDIAN
+             :            :            : MEDIAN.RMS MEDIAN.SKEW MIN NE NE1
+             :            :            : P01 P02 P05 P10 P20 P30 P40 P50
+             :            :            : P60 P70 P80 P90 P95 P98 P99 RMS
+             :            :            : SD SKEW
+             :            :            : 
+  [STATS]    : E CH       : (...)      : MAX MEAN MEDIAN MIN P01 P02 P05
+             :            :            : P10 P20 P30 P40 P50 P60 P70 P80
+             :            :            : P90 P95 P98 P99 RMS SKEW
+             :            :            : 
+-------------:------------:------------:---------------------------
 ```
 
 That is, we see that 2 commands were performed, generating output for
@@ -244,9 +248,12 @@ Individuals: 3
 Commands: 1
      STATS
 
-Variables: 12
-     STATS/MAX STATS/MEAN STATS/MEDIAN STATS/MEDIAN.MEAN STATS/MEDIAN.MEDIAN STATS/MEDIAN.RMS STATS/MEDIAN.SKEW
-      STATS/MIN STATS/NE STATS/NE1 STATS/RMS STATS/SKEW
+Variables: 27
+     STATS/MAX STATS/MEAN STATS/MEDIAN.MEAN STATS/MEDIAN.MEDIAN STATS/MEDIAN.RMS
+      STATS/MEDIAN.SKEW STATS/MIN STATS/NE STATS/NE1 STATS/P01 STATS/P02 STATS/P05
+      STATS/P10 STATS/P20 STATS/P30 STATS/P40 STATS/P50 STATS/P60 STATS/P70 STATS/P80
+      STATS/P90 STATS/P95 STATS/P98 STATS/P99 STATS/RMS STATS/SD STATS/SKEW
+
 ```
 
 Adding the `epoch` option to the `STATS` command generated
@@ -530,7 +537,7 @@ luna s.lst nsrr01 @cmd/vars.txt -o res.db < cmd/second.txt
 ```
 ```
 ===================================================================
-+++ luna | v0.24, 12-Aug-2020 |  starting 13-Aug-2020 13:32:56  +++
++++ luna | v0.26.0, 11-Nov-2021 | starting 01-Dec-2021 10:57:52 +++
 ===================================================================
 input(s): s.lst
 output  : res.db
@@ -542,44 +549,44 @@ commands: c1	EPOCH	len=${myepoch}
 
 ___________________________________________________________________
 Processing: nsrr01 [ #1 ]
- duration: 11.22.00 ( clocktime 21.58.17 - 09.20.17 )
+ duration: 11.22.00 | 40920 secs ( clocktime 21.58.17 - 09.20.16 )
 
  signals: 14 (of 14) selected in a standard EDF file:
-  SaO2 | PR | EEG2 | ECG | EMG | EOG(L) | EOG(R) | EEG1
-  AIRFLOW | THOR_RES | ABDO_RES | POSITION | LIGHT | OX_STAT
+  SaO2 | PR | EEG2 | ECG | EMG | EOG_L_ | EOG_R_ | EEG1
+  AIRFLOW | THOR_RES | ABDO_RES | POSITION | LIGHT | OXSTAT
 
  annotations:
-  NREM1 (x109) | NREM2 (x523) | NREM3 (x16) | NREM4 (x1)
-  REM (x238) | apnea_obstructive (x37) | arousal_standard (x194) | artifact_SpO2 (x59)
-  desat (x254) | hypopnea (x361) | wake (x477)
+  N1 (x109) | N2 (x523) | N3 (x17) | R (x238)
+  W (x477) | apnea/obstructive (x37) | arousal (x194) | artifact/SpO2 (x59)
+  desat (x254) | hypopnea (x361)
 
  variables:
   airflow=AIRFLOW | ecg=ECG | eeg=EEG2,EEG1 | effort=THOR_RES,A...
-  emg=EMG | eog=EOG(L),EOG... | hr=PR | light=LIGHT | oxygen=SaO2,OX_STAT
-  position=POSITION
+  emg=EMG | eog=EOG_L_,EOG... | hr=PR | id=nsrr01 | light=LIGHT
+  oxygen=SaO2,OXSTAT | position=POSITION
  ..................................................................
  CMD #1: EPOCH
    options: len=10 sig=*
- set epochs, length 10 (step 10), 4092 epochs
+ set epochs, length 10 (step 10, offset 0), 4092 epochs
  ..................................................................
  CMD #2: MASK
    options: all=T sig=*
  reset all 4092 epochs to be masked
  ..................................................................
  CMD #3: MASK
-   options: sig=* unmask-if=NREM1,NREM2,NREM3
+   options: sig=* unmask-if=N1,N2,N3
  set masking mode to 'unmask'
- based on NREM1 327 epochs match; 0 newly masked, 327 unmasked, 3765 unchanged
+ based on N1 327 epochs match; 0 newly masked, 327 unmasked, 3765 unchanged
  total of 327 of 4092 retained
- based on NREM2 1569 epochs match; 0 newly masked, 1569 unmasked, 2523 unchanged
+ based on N2 1569 epochs match; 0 newly masked, 1569 unmasked, 2523 unchanged
  total of 1896 of 4092 retained
- based on NREM3 48 epochs match; 0 newly masked, 48 unmasked, 4044 unchanged
- total of 1944 of 4092 retained
+ based on N3 51 epochs match; 0 newly masked, 51 unmasked, 4041 unchanged
+ total of 1947 of 4092 retained
  ..................................................................
  CMD #4: RESTRUCTURE
    options: sig=*
-  restructuring as an EDF+ :   keeping 19440 records of 40920, resetting mask
-  retaining 1944 epochs
+  restructuring as an EDF+:   keeping 19470 records of 40920, resetting mask
+  retaining 1947 epochs
  ..................................................................
  CMD #5: STATS
    options: sig=EEG2,EEG1
@@ -590,6 +597,6 @@ ___________________________________________________________________
 ...processed 1 EDFs, done.
 ...processed 1 command set(s),  all of which passed
 -------------------------------------------------------------------
-+++ luna | finishing 13-Aug-2020 13:32:57                       +++
++++ luna | finishing 01-Dec-2021 10:57:54                       +++
 ===================================================================
 ```
