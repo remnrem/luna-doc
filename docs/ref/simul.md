@@ -189,7 +189,7 @@ signal `S1`, to use Welch method to estimate the spectrum from the
 data.  Plotting the expected (gray line, same as above) against the
 estimated values for this one epoch, we see a good agreement: (note,
 there the lowest frequency estimated is 0.5 Hz, as the Welch method
-uses, by defauly, 4 second sliding windows; thus the x-axis is shifted relative
+uses, by default, 4 second sliding windows; thus the x-axis is shifted relative
 to the plot above):
 
 ![img](../img/simul3.png)
