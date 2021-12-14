@@ -42,7 +42,7 @@ You can install Luna in a number of ways.  The easiest approach is to
 download [binary executables](download/exec.md); you
 can also compile [from source](download/source.md)):
 
-![img](img/install1.png)
+![img](img/install1.png){width="100%"}
 
 An alternative is to run Luna in a [Docker container](download/docker.md).
 If you can install Docker on your machine, this may be a good route to
@@ -50,7 +50,7 @@ test-drive Luna.  We've generated two Docker containers: both include
 _lunaC_ and _lunaR_, either in the classic R environment, or
 via [RStudio](https://www.rstudio.com):
 
-![img](img/install2.png)
+![img](img/install2.png){width="100%"}
     
 ## Things Luna aims to do
 

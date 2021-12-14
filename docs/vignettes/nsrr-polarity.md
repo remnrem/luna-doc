@@ -48,7 +48,7 @@ set of correlational analyses, as it does not have a `C3` channel.)
 Using the [`CORREL`](../ref/cc.md#correl) command, we
 observed the following:
 
-![img](../img/pol-correl1.png)
+![img](../img/pol-correl1.png){width="100%"}
 
 Even given that we are averaging across heterogeneous studies, this
 _tri-modal_ distribution is surprising, as it includes a peak of
@@ -70,7 +70,7 @@ other studies) and given that it is highly unlikely to reflect a
 genuine physiological effect, we assumed some kind of artifact (or
 analytic error) was at play here:
 
-![img](../img/pol-correl2.png)
+![img](../img/pol-correl2.png){width="100%"}
 
 
 !!! info "SHHS positive correlations" 
@@ -87,7 +87,7 @@ next looked at the EOG channels.  Specifically, what did the
 distribution of EOG-EOG and (ipsilateral) EEG-EOG correlations look
 like?  Here we saw another unexpected set of multi-modal distributions:
 
-![img](../img/pol-correl3.png)
+![img](../img/pol-correl3.png){width="100%"}
 
 Splitting one of the EEG-EOG correlations (`C3-LOC`) by study, we
 again saw that _SHHS1_ appeared to be an outlier, in having a
@@ -96,7 +96,7 @@ those people, when the EEG channel showed a _positive deflection_, more
 often than not the (ipsilateral) EOG showed a _negative deflection_,
 and vice versa, despite having similar reference electrodes.
  
-![img](../img/pol-correl4.png)
+![img](../img/pol-correl4.png){width="100%"}
 
 Looking only at _SHHS1_, we plotted all four correlations (EEG-EEG,
 EOG-EOG and the two ipsilateral EEG-EOG comparisons) as a function of
@@ -105,7 +105,7 @@ point, ordered left-to-right on the x-axis according to their _SHHS_
 ID).  In each case, the y-axis goes from +1 (at the top) to -1 (at the
 bottom of each of the four plots):
 
-![img](../img/pol-correl5.png)
+![img](../img/pol-correl5.png){width="100%"}
 
 The apparent _banding_ turns out to largely map onto different parent
 studies and collection clinics in _SHHS1_, which are not randomly
@@ -193,7 +193,7 @@ at 180 degrees, with the dotted line), to the positive peak (`+` at
 at 360/0 degrees).  The histogram represents the number of individuals
 whose mean phase at spindle peak was at that value:
 
-![img](../img/pol-spin1.png)
+![img](../img/pol-spin1.png){width="100%"}
 
 Wow! These certainly are some unexpected - _and bimodal_ -
 distributions in the mean SO phase at spindle-peak for _SHHS1_, but
@@ -223,7 +223,7 @@ _assume_ that their C4 channel was flipped, how does that change
 spindle/SO coupling (in _SHHS1_), i.e. if we phase-shift their
 spindle/SO mean phase by 180 degrees?
 
-![img](../img/pol-spin2.png)
+![img](../img/pol-spin2.png){width="100%"}
 
 Good, this clears up the _SHHS1_ distribution somewhat.  In other
 words, people with a negative EEG-EOG correlation also tended to show
@@ -237,7 +237,7 @@ scatter plot between the C4-ROC correlation and mean SO/delta phase at
 spindle peak shows a clear relationship, suggesting that these two
 metrics are getting at the same thing (that is, flipped EEG polarity):
 
-![img](../img/pol-spin3.png)
+![img](../img/pol-spin3.png){width="100%"}
 
 
 But what about _CCSHS_ and _CFS_?  Note that we previously did not
@@ -259,7 +259,7 @@ _MESA_ study in the analyses above, because it didn't have a C3 channel.
 What does the distribution of SO phase at spindle peak look like in
 _MESA_?
 
-![img](../img/pol-spin4.png)
+![img](../img/pol-spin4.png){width="100%"}
 
 Hmmmm... here it seems that almost all individuals are showing the
 unexpected, "flipped" spindle/SO phase distribution, which we've
@@ -295,26 +295,26 @@ slightly different approach (that may or may not have any advantages
 relative to other similar ideas), as follows.  Consider an example
 epoch of EEG from NREM sleep:
 
-![img](../img/pol-heur1.png)
+![img](../img/pol-heur1.png){width="100%"}
 
 We first standardize the signal, band-pass filter in the delta-band,
 and then identify all positive (red) versus negative (blue)
 sample-points:
 
-![img](../img/pol-heur2.png)
+![img](../img/pol-heur2.png){width="100%"}
 
 We then identify the even/odd positive components (labeling them red
 and orange), and we do the same for the negative components (blue and
 black):
 
-![img](../img/pol-heur3.png)
+![img](../img/pol-heur3.png){width="100%"}
 
 Next, we split the original signal into two _semi-signals_,
 corresponding to the upper and lower portions of the original signal.
 We flip the polarity of odd (i.e. orange/black) components within each
 semi-signal, in order to create two new signals, as follows:
 
-![img](../img/pol-heur4.png)
+![img](../img/pol-heur4.png){width="100%"}
 
 The fundamental idea is that if the original signal is completely
 "symmetric", then the two resulting semi-signals should have similar
@@ -338,7 +338,7 @@ The plots below show the mean _difference_ in spectral power for the
 upper versus the lower semi-signal, calculated across all NREM epochs
 and all individuals in each cohort:
 
-![img](../img/pol-heur-app1.png)
+![img](../img/pol-heur-app1.png){width="100%"}
 
 For the cohorts where we do not suspect any EEG polarity flips
 (i.e. _SHHS2_, _MrOS_ and _SOF_, based on the correlational analyses
@@ -356,7 +356,7 @@ statistics be used to indicate individual-by-individual whether or not
 a signal was flipped?  Below we super-impose the difference statistics
 for each individual within each cohort:
 
-![img](../img/pol-heur-app2.png)
+![img](../img/pol-heur-app2.png){width="100%"}
 
 The individual traces are a little hard to make out, but in _SHHS1_
 there is clear evidence for _both_ types of profile, i.e. indicative
@@ -383,13 +383,13 @@ channels may themselves be flipped (i.e. which will attenuate this
 relationship), we can see a clear correspondence between the _POL_
 score and how EEG and EOG were correlated.
 
-![img](../img/pol-heur-app3.png) 
+![img](../img/pol-heur-app3.png){width="100%"}
 
 Do the _POL_ scores help to clear up the _CFS_ and _CCSHS_ data in
 terms of the spindle/SO phase relationships? Here, we phase-shift (180
 degrees) individuals with a negative _POL_ score:
 
-![img](../img/pol-spin6.png) 
+![img](../img/pol-spin6.png){width="100%"}
 
 This seems to be going in the right direction, although it isn't
 perfect.  For _SHHS1_, we seem to do better using the _POL_ score

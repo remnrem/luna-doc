@@ -329,7 +329,7 @@ plot( d$E[ d$F == 15 ]  , d$N[ d$F == 15 ]  , pch= 20 , col="skyblue" ,
       xlab="Epoch" , ylab="N spindles" , main="15 Hz spindles" )
 ```
 
-![img](../img/spindles-epoch.png)
+![img](../img/spindles-epoch.png){width="100%"}
 
 Luna provides a rough sanity-check to test for unusual distributions
 of spindles per epoch, as might occur if a movement artifact, for
@@ -368,7 +368,7 @@ alongside the bandpass filtered EEG for delta, theta, alpha and beta
 power as well as sigma power.  As expected (i.e. by definition), the
 spindle corresponds to a brief increase in sigma power:
 
-![img](../img/spindle.png)
+![img](../img/spindle.png){width="100%"}
 
 !!! note
     Primarily in the context of [_lunaR_](../ext/R/index.md), in the near future
@@ -474,7 +474,7 @@ legend( 5,0.2,c("11 Hz","15 Hz"),fill=c("orange","skyblue"))
 }
 ```
 
-![img](../img/spindle-th1.png)
+![img](../img/spindle-th1.png){width="100%"}
 
 For the first two individuals, based on Otsu's criterion at least,
 this suggests that thresholds around 4 or 5 are optimal, in the sense
@@ -535,7 +535,7 @@ nsrr03  EEG  15   0.066   3.000
 
 Returning to the plots, things look a bit better:
 
-![img](../img/spindle-th2.png)
+![img](../img/spindle-th2.png){width="100%"}
 
 
 What to make of all this?  We do _not_ advise selecting different
@@ -632,7 +632,7 @@ abline(v=0,col="red",lwd=2)
 ```
 We see that most spindles (as would be expected) have quality scores greater than 0, meaning that the interval showed greater _spindle-band_ enrichment than _non-spindle-band_ enrichment.
 
-![img](../img/sqch.png)
+![img](../img/sqch.png){width="100%"}
 
 
 Of the _full_ set (i.e. running _without_ the default `q=0` threshold in place), we see that approximately 10% of spindles have `q` less than 0:
@@ -698,7 +698,7 @@ sources of artifact, whereas, as a whole, the _high Q_ spindles look
 more like canonical spindles.
 
 
-![img](../img/sqc.png)
+![img](../img/sqc.png){width="100%"}
 
 Be aware that setting `q` too high may unnecessarily miss many true
 spindles though.  A value of `q=0.3` (i.e. log10(2)) requires that the
@@ -876,7 +876,7 @@ destrat out.db +SPINDLES -r F
 Plotting the output of this command, we potentially see evidence of a
 bimodality in spindle frequencies for this individual:
 
-![img](../img/mspindles1.png)
+![img](../img/mspindles1.png){width="100%"}
 
 
 !!! info "Relationship to individualized spindle detectors"
@@ -986,7 +986,7 @@ for (f in c(11,15)) {
 }
 ```
 
-![img](../img/tlock.png)
+![img](../img/tlock.png){width="100%"}
 
 
 ### Annotations
@@ -1263,7 +1263,7 @@ hist( d$SO_PHASE_PEAK[ d$F == 11  ] , breaks=15 , col = "blue" , xlab="SO phase 
 hist( d$SO_PHASE_PEAK[ d$F == 15  ] , breaks=15 , col = "blue" , xlab="SO phase angle (degrees)" , main="FS/SO coupling angle" ) 
 ```
 
-![img](../img/sp-coupling.png)
+![img](../img/sp-coupling.png){width="100%"}
 
 
 Next, we'll add random shuffling to the coupling analyses, to generate empirical, non-parametric estimates of significance, by adding the `nreps` command.  Here we specify 100,000 random permutations per analysis (these are evaluated quite quickly), running now only for fast spindles:
@@ -1387,7 +1387,7 @@ plot( d$PHASE , d$SOPL_CWT , type="b" , xlab="SO phase angle (degrees)" , ylab="
 plot( d$PHASE , d$SOPL_EEG , type="b" , xlab="SO phase angle (degrees)" , ylab="Mean raw EEG (uV)" , pch=20  ) 
 ```
 
-![img](../img/sp-coupling2.png)
+![img](../img/sp-coupling2.png){width="100%"}
 
 
 That is, the right panel confirms (as expected/defined) the typical
@@ -1456,7 +1456,7 @@ plot( d$PHASE , -log10(d$COUPL_OVERLAP_EMP ), pch=20 , type="b" , xlab="SO phase
 abline( h=-log10( 0.05) , lty=2) 
 ```
 
-![img](../img/sp-coupling4.png)
+![img](../img/sp-coupling4.png){width="100%"}
 
 
 That is, we see the above-chance rate of spindle/SO overlap is not
@@ -1751,7 +1751,7 @@ lines( d$SP[d$R==2], d$SOTL[d$R==2] , col="red" , lwd = 2 )
 lines( d$SP[d$R==3], d$SOTL[d$R==3] , col="green" , lwd = 2 )
 ```
 
-![img](../img/so1.png)
+![img](../img/so1.png){width="100%"}
 
 The three methods 1, 2 and 3 are blue, red and green respectively.
 The green line (R3) is more variable as a smaller number of SO were
@@ -1825,7 +1825,7 @@ lines( d$PHASE[d$R==2], d$SOPL_CWT[d$R==2] , lwd=2, col="red" )
 abline(v=270,lty=2)
 ```
 
-![img](../img/so2.png)
+![img](../img/so2.png){width="100%"}
 
 Here we see, for both R1 and R2 definitions, an increased fast spindle
 wavelet power around the negative peak of the SO (270 degrees) for

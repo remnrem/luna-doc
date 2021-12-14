@@ -186,7 +186,7 @@ window (from 1660 to 1680 seconds from the start of the EDF) of the
 as below:
 
 !!! Example "C&F Supplementary Figure A-1 (B) : illustrative 20-seconds of raw sleep EEG (Cz)"
-    ![img](../img/cf/cf1.png)
+    ![img](../img/cf/cf1.png){width="100%"}
 
 Using Luna to achieve the same goal, we will first extract the raw
 signal to a text file (`cz.txt`) and then use R to plot it.  Here we a) set 20-second `EPOCH`s, b)
@@ -207,7 +207,7 @@ plot( (1:8000/400), scan( "cz.txt" ),
       type = "l", ylab = "Cz", xlab = "Seconds", col="darkorange" )
 ```
 
-![img](../img/cf/cf1b.png)
+![img](../img/cf/cf1b.png){width="100%"}
 
 
 !!! hint "Alternatively: using lunaR" 
@@ -266,7 +266,7 @@ They plot the simulated signal, which has sinusoidal oscillations at 1 and 13 Hz
 (`sineAmpNorm_oneSided`):
 
 !!! Example "C&F Supplementary Figure A-1 (A, F) : simulated signal and amplitude from DFT/FFT analysis"
-    ![img](../img/cf/cf2.png)
+    ![img](../img/cf/cf2.png){width="100%"}
 
 
 Here, we'll repeat these steps, but first using R to generate the simulated signal, writing it to a text file `s1.txt`:
@@ -292,7 +292,7 @@ plot( sineTime , sineWaves , type="l" )
 write( format( sineWaves , digits=20 ) , file="s1.txt" , ncolumns = 1 )
 ```
 
-![img](../img/cf/cf3.png)
+![img](../img/cf/cf3.png){width="100%"}
 
 That is, `s1.txt` contains a signal 5 seconds in duration, sampled at
 400 Hz (i.e. 2000 data points). It comprises a single signal that is a
@@ -389,7 +389,7 @@ plot( d$F[ d$F <= 30 ] , d$NORM_AMP[ d$F <= 30 ] , type="l" ,
       col="darkgreen" , xlab="Frequency (Hz)" , ylab="Normalized amplitude" ) 
 ```
 
-![img](../img/cf/luna.sim.fft.png)
+![img](../img/cf/luna.sim.fft.png){width="100%"}
 
 
 ### FFT of real data
@@ -398,7 +398,7 @@ _C&F_ next apply DFT to the 20-second interval of real data extracted above (i.e
 basic code as above (see [here](../img/cf/matlab.html#fft_data)), resulting in the following PSD spectrum (left panel):
 
 !!! Example "C&F Supplementary Figure A-1 (G,H) : estimating PSD spectra with raw DFT/FFT and Welch's method"
-    ![img](../img/cf/cf4.png)
+    ![img](../img/cf/cf4.png){width="100%"}
 
 We can use the same `-d fft` option, but feeding in the `cz.txt` channel generated earlier:
 
@@ -419,7 +419,7 @@ lines( fft$F ,log10( fft$NORM_AMP ) , type="l" ,
        xlim=c(0,30) , ylim=c(-5,3) , col="darkgreen" )
 
 ```
-![img](../img/cf/luna.real.fft.png)
+![img](../img/cf/luna.real.fft.png){width="100%"}
 
 
 ### Welch algorithm
@@ -479,7 +479,7 @@ Below we plot these values (e.g. using R's `plot()` function as above, in red), 
 superimposed on the results obtained from running the _C&F_ code (in gray) for
 this 20-second segment, plotting the log-scaled PSD:
 
-![img](../img/cf/luna.welch.1.png)
+![img](../img/cf/luna.welch.1.png){width="100%"}
 
 That is, the gray line is the original Matlab output from `pwelch()`, whereas
 the red is the output from Luna's default `PSD` command.  We can see
@@ -553,7 +553,7 @@ luna s.lst pp3_N3_mast
              segment-sec=5 segment-overlap=2.5 min=0 max=30 pow2 '
 
 ```
-![img](../img/cf/luna.welch.2.png)
+![img](../img/cf/luna.welch.2.png){width="100%"}
 
 This is closer.  We now see that the Luna output has the same spectral resolution as the Matlab code, of 0.1953 Hz.
 ```
@@ -588,7 +588,7 @@ luna s.lst pp3_N3_mast
 
 Now we finally see identical results from both Luna and the Matlab script: (gray plotted with extra width so we can see otherwise perfectly overlapping lines):
 
-![img](../img/cf/luna.welch.3.png)
+![img](../img/cf/luna.welch.3.png){width="100%"}
 
 
 In contrast, we could have altered the Matlab code to match Luna's default behavior.  Rather than the original code:
@@ -642,7 +642,7 @@ the differences between absolute and relative power. They also show
 how to generate so-called topo-plots using EEGLAB, as shown [here](../img/cf/matlab.html#topo).
 
 !!! Example "C&F Figure 1 (C, D) : topographical representation of absolute and relative band PSD"
-    ![img](../img/cf/cf6.png)
+    ![img](../img/cf/cf6.png){width="100%"}
 
 
 This analysis was performed on individual `pp2` (N3 sleep, mastoid reference). We can generate PSD
@@ -689,7 +689,7 @@ for (i in 1:4) lines(d$F[d$CH==chs[i]],d$REL[d$CH==chs[i]],col=cols[i],lwd=2)
 ```
 
 This gives us the same spectra for these four selected channels (AFz, Cz, Pz and Oz) as _C&F_:
-![img](../img/cf/psd-abs-rel.png)
+![img](../img/cf/psd-abs-rel.png){width="100%"}
 
 Next, we can generate some rough _topoplots_.  Visualization has not
 been a strong focus of Luna to date, and so there is not a fully
@@ -731,7 +731,7 @@ for (f in freqs) {
 
 This effectively reproduces the results of _C&F_, albeit with messier visual rendering:
 
-![img](../img/cf/topo1.png)
+![img](../img/cf/topo1.png){width="100%"}
 
 !!! Note "PSD specification" 
     As we've noted , small issues of window choice, FFT size, segment size, etc, will slightly alter
@@ -753,7 +753,7 @@ the phase of the signal can be extracted (noting some ways in which the results 
 are removed from the plot below though):
 
 !!! Example "C&F Figure 5 (A) : extracting phase with the Hilbert transform"
-    ![img](../img/cf/cf7.png)
+    ![img](../img/cf/cf7.png){width="100%"}
 
 To reproduce this analysis and Figure, we'll first use R to generate the simulated sine wave (saved as the file `sine.txt`):
 ```
@@ -792,7 +792,7 @@ abline( v = c( 0.25 , 1 ) , col=c( "magenta" , "goldenrod" ) , lwd=3 )
 ```
 We see that we're able to replicate the main features of Figure 5A. 
 
-![img](../img/cf/luna-hilbert.1.png)
+![img](../img/cf/luna-hilbert.1.png){width="100%"}
 
 We also see that Luna uses the same convention as _C&F_ adopt, whereby phase is
 implicitly defined with respect to a cosine, such that peaks correspond to 0 radians
@@ -813,7 +813,7 @@ was modulated by the phase of the slow (1 Hz) component.  They used the filter-H
 of the fast oscillation varied over time (i.e. with the phase of the slow oscillation):
 
 !!! Example "C&F Figure 5 (B) : filter-Hilbert to extract slow oscillation and spindle amplitude"
-    ![img](../img/cf/cf8.png)
+    ![img](../img/cf/cf8.png){width="100%"}
 
 We'll do the same here, again using R to simulate the signal, and then Luna to apply the filter-Hilbert transform:
 
@@ -858,7 +858,7 @@ write.table( compoundSignal , file="wave2.txt" , row.names=F, col.names=F)
 ```
 This generates the expected simulated signal:
 
-![img](../img/cf/simulated2.png)
+![img](../img/cf/simulated2.png){width="100%"}
 
 _C&F_ then used two bandpass FIR (finite impulse response) filters, designed by the Matlab `firls()` command, to apply to the signal prior to the
 Hilbert transform.   We'll touch on filter design as applied to sleep EEG analysis in the follow-up vignette, but for now
@@ -877,7 +877,7 @@ properties.  (Note: the blue line is from _C&F_ when using a shorter
 filter, 1 second / order 400, rather than the longer (5 second/ order
 2000) FIR they use for the actual manuscript):
 
-![img](../img/cf/filt-resp.png)
+![img](../img/cf/filt-resp.png){width="100%"}
 
 We can then use the `HILBERT` command also specifying a filter (here with `f` and `order`, which
 by default uses a Hamming-window FIR of the specified order, with transition frequencies (-3dB) at, e.g. 0.35 and 2.25 Hz, for the
@@ -911,7 +911,7 @@ to extract the amplitude and phase of different components of
 the simulated signal, here saved in the file `wave2.txt`:
 
 !!! Example "C&F Figure 5 (C) : wavelets to extract spindle amplitude and phase"
-    ![img](../img/cf/cf9.png)
+    ![img](../img/cf/cf9.png){width="100%"}
 
 The key result is in Figure 5C panel i, which shows how for the correct phase estimates, one needs to wrap the wavelet (see _C&F_ for details):
 
@@ -943,7 +943,7 @@ i.e. this wavelet spans from 11.15 to 14.75 Hz, given the time-domain FWHM and `
 the `MAG` variable contained in this output also, to see the frequency characterization of
 the wavelet (with the horizontal line pointing to the two FWHM values):
 
-![img](../img/cf/luna.cwt.prop.png)
+![img](../img/cf/luna.cwt.prop.png){width="100%"}
 
 The `CWT` command generates two new signals (`S1_cwt_mag` and `S1_cwt_phase`) in the in-memory EDF, which are then dumped to a file (via `MATRIX`).  
 
@@ -962,7 +962,7 @@ luna wave2.txt --fs=400 epoch-len=20
 ```
 Plotting the spindle-band filtered signal, with the magnitude from filter-Hilbert (left) and CWT (right), we see broadly comparable results.
 (Note that the `CWT` command actually outputs power, so we plot the square root here):
-![img](../img/cf/luna.ht.cwt.png)
+![img](../img/cf/luna.ht.cwt.png){width="100%"}
 
 As _C&F_ note, some of the quirks in the filter-Hilbert plot reflect the imprecisions due to filtering -- this is an issue we'll revisit in the
 follow-up vignette.
@@ -981,7 +981,7 @@ To calibrate the metrics, they use time-series shifting, i.e. breaking down the 
 components to generate an empirical null distribution for each metric:
 
 !!! Example "C&F Figure 6 (E,F) : slow oscillation-spindle coupling"
-    ![img](../img/cf/cf10.png)
+    ![img](../img/cf/cf10.png){width="100%"}
 
 Their example considers a single 30-second epoch epoch from the EDF `pp2_N3_mast`.  We can recreate those results here, with the `CC` command.
 
@@ -1024,7 +1024,7 @@ how it varies based on the normalization scheme (i.e. raw `dPAC` vesus normalize
 They use the code [here](../img/cf/matlab.html#dPAC) to create these plots:
 
 !!! Example "C&F Figure 7 (A) : phase amplitude coupling (dPAC) and surrogate-based normalization"
-    ![img](../img/cf/cf11.png)
+    ![img](../img/cf/cf11.png){width="100%"}
 
 Note, in this analysis they use 20 epochs from the EDF `pp3_N3_mast`.  They consider two spindle frequencies also (_slow_ and _fast_)
 to be coupled with the slow (<1 Hz) activity.  We'll recreate this here using Luna and the `CC` command (restricted to the first 20 epochs, as per _C&F_):
@@ -1054,7 +1054,7 @@ ftopo( d$CH1[ d$F2 == frqs[2] ] , d$dPAC_Z[ d$F2 == frqs[2] ] , main="Fast spind
 
 ```
 
-![img](../img/cf/luna.pac.topo.png)
+![img](../img/cf/luna.pac.topo.png){width="100%"}
 
 ## Connectivity analyses
 
@@ -1068,7 +1068,7 @@ Their Figure 7B shows spikes in wPLI at slow and spindle frequencies; after eval
 via time-shifting surrogate analysis however, only the spindle spike remains significant:
 
 !!! Example "C&F Figure 7 (B) : weighted Phase Lag Index (wPLI) and surrogate-based normalization"
-    ![img](../img/cf/cf12.png)
+    ![img](../img/cf/cf12.png){width="100%"}
 
 The `CC` command, introduced above, performs cross-channel
 intra-frequency connectivity (i.e. wPLI) as well as intra-channel,
@@ -1088,7 +1088,7 @@ luna s.lst pp3_N3_mast
 destrat out/wpli.db +CC -r CH1 CH2 F1 F2 > out/wpli.txt
 ```
 
-![img](../img/cf/luna.wpli.png)
+![img](../img/cf/luna.wpli.png){width="100%"}
 
 
 ## Closing comments

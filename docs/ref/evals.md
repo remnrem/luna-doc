@@ -929,7 +929,7 @@ Note that `TRANS` only updates/modifies one channel at a time: the one
 specified by `sig`.  Any other modifications of a channel within the
 expression are restricted to the scope of the expression only, as this cartoon illustrates:
 
-![img](../img/trans.png)
+![img](../img/trans.png){width="100%"}
 
 
 To illustrate this further, look at this multi-part expression that involves two signals: `TcCO2` as well as `SpO2`:

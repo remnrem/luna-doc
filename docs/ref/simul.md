@@ -178,11 +178,11 @@ Plotting the expected log-log scaled frequency and power, we see the
 specified slope _b_ = -2 (negative `alpha`), which is linear on a
 log-log scale, as well as a peak at 15 Hz:
 
-![img](../img/simul1.png)
+![img](../img/simul1.png){width="100%"}
 
 The `MATRIX` command above output the simulated time series to the file `s1.txt`: here is five seconds of the signal:
 
-![img](../img/simul2.png)
+![img](../img/simul2.png){width="100%"}
 
 We also applied the `PSD` command to the newly generated
 signal `S1`, to use Welch method to estimate the spectrum from the
@@ -192,7 +192,7 @@ there the lowest frequency estimated is 0.5 Hz, as the Welch method
 uses, by default, 4 second sliding windows; thus the x-axis is shifted relative
 to the plot above):
 
-![img](../img/simul3.png)
+![img](../img/simul3.png){width="100%"}
 
 We can add the `slope` option to `PSD` to estimate the spectral slope using a simple linear regression on the log-log spectrum: i.e. the final `PSD` command were instead written:
 
@@ -275,7 +275,7 @@ rate of 400 Hz), c) the estimated power spectra obtained via the Welch method
 to 180-seconds of randomly simulated data, as green, orange and navy points/lines respectively, we
 see they all line up more or less as expected:
 
-![img](../img/simul4.png)
+![img](../img/simul4.png){width="100%"}
 
 
 Note that we used a different sample rate here (400 Hz),
@@ -287,7 +287,7 @@ if we plot the full range of output from the previous `SIMUL` command, we'll
 see the spectrum extends up to 200 Hz, but with values of 0 for all frequencies
 above 50 Hz (which are therefore not defined on the log scale, and so are `NA`):
 
-![img](../img/simul5.png)
+![img](../img/simul5.png){width="100%"}
 
 
 ---
@@ -312,7 +312,7 @@ signal, which uses the basic DFT algorithm (rather than Welch or
 multi-taper approaches to spectral estimation).  Plotting the contents of `s1.txt` (i.e.
 the raw time-domain signal output by `MATRIX`):
 
-![img](../img/simul6.png)
+![img](../img/simul6.png){width="100%"}
 
 
 The second signal adds the `pulses` option to make the output consist of 3 segments (each of 1.5 second duration)
@@ -326,7 +326,7 @@ luna . -o out.db --nr=10 --rs=1
             MATRIX minimal file=s2.txt '
 ```
 
-![img](../img/simul7.png)
+![img](../img/simul7.png){width="100%"}
 
 In this third example, we create two signals and add them together: a single 2-second segment of 4 Hz activity,
 and then superimpose 10 0.25-second segments of 20 Hz activity: 
@@ -340,7 +340,7 @@ luna . -o out.db --nr=10 --rs=1 \
             MATRIX minimal file=s3.txt '
 ```
 
-![img](../img/simul8.png)
+![img](../img/simul8.png){width="100%"}
 
 
 
@@ -353,17 +353,17 @@ destrat out.db +FFT -r F CH > o.1
 
 The first shows the simple 4 Hz sine wave:
 
-![img](../img/simul6s.png)
+![img](../img/simul6s.png){width="100%"}
 
 The second shows an attenuated peak at 4 Hz, with the discontinuities at the start/stop of segments introducing
 other spectral components:
 
-![img](../img/simul7s.png)
+![img](../img/simul7s.png){width="100%"}
 
 Finally, we see a similar picture for the third signal, but with spectral components around both 4 and 20 Hz, again with the 'ripples'
 in the frequency domain resulting from the onsets/offsets of the pulses:
 
-![img](../img/simul8s.png)
+![img](../img/simul8s.png){width="100%"}
 
 In this example, we've added two signals together, where the first was
 created from scratch.  It is also possible to use `add` to modify an
@@ -382,7 +382,7 @@ luna . -o out.db --nr=10 --rs=1 \
             MATRIX minimal file=s3b.txt '
 ```
 
-![img](../img/simul9.png)
+![img](../img/simul9.png){width="100%"}
 
 
 ## SIGGEN
@@ -421,5 +421,5 @@ luna s.lst -o out.db -s ' MASK ifnot=NREM2 & RE
 
 Plotting the output of `MTM`:
 
-![img](../img/siggen.png)
+![img](../img/siggen.png){width="100%"}
 

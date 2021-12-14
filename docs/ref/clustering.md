@@ -19,7 +19,7 @@ This command runs in one of four basic modes: for _K_ channels and _E_ epochs:
  - _channel-wise_ : one channel-by-channel (_KxK_) matrix [`cat` with unepoched data ] 
  - _concantenated_ : one matrix concatenating epochs from different channels (_KExKE_) [`cat` with epoched data, i.e running `EPOCH` beforehand ]
 
-![img](../img/exe6.png)
+![img](../img/exe6.png){width="100%"}
 
 After forming one of these distance matrices, it can be output to a
 file for subsequent processing outside of Luna.  Additionally, the
@@ -113,7 +113,7 @@ sometimes different clusters are assigned the same color):
 image(as.matrix(m), col = jet.colors(100) )
 plot( cmdscale(as.dist(m)), xlab="MDS component 1", ylab="MDS component 2", pch=21, bg=as.factor( c$CL ) ) 
 ```
-![img](../img/exe2.png)
+![img](../img/exe2.png){width="100%"}
 
 These types of epoch-wise (or channel-wise) analyses can potentially
 be useful in spotting (time-limited) aberrations in the data.  Clearly
@@ -128,7 +128,7 @@ assignment of epochs to the green, black or blue clusters from epoch
 ```
 plot( apply(m, 1, mean), xlab="Epoch", ylab="Mean PDC distance", pch=21, bg=as.factor(c$CL) ) 
 ```
-![img](../img/exe1.png)
+![img](../img/exe1.png){width="100%"}
 
 To get some more insight into this issue, we can look at raw data.
 First, we will look at the assignment of epochs to clusters:
@@ -161,7 +161,7 @@ Repeating this for typical epochs, we can view different examples of
 signals: e.g. here three instances from the unusual epochs (left /
 red) and three random ones from the rest of the sample (each for 2 seconds):
 
-![img](../img/exe5.png)
+![img](../img/exe5.png){width="100%"}
 
 These examples point to some high-frequency interference during epochs ~200-300, not
 present in the rest of the signal (i.e. which made these epochs _more similar_).  We
@@ -174,7 +174,7 @@ d <- k$PSD$CH_E_F
 lheatmap( d$E , d$F , d$PSD , col = jet.colors(100) ) 
 ```
 
-![img](../img/exe4.png)
+![img](../img/exe4.png){width="100%"}
 
 This points to a a constant electrical line noise artifact (the horizontal streak across the top
 of the spectrogram) which is amplified during the window from epoch 200 to 300.  As a proof-of-principle,
@@ -192,7 +192,7 @@ long-range banding of similarity, which maps onto different stages of
 sleep (e.g. N3 epochs are more similar to other N3 epochs than to REM
 epochs, etc).
 
-![img](../img/exe3.png)
+![img](../img/exe3.png){width="100%"}
 
 
 !!! note
@@ -214,18 +214,18 @@ of the cluster).   This provided a reasonably quick way to visually summarize mo
 of data for each individual, for example showing one with basically clean data (left) versus one
 with a lot of recurrent artifact (right dendrogram).
 
-![img](../img/exe7.png)
+![img](../img/exe7.png){width="100%"}
 
 A second class of application is to sanity check channels from polysomnography (PSG) studies.   Different types of channels (EEG, EMG, ECG, respiratory, etc)
 will typically have somewhat distinctive _signatures_ in terms of the permutation distributions (here using a fixed sample rate across different
 channels (via the [`RESAMPLE` command](manipulations.md#resample)) to allow distances across different types of channels:
 
-![img](../img/exe8.png)
+![img](../img/exe8.png){width="100%"}
 
 Plotting the dendrogram associated with this distance matrix, we see the tendency for like channels to cluster.   If one or some channels have
 very high levels of artifact, they will cluster separately.   
 
-![img](../img/exe9.png)
+![img](../img/exe9.png){width="100%"}
 
 Although simply looking at the raw data would likely provide a
 quick and simple way to similarly spot gross artifact, these types of visual summaries may be useful in the context of automated

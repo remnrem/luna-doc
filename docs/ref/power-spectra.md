@@ -246,7 +246,7 @@ Plotting these data, we see a moderate decrease in relative delta power across t
 ```
 plot( delta$E ,delta$RELPSD , pch=20 , col="blue", ylab="Relative delta power" , xlab="Epoch" )
 ```
-![img](../img/delta.png)
+![img](../img/delta.png){width="100%"}
 
 The correlation coefficient between epoch number and relative delta
 power is _r_ = -0.36 and highly significant:
@@ -310,7 +310,7 @@ Note that the `add` option for `SIMUL` adds the simulated signal onto the existi
 
 Plotting the resulting power spectra from both runs, we can clearly see the super-imposed artifact resulting in a more _spiky_ or _peaked_ spectrum:
 
-![img](../img/peaks0.png)
+![img](../img/peaks0.png){width="100%"}
 
 <!----
 k <- ldb( "out.db" )
@@ -379,11 +379,11 @@ studies, to identifier outliers, with respect to the extent of spectral spikes.
 Adding the `peaks-verbose` option gives additional output (stratified by both `CH` and `F`) that directly give the `DT`, `SM` and `DF` spectra
 as described above:   plotting these for the first instance: (black = DT, blue = SM):
 
-![img](../img/peaks1.png)
+![img](../img/peaks1.png){width="100%"}
 
 Whereas, for the second instance (with the spikes introduced), we see greater values for `DF` (note the different x-axis for the rightmost plot, versus above):
 
-![img](../img/peaks2.png)
+![img](../img/peaks2.png){width="100%"}
 
 
 If this approach is including true _bumps_ as outliers/spikes here,
@@ -580,7 +580,7 @@ legend(12,20,c("MTM","PSD"),fill=c("purple","orange"))
 ```
 
 
-![img](../img/mtm1.png)
+![img](../img/mtm1.png){width="100%"}
 
 
 As expected, in this particular scenario and with long signals, both
@@ -612,7 +612,7 @@ d <- k$MTM$CH_F_SEG
 lheatmap( d$SEG , d$F , d$MTM ) 
 ```
 
-![img](../img/mtm3.png)
+![img](../img/mtm3.png){width="100%"}
 
 ------
 
@@ -629,7 +629,7 @@ only 0.02 seconds at a time, and so gives a considerable smoothing of
 estimates in the time domain (which may or may not be desirable,
 depending on the goal of the analysis.)
 
-![img](../img/mtm2.png)
+![img](../img/mtm2.png){width="100%"}
 
 
 ## `FFT`
@@ -778,7 +778,7 @@ lines( d$SEC , d$EEG_hilbert_11_15_mag , col="red" , lwd=2 )
 plot( d$SEC , d$EEG_hilbert_11_15_phase , ylab = "Phase" , type="l" , axes=F)
 ```
 
-![img](../img/hilbert.png)
+![img](../img/hilbert.png){width="100%"}
 
 
 ## `CWT`
@@ -913,7 +913,7 @@ lines( d$F[ d$PARAM == "15_12_200" ]  , d$MAG[ d$PARAM == "15_12_200" ] ,
 legend( 2 , 0.9 , c("11 Hz","15 Hz") , fill = c("blue","red") )
 ```
 
-![img](../img/cwt-design.png)
+![img](../img/cwt-design.png){width="100%"}
 
 Looking at the estimated frequency domain FWHM values, we see these correspond to the _y=0.5_ (i.e. 50%)
 values for each wavelet, at lower and upper valeus respectively.
@@ -986,11 +986,11 @@ file `s1.txt` (for plotting).
 After running the above, we can first look at the raw signals (in `s1.txt`), for the original simulated signal `S1` (here
 showing just two seconds of the recording):
 
-![img](../img/emd1.png)
+![img](../img/emd1.png){width="100%"}
 
 and likewise for the three components extracted by `EMD`:
 
-![img](../img/emd2.png)
+![img](../img/emd2.png){width="100%"}
 
 It does indeed look as though `EMD` has extracted three sine waves,
 with the first being the fastest (as expected given the sifting/EMD
@@ -1000,11 +1000,11 @@ simulation).
 We can look at the spectral properties of the original signal and the EMD-derived components.  As expected, the original signal
 has power at exactly 2, 7 and 15 Hz (in a ratio of 1:1:2):
 
-![img](../img/emd4.png)
+![img](../img/emd4.png){width="100%"}
 
 Performing the FFT separately on each component, we see that EMD has in this instance successfully isolated the three simulated components:
 
-![img](../img/emd3.png)
+![img](../img/emd3.png){width="100%"}
 
 
 !!! note
@@ -1243,7 +1243,7 @@ plot( post$F[ post$ID == i ] , post$PSD[ post$ID == i ] ,
  type="l" , lwd=2 , col="olivedrab" , ylab="1/f-norm" , xlab=i)  }
 ```
 
-![img](../img/1fnorm.png)
+![img](../img/1fnorm.png){width="100%"}
 
 
 ## TV
@@ -1318,7 +1318,7 @@ plot( d$PSD, col=lstgcols(ss), pch=20, xlab="Sleep Epochs", ylab="Delta power (d
 lines( d1 , lwd=5 , col="orange" )
 ```
 
-![img](../img/tv.png)
+![img](../img/tv.png){width="100%"}
 
 
 
@@ -1366,7 +1366,7 @@ is the first [tutorial](../tut/tut1.md) EDF), there is considerable artifact at 
 with spectral peaks at 25 Hz and 12.5 Hz, reflecting harmonics of electrical noise artifacts). 
 
 
-![img](../img/acf-example.png)
+![img](../img/acf-example.png){width="100%"}
 
 If we repeat the analysis just looking at sleep (N2) epochs (i.e. just
 a quick way to chop off the particularly noisy part of the recording),

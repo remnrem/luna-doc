@@ -230,17 +230,17 @@ docker run  -e PASSWORD=abc123 -p 8787:8787 remnrem/luna
 If this command is successful, then after it downloads and installs, you will be able 
 to go to you web browser and visit the URL: `localhost:8787`
 
-![img](../img/rstudio1.png)
+![img](../img/rstudio1.png){width="100%"}
 
 Log in with username name `rstudio` and the password you specified above (i.e. `abc123`).   You will 
 then have an interactive environment, for which both the command prompt (for _lunaC_) and R (for _lunaR_) 
 are available, along with the tutorial data.  For example, we can run _lunaC_ in the terminal:
 
-![img](../img/rstudio2.png)
+![img](../img/rstudio2.png){width="100%"}
 
 Likewise, we can use _lunaR_ to query the tutorial data:
 
-![img](../img/rstudio3.png)
+![img](../img/rstudio3.png){width="100%"}
 
 The commands for mapping local folders to the Docker container
 (i.e. so that your own data are visible whilst in the container, and

@@ -151,7 +151,7 @@ d <- k$PSD$CH_F
 plot( d$F , log(d$PSD) , xlab = "Frequency (Hz)" , ylab = "Power" , col="blue" , lwd=2 , type="l" )
 ```
 
-![img](../../img/r-psd.png)
+![img](../../img/r-psd.png){width="100%"}
 
 !!! hint
     You can re-run adding the `max=30` parameter to the `PSD` command to obtain results on the same frequency scale as in the tutorial.

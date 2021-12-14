@@ -16,7 +16,7 @@ and one which is also specific to each channel and epoch pair (the so-called CHa
 The graphic below illustrates how these two masks are related and some of the key commands which operate on
 them:
 
-![img](../img/chep-mask.png)
+![img](../img/chep-mask.png){width="100%"}
 
 
 ## `MASK`

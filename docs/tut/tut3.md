@@ -154,7 +154,7 @@ To plot these per-epochs values:
 plot( d$T , d$VAL , ylab = "RMS(ECG)" , xlab = "Epoch" , pch=20 )
 ```
 
-![img](../img/epoch-plot1.png)
+![img](../img/epoch-plot1.png){width="100%"}
 
 
 Clearly there are a number of extreme points towards the end of the
@@ -218,7 +218,7 @@ plot( d$T[ 1:950 ] , d$VAL[ 1:950 ]  , ylab = "RMS(ECG)" , xlab = "Epoch" , pch=
 legend("bottomleft",legend=cols , fill = cols )
 ```
 
-![img](../img/epoch-plot2.png)
+![img](../img/epoch-plot2.png){width="100%"}
 
 
 ## Hypnograms 
@@ -849,7 +849,7 @@ following in R__):
  plot( m$E , m$H3 , pch = 20 , xlab="Epoch" , ylab="H3" , col = m$EMASK + 1) 
 ```
 
-![img](../img/artifact2.png)
+![img](../img/artifact2.png){width="100%"}
 
 In practice, given the heterogeneous nature of sleep signals,
 naturally it may be preferable to perform stage-specific artifact
@@ -885,7 +885,7 @@ plot( seq(1/125,30,1/125), s, type="l", ylim=c(-125, 125 ) ,
       xlab="Time (sec)" , ylab="EEG" )
 ```
 
-![img](../img/art3.png)
+![img](../img/art3.png){width="100%"}
 
 
 !!! info
@@ -965,7 +965,7 @@ for (i in ids) plot( d$F[ d$ID == i ] , log( d$PSD[ d$ID == i ] ) ,
   type="l" , xlab="Hz" , ylab="log(uV^2/Hz)" , lwd=2,main=i) 
 ```
 
-![img](../img/psd.png)
+![img](../img/psd.png){width="100%"}
 
 Especially for the second individual, we see the characteristic peak
 in the sigma band (11-15Hz), typically representing spindle activity
@@ -998,7 +998,7 @@ for (ch in c("EEG1","EEG2") )
             type="l" , xlab="Hz" , ylab="log(uV^2/Hz)" , lwd=2,main=paste(i,ch))
 ```
 
-![img](../img/psd-all.png)
+![img](../img/psd-all.png){width="100%"}
 
 Especially for `nsrr02`, there is clearly a great deal of 50 and 60Hz
 line noise in the signals.  Visual inspection of the signals,

@@ -198,7 +198,7 @@ plot(d$E,d$H2      ,pch=20,cex=0.8,col=f(m$EMASK),xlab="Epoch",ylab="H2")
 plot(d$E,d$H3      ,pch=20,cex=0.8,col=f(m$EMASK),xlab="Epoch",ylab="H3")
 ```
 
-![img](../img/sigstats.png)
+![img](../img/sigstats.png){width="100%"}
 
 As noted above, all epochs past epoch 1100 or so are wake, essentially
 containing nothing but noise (e.g. if recording continued after
@@ -291,7 +291,7 @@ plot( log(d$BETA_AVG) , type="l" , ylab="Beta local")
 plot( d$BETA_FAC , pch=20 , col = f( d$MASK ) , ylab="Beta fac") 
 ```
 
-![img](../img/buck.png)
+![img](../img/buck.png){width="100%"}
 
 Comparing the results to the [`SIGSTATS`](#sigstats) method described
 above, which is applied to the same data, we see that this approach
@@ -344,12 +344,12 @@ clear sub-harmonics at 4 Hz intervals, from which extend down into the
 regions typically considered of high physiological relevance for the
 sleep EEG, i.e. < 20 Hz.
 
-![img](../img/line-denoise3.png)
+![img](../img/line-denoise3.png){width="100%"}
 
 Zooming into the <25 Hz range, here we see the mean PSD for the entire sample (in this case, hundreds of individuals,
 many of whom turn out to share the same signature of electrical line noise, as was evident when looking at the full sample-level spectra up to 128 Hz):
 
-![img](../img/line-denoise1.png)
+![img](../img/line-denoise1.png){width="100%"}
 
 Although the impact on sample-level mean power in this frequency range is not extreme, in terms of individual differences, we see a clear and disturbing
 pattern, whereby the presence or absence of line-noise seems to drive clear spikes in the variance of power, and these seem to overwhelm physiological sources
@@ -367,7 +367,7 @@ luna s.lst –s LINE-DENOISE sig=${eeg} f=4,8,12,16,20,24 w=1,0.5
     
 In this particular case, this simple approach to removing line noise works quite well on this one individual:
 
-![img](../img/line-denoise4.png)
+![img](../img/line-denoise4.png){width="100%"}
 
 Perhaps more significantly, when looking at the whole sample
 (i.e. applying the above to all individuals in this sample), we see a
@@ -378,7 +378,7 @@ extent of line noise (e.g. especially at 16 Hz). Note that the mean
 PSD does show a few 'notches' suggesting that it has over-corrected in
 some cases.
 
-![img](../img/line-denoise2.png)
+![img](../img/line-denoise2.png){width="100%"}
 
 
 !!! warning
@@ -492,7 +492,7 @@ Plotting the `BPM` field of `hr.txt` against epoch (`E`), e.g. in R:
 plot(d$E,d$BPM,pch=20,col="red",ylim=c(50,80),ylab="HR (bpm)",xlab="NREM2 epoch")
 ```
 
-![img](../img/hr.png)
+![img](../img/hr.png){width="100%"}
 
 Second, we can extract the estimates of coherence between EEG and ECG as follows:
 
@@ -510,7 +510,7 @@ plot( d$F , d$COH.R.pre , ylim=c(0,1) , type="b" , pch=20, ylab="Coherence" , xl
 points( d$F , d$COH.R.post , ylim=c(0,1) , type="b" , pch=20, col="blue" ) 
 ```
 
-![img](../img/hrcoh.png)
+![img](../img/hrcoh.png){width="100%"}
 
 Note, this is only a _rough-and-ready_ approach to working with ECG data,
 which is not a primary focus of Luna.  Other artifacts may well remain
@@ -619,7 +619,7 @@ luna tmp/file.edf -o out.db alias="S1|C3" \
 After running `ALTER`, we run `COH` and `PSD` to generate power spectra and coherence statistics for all signals.  Here are the resulting power spectra: 
 
 
-![img](../img/alter1.png)
+![img](../img/alter1.png){width="100%"}
 
 The final signal (`S3`) has clearly had the major source of artifact removed (versus the contaminated `S2` signal), and shows a spectrum that is effectively identical to the
 original signal, `S1`. 
@@ -633,7 +633,7 @@ the power for the (artificial) `X1` signal (a simple sine wave) is
 effectively zero there, meaning that the coherence statistic is not
 defined.)
 
-![img](../img/alter2.png)
+![img](../img/alter2.png){width="100%"}
 
 Inasmuch as the _corrector_ channels provide an accurate proxy for the
 contamination observed in the target signal, this simple

@@ -19,7 +19,7 @@ representing sleep dynamics defined in terms of wake and sleep
 stages. Below is a hypnogram for one individual, randomly selected from 
 the [CHAT](http://sleepdata.org/datasets/chat/) study:
 
-![img](../img/dataplots/hypno1.png)
+![img](../img/dataplots/hypno1.png){width="100%"}
 
 Each point represents the manually-assigned stage for a 30-second
 epoch: REM (orange), NREM 1, 2 and 3 (light, mid and dark blue
@@ -31,7 +31,7 @@ In the plots below, we'll compress a single hypnogram to become a single line,
 using only color to denote the changes between sleep state.  Here is the 
 hypnogram above represented this way:
 
-![img](../img/dataplots/hypno2.png)
+![img](../img/dataplots/hypno2.png){width="100%"}
 
 ### Ultradian dynamics
 
@@ -42,7 +42,7 @@ CHAT study.  In the __leftmost plot__, rows (i.e. children) are ordered by
 age (approximately between 5 and 10 years); the _x_-axis is
 _elapsed time_ from the start of the recording.
 
-![img](../img/dataplots/chat-all.png)
+![img](../img/dataplots/chat-all.png){width="100%"}
 
 Especially at this resolution, it isn't necessarily easy to make out specific
 features when the data are shown this way, although we do see
@@ -95,7 +95,7 @@ elderly adults) as well as CHAT, the figure below shows plots of both
 sleep and wake epochs, with clock-time as the _x_-axis and
 individuals ordered by clock-time of sleep onset:
 
-![img](../img/dataplots/six-studies.png)
+![img](../img/dataplots/six-studies.png){width="100%"}
 
 Comparing plots between cohorts illustrates a
 number of physiological and technical differences.  
@@ -194,7 +194,7 @@ an almost inverse dynamic compared to delta power. That is, around the
 first few minutes of sleep onset gamma power is high,then drops
 quickly, and then slowly builds up over the second half of the night:
 
-![img](../img/dataplots/band-power.png)
+![img](../img/dataplots/band-power.png){width="100%"}
 
 By definition, EEG power changes with sleep stage.  Recreating the
 above two figures but only for N2 epochs (below) we can still
@@ -204,7 +204,7 @@ sleep are left a white/not plotted.) That is, the quantitative EEG
 metrics are capturing systematic differences in sleep above and beyond
 what is represented by traditional staging:
 
-![img](../img/dataplots/band-power-n2.png)
+![img](../img/dataplots/band-power-n2.png){width="100%"}
 
 ### Dynamics and artifacts
 
@@ -218,7 +218,7 @@ sleep epochs, to highlight some wake/sleep differences, but with the
 rows/individuals still ordered as above (i.e. by clock-time of sleep
 onset):
 
-![img](../img/dataplots/hjorth.png)
+![img](../img/dataplots/hjorth.png){width="100%"}
 
 The __leftmost__ plot shows _activity_ (H1) for the `HRate` (derived
 heart rate) channel in CCSHS. Clearly, there is an abrupt change that
@@ -257,7 +257,7 @@ furthermore, this effect is seen if looking just within N2 sleep, and
 so reflects dynamic processes at a finer granularity than traditional
 staging.  
 
-![img](../img/dataplots/cmc.png)
+![img](../img/dataplots/cmc.png){width="100%"}
 
 What does this particular result mean? Is it interesting?  Personally,
 I've currently no idea...  Again, the purpose here is to demonstrate the

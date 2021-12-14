@@ -142,7 +142,7 @@ plot( o[1:1000] , type="l" )
 lines( n[1:1000] , col="blue" ) 
 ```
 
-![../img/write.png](../img/write.png)
+![../img/write.png](../img/write.png){width="100%"}
 
 
 ## MATRIX

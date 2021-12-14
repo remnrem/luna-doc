@@ -41,7 +41,7 @@ lheatmap( mtm$SEG , mtm$F , mtm$MTM )
 ltopo.heat( psd$CH , psd$PSD , flt = psd$F == 15  , sz = 3 , zlab = "Power 15 Hz", mt = "Plot 1" ) 
 ```
 
-![img](../../img/rplot2.png)
+![img](../../img/rplot2.png){width="100%"}
 
 <!---
 c=         flt=       mt=        show.leg=  sz=        th.z=      th=        z=         zeroed=    zlab=      zlim=      
@@ -53,7 +53,7 @@ c=         flt=       mt=        show.leg=  sz=        th.z=      th=        z= 
 As `ltopo.heat()` except using a blue (negative) and red (positive) color scale, with 0 as white.  This is the
 same `zeroed=T` and with a different color scheme.  
 
-![img](../../img/ms/sol4.png)
+![img](../../img/ms/sol4.png){width="100%"}
 
 
 ## `ltopo.xy()`
@@ -63,13 +63,13 @@ same `zeroed=T` and with a different color scheme.
 ltopo.xy( c = hj$CH , x = hj$E , y = log( hj$H1 ) , xlab = "Epoch" , ylab = "H1"  ) 
 ```
 
-![img](../../img/rplot4.png)
+![img](../../img/rplot4.png){width="100%"}
 
 ```
 ltopo.xy( c = hj$CH , x = hj$E , y = log( hj$H1 ) , xlab = "Epoch" , ylab = "H1" , z = log( hj$H1 ) , pch=20  , col=rbpal , cex = 0.2   ) 
 ```
 
-![img](../../img/rplot3.png)
+![img](../../img/rplot3.png){width="100%"}
 
 
 
@@ -85,13 +85,13 @@ ltopo.xy( c = hj$CH , x = hj$E , y = log( hj$H1 ) , xlab = "Epoch" , ylab = "H1"
 ltopo.conn( chs1 = coh$CH1 , chs2 = coh$CH2 , z = coh$COH , flt = coh$B == "DELTA" & coh$COH > 0.8 , w = 3 , zr = c(-1 , 1 ) ) 
 ```
 
-![img](../../img/rplot5.png)
+![img](../../img/rplot5.png){width="100%"}
 
 ```
 ltopo.conn( chs1 = coh$CH1 , chs2 = coh$CH2 , z = coh$ICOH , flt = coh$B == "SIGMA" & coh$COH > 0.7 , w = 5 , signed = T ) 
 ```
 
-![img](../../img/rplot6.png)
+![img](../../img/rplot6.png){width="100%"}
 
 ## `ltopo.dconn()`
 
@@ -99,7 +99,7 @@ ltopo.conn( chs1 = coh$CH1 , chs2 = coh$CH2 , z = coh$ICOH , flt = coh$B == "SIG
 ltopo.dconn( ch = "C3" , chs1 = coh$CH1 , chs2 = coh$CH2 , z = coh$COH , flt = coh$B == "SIGMA" ) 
 ```
 
-![img](../../img/rplot7.png)
+![img](../../img/rplot7.png){width="100%"}
 
 ## `ltopo.topo()`
 
@@ -107,7 +107,7 @@ ltopo.dconn( ch = "C3" , chs1 = coh$CH1 , chs2 = coh$CH2 , z = coh$COH , flt = c
 ltopo.topo( c = c( coh$CH1 , coh$CH2 )  , c2 = c( coh$CH2 , coh$CH1 ) , z = c( coh$ICOH , -1 * coh$ICOH )  , f = rep( coh$B == "SIGMA" , 2 )   , sz=0.08, sz2=0.6 )
 ```
 
-![img](../../img/rplot8.png)
+![img](../../img/rplot8.png){width="100%"}
 
 
 

@@ -67,7 +67,7 @@ For visualization, we will use the R package and some of the
 [lunaR](../ext/R/index.md) functions.  Using [this code](chep-viz.md#raw-data-psd),
 we will plot the PSD from the output of the previous Luna run:
 
-![Placeholder](../img/chep/PSD1.png)
+![Placeholder](../img/chep/PSD1.png){width="100%"}
 
 From the plot above, it is clear that there are quite a few noisy
 channels, and based on the little topoplot in the top-right corner we
@@ -80,7 +80,7 @@ the Hjorth parameters computed with the
 the [`lheatmap()` function](../ext/R/viz.md#lheatmap), we can visualize the
 data using [this code](chep-viz.md#raw-data-hjorth-parameters):
 
-![Placeholder](../img/chep/SS1.png)
+![Placeholder](../img/chep/SS1.png){width="100%"}
 
 In particular, based on the second Hjorth parameter (H2), it is evident that several channels
 show unusual patterns in the latter two-thirds of the recording (red horizontal lines).  Vertical streaks
@@ -121,7 +121,7 @@ marking epochs that are 3-SD outliers.  These three options can be
 specified together within the same `CHEP-MASK` command, in which case they will be
 performed in the order above.
 
-![Placeholder](../img/chep/pastedImagebase640.png)
+![Placeholder](../img/chep/pastedImagebase640.png){width="100%"}
 
 To clarify some of the language used below:
 
@@ -165,7 +165,7 @@ luna Subj1.edf -o chep_bchs.db -s 'CHEP-MASK ch-th=2 & CHEP channels=0.3 dump'
 We can now visualize this mask to see which epochs and channels were
 marked as outliers by running [this R script](chep-viz.md#bad-channel-detection):
 
-![Placeholder](../img/chep/Mask1.png)
+![Placeholder](../img/chep/Mask1.png){width="100%"}
 
 The plot above is a direct illustration of how the `CHEP` mask works
 across channels and epochs, with the dark red color marking the
@@ -174,7 +174,7 @@ defined as "bad", with all epochs fully masked out (namely POz, P4, P2,
 CP4 and CP2).  Also notice that those channels correspond to
 the red lines we observed before on the H2 heatmap:
 
-![Placeholder](../img/chep/Mask1-H2.png)
+![Placeholder](../img/chep/Mask1-H2.png){width="100%"}
 
 That is, the channels defined as bad had extreme values
 for the latter part of the recording; further, the number of bad _cheps_ 
@@ -239,7 +239,7 @@ luna Subj1.edf -o ss_psd2.db -s ' EPOCH
 Using [this R code](chep-viz.md#interpolating-bad-channels), we can generate the following visualization
 showing the interpolated channels, and the resulting PSD (compared to beforehand for the bad channels):
 
-![Placeholder](../img/chep/Bad_chs.png)
+![Placeholder](../img/chep/Bad_chs.png){width="100%"}
 
 !!! hint "Dropping channels instead of interpolating them"
     If you wished simply to remove the bad channels (instead of interpolating them), then replace `INTERPOLATE`
@@ -290,7 +290,7 @@ luna Subj1.edf -o ss_psd3.db -s ' CHEP-MASK ch-th=2
 
 Visualizing the resulting PSD (using [this R code](chep-viz.md#epoch-level-interpolation)): 
 
-![Placeholder](../img/chep/chep_intep.png)
+![Placeholder](../img/chep/chep_intep.png){width="100%"}
 
 This "patchwork" interpolation scheme results in a PSD plot that looks better (note, only 3% more _cheps_
 were interpolated in addition to those arising from the 5 bad channels we defined
@@ -351,7 +351,7 @@ luna Subj1.edf -o ss_psd4.db -s ' CHEP-MASK ch-th=2
 Now we can visualize which epochs were removed and how the final data
 look using [this R code](chep-viz.md#masking-remaining-outlier-epochs):
 
-![Placeholder](../img/chep/chep_fin.png)
+![Placeholder](../img/chep/chep_fin.png){width="100%"}
 
 Unlike all previous commands, the above command now results in a
 slightly shorted recording. Evidently, by removing relatively few
@@ -359,7 +359,7 @@ epochs (to be exact, 43 epochs, about 7% of our data) we ended up with
 nice and smooth PSD across all channels.  A direct comparison of the
 initial and cleaned data is below:
 
-![Placeholder](../img/chep/final.png)
+![Placeholder](../img/chep/final.png){width="100%"}
 
 ## Concluding remarks
 
