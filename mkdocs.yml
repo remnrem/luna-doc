@@ -30,6 +30,8 @@ theme:
 markdown_extensions:
   - admonition
   - pymdownx.superfences
+  - attr_list
+  - md_in_html
 
 #extra_javascript:
 #  - 'javascripts/extra.js'

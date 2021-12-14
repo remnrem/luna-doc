@@ -33,7 +33,7 @@ d <- lx( k , "PSD" , "CH" , "E", "F" )
 lheatmap( mtm$SEG , mtm$F , mtm$MTM ) 
 ```
 
-![img](../../img/rplot1.png)
+![img](../../img/rplot1.png){width="100%"}
 
 ## `ltopo.heat()`
 

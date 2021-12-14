@@ -243,7 +243,7 @@ dev.off()
 
 Below are the visualization of the maps.
 
-![](../img/msvig-maps.png)
+![img](../img/msvig-maps.png){:width="100%"} 
 
 These maps maps are broadly similar to the four canonical microstate
 maps reported in the literature. They are in this order: from left to right, they

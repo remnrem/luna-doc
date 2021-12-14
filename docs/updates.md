@@ -16,6 +16,12 @@ IN FLIGHT
   
 -->
 
+## v0.27
+ - changed SUDS structures: new `model` files and weights 
+ - added permutation entropy (`pe`, with `pe-m` and `pe-t` options) to `SIGSTATS`
+ - added fractal dimension routines to `SIGSTATS`
+ - added `segment-median` and `segment-sd` to `PSD`
+ 
 ## v0.26 (29-Nov-2021)
 
 _New functionality_
