@@ -280,7 +280,7 @@ Why do we make these changes?  Because, similar to R or Matlab, Luna
 is fundamentally a command-line tool and so uses text input to specify
 operations. As such, having spaces or special characters creates many
 unnecessary problems (e.g. for commands such as
-[`TRANS`](ref/evals.md#trans) that can perform general arithmetic
+[`TRANS`](../ref/evals.md#trans) that can perform general arithmetic
 operations on signals, which would make the expression `C3-M2`
 ambiguous). See this
 [FAQ](../faq.md#spaces-and-special-characters-in-labels) for the

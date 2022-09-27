@@ -9,7 +9,7 @@ statistical package ([_lunaR_](ext/R/index.md)). Luna is _actively under
 development_ and we welcome feedback.  
 
 The
-__current release is v0.26__ (29-Nov-2021): see [here](updates.md) for
+__current release is v0.27__ (27-Sep-2022): see [here](updates.md) for
 a list of changes/additions.   
     
 ## Getting started

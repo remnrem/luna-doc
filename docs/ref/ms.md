@@ -6,7 +6,11 @@ _Implementation of the modified K-means approach to EEG microstate analysis_
 | Command | Description | 
 | ---- | ------ | 
 | [`MS`](#ms) | EEG microstate analysis |
-| [`--kmer`](#kmer) | (Group-level) permutation-based analysis of state sequences |
+| [`--kmer`](#-kmer) | (Group-level) permutation-based analysis of state sequences |
+| [`--cmp-maps`](#-cmp-maps) | Group/individual map spatial analysis |
+| [`--label-maps`](#-label-maps) | Label maps given a template |
+| [`--correl-maps`](#-correl-maps) | Spatial correlations between maps |
+
 
 ## `MS`
 
@@ -449,4 +453,363 @@ echo "file=all.states vars=cc.txt phe=PHE k=4 nreps=100" | luna --kmer -o out.db
     state labels at each position).
 
 
+## --cmp-maps
+
+_Group/individual map spatial analysis_
+
+_Note that this function does not require or accept an EDF or sample list._
+
+This command takes a set of microstate maps, along with an optional
+group/phenotype file (two groups only) and evaluates the topographical
+simiarity / dissimilarity of maps between groups/people, based on the
+summed spatial correlation between maps.
+
+The starting point for this command is always running
+_individual-level_ segmentation with the [`MS`](#ms) command.
+
+
+First, we perform individual-level segmentation:
+
+```
+luna s.lst -o maps.db \
+     -s  ' REFERENCE sig=${eeg} ref=${eeg}
+           MS sig=${eeg} k=4 gfp-max=3 gfp-min=1 gfp-kurt=1  npeaks=5000 '
+```
+
+We then extract all maps/solutions from all individuals to a single
+text file: (swapping IDs to match phe.txt)
+
+```
+destrat maps.db +MS -r CH K > all.maps
+```
+
+For group-level tests, we require a tab-delimited file (e.g. `phe.txt`)
+with `ID` and some other column with a 0/1 field: (here `DIS`):
+
+```
+luna --cmp-maps -o out.db \
+     --options file=all.maps vars=phe.txt phe=DIS nreps=1000
+```
+
+The output to the console may look like:
+``` 
+  of 125 total individuals, for DIS 68 cases, 57 controls and 0 unknown
+  creating individual-by-individual global similarity matrix
+
+  within-case similarity                       : 0.819118 p = 0.628372
+  within-control similarity                    : 0.824668 p = 0.34965
+  | within-case - within-control | similarity  : 0.00555053 p = 0.802198
+  concordant / discordant pair similarity      : 0.984001 p = 0.478521
+```
+
+
+All four above statistics are evaluated empirically.  There is
+likely some redundancy here: the primary ones are #3 and #4.
+(Arguably, #1 and #2 just help interpret a significant result from #3.).
+
+From top to bottom, these statistics reflect the following questions::
+
+  - _are cases more similar to each other than we’d expect by chance_ (1-sided)
+
+  - _are controls more similar to each other than we’d expect by chance_ (1-sided)
+
+  -  _are cases as similar to each other as controls are similar to each other?_ (2-sided, absolute difference)
+
+  -  _are phenotypically concordant pairs more similar than discordant pairs?_ (1-sided, ratio)
+ 
+
+To get individual level outputs (the mean similarity of that person vs all others):
+
+ 
+```
+destrat out.db +CMP-MAPS
+```
+```
+ID          S
+ID_0003     0.872831506350531
+ID_0004     0.821114969439348
+ID_0005     0.859732202249929
+ID_0006     0.88057487661809
+ID_0007     0.845507629897367
+ID_0009     0.863454475897446
+ID_0011     0.841742414155102
+ID_0012     0.861049164391393
+ID_0013     0.874618198441904
+... etc ...
+```
+
+To run in _template mode_ (i.e. comparing all individuals to a fixed template, rather than making a comparison between groups:
+ 
+```
+luna --cmp-maps -o out.db \
+     --options file=all.maps vars=phe.txt phe=DIS nreps=1000 template=prime6 
+```
+
+Here `prime6` is a text file with the template map, as Luna outputs from segmentation:  i.e. w/ a header row
+and tab-delimited columns:
+ 
+```
+CH    B          A        F         E          C          D
+Fp1   0.181639   0.12153  0.29197   0.078162   0.183723   0.0652307
+Fp2   0.053939   0.20571  0.25708  -0.100524   0.165446   0.0531564
+AF3   0.206103   0.12500  0.20173   0.071661   0.20764   -0.0747048
+AF4   0.055686   0.22630  0.1419   -0.143023   0.183976  -0.0930419
+F7    0.206141  -0.00312  0.23955   0.201432   0.113696   0.101976
+... etc ...
+```
+  
+```
+ running CMP-MAPS
+  found 6 classes: B A F E C D
+  read 6-class prototypes for 57 channels from prime6
+
+  of 125 total individuals, for DIS 68 cases, 57 controls and 0 unknown
+
+  comparing individuals to a fixed template
+  case-template similarity                         : 0.618476 p = 0.561439
+  control-template similarity                      : 0.618709 p = 0.43956
+  | case-template - control-template | similarity  : 0.000233025 p = 0.864136
+```
+ 
+
+Here we perform 3 different tests:
+
+ - _is mean case-template similarity greater than expected by chance?_ (1-sided)
+
+ - _is mean control-template similarity greater than expected by chance?_ (1-sided)
+
+ - _do cases and controls differentially match the template?_ (2 sided, absolute difference)  
+
+
+Note that the template map can contain more states (higher _K_) than the original data.
+
+In terms of individual-level output, this now gives the global
+similarity measure with the template/prototype maps (rather than with all other
+individuals:
+
+```
+destrat out.db +CMP-MAPS
+```
+
+```
+ID          S
+ID_0003     0.623501942435745
+ID_0004     0.623255522947831
+ID_0005     0.619270046224184
+ID_0006     0.621543219557438
+ID_0007     0.623715796386705
+ID_0009     0.62512820160196
+ID_0011     0.624581781547139
+ID_0012     0.618138762578379
+...
+```
+
+You can also get the corresponding template classes for the optimal global match for each individual:
+
+```
+destrat out.db +CMP-MAPS -c SLOT
+```
+
+```
+ID         T.SLOT_0  T.SLOT_1  T.SLOT_2  T.SLOT_3
+ID_0003    E         C         B         A
+ID_0004    C         F         B         A
+ID_0005    A         C         B         D
+ID_0006    B         A         C         D
+ID_0007    F         A         E         B
+ID_0009    C         A         E         B
+ID_0011    B         A         E         C
+ID_0012    B         C         A         E
+ID_0013    C         A         E         B
+... etc ...
+```
+
+
+## --label-maps
+
+_Label maps given a template_
+
+This function takes a microstate map file for _K_ classes, and a _template_ file (that should have
+at least _K_ states) with specified labels.  Based on the set of assignments (of states in the first
+file to the template file) that optimize the sum of spatial correlations, it generates a new map file
+with the appopriate labels (i.e. based on the template).  Further, for plotting/visualization purposes,
+it will flip a map if needed to make it more (visually) similar to the template.  (Note that spatial correlations
+themselves are polarity invariant.)
+
+This command considers all possible combinations of mappings, and
+picks the one with the highest overall spatial correlation (i.e. the
+sum of maximum correlations for the original _K_ states, each with one from
+the template set, with the constraint that each original state 
+must match a unique template state).  Note that this means that a
+state may sometimes have a higher spatial correlation with another template map than the
+one assigned: to give an unrealistic example, for two states 1 and 2 in the original, mapping to two templates X and Y):
+
+```
+        TEMPLATE  X     Y 
+  ORIG   
+    1             0.9   0.6          
+    2             0.7   0.5
+```
+
+The optimal would be `[1 --> X]` and `[2 --> Y]` as the summed
+correlation is 0.9 + 0.5 = 1.4 (versus 0.7 + 0.6 = 1.3), even though
+`2` actually correlates more strongly with `X` than with `Y`.  This simply
+reflects the logic of the criterion used to align a set of maps, and is not a problem _per se_ -
+but do bear this in mind when interpreting results (given that microstates can very often have high spatial
+correlations with multiple other states).
+
+It is possible for the template to contain more states than
+the test file: here, the command will pick the subset with the highest matches.
+
+With the exception of perhaps flipping the values (multiplying all values in a column by -1), this command does not
+change the underlying information/values in a solution, only the labels.
+
+_Note that this function does not require or accept an EDF or sample list._
+
+<h3>Parameters</h3>
+
+| Option | Example | Description |
+| ---- | ---- | ---- |
+| `sol`  | `k4` | Read solution from text file `k4` |
+| `template`  | `t6` | _Template_ file `t6` (e.g. contains canonical states ) |
+| `new`  | `n4` | New file name for labelled solution |
+| `th`  | 0.8 | Set to `?` if the spatial correlation does not exceed this value |
+
+
+<h3>Output</h3>
+
+Some notes to the console, and the relabelled map to a file (name given by `new`).
+
+<h3>Example</h3>
+
+Consider we have an unlabelled K=4 solution (in the text file `k4`)
+which we wish to label based on an existing set of K=4 templates (in
+the file `t4`), which are labelled with the canonical A, B, C and D
+labels.
+
+We can visualize these using LunaR's convenience functions: in R, first the original maps
+(with arbitrary labels 1,2,3,4 (which R renames as X1, X2, X3 and X4 when reading
+columns with those headers):
+
+```
+library(luna)
+k4 <- read.table("k4",header=T,stringsAsFactors=F)
+par(mfrow=c(3,4),mar=c(0,0,0,0) )
+for (i in 1:4) ltopo.rb( c = k4$CH , z = k4[,1+i] , mt = names(k4)[1+i])
+```
+
+![img](../img/ms-labels1.png)
+
+Likewise, the canonical maps are as follows:
+
+```
+t4 <- read.table("t4",header=T,stringsAsFactors=F)
+for (i in 1:4) ltopo.rb( c = t4$CH , z = t4[,1+i] , mt = names(t4)[1+i])
+```
+
+![img](../img/ms-labels2.png)
+
+To automatically assign labels using `--label-maps`:
+
+```
+luna --label-maps --options sol=k4 template=t6 new=k4.b th=0.8
+```
+
+```
+ running LABEL-MAPS
+  only assigning maps with spatial r >= 0.8 to matched template
+  found 4 classes: A B C D
+  read 4-class prototypes for 57 channels from t4
+  found 4 classes: 1 2 3 4
+  read 4-class prototypes for 57 channels from k4
+   mapping [1] --> template [D] with R = 0.803188       
+   mapping [2] --> template [B] with R = 0.991798       
+   mapping [3] --> template [A] with R = 0.871168       
+   mapping [4] --> template [C] with R = 0.990952       
+```
+
+To plot the relabelled maps in `n4`:
+```
+n4 <- read.table("n4",header=T,stringsAsFactors=F)
+for (i in 1:4) ltopo.rb( c = n4$CH , z = n4[,1+i] , mt = names(n4)[1+i])
+```
+
+![img](../img/ms-labels3.png)
+
+Note that if we had required a more stringent matching, e.g. with
+`th=0.9 we'd see the following:
+
+```
+ mapping [1] --> template [D] with R = 0.803188 *** below threshold corr. -- assigning '?'
+ mapping [2] --> template [B] with R = 0.991798       
+ mapping [3] --> template [A] with R = 0.871168 *** below threshold corr. -- assigning '?'
+ mapping [4] --> template [C] with R = 0.990952       
+```
+and the fields would be not named:
+```
+CH      ?          B           ?           C
+Fp1     1.33501    1.41774     0.194605    1.17416
+Fp2     1.5269     0.895938    0.928289    1.10388
+... etc ... 
+```
+
+
+## --correl-maps
+
+_Spatial correlations between maps_
+
+This convenience function reads a map from a file and prints the
+matrix of spatial correlations (between states) to standard output.
+
+_Note that this function does not require or accept an EDF or sample list._
+
+<h3>Parameters</h3>
+
+| Option | Example | Description |
+| ---- | ---- | ---- |
+| `sol`  | `k4.sol` | Read solution from file `k4.sol` |
+
+
+<h3>Output</h3>
+
+Some notes to the console, and the matrix to standard output.
+
+
+<h3>Example</h3>
+
+
+If `k4.sol` is a file as output by `MS` (i.e. first column channels, subsequent columns are channel weights/loadings for each map, one per column):
+```
+CH      C           B           A             D
+Fp1     1.33501     1.41774     0.194605      1.17416
+Fp2     1.5269      0.895938    0.928289      1.10388
+AF3     1.19466     1.34362     0.153383      1.2073
+AF4     1.34935     0.625492    1.08554       1.11598
+F7      0.833366    1.54421    -0.650062      0.78941
+F5      0.880587    1.48185    -0.436373      0.966646
+F3      0.868018    1.29965    -0.18313       1.09159
+F1      0.913968    1.08758     0.185383      1.1776
+... etc ...
+
+```
+To obtain the spatial correlation matrix:
+```
+luna --correl-maps --options sol=k4
+```
+In the console/log:
+```
+running CORREL-MAPS
+  found 4 classes: C B A D
+  read 4-class prototypes for 57 channels from k4
+```
+Written to standard output:
+```
+        C         B          A           D
+C       1         0.608757   0.653712    0.892096
+B       0.608757  1          0.216617    0.79893
+A       0.653712  0.216617   1           0.401007
+D       0.892096  0.79893    0.401007    1
+```
+
+Note the columns are kept in the same order as found in the input data.
 

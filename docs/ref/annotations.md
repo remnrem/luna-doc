@@ -12,7 +12,7 @@ to EDFs, and how to view and summarize their contents._
 | [NSRR XML files](#nsrr-xml-files) | NSRR XML annotation files |
 | [`--xml`](#-xml) & [`--xml2`](#-xml2) | View NSRR XML annotation files |
 | [`ANNOTS`](#annots)       | Tabulate all annotations |
-| [`WRITE-ANNOTS`](#writeannots) | Write annotations as `.annot` or `.xml` |
+| [`WRITE-ANNOTS`](#write-annots) | Write annotations as `.annot` or `.xml` |
 | [`SPANNING`](#spanning)   | Report on _coverage_ of annotations |
 | [`A2S`](#a2s)  | Add a 0/1 signal based on an annotation |
 | [`S2A`](#s2a)  | Add an annotation based on ranged values of a signal |
@@ -552,10 +552,12 @@ Alternatively, use `--xml2` to report _all_ entries in any XML, along with the f
 
 ## EDF+ Annotations
 
-
+<!---
 for -s ' MASK ... '
   note c( 'aa' , 'bb' )   is same as c( {aa} , {bb} ) "
   can use { and } instead of ', when can be convenient if using -s on the command line
+--->
+
 
 Using a test EDF+ file that contains some annotations
 (one posted on Teunis van Beelen's website, which can be accessed [here](https://www.teuniz.net/edf_bdf_testfiles/)), 
@@ -581,8 +583,39 @@ Further, the log also notes the number of annotations, 41 in this case:
  annotations:
   edf_annot (x41)
 ```
-Note that all annotations from an EDF+ file are assigned the _annotation class_ of `edf_annot`; the _annotation instance_ ID is assigned to whatever value is 
-present in the EDF+ (annotation instance IDs need not be unique).  See above for a description of annotation _class_ versus _instances_. 
+
+By default, note that all annotations from an EDF+ file are assigned the
+_annotation class_ of `edf_annot`; the _annotation instance_ ID is
+assigned to whatever value is present in the EDF+ (annotation instance
+IDs need not be unique).  See above for a description of annotation
+_class_ versus _instances_.
+
+!!! hint "Assigning class-level annotations from EDF+ explicitly"
+
+    Exceptions to the rule can be added with the `edf-annot-class` special variable, to give a list of annotations that are their own _classes_: e.g. 
+
+    ``` 
+    luna ma0844az_1-1+.edf -o out.db edf-annot-class=HVT_START,HVT_END -s ANNOTS 
+    ```
+
+    The console now shows these explicitly listed:
+    ```
+    annotations:
+      HVT_END (x1) | HVT_START (x1) | edf_annot (x39)
+    ```
+    This means they will be separately represented in the `ANNOTS` output, and can more easily be used as annotations in 
+    masks, etc.   Typically this might be done to pull out sleep stage annotations: e.g. to pull out stages from an EDF+
+    (assuming these are the labels) and save as a simple `.annot` file:
+
+    ```
+    luna edfplus.edf edf-annot-class=N1,N2,N3,R,W,? \
+         -s ' WRITE-ANNOTS file=a.annot annot=N1,N2,N3,R,W,? '
+    ```
+    Subsequently, one would likley then add `skip-edf-annots=T` as a special variable to ignore annotations from an EDF+ 
+    that have already been extracted to a separate file and attached (and linked via a sample-list to the original EDF+).  
+    It can be slow to scan an entire EDF+ to pull out 
+    annotations, and so performing these steps initially (i.e. to extract all desired annotations as an `.annot`) is 
+    the best workflow in Luna.
 
 If the `verbose` special variable is set to true, then (surprisingly...) you'd see more verbose output
 in the log, that lists some of these _instance_ IDs too:
@@ -763,6 +796,8 @@ _to be added_
 
 ## WRITE-ANNOTS
 
+_Output annotations in full Luna-format_
+
 Luna assumes that annotation data may arrive in subtly different
 formats: the generic `.annot` format tries to make some allowances for
 this, by making it easier to convert to .annot, for example:
@@ -779,11 +814,58 @@ When writing `.annot` files, Luna always adheres to a standard, full specificati
  - explicit start and stop times for annotations (although these can either be in elapsed seconds or clocktime)
  - ordered by time of occurrence 
  - all annotations (or a specified subset therefore) are written to a single file
+ - multiple annotation files will be combined into a single `.annot` file
+ - can output only a subset of annotations (via the `annot` option)
+ - can be (Luna) `.xml` format instead of `.annot`, although we suggest you use `.annot` format as the most flexible default
 
-This file can be iether `.annot` or (Luna) `.xml` format.
+<h3>Parameters</h3>
 
-To output only a subset of annotations, add the `annot` option to `WRITE-ANNOTS`.
+|  Parameter | Example | Description |
+| --- | --- | --- |
+| `file` | `a.annot` | File name - should end if `.annot` (unless XML) | 
+| `annot` | `N1,N2,N3,R,W` | Only output these options (versus all) |
+| `hms` | | Write in _hh:mm:ss_ output rather than elapsed seconds |
+| `collapse` | | For a discontinuous EDF, collapse annotation times (see below) |
+| `xml` | | Write to XML annotation format instead of `.annot` |
+| `add-ellipsis` | | For zero-duration annotations, add `...` as the second field, i.e. extend to the next annotation |
 
+<h3>Output</h3>
+
+A new annotation file, saved to disk, as either [`.annot`](#-annot-files) or [XML](#luna-xml-files) formats.
+
+<h3>Example</h3>
+
+Using `collapse` implies a discontinuous EDF (i.e. with gaps, either
+if it is an EDF+D from the outset, or if epochs have been spliced out
+(e.g. via masking and `RE` as described [here](masks.md)).  This will
+write the EDF ignoring gaps, i.e. so that the annotations will
+properly align with the corresponding EDF that would be output from
+the `WRITE` command that also specifies `force-edf` (i.e. also
+ignoring gaps).   In short, if saving as a simple EDF, this may 
+be the form used:
+```
+  WRITE-ANNOTS file=a.annot collapse
+  WRITE force-edf=T edf-dir=edfs/
+```
+
+If this wasn't done, then annotations from the original would no
+longer align with the new EDF. As a concrete example: if an original
+EDF+D had two segments: from 0 to 1000 seconds, and 5000 to 6000
+seconds, and these annotations:
+
+```
+A1   100 -- 110 seconds  (i.e. 10 seconds long)
+A2   200 -- 250 seconds  (i.e. 50 seconds long)
+A3   5100 - 5200 seconds  (i.e. 100 seconds long)
+```
+When using `WRITE-ANNOTS` with `collapse`, these times would become
+```
+A1   100 - 110
+A2   200 - 250 
+A3   1100 - 1200  (i.e. skips the 4000-second gap)
+```
+
+  
 ## SPANNING
 
 _Summarize the coverage of an EDF by one or more annotations_
@@ -941,9 +1023,11 @@ nsrr01  hypopnea  1       15.3
 
 _Add a signal based on an annotation_
 
-The `A2S` command makes a binary (0/1) EDF channel corresponding to
-one or more annotation(s), i.e. whether that sample-point is spanned
-by that annotation or not.
+The `A2S` command, by default, makes a binary (0/1) EDF channel
+corresponding to one or more annotation(s), i.e. whether that
+sample-point is spanned by that annotation or not.  Alternatively, it
+can use the instance ID if it is a numeric value (instead of always
+1).
 
 
 | Option | Example | Description |
@@ -951,6 +1035,7 @@ by that annotation or not.
 | `annot` | `arousal` | Name of annotation to select |
 | `sr`    | `100` | Sample rate of new signal |
 | `label` | `A` | Optionally, a name for the signal (otherwise is set to `annot` value) |
+| `numeric-inst` | | Sets signal to numeric value of the annotation _instance IDs_ , not just 0/1 | 
 
 
 ## S2A

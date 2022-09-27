@@ -1,27 +1,246 @@
 
 # Updates, additions and fixes
 
-Current stable version: __v0.26__ (main [downloads](download/index.md) page)
+Current stable version: __v0.27__ (main [downloads](download/index.md) page)
 
 <!--
-IN FLIGHT
-- [ midflight ] adding `ORDER` command (or that command-line 'sig' sets order)
-- loops in scripts [todo]
-- channel range selector [C3][C4] .. use same syntax as [C3][1..4] .. will have to wait and expand on a per-EDF basis ... 
-- add EDF+ to EDF converter  (zero-pad and add MASK for discontinuities)
- add an explicit COUPL command that uses caches
- - __Global coherence statistics__ via the [`SYNC` command](ref/cc.md#sync)  
+IN FLIGHT / TODO
 
-  - ??PLANNED: amend annots when force-edf (from EDF+D to +C/EDF)
-  
+  - `ORDER` command (or that command-line 'sig' sets order)
+  - loops in scripts [todo]
+  - channel range selector [C3][C4] .. use same syntax as [C3][1..4] .. will have to wait and expand on a per-EDF basis ... 
+
+  - add EDF+ to EDF converter  (zero-pad and add MASK for discontinuities)
+     add an explicit COUPL command that uses caches
+ 
+ - __Global coherence statistics__ via the [`SYNC` command](ref/cc.md#sync)  
+  - prototype [`TCLST`] command for time-series clustering
+  - `RIPPLES`
+  - `NMF` 
+
+   - ??PLANNED: amend annots when force-edf (from EDF+D to +C/EDF)
+
+_Predictive modelling_ 
+
+ - adding [LightGBM]() library support and compilation flag
+
+ - new [`ASSOC`] command
+
+ - added new `MASSOC` set of functions
+
+_LunaR_
+
+
+ - `lunaR` is now in CRAN
+
+ - documention (e.g. `?leval`) added to the lunaR package
+ 
+ - a new `moonlight()` interactive viewer 
+
+ - new `lload()`, `lhead()` and `lcols()` convenience functions 
+
+- additional `lheatmap()` options added
+
 -->
 
-## v0.27
- - changed SUDS structures: new `model` files and weights 
- - added permutation entropy (`pe`, with `pe-m` and `pe-t` options) to `SIGSTATS`
- - added fractal dimension routines to `SIGSTATS`
- - added `segment-median` and `segment-sd` to `PSD`
+
+## v0.27 (27-Sep-2022)
+
+In addition to multiple smaller fixes and modifications, this release
+contains a number of major new additions including: 1) revised
+macro-architecture summary statistics, 2) the SOAP and POPS tools for
+automated prediction/evaluation/manipulation of sleep stages, 3) new
+tools for assessing temporal coupling of annotation events, and 4) new
+signal processing tools including IRASA.  Major changes are noted below:
+
+_Macro-architecture_
+
+ - revised and expanded hypnogram summary metrics, and improved
+ documentation for the [`HYPNO`](ref/hypnograms.md#hypno) command
+ including: bout number/duration metrics, better incorporation of
+ _lights out_ markers, a heuristic to handle excessive
+ leading/trailing WASO, revised calculation of total persistent sleep
+ time (now `TST_PER`), renamed sleep efficiency/latency (`SE`, `SME`
+ and `SOL`), added final wake time (`FWT`).
+
+ - added a new `annot-cycles` option for
+  [`HYPNO`](ref/hypnograms.md#hypno), to add an annotation indicating
+  which NREM cycle an epoch belongs to
+
+ - fixed an issue when [`HYPNO`](ref/hypno.md#hypno) is called twice on the same EDF
  
+ - added `first` (mins) and `first-anchor` (`T0`, `T1` or `T2`)
+   options, to report hypnogram stats for only the first _N_ minutes
+   (setting the rest to `L`)
+
+ - fixed a bug impacting some of the elapsed time metrics from
+  [`HYPNO`](ref/hypno.md#hypno) (`E_*` etc) if the recording started
+  at or after midnight
+
+ - added and documented the new [`SOAP`](ref/soap.md#soap),
+   [`REBASE`](ref/soap.md#rebase) and [`PLACE`](ref/soap.md#place)
+   stage evaluation/manipulation commands
+   
+ - added a new automated staging command:
+  [`POPS`](ref/pops.md#pops) - _POPulation-based Staging_ that
+  implements a flexible syntax for model specification.  Internally,
+  POPS uses Microsoft's popular open-source C/C++
+  [LightGBM](https://lightgbm.readthedocs.io/en/latest/) library for
+  machine learning
+
+ - _Internal_: have depreciated the older (but still experimental)
+  SUDS stager; previously, we had added some new features, including a
+  canonical correlation based routine.
+ 
+
+_Data manipulation/handling_
+
+ - major new implementation and syntax for the
+   [`CANONICAL`](ref/canonical.md) command 
+
+ - new [`SET-HEADERS`](ref/manipulations.md#set-headers) command to directly edit EDF header values
+
+ - new [`ENFORCE-SR`](ref/manipulations.md#enforce-sr) command 
+
+ - new [`fix-edf`](luna/args.md#fix-truncated-edfs) option, to allow
+   (i.e. ignore) truncated final records of a trivially corrupted EDF 
+
+ - new [`--merge`](ref/helpers.md#-merge) command to aggregate multiple EDFs
+ 
+ - the [`--repath`](ref/helpers.md#-repath) utility now accepts `.` as first character,
+   meaning always append the second argument if (and only if) the
+   sample list has a relative path
+
+ - new [`SET-VAR`](ref/manipulations.md#set-var) command to set individual-level variables from within a script
+
+ - new [`RENAME`](ref/manipulations.md#rename) command to rename channels (unlike signal [aliases](luna/args.md#aliases), this command can accept [variables](luna/args.md#variables))
+
+ - [`HEADERS`](ref/summaries.md#headers) now outputs `STOP_TIME`
+ 
+ - added `pairwise` option to [`REFERENCE`](ref/manipulations.md#reference)
+
+ - new [`RECTIFY`](ref/manipulations.md#rectify) command
+
+ - new [`REVERSE`](ref/manipulations.md#reverse) command
+
+
+_Micro-architecture/signal processing_
+
+ - new [`IRASA`](ref/power-spectra.md#irasa) command, to implement
+   [Irregular-Resampling Auto-Spectral
+   Analysis](https://pubmed.ncbi.nlm.nih.gov/26318848/)
+ 
+ - new prototype/alpha implementation of detrended fluctuation
+   analysis via the [`DFA`](ref/exp.md#dfa) command
+
+ - added Petrosian fractal dimension and permutation entropy (`pe`,
+   with `pe-m` and `pe-t` options) to [`SIGSTATS`](ref/summaries.md#sigstats)
+
+ - new prototype [`ASYMM`](ref/exp.md#asymm) command to evaluate
+ (stage-specific) (regional) asymmetries (e.g. inter-hemispheric
+ differences) in derived signal metrics
+  
+ - new [`Z-PEAKS`](ref/intervals.md#z-peaks) command to make annotations based on peak finding in signals
+
+ - added `segment-median` and `segment-sd` to [`PSD`](ref/power-spectra.md#psd)
+
+ - added `precomputed` function to `SPINDLES`
+
+ - added `ch-median` `ch-epoch` `ch-spatial-threshold` `ch-spatial-weight` to `CORREL`,
+   which now also prints out disjoint sets of "high corr" channels (`CHS`)
+
+ - added [`OTSU`](ref/helpers.md#otsu) and `--otsu` commands; changed Otsu implementation
+  
+ - added the [`--ftt`](ref/power-spectra.md#fft) command
+
+ - added the `same-channel` option for
+   [`TLOCK`](ref/intervals.md#tlock) to constrain output for when `CH`
+   == `sCH`
+
+_Annotations_
+
+ - new [`OVERLAP`](ref/intervals.md#overlap) command to evaluate enrichment of overlap/locality of annotations,
+   in both single- and multi-sample contexts; it can also produce new annotations based on overlap with other annotations
+
+ - added the `collapse` argument for
+   [`WRITE-ANNOTS`](ref/annotations.md#write-annots) which can be used
+   with an EDF+D if an EDF will be output (i.e. changes the times as
+   if collapsing discontinuities)
+
+ - currently largely for internal development use, a new [`A2C`](ref/exp.md#a2c) command
+   to convert sample points (ints) in annotation meta-data to a cache
+   store
+
+ - `EPOCH align` now works for EDF+D - will align the first epoch at
+   the start of each segment, i.e. still assuming uniform epochs after
+   that (within each segment)
+   
+ - `skip-edf-annots` now still reads time-track for EDF+D from `EDF
+   Annotations` channels
+
+ - added the `numeric-inst` argument to [`A2S`](), to set a signal to
+   a numeric-valued _instance ID_ (i.e. not just 0/1)
+
+- when creating a set of epoch-level sleep stages, Luna will automatically detect if
+  the stage annotation are 0-duration change-points (as is often the case in EDF+ stage annotations)
+  and will extend those new signals up until the next stage annotaiton encountered (or the end of the recording)
+
+ - alternatively, unless `assume-stage-duration=F`, if sleep stages have 0 duration
+   (e.g. markers for change) assume they have the default epoch
+   duration length (currently only for EDF+ embedded annotations)
+
+ - added the `add-ellipsis` option (for zero-duration annotations) --
+   this impacts [`WRITE-ANNOTS`](ref/annotations.md#write-annots) `.annot` format files only
+
+ - for [EDF+ annotations](ref/annotations.md#edf-annotations),
+   added `edf-annot-class` special variable, to make these annots
+   classes (instead of `edf_annot_t` instanes)
+   e.g. `edf-annot-class=N1,N2,N3,R,W`
+
+
+_Microstate analysis_
+
+ - the EEG microstates command [`MS`](ref/ms.md#ms) has a new `w` argument for `--kmer`
+   analysis, which performs local shuffling of microstate sequences (i.e. only within _N_ states)
+
+ - the microstate [`--kmer`](ref/ms.md#-kmer) command will now automatically splice out `?` states, and
+   reduce adjacent states to one e.g. `AAA??AABBBCCC` -> `ABC`
+
+ - a new `--label-maps` command assign labels for a microstate map
+   `sol` file, given a labelled canonical/template `sol` file (template,
+   file, new)
+
+ - new [`--cmp-maps`](ref/ms.md#-cmp-maps) command to test for
+   differences between maps, either at the group or individual (one
+   versus all others) level, using a permutation procedure
+
+ - new [`--correl-maps`](ref/ms.md#-correl-maps) to print spatial
+   correlations for a map (from a text file)
+ 
+
+
+_Misc_
+
+ - added `--options` command to allow command-line functions to take args either from stdin OR from command line args (following --options)
+
+ - changed parameter parsing to include added signals when no `sig`
+ specified (i.e. match all) in the case when `sig` was specified as an
+ initial, top-level special variable
+
+ - param files have `+group` and `-group` flags.
+                      // +group  include only if matches group, otherwise skip
+                      // -group  exclude if matches group, otherwise parse
+
+-  `IF` and `IFNOT` (or `ENDIF` / `FI` )
+
+ - fixed bug in within-record interval offset calculation for EDF+D
+   when gaps present that are fractions of a record duration (i.e. and so
+   record start time-points are no longer multiples of the EDF record size)
+  
+
+
+
+
 ## v0.26 (29-Nov-2021)
 
 _New functionality_
@@ -30,7 +249,9 @@ _New functionality_
 
  - [`SIMUL`](ref/simul.md#simul) simulates time-series data given a power spectrum
 
- - [`PSD`] has [`peaks`](ref/power-spectra.md#peaksspikes) and [`slope`](ref/power-spectra.md#spectral-slopes) options
+ - [`PSD`](ref/power-spectra.md#psd) now has
+   [`peaks`](ref/power-spectra.md#peaksspikes) and
+   [`slope`](ref/power-spectra.md#spectral-slopes) options
  
 - [`FFT`](ref/power-spectra.md#fft) performs basic discrete Fourier transform (DFT) via the FFT
 
@@ -41,16 +262,14 @@ _New functionality_
 
  - upated the [`EMD`](ref/power-spectra.md#emd) (empirical mode decomposition) command 
  
- - [`--merge`](ref/helpers.md#-merge) to concatenate multiple EDFs; currently, only concatenates identical files
-
  - [`--repath`](ref/helpers.md#-repath) convenience sample-list function
  
  - prototype [`ALTER`](ref/artifacts.md#alter) command to perform reference-channel, regression-based artifact removal
 
  - `peaks` and `slope` options for `PSD` and `MTM`
 
- - [`REBASE`](ref/suds.md#rebase), which adopts the
-   [`SOAP`](ref/suds.md#soap) framework to (probabilistically)
+ - [`REBASE`](ref/soap.md#rebase), which adopts the
+   [`SOAP`](ref/soap.md#soap) framework to (probabilistically)
    re-estimate sleep stages using a different epoch duration (e.g. to
    translate from 20-second manually scored datasets to 30-second
    epochs) given a) manual staging in the original epoch duration, and
@@ -137,16 +356,23 @@ _Other fixes, minor modifications and new features_
 
  - added `drop` and `keep` options to the `PSC` command
 
- - added `import=file.txt` command to `CACHE` to read from destrat output; can take `factors` and `v` param (as well as required `cache=`)
+ - added `import=file.txt` command to `CACHE` to read from destrat
+   output; can take `factors` and `v` param (as well as required
+   `cache=`)
 
- - added `MASK epoch=all` to set a MASK but have it all empty ; i.e. to trim records not in an epoch
+ - added `MASK epoch=all` to set a MASK but have it all empty ;
+   i.e. to trim records not in an epoch
  
- - (for .annot only) added `align-annots` option : given list of annots (or *) for all,  align-annots-on=N1,N2, etc...
-   if not specified, find first instance of this annot, then align with 1 second boundary ( or align-annots-res=X if given)
-   align /all/ annots with this offset (bound at 0)
-  >> - expect a subsequent EPOCH to these, then MASK then WRITE those epochs/records (i.e. skip any records beforehand) 
+ - (for .annot only) added `align` option : given list of
+   annots (or *) for all, align-annots-on=N1,N2, etc...  if not
+   specified, find first instance of this annot, then align with 1
+   second boundary (or `align-annots-res=X` if given) align /all/
+   annots with this offset (bound at 0); i.e all records beforehand will
+   be skipped if subsequent `MASK`/`WRITE` commands are applied 
 
- - added `pick` option to `SIGNALS` to pick first of pick=a,b,c that is present, and drop the rest;  can map with 'rename' to rename the pick
+ - added `pick` option to `SIGNALS` to pick first of pick=a,b,c that
+   is present, and drop the rest; can map with 'rename' to rename the
+   pick
  
  - allow sample-lists to have a comma-delim list of annotations, or
    '.' to denote no data; in this way, we can have a fixed width
@@ -155,9 +381,10 @@ _Other fixes, minor modifications and new features_
    columns were found after first five rows, reflecting how R
    `read.table()` works)
  
-  - `CANONICAL` does not now need an explicit GROUP to be specified; the
-   file must still have a first col, it is just ignored now;   also, new 'drop-originals' option to drop all original (non-CANONICAL)
-    signals after making the new signals;  matches case-insentive
+  - `CANONICAL` does not now need an explicit GROUP to be specified;
+   the file must still have a first col, it is just ignored now; also,
+   new 'drop-originals' option to drop all original (non-CANONICAL)
+   signals after making the new signals; matches case-insentive
   
  - changed `epoch-check` to accept number of `.eannot` epochs that are
    different from expected; default is 5; only stops is absolute
@@ -197,14 +424,13 @@ _Major new functionality_
 
  - __EEG microstate analysis__ via the [`MS` command](ref/ms.md)
 
- - __Sleep stage prediction and evaluation__ via the [`SUDS`](ref/suds.md#suds) and [`SOAP`](ref/suds.md#soap)
-   commands (with supporting `RESOAP` and `--copy-suds` commands) 
+ - __Time-series clustering__ of epochs and/or channels via the [`EXE` command](ref/clustering.md#exe)
 
-- __Time-series clustering__ of epochs and/or channels via the [`EXE` command](ref/clustering.md#exe)
-
-- __Cluster-based non-parametric linear models__ for association analysis via the [`CPT` command](ref/assoc.md#cpt)
+ - __Cluster-based non-parametric linear models__ for association analysis via the [`CPT` command](ref/assoc.md#cpt)
 
 _Other new commands/functionality_
+
+ - added `DUPES` command to find flat signals and digital duplicates
 
  - Added `cache-metrics` options for `PSD`, `MTM`, `COH`, `PSI`, `SPINDLES` and `SO` (i.e. primarily for use with the `PSC` command)
 

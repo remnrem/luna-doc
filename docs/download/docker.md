@@ -65,7 +65,7 @@ docker run --rm -it remnrem/luna /bin/bash
 ``` 
 
 The `remnrem/luna` Docker image contains luna pre-installed within a
-Linux environment.  It also includes R with [lunaR](../ext/R.md)
+Linux environment.  It also includes R with [lunaR](../ext/R/index.md)
 pre-installed: both base R and [RStudio](http://www.rstudio.com), as
 described [below](#luna-and-rstudio).
 

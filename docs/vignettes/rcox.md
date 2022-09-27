@@ -47,17 +47,17 @@ The original 18 (i.e. 3 x 2 x 3) datasets are distributed by _C&F_ in
 Matlab/EEGLAB format (available
 [here](https://zenodo.org/record/3929730#.XyAQ3S-z3dc)).  As Luna
 primarily works with EDFs, we've converted these data to EDF and
-posted them on this site.  To follow the tutorial below, you should
+posted them on the [NSRR](http://sleepdata.org).  To follow the tutorial below, you should
 download these EDFs, which are split into three archives according to
 the reference used.  As almost all of this tutorial uses the linked
-mastoid versions of the data, you can start by only downloading that
-first one.
+mastoid versions of the data, you can start by only downloading the
+first one (linked mastoid reference):
 
 | Archive | Contents | Filename |
 | ---- | ---- | ---- |
-| Linked mastoid EDFs (__primary__) | 6 EDFs (3 individuals for N2 & N3) | [`cox_fell_edfs_mast.zip`](http://zzz.bwh.harvard.edu/dist/luna/cf/cox_fell_edfs_mast.zip) |
-| Common average EDFs  | 6 EDFs (3 individuals for N2 & N3)  | [`cox_fell_edfs_ave.zip`](http://zzz.bwh.harvard.edu/dist/luna/cf/cox_fell_edfs_ave.zip) |
-| Surface Laplacian EDFs  | 6 EDFs (3 individuals for N2 & N3) | [`cox_fell_edfs_lap.zip`](http://zzz.bwh.harvard.edu/dist/luna/cf/cox_fell_edfs_lap.zip) - not posted yet |
+| Linked mastoid EDFs (__primary__) | 6 EDFs (3 individuals for N2 & N3) | [`cox_fell_edfs_mast.zip`](https://sleepdata.org/datasets/coxfell2020/files/m/browser/cox_fell_edfs_mast.zip) |
+| Common average EDFs  | 6 EDFs (3 individuals for N2 & N3)  | [`cox_fell_edfs_ave.zip`](https://sleepdata.org/datasets/coxfell2020/files/m/browser/cox_fell_edfs_ave.zip) |
+| Surface Laplacian EDFs  | 6 EDFs (3 individuals for N2 & N3) | [`cox_fell_edfs_lap.zip`](http://zzz.bwh.harvard.edu/dist/luna/cf/cox_fell_edfs_lap.zip) - _not posted_ |
 
 After downloading the zip archive to your working directory, extracting the contents should generate a subfolder `edfs` containing six EDFs:
 ```

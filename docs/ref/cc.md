@@ -8,6 +8,7 @@
 | [`PSI`](#psi) | Phase slope index (PSI) connectivity metric |
 | [`MI`](#mi) | Mutual information |
 | [`TSYNC`](#tsync) | Cross-correlation and phase delay |
+| [`GP`](#gp) | Granger prediction |
 
 ## COH
 
@@ -130,6 +131,9 @@ either for the whole signal, or epoch-by-epoch.  When epoch-level
 statistics are requested, Luna also reports the mean and median of all
 per-epoch statistics for a given channel pair.
 
+As of v0.27, Luna also provides functions to incorporate spatial channel distance (i.e.
+for the EEG/MEG context) of channels, and to find disjoint sets of highly correlated channels.
+
 <h5>Parameters</h5>
 
 | Parameter | Example | Description |
@@ -140,6 +144,57 @@ per-epoch statistics for a given channel pair.
 | `sr`     | `sr=128` | Resample channels to this sample rate, if they are not already at that rate |
 | `epoch`   | `epoch` | Display per-epoch correlations, and estimate mean and median correlation across epochs | 
 
+<h6>Epoch-level correlations</h6>
+
+By default, the correlations from `CORREL` are based on the entire signal. 
+To instead estimate of channel-pair correlations based on
+aggregating epoch-level correlations, use the `ch-epoch` option.  This is often likely
+more robust to artifacts.  In particular, if you also use `ch-median`
+then the final correlation is the median of epoch-level correlations
+(otherwise, default = mean).  In general, when using the `CORREL` command, it is probably
+advisable to always add `ch-epoch ch-median`.
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+|`ch-epoch` |  | Base overall correlations on aggregate summaries of epoch-level correlations |
+|`ch-median` | | Use the median (instead of the mean) when applying `ch-epoch` |
+
+<h6>Including EEG channel topographies</h6>
+
+For high-density EEG/MEG studies, `CORREL` can produce some simple
+metrics that flag pairs of channels that are more correlated by might
+be expected given their topographical similarity.  This may be indicative
+of artifact or bridging, etc.
+
+To include spatial distances in correlations, it is first necessary to
+have previously attached a set of channel locations via the
+[`CLOCS`]() command) prior to running `CORREL`.  An example map (for a
+64-channel EEG) can be found
+[here](http://zzz.bwh.harvard.edu/dist/luna/clocs/clocs64): e.g. 
+
+```
+  CLOCS clocs=clocs64
+  CORREL sig=${eeg}
+```
+Channel locations are translated to a cosine similarity (-1 to +1, where +1 is
+most similar) and are output as the `S` variables from the `CORREL` command:
+``` 
+   destrat out.db +CORREL -r CH1 CH2
+```
+This allows easy plotting of correlation against spatial proximity, e.g. to spot extreme outliers. 
+(Note: assuming the same map has been used, `S` will obviously be the same of all individuals.)
+
+
+`ch-spatial-threshold` `ch-spatial-weight` to `CORREL`,
+
+
+<h6>Disjoint sets of highly correlated channels</h6>
+
+CORREL now prints disjoint sets of highly-correlated channels (as
+defined by the `ch-high` option) channels, with `CHS` stratifier, if
+the `ch-high` option is given.
+
+
 <h5>Output</h5>
 
 Whole-signal correlations for pairs of channels (strata: `CH1` x `CH2`) 
@@ -149,12 +204,42 @@ Whole-signal correlations for pairs of channels (strata: `CH1` x `CH2`)
 | `R` | Pearson product moment correlation |
 | `R_MEAN` | (If `epoch` is specified) the mean of epoch-level correlations |
 | `R_MEDIAN` | (If `epoch` is specified) the median of epoch-level correlations |
- 
+| `S` | If channel locations attached for this pair, the cosine similarity (based only on map) |
+
 Whole-signal correlations for pairs of channels (option: `epoch`, strata: `E` x `CH1` x `CH2`) 
  
 | Variable | Description | 
 | ---- | ---- | 
 | `R` | Per-epoch Pearson product moment correlation |
+
+
+Channel-level summaries (strata: `CH`)
+
+| Variable | Description |
+| ---- | ---- |
+| `SUMM_MEAN` | Mean correlation with all other channels |
+| `SUMM_N`    | Number of other channels this is correlated with |
+| `SUMM_MIN`  | Minimim correlation for this channel |
+| `SUMM_MAX`  | Maximum correlation for this channel |
+| `SUMM_HIGH` | Number of correlations (i.e. channels) above `ch-high` |
+| `SUMM_LOW`  | Number of correlations (i.e. channels) below `ch-low` |
+
+
+Disjoint sets of highly correlated channels (potion: `ch-high`, strata: _none_ )
+
+| Variable | Description |
+| ---- | ---- |
+| `SUMM_HIGH_N` | Total number of disjoint sets in the data |
+| `SUMM_HIGH_CHS` | Comma-delimited list of channnels in this highly-correlated set |
+
+
+Disjoint sets of highly correlated channels (option: `ch-high`, strata: `CHS`)
+
+| Variable | Description |
+| ---- | ---- |
+| `N` | Number of channels in this disjoint set |
+| `SET` | Channels in this disjoint set |
+
 
 
 <h5>Example</h5>
@@ -238,6 +323,115 @@ interesting pattern, in which we see that REM epochs (in red) are more
 likely to show _negative_ correlations between the left and right EOG,
 reflecting the deviations due to eye-movements during REM.
 
+
+<h6>Disjoint sets of highly correlated channels</h6>
+
+CORREL now prints disjoint sets of highly-correlated channels (as defined by the `ch-high` option):
+channels, with `CHS` stratifier, e.g.
+
+``` 
+destrat out.db +CORREL -r CHS
+```
+```
+ID     CHS     N       SET
+ID01   1       2       Fp2,AF4
+ID01   2       2       F3,F1
+ID01   3       3       F2,FC2,FZ
+ID01   4       6       C2,CP2,P2,P4,CPZ,PZ
+ID01   5       2       CP4,CP6
+ID01   6       2       P3,P1
+ID01   7       2       P6,P8
+ID01   8       4       PO4,O2,POz,OZ
+```
+
+i.e. here we have 8 groups (`CHS`), where `N` is the number of channels in
+that group.
+ 
+
+The baseline CORREL output will list the total # of channels with a highly-correlated partners: 
+``` 
+destrat out.db +CORREL
+```
+
+```
+ID    SUMM_HIGH_CHS                     SUMM_HIGH_N
+ID01  CPZ,P4                            2
+ID02  NA                                0
+ID03  NA                                0
+ID04  CP2,CP6                           2
+ID05  NA                                0
+ID06  NA                                0
+ID07  P3,TP7                            2
+ID08  P1,P2,P7,P8                       4
+ID09  CP2,O2,OZ,P4,POz                  5
+ID10  NA                                0
+ID11  AF4,C4,CP2,CP6,F2,F4,F6,FC2,FC4   9
+ID11  P1,P7                             2
+ID12  AF4,FC4,P4,TP8                    4
+... etc ...
+```
+
+ 
+<h6>Spatial thresholding</h6>
+ 
+Note that these statistics/sets are optionally influenced by
+`ch-spatial-threshold`, which only includes channel pairs that are
+_below_ a certain similarity (i.e. not neighbouring).  You can look at
+the distribution of `S` from the output of `+COREEL -r CH1 CH2` (see
+above).  Based on the above example map with 57 channels present in
+the EDF, something like 0.8 excludes ~222 out of the ~1600 pairs,
+i.e. on average, this will exclude the closest ~4 channels for each
+channel (4 * 57 = 228).  Valid arguments are between -1 and +1.
+ 
+With spatial thresholding, channel pairs with a spatial similarity above threshold
+are excluded from all correlational analyses.   The column `SUMM_N` gives the number of
+included channels after these step.
+
+```
+  CORREL  sig=${eeg} ch-epoch ch-spatial-threshold=0.8 ch-high=0.98 '
+```
+
+i.e.
+```
+luna s.lst -o out.db \
+           -s 'CLOCS file=clocs64
+	       REFERENCE sig=${eeg} ref=A1,A2
+	       CORREL sig=${eeg} ch-epoch ch-spatial-threshold=0.8 ch-high=0.98 '
+``` 
+ 
+
+<h6>Spatial weighting</h6>
+  
+The argument `ch-spatial-weight` only impacts the `SUMM_MEAN`
+output, which is the mean of the absolute value of correlations for a
+channel, with all other channels. (Note, this used not to take the
+absolute value, but I've changed this behavior just now, along w/ the
+other changes to CORREL).
+ 
+As above, `SUMM_MEAN` may be based on epoch-level stats (after taking
+the mean/median of those) or on whole-recording signals.  In addition,
+`SUMM_MEAN` is only based on below threshold channel pairs, if
+`ch-spatial-threshold` has been set.  Setting `ch-spatial-weight` will
+weight the correlation, multiplying each absolute correlation by a
+weight factor determine by the cosine similarity between the channel
+pairs, before summing for that channel.   The weight is set such that
+more nearby channels have less weight -- i.e. if one is trying to pick 
+up on more distal channel pairs that still have high correlations in the signals.
+ 
+Luna defines the weight as:
+``` 
+  W = ( ( 1 - S ) / 2 )^X
+```
+
+i.e. we scale similarity `S` from ( -1 , +1 ) to ( 0 , 1 ) and then we
+optionally take the `X`^th power, i.e.  so that higher `X` values more
+we put even less weight on nearby channel pairs.  The default is 2.
+e.g. for a linear effect, use:
+ 
+```
+ch-spatial-weight=1 
+``` 
+ 
 
 ## CC
 
@@ -362,7 +556,7 @@ wPLI between the two channels at a grid of 50 frequencies, linearly spaced betwe
 ```
 luna s.lst 2 -o out.db
              -s 'MASK ifnot=NREM2 & RE &
-	         CC sig=EEG,EEG(sec) fc-range=1,25 num=50 nreps=200 linear xch'
+                 CC sig=EEG,EEG(sec) fc-range=1,25 num=50 nreps=200 linear xch'
 ```
 
 Extracting the output as follows:
@@ -581,6 +775,34 @@ Epoch-level channel-pair output (option: `epoch`, strata: `CH1` x `CH2`)
 | Variable | Description |
 | ---- | ---- |
 | `S` | Phase delay based on cross-correlation |
+
+
+<h5>Example</h5>
+
+_to be added_
+
+
+## GP
+
+_Applies Granger prediction_
+
+<todo>
+
+<h5>Parameters</h5>
+
+| Parameter | Example | Description |
+| ---- | ----- | ----- |
+| `sig` | `sig=C3,C4,F3,F4` | Optionally specify channels (default is to include all) |
+
+
+<h5>Output</h5>
+
+
+Channel-pair output (strata: `CH1` x `CH2`)
+
+| Variable | Description |
+| ---- | ---- |
+
 
 
 <h5>Example</h5>

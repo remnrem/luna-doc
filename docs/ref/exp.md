@@ -7,10 +7,15 @@
     these are a) highly likely to change, b) will not necessarily use
     Luna's standard [output mechanims](#../luna/outputs.md), c) may be
     removed in future versions, and d) may be buggy, incomplete or
-    both.  Stay well clear! You've been warned!
+    both.  Stay well clear! You've been warned!  Whereas some commands listed here will
+    (hopefully!) be elevated to be part of the main release, and more fully documented,
+    others may remain here or be removed in future releases.
 
 |Command |Description |	       
 |---|---|
+| [`DFA`](#dfa) | Detrended flucation analysis |
+| [`ASYMM`](#dfa) | Detrended flucation analysis |
+| [`A2C`](#a2c) | Annotation to cache entry |
 | [`L1OUT`](#l1out)    | Leave-one-out interpolation-based signal check |
 | [`ED`](#ed)      | Diagnostic for electrical bridging |
 | [`POL`](#pol)    | Polarity check heuristic for sleep EEG |
@@ -19,22 +24,93 @@
 | [`SPIKE`](#spike)           | Create a synthetic signal by combining part of one signal with another |
 | [`ZR`](#zr)   |  Calculate per-epoch Z-ratio |
 
+## `DFA`
+
+_Implements the detrended fluctuation analysis (DFA)_
+
+Implements DFA as described by [Nolte et al
+(2019)](https://pubmed.ncbi.nlm.nih.gov/31004085/), which adopts an
+efficient, Fourier-based approach to DFA, in order to study
+long-range temporal correlations in time series.
+
+Briefly, a signal is split into detrended segments of length L, and
+the standard deviation (or _fluctuations_) of segments is calculated,
+for different length L.  Under a power law, one expects a linear
+relationship between the log-scaled flucuations and the log of L; the
+slope of that line estimates the so-called Hurst exponent, which is a
+rescaled version of the spectral slope as estimated using other
+frequency-domain approaches (e.g. [`IRASA`](#irasa)).   See the above paper
+for a clear description of the full method.   That paper also describes
+a frequency-domain approach to DFA, which is directly implemented here
+(currently w/ the boxcar rather than Gaussian window, however).
 
 
-## `L1OUT`
+<h3>Parameters</h3>
+
+| Parameter | Example |Description |
+| ---- | -----| ----- |
+| `sig`   | `C3,C4` | Signal(s) to analyse |
+| `n`     | `50`  | Number of different window sizes to create (default 100) |
+| `min`   | `0.1` | Minimum window length (time in seconds, default 0.1) |
+| `m`     | `2`   | Integer power to specify maximum window size (default 2 implies `min` scaled by factor `10^0` to `10^2`, i.e. 0.1s to 10s) | 
+| `f-lwr` | `10`  | Lower transition for band-pass filter |
+| `f-upr` | `15`  | Upper transition for band-pass filter |
+| `ripple` | `0.05` | FIR ripple (default 0.02) |
+| `tw` | `2` | FIR transition width (default 0.5 Hz) |
+| `epoch` | | Report 
+
+<h3>Outputs</h3>
+
+Epoch-level DFA statistics (strata: `CH` x `SEC`)
+
+| Variable | Description |
+| ----- | ----- |
+|`FLUCT` | Fluctuations |
+|`SLOPE` | Slopes |
+
+Epoch-level DFA statistics (option: `epoch`, strata: `E` x `CH` x `SEC`)
+
+| Variable | Description |
+| ----- | ----- |
+|`FLUCT` | Epoch fluctuations |
+|`SLOPE` | Epoch slopes |
+
+
+<h3>Example</h3>
+
+_to be added_
+
+
+## ASYMM
+
+_Evaluates (regional) signal asymmetries in specifie metrics_
+
+To be completed.
+
+
+## A2C
+
+_Writes an annotation to a set of cache entries_
+
+Primarily an internal command for testing/development.
+
+Documentation to be completed.
+
+
+## L1OUT
 
 _Leave-one-out interpolation-based signal check_
 
 
 
-## `ED`
+## ED
 
 _Heuristic method to spot electrical bridging_
 
 To be completed.
 
 
-## `POL`
+## POL
 
 _Polarity checks for EEG sleep signals_
 

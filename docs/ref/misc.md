@@ -8,7 +8,6 @@ _Various commands and digital signal processing tools features not mentioned els
 | [`SPIKE`](#spike)           | Create a synthetic signal by combining part of one signal with another |
 | [`ZR`](#zr)   |  Calculate per-epoch Z-ratio |
 
-
 ## `HR`
 
 _A modified Pan-Tompkins algorithm for detect R peaks in the ECG_

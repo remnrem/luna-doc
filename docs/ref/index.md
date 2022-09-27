@@ -27,11 +27,11 @@ see _lunaC_'s [help function](../luna/args.md#help).
 |[FIR filters](fir-filters.md)     | FIR filter design and application |
 |[Artifacts](artifacts.md)         | Artifacts detection/correction routines |
 |[Hypnograms](hypnograms.md)       | Characterizations of hypnograms |
-|[SUDS](suds.md)                   | Sleep staging & evaluation |
+|[POPS](pops.md)                   | Sleep staging & evaluation |
 |[Time/frequency analyses](power-spectra.md) | Power spectral density estimation and other T/F decompositions |
 |[Spindles and SO](spindles-so.md) | Spindles and slow oscillations |
 |[Coupling/connectivity](cc.md)    | Phase/amplitude coupling, coherence and other multi-signal analyses |
-|[Interval-based](intervals.md)    | Time/event-locked signal averaging, peak detection |
+|[Interval-based](intervals.md)    | Time/event-locked signal averaging, peak detection, enrichment |
 |[Spatial/topographical](spatial.md) | Channel locations, spatial filtering and interpolation |
 |[ICA](ica.md)                     | Independent components analysis |
 |[MS](ms.md)                       | EEG microstate analysis |
@@ -78,8 +78,8 @@ __Manipulations:__
 [`SIGNALS`](manipulations.md#signals): _drop signals,_
 [`COPY`](manipulations.md#copy): _copy signals,_
 [`RESAMPLE`](manipulations.md#resample): _resample signals,_
+[`ENFORCE-SR`](manipulations.md#enforce-sr): _check for sufficient sample rate,_ 
 [`REFERENCE`](manipulations.md#reference): _re-reference signals,_
-[`CANONICAL`](manipulations.md#canonical): _make canonical signals,_
 [`MINMAX`](manipulations.md#minmax): _set channel min/max,_
 [`EDF`](manipulations.md#edf): _force basic EDF,_
 [`TIME-TRACK`](manipulations.md#time-track): _add time-track,_
@@ -90,7 +90,13 @@ __Manipulations:__
 [`mV`](manipulations.md#mv): _force millivolts,_
 [`FLIP`](manipulations.md#flip): _flip signal,_
 [`ZC`](manipulations.md#zc): _zero-center signal,_
-[`ROBUST-NORM`](manipulations.md#robust-norm): _robust normalization._
+[`ROBUST-NORM`](manipulations.md#robust-norm): _robust normalization,_
+[`SET-HEADERS`](manipulations.md#set-headers): _set EDF headers,_
+[`SET-VAR`](manipulations.md#set-var): _set Luna variables._
+[`RECTIFY`](manipulations.md#rectify): _rectify a signal,_
+[`REVERSE`](manipulations.md#reverse): _reverse a signal._
+__Canonical signals:__
+[`CANONICAL`](manipulations.md#canonical): _make canonical signals._
 __Outputs:__ 
 [`WRITE`](outputs.md#write): _write EDF,_
 [`MATRIX`](outputs.md#matrix): _signals to text,_
@@ -111,37 +117,44 @@ __Artifacts:__
 __Hypnograms:__
 [`STAGE`](hypnograms.md#stage): _dump stages,_
 [`HYPNO`](hypnograms.md#hypno): _stage summaries._
-__SUDS:__
-[`SOAP`](suds.md#soap):	_single observation model,_
-[`RESOAP`](suds.md#resoap): _iterative SOAP,_
-[`REBASE`](suds.md#rebase): _change epoch length,_
-[`MAKE-SUDS`](suds.md#make-suds): _make library,_
-[`--copy-suds`](suds.md#-copy-suds): _copy library,_
-[`SUDS`](suds.md#suds): _predict stages._
+__SOAP:__
+[`SOAP`](soap.md#soap):	_single observation model,_
+[`RESOAP`](soap.md#resoap): _iterative SOAP,_
+[`REBASE`](soap.md#rebase): _change epoch length,_
+[`PLACE`](soap.md#place): _align stages,_
+__POPS:__
+[`POPS`](pops.md#pops): _predict sleep stages,_
+[`--pops`](pops.md#-pops): _train model,_
+[`--priors`](pops.md#-priors): _derive stage priors,_
+[`EVAL-STAGES`](pops.md#eval-stages): _evaluate external stages,_
+[`--eval-stages`](pops.md#eval-stages): _evaluate external stages._
 __Time/frequency analysis:__
-[`PSD`](power-spectra.md#): _Welch PSD,_
-[`MTM`](power-spectra.md#): _Multi-taper PSD,_
-[`FFT`](power-spectra.md#): _Fourier transform,_
-[`HILBERT`](power-spectra.md#): _Hilbert transform,_
-[`CWT`](power-spectra.md#): _wavelet transform,_
-[`CWT-DESIGN`](power-spectra.md#): _CWT properties,_
-[`EMD`](power-spectra.md): _Empirical mode decompositon,_
-[`MSE`](power-spectra.md#): _Multi-scale entropy,_
-[`LZW`](power-spectra.md#): _LZW compression,_
-[`1FNORM`](power-spectra.md#): _remove the 1/f trend,_
-[`TV`](power-spectra.md#): _total variation denoiser,_
-[`ACF`](power-spectra.md#): _autocorrelation function_
+[`PSD`](power-spectra.md#psd): _Welch PSD,_
+[`MTM`](power-spectra.md#mtm): _Multi-taper PSD,_
+[`FFT`](power-spectra.md#fft): _Fourier transform,_
+[`HILBERT`](power-spectra.md#hilbert): _Hilbert transform,_
+[`CWT`](power-spectra.md#cwt): _wavelet transform,_
+[`CWT-DESIGN`](power-spectra.md#cwt-design): _CWT properties,_
+[`EMD`](power-spectra.md#emd): _Empirical mode decompositon,_
+[`MSE`](power-spectra.md#mse): _Multi-scale entropy,_
+[`LZW`](power-spectra.md#lzw): _LZW compression,_
+[`1FNORM`](power-spectra.md#1fnorm): _remove the 1/f trend,_
+[`TV`](power-spectra.md#tv): _total variation denoiser,_
+[`ACF`](power-spectra.md#acf): _autocorrelation function_
 __Spindles and SO:__
 [`SPINDLES`](spindles-so.md#spindles): _spindles,_
 [`SO`](spindles-so.md#so): _slow oscillations._
 __Coupling/connectivity:__
-[`COH`](cc.md): _coherence,_
-[`CORREL`](cc.md): _correlation,_
-[`CC`](cc.md): _phase-amplitude coupling & phase lag,_
-[`PSI`](cc.md): _phase slope index,_
-[`MI`](cc.md): _mutual information,_
-[`TSYNC`](cc.md): _cross-correlation & phase delay._
+[`COH`](cc.md#coh): _coherence,_
+[`CORREL`](cc.md#correl): _correlation,_
+[`CC`](cc.md#cc): _phase-amplitude coupling & phase lag,_
+[`PSI`](cc.md#): _phase slope index,_
+[`MI`](cc.md#mi): _mutual information,_
+[`TSYNC`](cc.md): _cross-correlation & phase delay,_
+[`GP`](cc.md#gp): _Granger prediction._
 __Interval-based:__
+[`OVERLAP`](overlap.md#overlap): _single-sample overlap analysis,_
+[`--overlap`](overlap.md#-overlap): _multi-sample overlap analysis,_ 
 [`MEANS`](intervals.md#means): _signal mean by annotation,_
 [`PEAKS`](intervals.md#peaks): _detect/cache peaks,_
 [`TLOCK`](intervals.md#tlock): _time-locked averaging._
@@ -159,7 +172,10 @@ __ICA:__
 __Microstates:__
 [](ms.md)
 [`MS`](ms.md#ms): _EEG microstates,_
-[`--kmer`](ms.md#-kmer): _sequence motifs._
+[`--kmer`](ms.md#-kmer): _sequence motifs,_
+[`--cmp-maps`](ms.md$-cmp-maps): _group/indiv map spatial analysis,_
+[`--label-maps`](ms.md$-label-maps): _label maps given a template,_
+[`--correl-maps`](ms.md$-correl-maps): _spatial correlations._
 __Clustering:__
 [`EXE`](clustering.md): _time-series clustering._
 __Association:__
@@ -169,6 +185,9 @@ __Simulation:__
 __Helpers:__
 [`--build`](helpers.md#-build): _build sample-lists,_
 [`--repath`](helpers.md#-repath): _alter sample-lists,_
-[`--merge`](helpers.md#-merge): _merge EDFs._
+[`--merge`](helpers.md#-merge): _merge EDFs,_
+[`--otsu`](helpers.md#-otsu): _Otsu thresholding (file),_
+[`OTSU`](helpers.md#otsu): _Otsu thresholding (EDF)._
+
 __Experimental:__
 [Various](exp.md): _misc. experimental commands._

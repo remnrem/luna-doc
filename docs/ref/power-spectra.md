@@ -8,6 +8,7 @@ power spectral density estimation_
 | [`PSD`](#psd)         | Welch's method for power spectral density estimation |
 | [`MTM`](#mtm)         | Multi-taper method for power spectral density estimation |
 | [`FFT`](#fft)         | Basic discrete Fourier transform of a signal |
+| [`IRASA`](#irasa)     | Irregular-resampling auto-spectral analysis |
 | [`HILBERT`](#hilbert) | Hilbert transform |
 | [`CWT`](#cwt)         | Continuous wavelet transform |
 | [`CWT-DESIGN`](#cwt-design) | Complex Morlet wavelet properties |
@@ -18,7 +19,7 @@ power spectral density estimation_
 | [`TV`](#tv)                 | Total variation denoiser |
 | [`ACF`](#acf) | Autocorrelation function |
 
-## `PSD`
+## PSD
 
 _Estimates a signal's power spectral density (PSD)_
 
@@ -52,6 +53,9 @@ of the epoch-level estimates.
 | `dB` | `dB` | Give power in dB units |
 | `peaks` | `peaks` | Reports statistics on extreme peaks (spikes) ( see section below for more options/details ) | 
 | `slope` | `30,45` | Estimate spectral slope ( see section below for more options/details ) | 
+| `th` | 3 | Remove epochs that are +/- 3 SD units outliers before calculating mean/median/SD over epochs |
+| `median` | | Compute median (not mean) over epochs |
+| `sd` | | Report standard deviation for epoch-to-epoch variability in power |
 
 In addition to the primary parameters above, there are a number of
 other, more detailed parameters (that can probably be ignored by most
@@ -67,6 +71,16 @@ users), as described in this table:
 | `hann`       | `hann` | Apply a Hann window function |
 | `hamming`    | `hamming` | Apply a Hamming window function |
 | `no-window`  | `no-window` | Do not apply any window function |
+| `segment-median` | | Use median (not mean) over Welch segments (to get epoch estimates) |
+| `segment-sd` | | Report inter-segment standard deviation as well as mean (or median) per epoch |
+
+
+<h6>Simple ultradian/power dynamics statistics</h6>
+
+| Parameter | Example | Description |
+| ---- | ---- | ---- |
+| `dynamics` | | Report inter-segment standard deviation as well as mean (or median) per epoch |
+
 
 
 !!! warn 
@@ -78,7 +92,7 @@ users), as described in this table:
 
 | Parameter | Example | Description |
 | --- | --- | --- |
-|`cache-metrics` | `cache-metrics=c1`  | Cache `PSD` by `F` and `CH` (e.g. for `PSC`) |
+| `cache-metrics` | `cache-metrics=c1`  | Cache `PSD` by `F` and `CH` (e.g. for `PSC`) |
 
 
 <h3>Band definitions</h3>
@@ -123,6 +137,7 @@ Spectral power by frequency bin (option: `spectrum`, strata: `F` x `CH`)
 | Variable | Description |
 | ---- |----- | 
 | `PSD` | Absolute spectral power |
+| `PSD_SD` | Standard deviation (within epoch) of absolute spectral power |
 
 
 Epoch-level spectral band power (option: `epoch`, strata: `E` x `B` x `CH`)
@@ -473,7 +488,7 @@ Spectral slope outputs: (strata: `CH`)
 
 
 
-## `MTM`
+## MTM
 
 _Applies the multitaper method for spectral density estimation_
 
@@ -632,7 +647,7 @@ depending on the goal of the analysis.)
 ![img](../img/mtm2.png)
 
 
-## `FFT`
+## FFT
 
 _Applies the basic discrete Fourier transform to a signal_
 
@@ -649,7 +664,7 @@ provide better estimates of the power spectrum.
 !!! info
     Practically, for very long signals, `FFT` will return a very large/dense spectrum, which
     might make the `destrat` output mechanism struggle;  if you really want this, run with the `-t` command-line option
-    to produce [text table outputs](../../luna/args.md#text-tables).
+    to produce [text table outputs](../luna/args.md#text-tables).
 
 <h3>Parameters</h3>
 
@@ -688,7 +703,167 @@ See [this vignette](../../vignettes/rcox/#spectral-analyses) for a description o
 only difference is that `FFT` command operates on EDF channels, whereas the example above is based on reading a text file.)
 
 
-## `HILBERT`
+## IRASA
+
+_Implements the Irregular-Resampling Auto-Spectral Analysis method_
+
+Implements the IRASA method as described
+[here](https://pubmed.ncbi.nlm.nih.gov/26318848/), which seeks to
+partition power spectra into periodic (oscillatory) and aperiodic
+(fractal) components.
+
+<h3>Parameters</h3>
+
+| Parameter | Example | Description |
+| ---- | ---- | ----- |
+| `sig` | `C3,C4` | Which signal(s) to analyse |
+| `h-min` | 1.05 | Minimum resampling factor (default 1.05) |
+| `h-max` | 1.95 | Maximum resampling factor (default 1.95) |
+| `h-steps` | 19 | Number of steps between `h-min` and `h-max` (default 19, i.e. 0.05 increments) ||
+| `dB` | | Report log-scaled power |
+| `epoch` | | Report epoch-level statistics | 
+| `min` | 1  | Minimum frequency to include in the output (default 1 Hz) |
+| `max` | 30 | Maximum frequency to include in the output (default 30 Hz) |
+
+_Secondary parameters_
+
+| Parameter | Example | Description |
+| ---- | ---- | ----- |
+| `segment-mean` | | Use the mean (rather than median) across segments, within epoch |
+| `epoch-mean`   | | Use the mean (rather than median) across epochs | 
+| `fast` | | Use a faster (but less accurate) linear resampling method |
+| `segment-sec` | 5 | Set the Welch segment size (default 4 seconds) |
+| `segment-overlap` | 2.5 | Set the Welch segment overlap/increment (default 2 seconds) ||
+| `no-window` | | No windowing for Welch method |
+| `hann` | | Use a Hann window for Welch method |
+| `hamming` | | Use a Hamming window for Welch method |
+| `tukey50` | | Use a Tukey window for Welch method |
+
+
+<h3>Output</h3>
+
+Whole-signal power spectra (strata: `CH` x `F`)
+
+| Variable | Description |
+| ----- | ----- |
+| `LOGF` | Log-scaled frequency `F` (if `dB` specified) |
+| `APER` | Aperiodic component of the power spectrum |
+| `PER` | Periodic component of the power spectrum |
+
+Whole-signal slope statistics (strata: `CH`)
+
+| Variable | Description |
+| ----- | ----- |
+|`SPEC_SLOPE`     | Spectral slope (based on aperiodic component) |
+|`SPEC_INTERCEPT` | Spectral intercept (based on aperiodic component) |
+|`SPEC_RSQ`       | R-sq for above fit  | 
+|`SPEC_SLOPE_N`   | Number of non-outlier data points in slope estimate |
+
+Optional epoch-level output (option: `epoch`, strata: `E` x `CH` x `F`)
+
+| Variable | Description |
+| ----- | ----- |
+| `LOGF` | Log-scaled frequency `F` ( if `dB` specified) |
+| `APER` | Aperiodic component of the power spectrum |
+| `PER` | Periodic component of the power spectrum |
+
+Epoch-level slope statistics (option: `epoch`, strata: `E` x `CH`)
+
+| Variable | Description |
+| ----- | ----- |
+|`SPEC_SLOPE`     | Epoch spectral slope (based on aperiodic component) |
+|`SPEC_INTERCEPT` | Epoch spectral intercept (based on aperiodic component) |
+|`SPEC_RSQ`       | Epoch R-sq for above fit  |
+|`SPEC_SLOPE_N`   | Epoch number of non-outlier data points in slope estimate |
+
+
+<h3>Examples</h3>
+
+We use Luna's [`SIMUL`](simul.md#simul) command to generate random time series
+data, specifying a `1/f^alpha` slope with `alpha` set to 2, as well as a periodic
+component centered at 15 Hz.  We generate 3000 seconds of data, with a sample
+rate of 256 Hz:
+```
+luna . -o out.db --nr=3000 --rs=1 \
+       -s ' SIMUL alpha=2 intercept=1 frq=15 psd=10 w=0.1 sig=S1 sr=256
+            PSD sig=S1 spectrum max=30 slope=1,30 dB
+            IRASA sig=S1 dB h-max=4'
+```
+As shown above, we then analyse the simulated channel `S1` using first [`PSD`](#psd) (Welch method)
+and then `IRASA`.  For `PSD`, we have to explicitly request that the spectral slope be estimated (`slope=1,30`)
+which indicates a log-log regression of power on frequency (after removing outlier points).  We expect this
+estimate of slope to be biased by the oscillatory peak at 15 Hz.  In contrast, IRASA will generate
+two spectra, the aperiodic and periodic components, and estimate the slope (using the same approach as `PSD`)
+only on the aperiodic component.
+
+To compare like-with-like, we use a range of 1 to 30 Hz in both cases
+(this is the default for `IRASA`). We set the resampling factor _h_ to
+have a maximum value of 4, which implies an evaluated range of 1/4 =
+0.25 Hz to 30 * 4 = 120 Hz.
+
+```
+  specified frequency range is 1 - 30 Hz
+  full evaluated frequency range given h_max = 4 is 0.25 - 120 Hz
+```
+
+Extracting the estimated slopes from both methods: Welch estimates are a little biased (-1.9 instead of -2, i.e. minus _alpha_)
+and has a modest model fit (R-sq ~50%):
+```
+destrat out.db +PSD -r CH  | behead
+```
+```
+                 SPEC_RSQ   0.50951
+               SPEC_SLOPE   -1.91503
+```
+In contrast, the IRASA estimate is closer to -2 and basically has a near perfect model fit:
+```
+destrat out.db +IRASA -r CH  | behead
+```
+```
+                 SPEC_RSQ   0.99874   
+               SPEC_SLOPE   -2.03858
+```
+
+We can visualize the three resulting power spectra as follows, in R:
+
+```
+k <- ldb( "out.db" )
+par(mfcol=c(1,3))
+d <- k$PSD$CH_F
+plot( d$F, d$PSD, type="l", lwd=3, col="blue", xlab="Frequency (Hz)", ylab="log(Power)", main="Welch" ) 
+i <- k$IRASA$CH_F
+plot( i$F, i$APER, type="l", lwd=3, col="orange", xlab="Frequency (Hz)", ylab="log(Power)", main = "IRASA, aperiodic" )
+plot( i$F, i$PER, type="l", lwd=3, col="purple", xlab="Frequency (Hz)", ylab="log(Power)", main="IRASA, periodic" )
+```
+
+![img](../img/irasa.png)
+
+
+As nicely illustrated by [Gerster et al. (2021)](https://pubmed.ncbi.nlm.nih.gov/35389160/), IRASA
+is not infallible - for instance, if there are very broad oscillatory peaks and the maximum resampling
+factor is not sufficiently high, it can fail to properly separate out aperiodic and periodic components
+(see their Figure 6).  We can recapitulate this property by increasing the peak width (`w` in `SIMUL`)
+and reduced the resampling factor (`h-max` in `IRASA`):
+
+
+```
+luna . -o out.db --nr=3000 --rs=1 \
+       -s ' SIMUL alpha=2 intercept=1 frq=15 psd=10 w=1 sig=S1 sr=256
+            PSD sig=S1 spectrum max=30 slope=1,30 dB
+            IRASA sig=S1 dB h-max=2'
+```
+
+![img](../img/irasa2.png)
+
+This is of course an extreme example (i.e. with a very large
+amplitude, broad oscillatory peak), but nonetheless shows one failure
+mode of IRASA.  In practice, examining the shape of the aperiodic
+spectrum (i.e. which should be approximately striaght on a log-log or
+semi-log plot) will indicate if resulting slope estimates are likely biased
+by oscillatory activity.
+
+
+## HILBERT
 
 _Applies filter-Hilbert transform to a signal, to estimate envelope and instantaneous phase_
 
@@ -781,7 +956,7 @@ plot( d$SEC , d$EEG_hilbert_11_15_phase , ylab = "Phase" , type="l" , axes=F)
 ![img](../img/hilbert.png)
 
 
-## `CWT`
+## CWT
 
 _Applies a continuous wavelet transform by convolution with a complex Morlet wavelet_
 
@@ -927,7 +1102,7 @@ ID      PARAM    FWHM_F  FWHM_LWR  FWHM_UPR
 .   15_12_200  3.003003  13.51351  16.51652
 ```
 
-## `EMD`
+## EMD
 
 _Empirical mode decomposition_
 
@@ -1050,7 +1225,7 @@ abline(h=c(1,2) , lty=2 , col="gray" )
 -->
 
 
-## `MSE`
+## MSE
 
 _Calculates per-epoch multi-scale entropy statistics_
 
@@ -1094,7 +1269,7 @@ Epoch-level MSE per channel and scale (option: `verbose`, strata: `E` x `CH` x `
 
 
 
-## `LZW`
+## LZW
 
 _Calculate per-epoch LZW compression index_
 

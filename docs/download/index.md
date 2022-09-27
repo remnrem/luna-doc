@@ -1,6 +1,6 @@
 # Downloads
 
-<p align="right"><em>Current Luna release: <b>v0.26</b> (29-Nov-2021)</em></p>
+<p align="right"><em>Current Luna release: <b>v0.27</b> (27-Sep-2022)</em></p>
 
 ## Installation options 
 

@@ -273,3 +273,36 @@ library(luna, lib.loc="~/my-Rlib")
     ```
 
 
+## LightGBM
+
+To use the [`POPS`](../ref/pops.md) and other commands, you need to
+enable the [LightGBM](https://lightgbm.readthedocs.io) library when
+compiling Luna.  First obtain the LightGBM library on your system, following the
+steps described in the documentation link above.   On many systems, a package manager
+may be able to achieve this in a single step: e.g.
+```
+brew install lightgbm
+```
+
+Then, when compiling Luna from source, add the `LGBM=1` flag: e.g.
+```
+make -j 4 ARCH=MAC LGBM=1 
+```
+
+If LightGBM is installed in a nonstandard location, you can point to it with the `LGBM_PATH` variable.   For example, to install
+on Linux in a local folder, following the documentation [here](https://lightgbm.readthedocs.io/en/latest/Installation-Guide.html#linux):
+```
+mkdir ~/tmp
+cd ~/tmp
+git clone --recursive https://github.com/microsoft/LightGBM
+cd LightGBM
+mkdir build
+cd build
+cmake ..
+make -j4
+```
+Then, when building Luna, add, for example:
+```
+cd ~/src/luna-base/
+make -j4 LGBM=1 LGBM_PATH=~/tmp/LightGBM
+```

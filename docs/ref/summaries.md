@@ -14,6 +14,7 @@ _Basic commands to give overviews of the structure of an EDF_
 |[`TAG`](#tag)         | Generic command to add a tag (level/factor) to the output |
 |[`STATS`](#stats)     | Basic signal statistics (min/max, mean, RMS, etc) |
 |[`SIGSTATS`](#sigstats)  | Hjorth parameters and other signal statistics |
+|[`DUPES`](#dupes) | Finds flat signals and digital duplicates |
 
 ## DESC
 
@@ -117,9 +118,9 @@ Signal 2 : [EOG-R]
 _Tabulate EDF header information_
 
 This command produces similar information to the `SUMMARY` command,
-except it uses Luna's standard 
-[output mechanism](../luna/args.md#output), rather than writing to the
-console.  
+except it uses Luna's standard [output
+mechanism](../luna/args.md#output), rather than writing to the
+console.
 
 <h3>Parameters</h3>
 
@@ -132,10 +133,13 @@ Basic EDF header information (strata: _none_)
 | Variable | Description |
 | --- | --- |
 | `EDF_ID` | ID (in EDF header), or period (`.`) if empty |
-| `START_TIME` | Start time |
+| `EDF_TYPE` | EDF type (EDF, EDF+C or EDF+D) |
 | `START_DATE` | Start date |
+| `START_TIME` | Start time |
+| `STOP_TIME` | Stop time |
 | `NR`    | Number of records |
-| `NS`    | Number of signals/channels | 
+| `NS`    | Number of signals/channels (current in-memory EDF) | 
+| `NS_ALL` | `NS` in the original EDF file (before any manipulations) |
 | `REC_DUR` | Duration of each record (seconds) |
 | `TOT_DUR_SEC` | Total duration of EDF (seconds) |
 | `TOT_DUR_HMS` | Total duration of EDF (hh:mm:ss string) |
@@ -144,14 +148,17 @@ Per-channel header information  (strata: `CH`)
 
 | Variable | Description |
 | --- | --- |
+|`POS` | Position (signal slot) in EDF |
 |`DMAX` | Digital max |
 |`DMIN` | Digital min |
-|`PDIM` | Physical dimension |
+|`PDIM` | Physical dimension (unit) field |
 |`PMAX` | Physical min |
 |`PMIN` | Physical max |
 |`SR`   | Sample rate (Hz) |
+|`TRANS` | Transducer type field |
 |`SENS`   | Sensitivity (unit/bit) |
 |`TYPE`   | Inferred channel [_type_](../luna/args.md#types) |
+
 
 <h3>Example</h3>
 
@@ -171,17 +178,15 @@ out.db: 1 command(s), 1 individual(s), 16 variable(s), 120 values
   command #1:	c1	Fri Aug 14 12:38:29 2020	HEADERS	sig=*
 --------------------------------------------------------------------------------
 distinct strata group(s):
-  commands      : factors           : levels        : variables 
-----------------:-------------------:---------------:---------------------------
-  [HEADERS]     : .                 : 1 level(s)    : EDF_ID NR NS REC_DUR 
-                :                   :               : START_DATE START_TIME 
-                :                   :               : TOT_DUR_HMS TOT_DUR_SEC
-                :                   :               : 
-                :                   :               : 
-  [HEADERS]     : CH                : 14 level(s)   : DMAX DMIN PDIM PMAX PMIN 
-                :                   :               : SENS SR TYPE
-                :                   :               : 
-----------------:-------------------:---------------:---------------------------
+  commands      : factors   : levels       : variables 
+-------------:-----------:--------------:---------------------------
+  [HEADERS]  : .         : 1 level(s)   : EDF_ID EDF_TYPE NR NS NS_ALL REC_DUR
+             :           :              : START_DATE START_TIME STOP_TIME
+             :           :              : TOT_DUR_HMS TOT_DUR_SEC
+             :           :              : 
+  [HEADERS]  : CH        : 14 level(s)  : DMAX DMIN PDIM PMAX PMIN POS SENS
+             :           :              : SR TRANS TYPE
+-------------:-----------:--------------:---------------------------
 ```
 
 This shows there are two _strata_: the first is a _baseline_ strata,
@@ -192,11 +197,22 @@ the 14 channels/signals in the EDF.
 
 To extract the baseline information from the `HEADERS` command:
 ```
-destrat out.db +HEADERS 
+destrat out.db +HEADERS  | behead
 ``` 
 ```
-ID     EDF_ID NR    NS REC_DUR START_DATE START_TIME TOT_DUR_HMS TOT_DUR_SEC
-nsrr01 .      40920 14 1       01.01.85   21.58.17   11.22.00    40920
+                       ID   nsrr01              
+                   EDF_ID   .                   
+                 EDF_TYPE   EDF                 
+                       NR   40920               
+                       NS   14                  
+                   NS_ALL   14                  
+                  REC_DUR   1                   
+               START_DATE   01.01.85            
+               START_TIME   21.58.17            
+                STOP_TIME   09.20.16            
+              TOT_DUR_HMS   11:22:00            
+              TOT_DUR_SEC   40920               
+
 ```
 
 To extract only the sample rate variable (`SR`), which is stratified
@@ -229,9 +245,9 @@ Alternatively, to extract all variables for `EMG` and `ECG` channels only:
 destrat out.db +HEADERS -r CH/EMG,ECG
 ```
 ```
-ID      CH   DMAX  DMIN  PDIM  PMAX  PMIN   SENS     SR   TYPE
-nsrr01  ECG  127   -128  mV    1.25  -1.25  0.00980  250  ECG
-nsrr01  EMG  127   -128  uV    31.5  -31.5  0.24705  125  EMG
+ID      CH   DMAX  DMIN  PDIM  PMAX  PMIN   POS  SENS     SR   TRANS  TYPE
+nsrr01  ECG  127   -128  mV    1.25  -1.25  4    0.00980  250  .      ECG
+nsrr01  EMG  127   -128  uV    31.5  -31.5  5    0.24705  125  .      EMG
 ```
 
 ## CONTAINS
@@ -247,7 +263,7 @@ present in an EDF.
 code_ or _return code_ mechanism to report its findings, to faciliate
 script-based analyses.  Using the bash shell, the default return code
 (i.e. after running any command, not just Luna) is 0, meaning
-"success".  It can be accessed via the `$?` special variable.  For
+"success".  It can be accessed via the bash `$?` special shell variable.  For
 signal checking, the following convention is used:
 
  - 0 : all signals present (in all individuals)
@@ -285,7 +301,7 @@ output mechanism.
 Individual-level output (strata: _none_)
 
 | Variable | Description |
-| ---- | ---- |	
+| ---- | ---- |
 | `NS_REQ` | Number of requested channels
 | `NS_OBS` | Number of requested channels observed in the EDF |
 | `NS_TOT` | Total number of channels in the EDF |
@@ -857,6 +873,21 @@ Core parameters:
 | --- | --- | --- |
 | `sig`     | `sig=C3,F3` | Restrict analysis to these channels |
 | `epooch`  |   | Epoch-level output |x
+| `sr-over` | `100` | Requires a sample rate of at least 100 Hz to report signal statistics |
+
+Additional statistics
+
+| Parameter | Description |
+| --- | --- |
+| `pfd` | Compute signal Petrosian fractal dimension |
+| `pe` | Compute signal permutation entropy |
+| `pe-m` | Embedding dimension for permutation entropy (default 3 to 7) |
+| `pe-t` | Step function for permutation entropy (default 1) |
+| `rms`     |  | Report signal RMS |
+| `flat`    | 1e-6  | Report proprtion of time with a flat signal (default 1e-6 if not specified) |
+| `clipped` |       | Report proprtion of time with a clipped signal |
+| `max`     | `100` | Report proportion of time with `|X|>MAX` (no default) |
+
 
 <h5>Output</h5>
 
@@ -884,4 +915,11 @@ Per-channel epoch-level statistics (strata: `CH` x `E`)
 | `MAX`   | Proportion of maxed out sample points |
 | `FLAT`  | Proportion of flat sample points |
 | `RMS`   | Signal root mean square |
+
+
+## DUPES
+
+_Finds digital/physical signal duplicates (and flat signals)_
+
+This function is designed to spot obviously redundant or empty channels in an EDF.
 

@@ -2,109 +2,210 @@
 
 _Commands to show and summarize elements of sleep macro architecture_ 
 
-These commands require staging information to be present in an
-[annotation file](annotations.md).
+These commands require staging annotations to be present in an
+[annotation file](annotations.md), as described below.
 
 |Command |Description | 
 |---|---|
-| [`STAGE`](#stage) | Output sleep stages per epoch |
 | [`HYPNO`](#hypno) | Sleep macro-architecture summaries |
-
-## `STAGE`
-
-_Export sleep stage information_
-
-This command simply writes sleep stage information (e.g. as encoded by
-an NSRR [XML annotation file](annotations.md#nsrr-xml-files)) to a
-database.  Internally, it creates a single annotation class called
-`SleepStage`, with instances that correspond to `W`, `N1`, `N2`,
-`N3`, `R`, `?` and `L` (_Lights On_).  The [`HYPNO`](#hypno) command
-does the same but additionally computes a large number of other
-statistics.  Unlike `HYPNO` however, the `STAGES` command can be run
-after epochs have been [masked out](masks.md).  In contrast, `HYPNO`
-requires the original, entire EDF, in order to produce meaningful
-summary statistics on sleep macro architecture. 
-
-!!! warning 
-    Currently, Luna and this documentation uses a
-    not-always-clearcut mixture of sleep stage terminology, e.g. using
-    N2 and NREM2 interchangeably.  Also, if stage NREM4 sleep is
-    present, it is summarized explicitly.
-
-
-<h5>Parameters</h5>
-
-| Parameter | Example | Description |
-| ---- | ---- | ---- | 
-| `W`   | `W=wake`    | Set the annotation class for _wake_ epochs |
-| `N1`  | `N1=NREM1`  | Set the annotaiton class for _N1_ epochs |
-| `N2`  | `N2=NREM2`  | Set the annotaiton class for _N2_ epochs |
-| `N3`  | `N3=NREM3`  | Set the annotaiton class for _N3_ epochs |
-| `R`   | `R=REM`   | Set the annotaiton class for _REM_ epochs |
-| `?`   | `?=UNKNOWN` | Set the annotation class for _unscored/unknown_ epochs |
-| `dump` | | Write stage labels to standard out (minimal output )|
-| `eannot` | `eannot=s.txt` | Write stage labels to a file |
-
-
-<h5>Output</h5>
-
-| Variable | Description |
-| ---- | ---- |
-| `CLOCK_TIME` | Clock time (hh:mm:ss) |
-| `MINS`       | Elapsed time from start of EDF (minutes) |
-| `STAGE`      | Sleep stage (text value) |
-| `STAGE_N`    | Numeric encoding of sleep stage | 
-
-
-__Numeric stage encoding:__ The `STAGE_N` encoding is designed to help
-with quickly plotting a hypnogram: `W` is 1, `NREM1`, `NREM2` and
-`NREM3` are -1, -2 and -3 respectively; `R` is 0; unknown is 2. As
-such, something like the following R command can produce a
-hypnogram-like representation of the night:
-
-``` 
-plot( d$E , d$STAGE_N ) 
-```
-
-<h5>See also</h5>
-
-The [`lstages()`](../ext/R/ref.md#lstages) function in
-[_lunaR_](../ext/R/index.md) provides a quick way to run the `STAGE` command
-for a single EDF, returning just a vector of stage names.
+| [`STAGE`](#stage) | Output sleep stages per epoch |
 
 
 ## `HYPNO`
 
 _Estimates multiple summary statistics based on the hypnogram_
 
-As [`STAGE`](#stage) does, this command expects manual sleep stages
-to be present as an [_annotation_](annotations.md).  `HYPNO` produces
-individual-level summary statistics (e.g. total sleep time, percent in
-each sleep stage, etc), epoch-level output (e.g. cumulative elapsed
-sleep duration, etc) and stage transition counts/probabilities.
-In addition, NREM sleep cycles are calculated
-based on a modified heuristic following [Feinberg and
-Floyd](https://www.ncbi.nlm.nih.gov/pubmed/220659).
+`HYPNO` produces individual-level summary statistics (e.g. total sleep
+time, percent in each sleep stage, etc), epoch-level output
+(e.g. cumulative elapsed sleep duration, etc), statistics on bout
+lengths and stage transition counts/probabilities.  NREM sleep cycles
+are also calculated based on a modified heuristic following [Feinberg
+and Floyd](https://www.ncbi.nlm.nih.gov/pubmed/220659).
+
+### Definitions 
+
+The schematic illustrates some of the main hypnogram summaries from
+this command:
+
+![img](../img/hypno1.png)
+
+The key time markers (`T0` to `T6`) - which by definition are always in
+this order - are then:
+
+ * `T0`: the start of the recording
+ * `T1`: lights off
+ * `T2`: sleep onset
+ * `T3`: sleep midpoint
+ * `T4`: final wake
+ * `T5`: lights on
+ * `T6`: end of recording
+ 
+The primary spanning intervals are defined by these time points. The
+entire recording (based on the epoched EDF) constitutes the total
+recording time (`TRT`), to T0 to T6. If lights out/on markers are
+present (see below), then the time in bed (`TIB`) is the period between
+lights out and lights on (`T1` to `T5`); otherwise, it is the same as
+`TRT`. The sleep period time (`SPT`) is from sleep onset to final wake (`T2`
+to `T4`).
+
+Sleep onset latency (`SOL`) is the time from lights out to sleep onset
+(from `T1` to `T2`).  We also define __persistent sleep__ as a sleep bout
+of at least 10 minutes, and also define persistent sleep onset latency
+(`SOL_PER`) with regard to the first epoch of persistent sleep. Note:
+this is the first epoch in a bout that is greater than 10 minutes,
+i.e. and not _after_ ten minutes of sleep.  That is, if lights off is
+at 10pm and the individual starts a sleep bout at 10:25pm that last
+for 2 hours, then `SOL_PER` is 25 minutes - the same as `SOL` in this example -
+and __not__ 25 + 10 = 35 minutes.
+
+Wake is defined as wake after sleep onset (`WASO`) if it occurs between
+sleep onset (`T2`) and final wake (`T4`).  Wake outside the sleep period
+(i.e. before sleep onset or after final wake) is called _flanking_
+wake.  Whereas leading flanking wake duration is `SOL` (sleep onset
+latency), we also record the final wake time (`FWT`), i.e. up until
+lights on.  Total wake time (`TWT`) is therefore `SOL` plus `WASO` plus `FWT`.
+We also track the duration of lights on time (`LOT`, from `T0`
+to `T1`, and `T5` to `T6`).
+
+The tables below show the various summary statistics based on this partitioning of sleep
+macro architecture.
+
+Individual-level durations (all metrics in minutes) (strata: _none_)
+
+| Variable | Description |
+| --- | --- |
+| `TRT` | Total Recording Time: based on all scoring epochs (T0 – T6) |
+| `TIB` | Time In Bed: Lights Off to Lights On (mins) (T1 – T5) |
+| `SPT` | Sleep period time: sleep onset to final wake (T2 – T4) |
+| `SPT_PER` | Persistent sleep period time: persistent sleep onset to final wake |
+| `TST` | Total sleep time |
+| `TST_PER` | Total persistent sleep time |
+| `TWT` | Total wake time during Lights Off = SOL + WASO + FWT |
+| `WASO` | Wake time between sleep onset and final wake onset (T2 – T4) |
+| `FWT` | Duration of wake from final wake onset to Lights on (T4 – T5) |
+| `LOT` | Lights On duration (mins) |
+
+Efficiency/latency metrics (strata: _none_)
+
+| Variable | Description |
+| --- | --- |
+| `SE`  | Sleep efficiency, TST /  TIB  (denom. = T1 – T5) |
+| `SME` | Sleep maintenance efficiency, TST / SPT (denom. = T2 – T4) |
+| `SOL` | Sleep latency (T1 – T2) |
+| `SOL_PER` | Persistent sleep latency (T1 to onset of persistent sleep) |
+| `REM_LAT` | REM latency (sleep onset T2 – first REM epoch) |
+| `REM_LAT2` | REM latency excluding WASO, i.e. elapsed NR at REM onset |
+
+As noted above, there are two versions of _sleep efficiency_: in both
+cases, the numerator is total sleep time (`TST`); in the first case
+(`SE`), the denominator is `TIB`, whereas for `SME`, the denominator
+is `SPT`.  The latter metric is often more robust is lights off/on has
+not been accurately tracked.
+
+Luna also estimates REM latency (`REM_LAT`) as the time from sleep onset until
+the first epoch of REM sleep.  A second version of REM latency only counts
+the sleep time between sleep onset and REM onset, i.e. ignoring any intervening
+wake (`REM_LAT2`).
+
+Indicators if unusual/corrupt staging (strata: _none_)
+
+| Variable | Description |
+| --- | --- |
+| `FIXED_LIGHTS` | Number of epochs set to L before/after lights out/on |
+| `LOST` | Lights On Sleep duration (mins) : sleep set to L (should be 0) |
+| `FIXED_WAKE` | Wake epochs set to `L` due to extreme WASO intervals |
+| `CONF` | Number of epochs w/ conflicting stages (should be 0) |
+| `SINS` | Recording starts in sleep (0=N, 1=Y) |
+| `EINS` | Recording ends in sleep (0=N, 1=Y) |
+| `OTHR` | Duration of non-sleep/non-wake annotations (unknown/movement) |
 
 
-__Some definitions:__ If _Lights off_ and _Lights on_ times can be
+Sleep fragmentation indices
+
+| Variable | Description |
+| --- | --- |
+| `SFI` | Sleep Fragmentation Index: Sleep to W transition count / TST |
+| `TI_S` | Stage Transition Index (excludes W) N1-N2-N3-R transition count / TST |
+| `TI_S3` | TI_S3 3-class Stage Transition Index, NR-R-W transition count / SPT |
+| `TI_RNR` | REM-NREM transition count / TST |
+| `LZW` | LZW complexity index |
+
+Stage-specific metrics
+
+The following metrics are calculated for the following categories:
+`N1`, `N2`, `N3`, all `NR`, `R`, `W`, `S`, `?`, `L` & `WASO`:
+
+| Variable | Description |
+| --- | --- |
+| `MINS` | Stage duration (mins) |
+| `PCT` | Stage duration as proportion of TST (N1, N2, N3, NR & R only) |
+| `BOUT_N` | Number of bouts (contiguous stretches of this stage) |
+| `BOUT_MD` | Median bout duration (mins) |
+| `BOUT_MN` | Mean bout duration (mins) |
+| `BOUT_MX` | Maximum bout duration (mins) |
+| `BOUT_05` | Stage duration, considering only bouts of at least 5 minutes (mins) |
+| `BOUT_10` | Stage duration, considering only bouts of at least 10 minutes  (mins) |
+
+In addition, `HYPNO` distinguishes ascending vs. descending (vs. “flat”) N2 for `MINS` & `PCT`
+
+ * `N2_ASC` : ascending N2 :  N3 → N2 →  N1/R/ W
+
+ * `N2_DSC` : descending N2 :  N1/R/W → N2 → N3
+
+ * `N2_FLT` : "flat" N2 : ambiguous, e.g. flanked by REM on both sides, or mixtures
+ 
+
+### Lights Off/Lights On
+
+If no Lights On epochs (L), implies TRT = TIB & LOT = 0
+ i.e. assumes Lights Off occurs at start of recording
+ and Lights On at the end of the recording
+
+Any leading/trailing unscored epochs (?) are set to L (Lights On
+epochs) [ i.e if before/after first/last sleep or wake epoch]
+
+If _Lights off_ and _Lights on_ times can be
 calculated from the annotations, they are used to calculate sleep
 efficiency (`SLP_EFF`), i.e. as total sleep time divided by the total
 recording time, where the latter is the duration between _lights off_
-and _lights on_.  Any epoch with the stage annotation `L` means that
+and _lights on_.
+
+![img](../img/hypno2b.png)
+
+
+### Excessive WASO
+
+_Notes to be added_
+
+![img](../img/hypno4.png)
+
+### Stage/epoch alignment
+
+_Notes to be added_
+
+![img](../img/hypno5.png)
+
+Any epoch with the stage annotation `L` means that
 lights are on, i.e. wake but not part of the recording.  However, many
 NSRR annotation files do not have explicit information on when _lights
-off/on_ events occurred.  In this case, Luna assumes that _lights off_
+off/on_ events occurred.
+
+Unless otherwise instructed, Luna assumes that _lights off_
 corresponds to the start of the EDF, and _lights on_ corresponds to
-the end.  This may not be appropriate, however, e.g. if the recording
+the end: that is, TIB equals TRT.
+
+This may not be appropriate, however, e.g. if the recording
 continued for a long time after the subject woke (as an example, see
-the first individual in the [tutorial](../tut/tut1.md) dataset).  Luna
-therefore also provides a second estimate of sleep efficiency, as
+the first individual in the [tutorial](../tut/tut1.md) dataset).
+
+Luna therefore also provides a second estimate of sleep efficiency, as
 total sleep time divided by the time from first sleep epoch to final
 sleep epoch (`SLP_EFF2`).  Overall, if lights on/off annotations are
 not clearly marked, `SLP_EFF2` is likely to be the most robust metric
-of sleep efficiency. _Sleep maintenance efficiency_ (`SLP_MAIN_EFF`)
-is similar to `SLP_EFF` but the denominator is total recording time
+of sleep efficiency.
+
+_Sleep maintenance efficiency_ (`SME`)
+is similar to `SE` but the denominator is total recording time
 minus sleep latency (i.e. from first sleep epoch to lights on/end of
 recording).  _Persistent sleep_ is defined as sleep that follows at
 least ten minutes of uninterrupted sleep.
@@ -436,3 +537,76 @@ which enforces a distinction between N1, N2 and N3 epochs.   The default is actu
        ...
 ```
 i.e. implying a much larger group of 80 NREM epochs (which go way beyond epoch 672 here).
+
+
+
+
+## `STAGE`
+
+_Export sleep stage information_
+
+This command simply reports sleep stage information (e.g. as encoded
+stages in an [annotation file](annotations.md#file-formats).
+Internally, it creates a single annotation class called `SleepStage`,
+with instances that correspond to `W`, `N1`, `N2`, `N3`, `R`, `?` and
+`L` (_Lights On_).  The [`HYPNO`](#hypno) command does the same but
+additionally computes a number of other statistics.  Unlike
+`HYPNO` however, the `STAGES` command can be run after epochs have
+been [masked out](masks.md).  In contrast, `HYPNO` requires the
+original, entire EDF in order to produce meaningful summary
+statistics on sleep macro architecture.
+
+The canonical epoch labels for sleep/wake staging are as above
+(i.e. `N1`, `N2`, `N3`, `R`, `W` as well as `?` and `L`).  Note that
+alternatives such as `NREM2`, `REM` or `wake` are also acceptable (but
+will be mapped to the above labels).  Note that by default `NREM4` is
+mapped to `N3` sleep.
+
+!!! info
+    There is no explicit representation of movement or artifact
+    (i.e. set those to `?` in terms of epoch-level staging) in the
+    `STAGES` or `HYPNO` commands.  Still, you can always track that
+    information (e.g. and [`MASK`](ref/masks.md#mask) epoch based on
+    them as generic annotations however.
+
+
+<h5>Parameters</h5>
+
+| Parameter | Example | Description |
+| ---- | ---- | ---- | 
+| `W`   | `W=wake`    | Set the annotation class for _wake_ epochs |
+| `N1`  | `N1=NREM1`  | Set the annotaiton class for _N1_ epochs |
+| `N2`  | `N2=NREM2`  | Set the annotaiton class for _N2_ epochs |
+| `N3`  | `N3=NREM3`  | Set the annotaiton class for _N3_ epochs |
+| `R`   | `R=REM`   | Set the annotaiton class for _REM_ epochs |
+| `?`   | `?=UNKNOWN` | Set the annotation class for _unscored/unknown_ epochs |
+| `dump` | | Write stage labels to standard out (minimal output )|
+| `eannot` | `eannot=s.txt` | Write stage labels to a file |
+
+
+<h5>Output</h5>
+
+| Variable | Description |
+| ---- | ---- |
+| `CLOCK_TIME` | Clock time (hh:mm:ss) |
+| `MINS`       | Elapsed time from start of EDF (minutes) |
+| `STAGE`      | Sleep stage (text value) |
+| `STAGE_N`    | Numeric encoding of sleep stage | 
+
+
+__Numeric stage encoding:__ The `STAGE_N` encoding is designed to help
+with quickly plotting a hypnogram: `W` is 1, `N1`, `N2` and
+`N3` are -1, -2 and -3 respectively; `R` is 0; `?` is 2. As
+such, something like the following R command can produce a
+hypnogram-like representation of the night:
+
+``` 
+plot( d$E , d$STAGE_N ) 
+```
+
+<h5>See also</h5>
+
+The [`lstages()`](../ext/R/ref.md#lstages) function in
+[_lunaR_](../ext/R/index.md) provides a quick way to run the `STAGE` command
+for a single EDF, returning just a vector of stage names.
+

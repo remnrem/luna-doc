@@ -525,6 +525,22 @@ f2	/Users/mary/proj1/edfs/f2.edf	/Users/mary/proj1/xmls/f2.xml
 f3	/Users/mary/proj1/edfs/f3.edf	/Users/mary/proj1/xmls/f3.xml
 ```
 
+### Empty EDFs
+
+Rather than read in data, it is possible to specify an empty or "virtual" EDF.
+This will have a
+fixed durataion and sample rate, but initially no channels/signal
+data.  This can be convenient when using certain commands that do not
+require signal data, e.g. the [`SIMUL`](../ref/simul.md#simul) or [`OVERLAP`](../ref/intervals.md#overlap) commands.
+
+Here, you specify `.` (period character) as the sample-list/file-name
+along with `--nr` and `--rs` on the command line, to give the number of
+records (`nr`) and the EDF record size (`rs`) respectively.
+
+Luna will then create an EDF of this duration (i.e. with headers
+speciying the length of the recording) but with 0 signals, i.e. a
+collection of empty records.
+
 
 ### Command files
 
@@ -1570,6 +1586,78 @@ calculate the implied number of epochs in the EDF).
 ```
 epoch-len	20
 ```
+
+### Fix truncated EDFs
+
+Some exporters generate EDFs that do not have a complete final EDF
+record; alternatively, file transfer may result in a truncated
+file. For example, if the EDF record size is 1 second, but the total
+recording length is, say, 20000.5 seconds, and so the last 0.5 seconds
+does not constitute a full record, but _something_ is nonetheless written
+to disk (i.e. the EDF shoule either be 20,000 or 20,001 seconds, in this case).
+
+For these cases, where there is a small difference (typically < 1
+record fewer than expected), you can add the `fix-edf=T` option to the
+command line.  For example, here is an error encountered with a real
+EDF as found in the wild:
+
+```
+luna s.lst -s DESC
+```
+```
+Processing: id_XXXXXX [ #1 ]
+ uniqifying Resp/Abd1-Gnd to Resp/Abd1-Gnd.1
+
+ error : corrupt EDF: expecting 288820320 but observed 288817152 bytes
+ details:
+   header size ( = 256 + # signals * 256 ) = 5120
+   num signals = 19
+   record size = 7600
+   number of records = 38002
+   implied EDF size from header = 5120 + 7600 * 38002 = 288820320
+ 
+   assuming header correct, implies the file has -0.416842 records too many
+   (where one record is 1 seconds)
+```
+
+Luna then goes on to give the following suggestion - but stressing the point that it
+is only an _assumption_ that the data are truncated (i.e. and otherwise okay).  (That is,
+there could be other reasons why the EDF size does not match that expected based on the EDF headers.)
+
+```
+
+ IF you're confident about the remaining data you can add the option:
+ 
+    luna s.lst fix-edf=T ... 
+ 
+  to attempt to fix this.  This may be appropriate under some circumstances, e.g.
+  if just the last one or two records were clipped.  However, if other EDF header
+  information is incorrect (e.g. number of signals, sample rates), then you'll be
+  dealing with GIGO... so be sure to carefully check all signals for expected properties;
+  really you should try to determine why the EDF was invalid in the first instance, though
+```
+Re-running but with the `fix-edf=T` option added:
+```
+luna s.lst fix-edf=T -s DESC
+```
+allows Luna to proceed (with a warning)
+```
+  assuming header correct, implies the file has -0.416842 records too many
+  (where one record is 1 seconds)
+ 
+  attempting to fix this, ...
+    changing the header number of records from 38002 to 38001 ... good luck!
+ 
+ duration: 10.33.21 | 38001 secs ( clocktime 20.38.43 - 07.12.03 )
+ 
+ signals: 19 (of 19) selected in a standard EDF file:
+  F3-Ref | F4-Ref | C3-Ref | C4-Ref | O1-Ref | O2-Ref | A1-Ref | A2-Ref
+  ...
+
+```
+
+In other words, _proceed with care if you find yourself having to use
+this option..._
 
 
 ### Force evening start time

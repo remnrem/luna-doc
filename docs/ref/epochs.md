@@ -24,13 +24,22 @@ Without parameters the default is 30-seconds, with no overlap
 general, if the increment is not specified, it defaults to the epoch
 length (i.e. no overlap between epochs).
 
+By default, epochs start at 0 seconds (start of EDF).   The 
+
 | Parameter | Example |Description |
 | --- | --- | --- | 
-| `len`  | `len=30` | Epoch length (seconds), defaults to 30 |
-| `inc`  | `inc=30` | Epoch increment (seconds), defaults to `len` (i.e. no overlap) |
-| `epoch` | `epoch=30,15` | Epoch length{,increment} (seconds), defaults to 30,30 |
-| `require` | `require=10` | Stop processing that EDF if there are not at least _N_ epochs | 
-| `verbose` | `verbose` | Output epoch-level information |
+| `len`  | 30 | Epoch length (seconds), defaults to 30 |
+| `inc`  | 30 | Epoch increment (seconds), defaults to `len` (i.e. no overlap) |
+| `epoch` | 30,15 | Epoch length{,increment} (seconds), defaults to 30,30 |
+| `require` | 10 | Stop processing that EDF if there are not at least _N_ epochs | 
+| `verbose` |  | Output epoch-level information |
+| `align` | `N1,N2,N3,R,W,?` | Align epoch starts with the first of these annotations |
+| `offset` | 10 | Explicitly set start time for first epoch (seconds) |
+| `clear` | | Reset any defined epochs |
+| `min` | | Minimal output: writes the number of epochs to standard output | 
+
+Note: if `align` is not given an explicit argument, it defaults to `N1,N2,N3,R,W,?,L,U,M` - i.e.
+a list of common stage annotations.
 
 
 <h3>Outputs</h3>

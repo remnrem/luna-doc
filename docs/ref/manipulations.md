@@ -5,8 +5,10 @@ _Commands to alter basic properties of the EDF and the signals therein_
 | Command | Description |
 | -----  | ----- | 
 |[`SIGNALS`](#signals) | Retain/remove specific EDF channels |
+|[`RENAME`](#rename) | Rename channels |
 |[`COPY`](#copy) | Duplicate one or more EDF channels |
 |[`RESAMPLE`](#resample) | Resample signal(s) | 
+|[`ENFORCE-SR`](#enforce-sr) | Require a particular sample rate |
 |[`REFERENCE`](#reference) | Re-reference signals |
 |[`CANONICAL`](#canonical) | Generate _canonical_ signals |
 |[`MINMAX`](#minmax) | Set digital/physical min/max across channels |
@@ -19,8 +21,11 @@ _Commands to alter basic properties of the EDF and the signals therein_
 |[`TIME-TRACK`](#time-track) | Add a time-track to an EDF |
 |[`RECORD-SIZE`](#record-size) | Change EDF record size |
 |[`ALIGN`](#align) | Realign EDF records, annotations and epochs |
-|[`ANON`](#anon)       | Strip ID information from EDF header |
-
+|[`ANON`](#anon)    | Strip ID information from EDF header |
+|[`SET-HEADERS`](#set-headers) | Directly specify certain EDF headers |
+|[`SET-VAR`](#set-var) | Directly specify Luna variables |
+|[`RECTIFY`](#rectify) | Rectify a signal |
+|[`REVERSE`](#reverse) | Reverse a signal |
 
 ## SIGNALS
 
@@ -62,6 +67,129 @@ yields the expected output:
 Number of signals : 3
 Signals           : EOG-L[256] EOG-R[256] EMG[256]
 ```
+
+## RENAME
+
+_Renames channels_
+
+This command can rename channels within the context of evaluating a
+Luna script.  In this way, it differs from using signal
+[aliases](../luna/args.md#alaises) (which can only be specified when
+first initiating Luna, and will be fixed for all individuals), as this
+command can use [variables](../luna/args.md#variables) (which may be
+[individual-specific](../luna/args.md#individual-variables)).
+
+<h3>Parameters</h3>
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `sig` | `C3,C4` | List of channels to duplicate |
+| `new` | `C3_LM,C4_LM` | List of new labels (same size as `sig`) |
+
+Note that you cannot use an existing channel label as a `new` label.
+
+
+<h3>Output</h3>
+
+No formal output, other than changing the labels of channels in the internal EDF
+
+<h3>Example</h3>
+
+In its simplest form, if we have a channel named `THOR_RES`, for
+example, we can rename to some other label -- here just using `XX` --
+using `RENAME`, and then use that new label in other commands:
+
+```
+luna s.lst -s ' RENAME sig=THOR_RES new=XX & STATS sig=XX '
+```
+
+Note that this also adds an alias internally, so that `THOR_RES` can
+still be used as a label (e.g. with the `sig` option of a command),
+but the output will be labelled with the primary term `XX`.
+
+As noted above, this provides similar functionality as using a signal
+[alias](../luna/args.md#aliases):
+
+```
+luna s.lst "alias=XX|THOR_RES" -s ' STATS sig=XX '
+```
+
+The primary difference is that `RENAME` accepts (individual-specific)
+variables as arguments, i.e. which can allow different individuals to
+have different assignments (with `sig` and/or `new`).  For example, in
+this toy example, we change `THOR_RES` and `ABDO_RES` (all present in
+the three individuals in the [tutorial dataset](../tut/tut1.md) to
+different labels.  If we have a tab-delimited file that defines these
+variables for each individual:
+
+```
+cat ch.txt
+```
+```
+ID	CHS
+nsrr01	XX,YY
+nsrr02	AA,BB
+nsrr03	CC,DD
+```
+
+Now, the command
+```
+luna s.lst vars=ch.txt \
+     -s ' DESC & RENAME sig=THOR_RES,ABDO_RES new=${CHS} & DESC ' 
+
+```
+
+will use `RENAME` to swap those two channels to the other specified
+values: e.g. showing extracts from the `DESC` output for the three
+individuals: in all cases, the first `DESC` command gives the same:
+
+```
+Signals : SaO2[1] PR[1] EEG_sec_[125] ECG[250] EMG[125] EOG_L_[50]
+          EOG_R_[50] EEG[125] AIRFLOW[10] THOR_RES[10] ABDO_RES[10] POSITION[1]
+          LIGHT[1] OX_STAT[1]
+```
+whereas the second `DESC` varies between the three individuals as expected:
+```
+Signals : SaO2[1] PR[1] EEG_sec_[125] ECG[250] EMG[125] EOG_L_[50]
+          EOG_R_[50] EEG[125] AIRFLOW[10] XX[10] YY[10] POSITION[1]
+          LIGHT[1] OX_STAT[1]
+```
+
+```
+Signals  : SaO2[1] PR[1] EEG_sec_[125] ECG[250] EMG[125] EOG_L_[50]
+           EOG_R_[50] EEG[125] AIRFLOW[10] AA[10] BB[10] POSITION[1]
+           LIGHT[1] OX_STAT[1]
+```
+and
+```
+Signal   : SaO2[1] PR[1] EEG_sec_[125] ECG[250] EMG[125] EOG_L_[50]
+           EOG_R_[50] EEG[125] AIRFLOW[10] CC[10] DD[10] POSITION[1]
+           LIGHT[1] OX_STAT[1]
+```
+
+Another difference is that using a signal aliases allows a many-to-one
+mapping, whereas `RENAME` requires a one-to-one mapping of
+labels. That is, `"alias=XX|AA|BB|CC"` will map either `AA`, `BB` or
+`CC` to `XX` (i.e. where an individual EDF may have none, one or
+multiple of these labels).  In contrast, `RENAME` must use the single,
+primary label in the `sig` option.   However, there is nothing stopping
+combined use of signal aliases and the `RENAME` command, i.e. to achieve a many-to-many
+mapping of labels: e.g. 
+
+```
+luna s.lst vars=ch.txt "alias=XX|AA|BB|CC" \
+     -s ' RENAME sig=XX new=${CHS} & WRITE edf-dir=edfs/ ' 
+```
+
+This effectively uses `XX` as an intermediate (mapped to from _either_ `AA`, `BB` or `CC`) and will then write to
+the new EDF a label as defined in `ch.txt`.   Of course, an alternative would be to also supply individual-specific
+labels for both `sig` and `new` in the `vars.txt` file, e.g. if it had two columns defining `OLD` and `NEW` variables/columns:
+```
+luna s.lst vars=ch.txt \
+     -s ' RENAME sig=${OLD} new=${NEW} & WRITE edf-dir=edfs/ '	
+```
+
+
 
 ## COPY
 
@@ -147,6 +275,34 @@ To create a new EDF with the `EEG` channel resampled to 100 Hz:
 luna s.lst -s 'RESAMPLE sig=EEG sr=100 & WRITE edf-tag=resample edf-dir=edfs/ sample-list=s2.lst'
 ```
 
+## ENFORCE-SR
+
+_Drop signals that do not conform to a given EDF record size, or min/max sample rate_
+
+To enable clean EDF record-size conversion, this command first drops
+any signals which would not be able to be represented by an _N_-second
+record size. For example, a signal with a sample rate of 125 Hz cannot
+be represented in the EDF block/record structure if each block is only
+0.5 seconds.  Such signals will be dropped (based on `dur`) from the
+internal EDF representation. This command can be used prior to a
+`RECORD-SIZE` command.
+
+Further, this command can optionally drop signals with a sample rate
+below or above a given range (using `sr`).
+
+<h3>Parameters</h3>
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `dur` | `dur=1` | Proposed EDF record size (seconds), which may differ from the current value |
+| `sr` | `sr=100,200` | Optionally, drop signals with rates below 100 Hz or above 200 Hz |
+
+
+<h3>Output</h3>
+
+No output other than a message to the log (and altering the in-memory
+signal).
+
 
 ## REFERENCE
 
@@ -158,247 +314,32 @@ _Re-references signals with respect to one or more other signals_
 | --- | --- | --- |
 | `sig` | `sig=C3,C4` | Signal(s) to re-reference | 
 | `ref` | `ref=A1,A2` | Signal(s) to provide the reference | 
+| `pairwise` | | Perform pairwise re-referencing between `sig` and `ref` (see below) |
 
 Both `sig` and `ref` are required parameters. If more than one
 channel is given as the reference (in a comma-delimited list), the
-average of those channels is used as the reference value.
+average of those channels is used as the reference value.  Alternatively, if the `pairwise`
+option is also specified, then `sig` and `ref` should be of the same length.  In this case,
+rather than average multiple `ref` channels, the command would do a pairwise referencing:
+
+Given the above `sig` and `ref` values in the table above: without the `pairwise` option, the
+two channels would be calculated as:
+```
+  -->  C3 - (A1+A2)/2
+       C4 - (A1+A2)/2
+```
+With `pairwise`:
+```
+  ---> C3 - A1
+       C4 - A2
+```
+
 
 <h3>Output</h3>
 
 No output, other than a note to the log.  In memory, the updated
 `sig` channels will contain the re-referenced values.
 
-## CANONICAL
-
-_Generates so-called canonical signals given a set of rules_
-
-Particular algorithms may often expect a particular type of signal:
-for example, automated sleep staging may expect an EEG, EOG and/or EMG
-channel.  Those downstream algorithms may require certain naming
-conventions, units, sampling rates and/or referencing schemes to hold.
-On the other hand, those algorithms may also allow for alternate
-choices, e.g. if a C4/M1 channel is not present, then use C3/M2.  The
-intention of the `CANONICAL` command is to faciliate this type of
-pre-processing, to generate signals that are _canonical_ in the sense
-that they constitute a uniform set for further processing.
-
-The key behind this command is a text file that defines the canonical
-signals.  This should be a plain-text file; comments can be included,
-by starting the line with a `%` character (the same of Luna command
-scripts).  Uncommented lines group should contain either six or seven
-tab-delimited columns:
-
-| Column | Description |
-| --- | --- |
-| _GROUP_ | Matches the `group` option on the CANONICAL command |
-| _TYPE_ | Currently one of: `EEG`, `LOC`, `ROC`, `EMG` or `ECG` |
-| _CHANNEL_ | The channel that represents the canonical form |
-| _REFERNECE_ | If needed, the reference channel to achieve canonical form (or `.` if not needed) |
-| _SR_ | The desired sampling rate for the canonical channel |
-| _UNIT_ | The desired physical units for the canonical channel (or `.` if no change needed) |
-| _NOTES_ | Optionally, a seventh (tab-delimited) field that contains notes on this rule, which will be recorded in the output |
-
-Canonical signals can currently only be one of the following types:
-`EEG`, `LOC`, `ROC`, `EMG` and `ECG`.  Note: _canonical signals_ are
-not to be confused with [channel
-types](#../luna/args.md#channel-types).  A canonical signal represents
-a _new_ signal that is generated from existing signals according to a
-set of rules.  A _channel type_ is simply a label or annotation that
-is given to all channels, based on their channel name.  The reason for
-the `CANONICAL` command is that often datasets (such as those in the
-NSRR) can EDFs with mixtures of conventions and montages.  Thus, this
-command is designed to be able to, e.g. "extract a central EEG" across
-multiple studies.
-
-To make things more concrete: consider this example __tab-delimited__ plain text file `cs.txt`:
-```
-TEST  EEG  C4,EEG2 .      100  uV   If 'C4' not present, look for 'EEG2' instead
-TEST  EMG  Lchin   Rchin  100  uV 
-TEST  LOC  LOC     M2,A2  100  uV   If 'M2' not present, look for 'A2' instead
-TEST  ROC  E2,ROC  M2,A2  100  uV   If 'E2' not present, look for 'ROC' instead
-TEST  ECG  ECG     .      100  mV
-```
-
-Here we see five rules that define five canonical channels.  If run
-with the option `prefix=cs` as above, these channels will be added to
-the (in-memory) EDF as `csEEG`, `csEMG`, etc, and can be included in
-any analysis, or writen to a new EDF (with the
-[`WRITE`](outputs.md#write) command).
-
-!!! Note "Channel label clashses"
-    If there is already a channel called `EEG`, then Luna will not
-    overwrite it with a new canonical channel.  In this instance, use the
-    `prefix` option to specify a new canonical name: e.g. `prefix=cs` will
-    make the new channel `csEEG` rather than just `EEG`, which can be used
-    to avoid naming clashes.
-
-The first channel, which is the _canonical EEG_ is defined either `C4`
-or `EEG2`.  That is, if `C4` is not present, then `EEG2` will be used
-to generate `csEEG`, if present.  The `.` indicates that no
-re-referencing is needed; the `100` indicates that `EEG` will be
-resampled to 100 Hz, if needed.  Finally, the sixth column has an optional note
-describing this rule. The second line shows the rule of the _canonical EMG_, which is
-defined as the channel `Lchin` re-referenced against the channel
-`Rchin`. The other lines continue in this manner: for example, `csLOC` will
-reflect `LOC` either re-referenced against `M2` or `A2`.
-
-It is possible to have different rules for the same canonical signal,
-by listing them on different lines; Luna will select the first rule
-that matches. For example, if within a given cohort some individuals
-have left/right EMG as separate channels, but other individuals have a
-single channel that is already left-right referenced.  For a
-_canonical_ EMG in the first instance you'd want to take left and
-right as two channels and perform the re-referencing; in the second
-instance, you'd want to take the already re-referenced channel as is.
-Therefore:
-
-```
-TEST    EMG     lchin   rchin   100   uV
-TEST    EMG     chin    .       100   uV
-```
-
-That is, if Luna can't find `lchin` and `rchin` in the EDF, it will
-search for for `chin` instead.  In this way, one can handle a
-heterogeneous set of EDFs but select a single examplar/canonical
-channel to reflect a given type of signal. Note: having different
-rules (lines) for a given canonical signal implies substantively
-different channels (location/referencing); within a rule, the
-comma-delimited list only implies superficial labelling differences.
-
-   
-Some further notes:
-
- * Using a comma-delimited list on the same rule only means to take
-   the first available channel of that label; in that case, you cannot have a `.`
-   included as part of a reference channel list though:
-```
-TEST EEG  C4   M1,.  100      <--- not allowed
-```
-   This should be written as two rules:
-```
- TEST EEG  C4   M1  100
- TEST EEG  C4   .   100
-```
-  which implies that, _if_ `M1` is present in the EDF, then `C4` should
-  be re-referenced against it; otherwise, just take `C4` (i.e. assuming
-  that `C4` has already been re-referenced).
-
-
-* Do not assume that values are _paired_ for signal and reference 
-  comma-delimited lists: i.e. 
-  ```  
-  TEST EEG C4,C3  M1,M2   100
-  ```
-  does *not* imply that Luna will take either `C4/M1`, or else `C3/M2`, 
-  (or nothing, if none of these exist).
-  Rather, here, it would take `C3` referenced against `M1`, if say, only `C3` and `M1`
-  were present in the EDF.  To specify the logic of `C4/M1` or `C3/M2` 
-  instead use two different rules:
-```
-TEST EEG C4  M1   100  uV
-TEST EEG C3  M2   100  uV
-```
-
- * Do not replicate channel aliases in these files; i.e. this command is intended to 
- be used with standard Luna channel aliases, e.g. from `@include` files.  For example, if `EEG2` 
- is already an alias for `EEG(sec)`, `EEG 2`, `EEG (sec)` and `EEG sec`, e.g. if `sig.alias` is a file
- containing:
-```
- alias  EEG2|EEG(sec)|"EEG 2"|"EEG (sec)"|"EEG sec" 
-```
-  then when using `CANONICAL` we can just write:
-```
- TEST EEG  EEG2 .  100  uV
-```
-and it will match `EEG2` to any of those aliases in the standard manner.  That is, 
-there no need to add all the aliases in again, e.g. when running the following:
-```
-luna s.lst @sig.alias -s 'CANONICAL file=cs.txt group=TEST'
-```
-
- * This command is set up with a typical PSG in mind, where a
-   single EEG or single ECG is often all that is required, e.g. for a
-   given staging or HRV analysis, etc.  In principle, this command
-   can be extended to define more canonical types (e.g. a _canonical
-   frontal EEG_, or _canonical oxygen desaturation signal_, etc), which
-   we may do in future releases.
-
-<h3>Parameters</h3>
-
-| Parameter | Example | Description |
-| --- | --- | --- |
-| `sig` | `sig=C3,C4` | Signals (two or more) to set group min/max values |
-| `file` | `file=cs.txt` | Specify the definitions of canonical signals |
-| `group` | `group=SHHS` | Specifying the group to use |
-| `cs` | `cs=EEG,EMG` | Only create these canonical channels |
-| `prefix` | `prefix=cs` | Adds an optional prefix to canonical signals | 
-
-<h3>Output</h3>
-
-The primary action of this command is to add new signals to the in-memory EDF, e.g. `csEEG`.
-
-Canonical signal information (strata: `CS`)
-
-| Variable | Description |
-| --- | --- |
-| `DEFINED`  | 0/1 for whether this canonical signal could be created for this EDF |
-| `SIG` | Primary signal used |
-| `REF` | Reference signal used (if any) |
-| `SR` | Sampling rate of canonical signal |
-| `UNITS` | Physical dimension of the canonical signal |
-| `NOTES` | Any notes (from the definition file) for the rule applied |
-
-<h3>Example</h3>
-
-Consider the following (admittedly, not particularly compelling) example of how to use `CANONICAL`.
-We have a file `cs.txt` that defines the canonical signals for this group:
-
-```
-G1	EEG	EEG	.	100	uV
-G1	EMG	EMG	.	100	uV
-G1	LOC	EOG(L)	.	100	uV	
-G1	ROC	EOG(R)	.	100	uV
-G1	ECG	ECG	.	100	mV
-```
-We apply it to a test EDF:
-```
-luna s.lst 1 -o out.db -s 'CANONICAL file=cs.txt group=G1 prefix=cs & DESC'
-```
-This reports what is being done in the log:
-
-```
-  generating canonical signal csEEG from EEG/.
-  resampling channel csEEG from sample rate 125 to 100
-  generating canonical signal csLOC from EOG(L)/.
-  resampling channel csLOC from sample rate 50 to 100
-  generating canonical signal csROC from EOG(R)/.
-  resampling channel csROC from sample rate 50 to 100
-  generating canonical signal csEMG from EMG/.
-  resampling channel csEMG from sample rate 125 to 100
-  generating canonical signal csECG from ECG/.
-  resampling channel csECG from sample rate 250 to 100
-```
-And we can see the output of `DESC` (also in the log) that confirms new channels have been created:
-
-```
-Signals : SaO2[1] PR[1] EEG(sec)[125] ECG[250] EMG[125] EOG(L)[50]
-          EOG(R)[50] EEG[125] AIRFLOW[10] THOR_RES[10] ABDO_RES[10] POSITION[1]
-          LIGHT[1] OX_STAT[1] csEEG[100] csLOC[100] csROC[100] csEMG[100]
-          csECG[100]
-```
-We can also see the summary of what was done in the output:
-
-```
-destrat out.db +CANONICAL -r CS
-```
-```
-ID       CS      DEFINED  NOTES   REF   SIG     SR    UNITS
-nsrr01   csEEG  1        .       .     EEG     100   uV
-nsrr01   csLOC  1        .       .     EOG(L)  100   uV
-nsrr01   csROC  1        .       .     EOG(R)  100   uV
-nsrr01   csEMG  1        .       .     EMG     100   uV
-nsrr01   csECG  1        .       .     ECG     100   mV
-```
 
 ## MINMAX
 
@@ -1154,5 +1095,154 @@ set to missing:
 ```
 luna s.lst -s "ANON & WRITE edf-dir=edfs/ edf-tag=anon sample-list=s2.lst" 
 ```
+
+## SET-HEADERS
+
+_Directly specify certain EDF header values_
+
+Note that EDF header fields which relate to the size/structure of the
+actual data (i.e. sample rate, EDF header size, physical min/max, etc)
+cannot be changed in this way - i.e. for those changes, use the relevant
+data-modifying command, e.g. `RESAMPLE`, `RECORD-SIZE`, `MINMAX`,
+etc).  That is, these options only modify the header and nothing else.
+
+
+
+<h3>Parameters</h3>
+
+Primary headers
+
+| Parameter | Example | Description |
+| ---- | ---- | ---- |
+| `id` | `id001` | EDF patient ID (max 80 chars) |
+| `recording-info` | | EDF recording information field (max 80 chars) |
+| `start-date` | | EDF start date (max 8 characters; no format imposed) |
+| `start-time` | | EDF start time (max 8 characters; no format imposed) |
+
+Channel-specific headers
+
+| Parameter | Example | Description |
+| ---- | ---- | ---- |
+| `sig` | `${eeg}` | Specify the channel(s) to modify |
+| `transducer` | | Set the transducer field for specified channels (max 80 chars) |
+| `physical-dimension` | | Set the physical dimension (units) for specified channels (max 8 chars) |
+| `unit` | | Same as `physical-dimensions` |
+| `prefiltering` | | Set the prefiltering field for specified channels (max 80 chars) |
+
+
+<h3>Output</h3>
+
+This command only modifies the in-memory representation of the EDF.  Use `WRITE` to save any changes.
+
+e.g. to fix the start date, and add transducer types for the EEGs (here
+using Luna's automatic specification of common EEG channel names):
+
+```
+luna file1.edf -s 'SET-HEADERS start-date=08.08.21 sig=${eeg} transducer=Ag/AgCl & WRITE edf-tag=edit '
+```
+will generate a new EDF `file1-edit.edf` with the above fields fixed.
+
+
+## SET-VAR
+
+_Directly specify Luna variables_
+
+This can be useful if one wants to include individual-level variables
+when defining a script variable.  If it isn't clear why you'd want to
+do this, then there is no need to worry about using this command.
+
+<h3>Parameters</h3>
+
+This command takes only a single option, which will be given as the variable name.  The argument is the variable value.
+
+| Parameter | Example | Description |
+| ---- | ---- | ---- |
+| _any valid variable name_ | `v=100` | Sets this variable (e.g. `v`) to the value `100` |
+
+
+<h3>Output</h3>
+
+None, other than a message to the console log.
+
+<h3>Example</h3>
+
+Sets an individual-level variable `var` to the text string `val`:
+
+```
+luna s.lst -s 'SET-VAR var=val`
+```
+
+
+## RECTIFY
+
+_Rectifies a signal_
+
+This commands sets all values of an EDF signal to their absolute values.  It is primarily designed for use
+working with other functions such as `HILBERT` and `PEAKS`, to build up larger processing procedures.
+
+<h3>Parameters</h3>
+
+| Parameter | Example | Description |
+| ---- | ---- | ---- |
+| `sig` | `C3,C4` | Signals to be rectified (or all, if this is absent) |
+
+
+<h3>Output</h3>
+
+None.
+
+<h3>Example</h3>
+
+As toy example, here rectifying a signal with positive and negative values (an EEG):
+
+```
+luna s.lst 1 -o out.db \
+     -s ' TAG run/1 & STATS sig=EEG
+        & RECTIFY sig=EEG
+        & TAG run/2 & STATS sig=EEG ' 
+```
+Before:
+```
+destrat out.db +STATS -r CH run/1 -v MIN MAX | behead
+```
+
+```
+      ID   nsrr01
+      CH   EEG
+     run   1
+     MAX   125
+     MIN   -124.019607843137
+```
+After:
+```
+destrat out.db +STATS -r CH run/2 -v MIN MAX | behead
+```
+```
+      ID   nsrr01
+      CH   EEG
+     run   2
+     MAX   125
+     MIN   0.490196078431372
+```
+
+
+## REVERSE
+
+_Reverse a signal_
+
+This command is primarily designed for evaluated other
+time-domain/phase-based methods, e.g. to provide a sanity-check by
+completely reversing a signal in the time-domain.
+
+<h3>Parameters</h3>
+
+| Parameter | Example | Description |
+| ---- | ---- | ---- |
+| `sig` | `C3,C4` | Signals to be reversed (or all, if this is absent) |
+
+
+<h3>Output</h3>
+
+None.
 
 

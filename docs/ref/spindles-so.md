@@ -163,6 +163,17 @@ Most users will not need to alter these.
 |`cache-peaks` | `cache-peaks=p1` | Cache spindle peaks (sample points) (e.g. for `TLOCK`) |
 |`cache-metrics` | `cache-metrics=c1`  | Cache (currently) `DENS`, `DUR`, `AMP` and `ISA_S` (e.g. for `PSC`) |
 
+<h6>Characterizing external spindles</h6>
+
+If you have an annotation based on spindles detected by an external method, you can
+still use Luna to generate the same metrics for those events (i.e. rather than using its
+own internal algorithm to detect those spindles), via the `precomputed` option.  This naturally requires
+that the events/spindles have been read in as an [interval annotation](annotations.md).
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+|`precomputed` | `sp1` | Use annotation class `sp1` to define spindles, rather than have SPINDLES detect them |
+
           
 <h5>Outputs</h5>
 

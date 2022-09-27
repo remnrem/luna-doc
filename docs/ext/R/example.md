@@ -34,7 +34,7 @@ automatically scan for epochs with high levels of artifact, and then
 estimate the PSD.  First, we mask out all epochs that are not N2 sleep:
 
 ```
-leval( "MASK ifnot=NREM2" )
+leval( "MASK ifnot=N2" )
 ```
 ```
 nsrr02 : 14 signals, 10 annotations, 09:57:30 duration, 399 unmasked 30-sec epochs, and 796 masked
@@ -64,7 +64,7 @@ commands typically do not return values of interest.  Here we will
 save return values (in a list named `k0`) for future use, however:
 
 ```
-k0 <- leval( "ARTIFACTS mask & SIGSTATS epoch mask threshold=3,3,3" ) 
+k0 <- leval( "ARTIFACTS mask & CHEP-MASK ep-th=3,3,3 & CHEP epochs" ) 
 ```
 ```
 nsrr02 : 1 signals, 10 annotations, 03:19:30 duration, 368 unmasked 30-sec epochs, and 31 masked
@@ -102,48 +102,33 @@ particular analysis we only have a single channel, `EEG`):
 k$PSD$CH_F
 ```
 ```
-    CH     F        PSD
-1  EEG  0.00  1.1965277
-2  EEG  0.25 30.2506337
-3  EEG  0.75 62.8448068
-4  EEG  1.25 44.4322119
-5  EEG  1.75 36.9482211
-6  EEG  2.25 26.4534428
-7  EEG  2.75 19.9197660
-8  EEG  3.25 15.1230627
-9  EEG  3.75 12.5903582
-10 EEG  4.25 10.3720280
-11 EEG  4.75  8.4881753
-12 EEG  5.25  7.4004198
-13 EEG  5.75  6.3812719
-14 EEG  6.25  5.8546718
-15 EEG  6.75  5.6997780
-16 EEG  7.25  5.1773553
-17 EEG  7.75  4.9549092
-18 EEG  8.25  4.6586603
-19 EEG  8.75  4.1608020
-20 EEG  9.25  3.7108913
-21 EEG  9.75  3.6358155
-22 EEG 10.25  3.2967826
-23 EEG 10.75  3.0307075
-24 EEG 11.25  2.6924206
-25 EEG 11.75  2.7074242
-26 EEG 12.25  3.8733526
-27 EEG 12.75  4.2031480
-28 EEG 13.25  3.2350931
-29 EEG 13.75  1.7120545
-30 EEG 14.25  1.0612353
-31 EEG 14.75  0.7444655
-32 EEG 15.25  0.5226373
-33 EEG 15.75  0.4335665
-34 EEG 16.25  0.3993188
-35 EEG 16.75  0.3486289
-36 EEG 17.25  0.3470138
-37 EEG 17.75  0.3217134
-38 EEG 18.25  0.2806634
-39 EEG 18.75  0.2613016
-40 EEG 19.25  0.2383480
-41 EEG 19.75  0.2260711
+        ID  CH     F         PSD
+1   nsrr02 EEG  0.50 48.48646744
+2   nsrr02 EEG  0.75 62.55672251
+3   nsrr02 EEG  1.00 63.13289104
+4   nsrr02 EEG  1.25 47.72029434
+5   nsrr02 EEG  1.50 41.14412948
+6   nsrr02 EEG  1.75 38.76472567
+7   nsrr02 EEG  2.00 35.13171657
+8   nsrr02 EEG  2.25 29.76887124
+9   nsrr02 EEG  2.50 23.13801428
+10  nsrr02 EEG  2.75 19.24464783
+11  nsrr02 EEG  3.00 20.59488426
+12  nsrr02 EEG  3.25 17.46907997
+13  nsrr02 EEG  3.50 12.77704547
+14  nsrr02 EEG  3.75 11.49771701
+15  nsrr02 EEG  4.00 13.68299939
+16  nsrr02 EEG  4.25 11.95281293
+17  nsrr02 EEG  4.50  8.79124308
+18  nsrr02 EEG  4.75  8.02781760
+19  nsrr02 EEG  5.00  8.94853303
+20  nsrr02 EEG  5.25  8.07366985
+21  nsrr02 EEG  5.50  6.72716982
+22  nsrr02 EEG  5.75  6.19444000
+23  nsrr02 EEG  6.00  6.56810384
+24  nsrr02 EEG  6.25  6.10237343
+25  nsrr02 EEG  6.50  5.60697017
+...
 ```
 Plotting this:
 ```
@@ -152,9 +137,6 @@ plot( d$F , log(d$PSD) , xlab = "Frequency (Hz)" , ylab = "Power" , col="blue" ,
 ```
 
 ![img](../../img/r-psd.png)
-
-!!! hint
-    You can re-run adding the `max=30` parameter to the `PSD` command to obtain results on the same frequency scale as in the tutorial.
 
 
 That completes our simple introduction to using _lunaR_.  As noted
