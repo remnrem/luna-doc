@@ -850,7 +850,7 @@ d <- read.table("res.txt",header=T)
 plot( d$E , d$RMS , col = d$ID , pch=20 , xlab = "Epoch" , ylab = "RMG(ECG)" ) 
 ```
 
-![img](../img/ecg-rms.png)
+![img](../img/ecg-rms.png){width="100%"}
 
 
 

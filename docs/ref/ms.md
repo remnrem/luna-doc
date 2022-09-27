@@ -38,7 +38,7 @@ extraction, segmentation, backfitting and kmer/sequence enrichment)
 into sub-commands that can be run individually to faciliate
 group-level analysis.
 
-![img](../img/ms/flow.png)
+![img](../img/ms/flow.png){width="100%"}
 
 
 
@@ -334,7 +334,7 @@ In the above command, we also specify `write-states` option, in order to save th
 
 We can visualize the prototype maps, e.g. using [`ltopo.rb()`](../ext/R/viz.md#ltoporb)
 
-![img](../img/ms/sol4.png)
+![img](../img/ms/sol4.png){width="100%"}
 
 Here we see that the four states correspond to the canonical 4 states
 as often reported (for a _K=4_ solution in the EEG microstate

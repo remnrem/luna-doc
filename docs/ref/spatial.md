@@ -177,7 +177,7 @@ luna Subj1.edf -o ss_psd3.db -s ' CHEP-MASK ch-th=2
 The left matrix shows the epochs, as identified by `CHEP-MASK` and `CHEP`, that the `INTERPOLATE` command
 will interpolate; the right plot shows the PSD before and after QC and interpolation. 
 
-![img](../img/chep/chep_intep.png)
+![img](../img/chep/chep_intep.png){width="100%"}
 
 Normally, one would want to specify a [`WRITE`](outputs.md#write)
 command following interpolation, i.e. in order to save the

@@ -136,7 +136,7 @@ d <- k$PSD$CH_F
 plot( d$F , log(d$PSD) , xlab = "Frequency (Hz)" , ylab = "Power" , col="blue" , lwd=2 , type="l" )
 ```
 
-![img](../../img/r-psd.png)
+![img](../../img/r-psd.png){width="100%"}
 
 
 That completes our simple introduction to using _lunaR_.  As noted

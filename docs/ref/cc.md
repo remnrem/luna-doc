@@ -112,7 +112,7 @@ plot( d$F, d$COH , type="l" ,
       ylim=c(0,1) , lwd=2, col="red")
 ```
 
-![img](../img/coh.png)
+![img](../img/coh.png){width="100%"}
 
 Following other reports ([for example](https://www.ncbi.nlm.nih.gov/pubmed/9682192)), we see peaks
 in EEG coherence especially for the low delta and sigma frequencies
@@ -316,7 +316,7 @@ plot( d$E , d$R , col = lstgcols( ss ) , pch=20 , ylab="L-R EOG correlation", xl
 abline( h=0 , lty=2 )
 ```
 
-![img](../img/correl.png)
+![img](../img/correl.png){width="100%"}
 
 For this particular individual, there seems to be a clear and
 interesting pattern, in which we see that REM epochs (in red) are more
@@ -567,7 +567,7 @@ destrat out.db +CC -r F1 F2 CH1 CH2
 
 We can plot the wPLI (left) and correspondong Z-score (the empirical value derived from randomization, right):
 
-![img](../img/cc_wpli.png)
+![img](../img/cc_wpli.png){width="100%"}
 
 That is, we see significant connectivity between these two central channels in the spindle/sigma frequency band during N2 sleep.
 

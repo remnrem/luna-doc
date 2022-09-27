@@ -1083,7 +1083,7 @@ luna cfs.lst 1 -s MATRIX min file=pos.txt sig=POSITION
 Plotting the values in `pos.txt`, we see that this signal contains
 only 4 discrete values, here plotted across the night:
 
-![img](../img/s2a.png)
+![img](../img/s2a.png){width="100%"}
 
 as tabulated here:
 

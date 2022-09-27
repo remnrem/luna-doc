@@ -57,7 +57,7 @@ If it asks you for a username and password, login with user-name
 `rstudio` and the password you specified above
 (i.e. `abc123` in this example):
 
-![img](../img/rt1.png)
+![img](../img/rt1.png){width="100%"}
 
 This will bring up the RStudio environment, which is running as a
 server within the Docker container, and which you access via port
@@ -128,7 +128,7 @@ individual we want to attach:
 lattach( sl , "nsrr01" ) 
 ```
 
-![img](../img/rt2.png)
+![img](../img/rt2.png){width="100%"}
 
 
 Mirroring how _lunaC_ processes a _script_ (i.e. a set of Luna
@@ -201,7 +201,7 @@ evaluating...
 nsrr01 : 14 signals, 11 annotations, 11:22:00 duration
 ```
 
-![img](../img/rt3.png)
+![img](../img/rt3.png){width="100%"}
 
 Unlike the [`DESC`](../ref/summaries.md#desc) command,
 [`STATS`](../ref/summaries.md#stats) returns information to the formal
@@ -321,7 +321,7 @@ typing
 View(k)
 ```
 
-![img](../img/rt4.png)
+![img](../img/rt4.png){width="100%"}
 
 
 
@@ -445,7 +445,7 @@ restructured, how that epoch maps to the original EDF):
 a <- letable( annots = lannots() ) 
 ```
 
-![img](../img/rt5.png)
+![img](../img/rt5.png){width="100%"}
 
 
 !!! info "Quickly summarizing sleep stages" 
@@ -867,7 +867,7 @@ nsrr03 12.302106 14.49673 18.98009        NA
     hist(x[x> -10 & x < 10 ] , breaks= 500 ) 
     ```
 
-    ![img](../img/rt6.png)
+    ![img](../img/rt6.png){width="100%"}
 
 
 ## Using destrat
@@ -888,7 +888,7 @@ As a quick example, within RStudio, switch to the "Terminal" tab
 (instead of "Console").  This gives a prompt in a _bash_ (Bourne Again
 Shell) where you can access the virtual Linux machine running RStudio: 
 
-![img](../img/rt7.png)
+![img](../img/rt7.png){width="100%"}
 
 This should be in the same `tutorial/` folder (if you are not, run `cd
 tutorial`).  Typing `ls` should show the `s.lst` file and the two
@@ -935,7 +935,7 @@ k <- ldb( "out.db" )
 
 Using `lx()`, we should see the same structure and information: 
 
-![img](../img/rt8.png)
+![img](../img/rt8.png){width="100%"}
 
 
 ## Parameter files
@@ -950,7 +950,7 @@ You can use the [`lset()`](^lset) function to read in variable assignments from 
 We previously used the file `cmd/vars.txt`, which we can view within RStudio by navigating to the
 tutorial folder and clicking on that file:
 
-![img](../img/rt9.png)
+![img](../img/rt9.png){width="100%"}
 
 
 The previous section ran the command file `cmd/second.txt` for
@@ -1138,7 +1138,7 @@ cols <- as.factor(sort(unique(d$SS)))
 legend("bottomleft",legend=cols , fill = cols , cex=0.7)
 ```
 
-![img](../img/rt10.png)
+![img](../img/rt10.png){width="100%"}
 
 
 ## Hypnograms
@@ -1383,7 +1383,7 @@ We can view the epoch table here (if the image is too small, click to upon in a 
 View(d)
 ```
 
-![img](../img/rt11.png)
+![img](../img/rt11.png){width="100%"}
 
 Epochs that are masked have `M` set to `1` and the epoch codes (`E`)
 and start-time (`SEC`) are set to _NA_.  Luna tracks the original
@@ -1407,7 +1407,7 @@ d <- letable( annots = c( "persistent_sleep" , "NREM2" , "apnea_obstructive" , "
 
 All masked epochs have now been dropped, although Luna still retains the original time/epoch encoding in `E0`, etc.
 
-![img](../img/rt12.png)
+![img](../img/rt12.png){width="100%"}
  
 ## Manipulating EDFs
 
@@ -1490,7 +1490,7 @@ Duration          : 11:22:00
 Signals           : EEG2[100] EEG1[100]
 ```
 
-![img](../img/rt13.png)
+![img](../img/rt13.png){width="100%"}
 
 !!! note
     Annotation files are _not_ automatically transferred to new EDFs, as
@@ -1594,7 +1594,7 @@ plot( m$E , m$H3 , pch=20 , col = lstgcols( m$STAGE ) )
 As well as clear evidence of ultradian dynamics (that correspond to sleep stage), we see evidence of some
 outlier epochs in these plots (Hjorth parameters 1, 2 and 3 from top to bottom):
 
-![img](../img/rt14.png)
+![img](../img/rt14.png){width="100%"}
 
 
 We'll now run the slightly modified script, that masks outlier epochs
@@ -1696,7 +1696,7 @@ plot( m$E , m$H2 , pch = 20 , xlab="Epoch" , ylab="H2" , col = m$EMASK + 1)
 plot( m$E , m$H3 , pch = 20 , xlab="Epoch" , ylab="H3" , col = m$EMASK + 1) 
 ```
 
-![img](../img/rt15.png)
+![img](../img/rt15.png){width="100%"}
 
 From looking at `d`, we see that epoch #220 is one of the masked
 epochs.  To view it, we can use the [`ldata()`](../ext/R/ref.md#ldata) function.  Naturally, we 
@@ -1715,7 +1715,7 @@ plot( y$SEC - min(y$SEC) , y$EEG , type="l",
       ylim=c(-125, 125 ) , xlab="Time (sec)" , ylab="EEG" )
 ```
 
-![img](../img/rt16.png)
+![img](../img/rt16.png){width="100%"}
 
 ## Spectral and spindle analyses
 
@@ -1793,7 +1793,7 @@ for (i in ids) plot( d$F[ d$ID == i ] , log( d$PSD[ d$ID == i ] ) ,
   type="l" , xlab="Hz" , ylab="log(uV^2/Hz)" , lwd=2,main=i) 
 ```
 
-![img](../img/rt17.png)
+![img](../img/rt17.png){width="100%"}
 
 Next, mirroring the previous tutorial section, we need to repeat
 the PSD estimation, now for both channels and without the band-pass
@@ -1825,7 +1825,7 @@ for (ch in c("EEG1","EEG2") )
             type="l" , xlab="Hz" , ylab="log(uV^2/Hz)" , lwd=2,main=paste(i,ch))
 ```
 
-![img](../img/rt18.png)
+![img](../img/rt18.png){width="100%"}
 
 
 
@@ -1952,7 +1952,7 @@ points( d15$START/3600 , rep( 15, length(d15$START) ) ,
   pch="|" , ylim=c(10,16), col="purple")
 ```
 
-![img](../img/rt19.png)
+![img](../img/rt19.png){width="100%"}
 
 The `annot` option we used for the `SPINDLES` command means that
 Luna will have written an [.annot file](../ref/annotations.md#annot) to the
@@ -2094,7 +2094,7 @@ plot( d$EEG1 , type="l" , xaxt = 'n' , yaxt='n' , axes=F , ylab="EEG1" )
 plot( d[, sp.label ] , type="l" , lwd=2 , col="blue" , xaxt='n' , yaxt='n' , axes=F, ylab="Spindles" )
 ```
 
-![img](../img/rt20.png)
+![img](../img/rt20.png){width="100%"}
 
 
 So far, so good.  Let's extend this to show some other information in
@@ -2149,7 +2149,7 @@ plot( d$EEG1_sigma , type="l" , col=rgb(0,0,100,150,max=255) , axes=F , ylab="Si
 plot( d$EEG1_beta  ,  type="l" , col=rgb(100,0,100,150,max=255) , axes=F , ylab="Beta" )
 ```
 
-![img](../img/rt21.png)
+![img](../img/rt21.png){width="100%"}
 
 (_Note:_ the above image is from a prior run with a different spindle example from the above: we'll fix these
 tutorial pages soonish.)
@@ -2197,13 +2197,13 @@ You could imagine easily adding some code to save each plot, or to make multiple
 per page, etc, for easy reviewing of all spindles detected in an EDF.   Some example below:
 
 
-![img](../img/rt22.png)
+![img](../img/rt22.png){width="100%"}
 
-![img](../img/rt23.png)
+![img](../img/rt23.png){width="100%"}
 
-![img](../img/rt24.png)
+![img](../img/rt24.png){width="100%"}
 
-![img](../img/rt25.png)
+![img](../img/rt25.png){width="100%"}
 
 
 That's the end of the tutorial.  If this was your first pass, there

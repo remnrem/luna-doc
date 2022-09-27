@@ -216,7 +216,7 @@ plot( d$SEC , d$EEG , type="l" , lwd=0.5 , col="darkgray",ylab="EEG")
 plot( d$SEC , d$EMG , type="l" , lwd=0.5 , col="darkgray",ylab="EMG") 
 plot( d$SEC , d$arousal , type="l" , col="blue" , lwd=2,ylab="Arousal") 
 ```
-![img](../../img/ldata.png)
+![img](../../img/ldata.png){width="100%"}
 
 
 !!! warning

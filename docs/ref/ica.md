@@ -126,7 +126,7 @@ destrat out.db +PSD -r F CH > psd.out
 ```
 combined with the topographics of the ICs, and then use lunaR's [`ltopo.rb()`](../ext/R/viz.md#ltoporb) or similar functions to view these:
 
-![img](../img/ica/ica.png)
+![img](../img/ica/ica.png){width="100%"}
 
 Here we see that some components are highly channel-specific (i.e. as
 indicated by the topoplots, e.g. `IC_18`).  Looking at the PSD, some
@@ -191,7 +191,7 @@ luna file-ic.edf -o out.db -s ' TAG ver/pre
 
 In these example data, the pre- and post-ICA PSD are as follows:
 
-![img](../img/ica/adjust.png)
+![img](../img/ica/adjust.png){width="100%"}
 
 
 To drop ICs that show time-domain correlations above some threshold with one or more other channels (e.g. EOG), one

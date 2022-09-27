@@ -170,7 +170,7 @@ plot( d$EEG_BETA ,  type="l" , col=rgb(100,0,100,150,max=255) , axes=F , ylab="B
 Then, running `f1( d )` will produce this plot (although, note that different
 signals are not uniformly scaled in this particular representation):
 
-![img](../img/band-filters.png)
+![img](../img/band-filters.png){width="100%"}
 
 
 ## `FILTER-DESIGN`
@@ -312,7 +312,7 @@ w <- read.table("fir.txt",header=T)
 plot( w$TAP/200 , w$W , type="l", lwd=2, col="blue", ylab="Coef", xlab="Time" ) 
 ```
 
-![img](../img/fir.png)
+![img](../img/fir.png){width="100%"}
  
 
 The amplitude (magnitude) response of the filter is in the `F` x `FIR` stratum:
@@ -328,5 +328,5 @@ plot(d$F, d$MAG   , type="l",lwd=2,col="blue", xlab="Hz",ylab="Magnitude")
 plot(d$F, d$MAG_DB, type="l",lwd=2,col="blue", xlab="Hz",ylab="Magnitude (dB)")
 ```
 
-![img](../img/fir2.png)
+![img](../img/fir2.png){width="100%"}
 

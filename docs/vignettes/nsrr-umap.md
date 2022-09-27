@@ -55,7 +55,7 @@ As a broad initial sanity-check, we first considered the average power
 spectra per cohort, _for all sleep epochs_ (i.e. merging both REM and
 NREM). After removing outliers, we obtained the following:
 
-![img](../img/umap-pow2.png)
+![img](../img/umap-pow2.png){width="100%"}
 
 The PSD of the two _CHAT_ studies (which are studies of younger children) almost completely
 overlap (these are the two lines with the highest theta power,
@@ -72,7 +72,7 @@ the input to UMAP for dimension reduction, this is a snapshot of the
 "NSRR sleep EEG".  Each point represents a single individual, with the
 colors indicating the cohort:
 
-![img](../img/umap-all1.png)
+![img](../img/umap-all1.png){width="100%"}
 
 We see the two _CHAT_ studies (blue and yellow) form their own
 cluster, but otherwise most individuals fall into a single large
@@ -83,7 +83,7 @@ as above, but split by cohort (i.e. for the top-left _CCSHS_ plot,
 all non-_CCSHS_ individuals are in gray).
 
 
-![img](../img/umap-all2.png)
+![img](../img/umap-all2.png){width="100%"}
 
 The distribution of _CCSHS_ (16-18 year old adolescents, coloured red)
 is interesting, in that they largely form their own cluster, in
@@ -106,7 +106,7 @@ are largely uninteresting, perhaps with the exception of _SHHS1_,
 where (as evident in the early plots) there appear to be some
 _substructure_ within the _SHHS1_ samples:
 
-![img](../img/umap-all3.png)
+![img](../img/umap-all3.png){width="100%"}
 
 What's going on with _SHHS1_?  Looking only at this cohort, we can
 flag individuals in the two lower clusters as _red_ and _blue_, and
@@ -114,7 +114,7 @@ then look at their power spectra (both as the mean, and also showing
 every individual's PSD; in all cases, the gray PSD is the mean for the
 rest of the _SHHS1_ cohort):
 
-![img](../img/umap-shhs1.png)
+![img](../img/umap-shhs1.png){width="100%"}
 
 As is clear from these plots, the PSD for these subgroups contain
 strong spikes (at two slightly different locations, thus the
@@ -128,7 +128,7 @@ _at the end of the study_ for the C4-M1 channel.  Below, we show the
 power spectra for three of the "blue" individuals, along with their
 sleep spectrograms (i.e. epochs of sleep on the x-axis):
 
-![img](../img/umap-shhs2.png)
+![img](../img/umap-shhs2.png){width="100%"}
 
 Clearly this channel has become corrupted towards the end of the
 recording (although these are all manually annotated as _sleep_
@@ -150,13 +150,13 @@ differences between stages as well as differences between individuals.
 N1, N2 and N3 are coloured light blue, blue and black; REM sleep is
 coloured orange.  Looking at all nine NSRR cohorts together:
 
-![img](../img/umap-stage1.png)
+![img](../img/umap-stage1.png){width="100%"}
 
 In the above plot, we see clear evidence of clustering both by
 stage and by cohort (largely _CHAT_ versus _non-CHAT_), as expected.
 Plotting the same data separately for each of the nine cohorts:
  
-![img](../img/umap-stage2.png)
+![img](../img/umap-stage2.png){width="100%"}
 
 Aside from the _CHAT_ studies, perhaps the other noteworthy point here
 is that _SHHS1_ clustering with respect to manually-assigned stage
@@ -179,17 +179,17 @@ respectively, and REM is orange:
 
 <h3>CHAT (children)</h3>
 
-![img](../img/umap-chat-grid.png)
+![img](../img/umap-chat-grid.png){width="100%"}
 
 <h3>CCSHS (adolescents)</h3>
-![img](../img/umap-ccshs-grid.png)
+![img](../img/umap-ccshs-grid.png){width="100%"}
 
 <h3>MrOS (older adult males)</h3>
-![img](../img/umap-mros-grid.png)
+![img](../img/umap-mros-grid.png){width="100%"}
 
 <h3>SOF (elderly females)</h3>
 
-![img](../img/umap-sof-grid.png)
+![img](../img/umap-sof-grid.png){width="100%"}
 
 
 There are a number of things to note in the above plots.  Perhaps most

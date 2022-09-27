@@ -92,12 +92,12 @@ See [_lunaR_](../ext/R.md) for more details.
 
 When first running Luna, you may encounter the following:
 
-![img](../img/mac-install1.png)
+![img](../img/mac-install1.png){width="100%"}
 
 This is a standard message, and does not mean that Luna (or the other executables) pose any risk.  To fix, go
 to System Settings / Security & Privacy tab and click the _Open Anyway_ button, and then click on the lock (bottom left) to make the changes:
 
-![img](../img/mac-install2.png)
+![img](../img/mac-install2.png){width="100%"}
 
 You'll then see a further dialog box pop up, where you should click
 "Open".  This will allow luna to run on the command line.  Do likewise
