@@ -109,6 +109,7 @@ nav:
 
  - Vignettes: 
     - 'Index' : 'vignettes/index.md'
+    - 'SOAP/POPS staging' : 'vignettes/soap-pops.md'
     - 'EEG microstates' : 'vignettes/microstates.md'
     - 'Artifacts' : 'vignettes/chep.md'
     - 'EDF+D & annotations' : 'vignettes/annots.md'

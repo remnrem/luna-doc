@@ -22,6 +22,7 @@ see _lunaC_'s [help function](../luna/args.md#help).
 |[Expressions](evals.md)           | Evaluating more advanced annotation-based expressions |
 |[Epochs](epochs.md)               | Epoching signals and epoch-level annotations |
 |[Masks](masks.md)                 | Masking epochs based on annotations and other criteria |
+|[Canonical signals](canonical.md) | Harmonizing EDFs through _canonical signal_ specification |
 |[Manipulations](manipulations.md) | Manipulating signal data |
 |[Outputs](outputs.md)             | Commands to output signals in different formats |
 |[FIR filters](fir-filters.md)     | FIR filter design and application |
