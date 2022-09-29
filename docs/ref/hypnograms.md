@@ -42,7 +42,7 @@ this order - are then:
  
 The primary spanning intervals are defined by these time points. The
 entire recording (based on the epoched EDF) constitutes the total
-recording time (`TRT`), to T0 to T6. If lights out/on markers are
+recording time (`TRT`), from T0 to T6. If lights out/on markers are
 present (see below), then the time in bed (`TIB`) is the period between
 lights out and lights on (`T1` to `T5`); otherwise, it is the same as
 `TRT`. The sleep period time (`SPT`) is from sleep onset to final wake (`T2`
@@ -67,8 +67,124 @@ lights on.  Total wake time (`TWT`) is therefore `SOL` plus `WASO` plus `FWT`.
 We also track the duration of lights on time (`LOT`, from `T0`
 to `T1`, and `T5` to `T6`).
 
-The tables below show the various summary statistics based on this partitioning of sleep
-macro architecture.
+ 
+
+### Lights Off/Lights On
+
+If there are no _Lights On_ epochs (`L`), implies `TRT` = `TIB` and
+`LOT` = 0 i.e. this assumes that _Lights Off_ occurs at start of
+recording and _Lights On_ at the end of the recording. Any
+leading/trailing unscored epochs (`?`) are set to `L` (_Lights On_
+epochs), i.e if they before/after the first/last sleep or wake epoch.
+
+_Lights off_ and _Lights on_ times will be derived from the
+annotations, if available, as follows, based on the canonical
+`lights_on` and `lights_off` annotations.  These may represent either
+change-points (i.e. `lights_off` has 0-seconds duration, and just marks the exact time when the lights were
+turned off), or an intervaal (i.e. `lights_off` has a non-zero durationm, implying
+that it spans the entire period during which the lights were off).  The graphic below illustrates
+the logic Luna employs when trying to derive the lights on/off times:
+
+![img](../img/hypno2b.png)
+
+  // valid combinations:                        | Off                    | On                                                                    
+  // ------------------------------------------------------------------------------------------                                                  
+  //  a)  lights_off interval only (>epoch dur) : start of lights_off    | end of lights_off                                                     
+  //  b)  lights_off interval only (<epoch dur) : start of lights_off    | end of recoding (i.e. no explicit lights_on)                          
+  //  c)  two lights_on intervals               : end of first lights_on | start of second light on                                              
+  //  d)  one lights_off + 1 or 2 lights_on     : start of lights off    | start of last lights_on                                               
+
+
+  //  nb.  the final case works if two 'change-point' (i.e. 0-duration                                                                           
+  //  intervals) are specified as lights_off and lights_on as well                                                                               
+
+  // lights_off                                                                                                                                  
+  //  --> all epochs that end (using exact (not +1) time) before this time will be set to L                                                      
+
+  // lights_on change-point:                                                                                                                     
+  //  --> all epochs that start on or after this time will be set to L                                                                           
+
+
+
+
+Any epoch with the stage annotation `L` means that
+lights are on, i.e. wake but not part of the recording.  However, many
+NSRR annotation files do not have explicit information on when _lights
+off/on_ events occurred.
+
+Alternatively, lights on/off times can be set via additional options to `HYPNO`,
+i.e. if they are known but not explicitly represented in the staging
+annotations.  
+
+
+
+If not otherwise instructed, Luna assumes that _lights off_
+corresponds to the start of the EDF, and _lights on_ corresponds to
+the end: that is, TIB equals TRT. This may not be appropriate,
+however, e.g. if the recording continued for a long time after the
+subject woke (as an example, see the first individual in the
+[tutorial](../tut/tut1.md) dataset).  Because of this, Luna implements
+two versions of sleep efficiency: in both cases, the
+numerator is total sleep time (`TST`); in the first case (`SE`), the
+denominator is `TIB`, whereas for `SME`, the denominator is `SPT`. The
+latter metric is often more robust is lights off/on has not been
+accurately tracked.
+
+### Excessive WASO
+
+_Notes to be added_
+
+![img](../img/hypno4.png)
+
+
+### Stage/epoch alignment
+
+_Notes to be added_
+
+![img](../img/hypno5.png)
+
+
+
+
+
+<h3>Parameters</h3>
+
+| Parameter | Example | Description |
+| ---- | ---- | ---- | 
+| `epoch` | | Display epoch-level output |
+| `file` | `file=hypno.txt` | Optionally, read stage information from a file |
+| `W`| `W=wake` | Set the annotation class for _wake_ epochs |
+| `N1`  | `N1=NREM1` | Set the annotaiton class for _N1_ epochs |
+| `N2`  | `N2=NREM2` | Set the annotaiton class for _N2_ epochs |
+| `N3`  | `N3=NREM3` | Set the annotaiton class for _N3_ epochs |
+| `R` | `REM=REM` | Set the annotaiton class for _REM_ epochs |
+| `?`   | `?=UNKNOWN` | Set the annotation class for _unscored/unknown_ epochs |
+| `req-pre-post` | `req-pre-post=5` | For epoch-level transition flags, only consider _post_ transition stage `FLANKING_ALL` values equal to or greater than this number of epochs (default 4) |
+| `flanking-collapse-nrem` | `flanking-collapse-nrem=F`|  Collapse all NREM stages when considering flanking epoch similarity (default `T`) |
+| `lights-off` | `23:30:00` | Explicitly set _Lights Off_ (_hh:mm:ss_ or elapsed seconds from EDF start )|
+| `lights-on` | `08:00:00` | Explicitly set _Lights On_ (_hh:mm:ss_ or elapsed seconds from EDF start )|
+| `end-wake` | 120 | Threshold for trimming excessive WASO (mins) |
+| `end-sleep` | 5 | Threshold for trimming excessive WASO (mins) |
+| `trim-wake` | 20 | Trim leading/trailing wake to at most 20 mins |
+| `trim-leading-wake` | 20 | Trim leading wake to at most 20 mins |
+| `trim-trailing-wake` | 20 | Trim trailing wake to at most 20 mins |
+| `first` | 240 | Only analyse the first 240 minutes for all statistics | 
+| `first-anchor` | `T1` | Anchor for extracting first N minutes (from `T0`, `T1` or `T2`) |
+
+
+<h3>Output</h3>
+
+The tables below show the various summary statistics based on this
+partitioning of sleep macro architecture, and are grouped as follows:
+
+ - individual level durations 
+ - efficiency & latency metrics
+ - flags for unusual/corrupt staging
+ - sleep fragmentation indices
+ - stage-specific metrics
+ - epoch-level metrics
+ - cycle-level metrics
+ - stage transitions metrics
 
 Individual-level durations (all metrics in minutes) (strata: _none_)
 
@@ -153,122 +269,7 @@ In addition, `HYPNO` distinguishes ascending vs. descending (vs. “flat”) N2 
  * `N2_DSC` : descending N2 :  N1/R/W → N2 → N3
 
  * `N2_FLT` : "flat" N2 : ambiguous, e.g. flanked by REM on both sides, or mixtures
- 
 
-### Lights Off/Lights On
-
-If no Lights On epochs (L), implies TRT = TIB & LOT = 0
- i.e. assumes Lights Off occurs at start of recording
- and Lights On at the end of the recording
-
-Any leading/trailing unscored epochs (?) are set to L (Lights On
-epochs) [ i.e if before/after first/last sleep or wake epoch]
-
-If _Lights off_ and _Lights on_ times can be
-calculated from the annotations, they are used to calculate sleep
-efficiency (`SLP_EFF`), i.e. as total sleep time divided by the total
-recording time, where the latter is the duration between _lights off_
-and _lights on_.
-
-![img](../img/hypno2b.png)
-
-
-### Excessive WASO
-
-_Notes to be added_
-
-![img](../img/hypno4.png)
-
-### Stage/epoch alignment
-
-_Notes to be added_
-
-![img](../img/hypno5.png)
-
-Any epoch with the stage annotation `L` means that
-lights are on, i.e. wake but not part of the recording.  However, many
-NSRR annotation files do not have explicit information on when _lights
-off/on_ events occurred.
-
-Unless otherwise instructed, Luna assumes that _lights off_
-corresponds to the start of the EDF, and _lights on_ corresponds to
-the end: that is, TIB equals TRT.
-
-This may not be appropriate, however, e.g. if the recording
-continued for a long time after the subject woke (as an example, see
-the first individual in the [tutorial](../tut/tut1.md) dataset).
-
-Luna therefore also provides a second estimate of sleep efficiency, as
-total sleep time divided by the time from first sleep epoch to final
-sleep epoch (`SLP_EFF2`).  Overall, if lights on/off annotations are
-not clearly marked, `SLP_EFF2` is likely to be the most robust metric
-of sleep efficiency.
-
-_Sleep maintenance efficiency_ (`SME`)
-is similar to `SE` but the denominator is total recording time
-minus sleep latency (i.e. from first sleep epoch to lights on/end of
-recording).  _Persistent sleep_ is defined as sleep that follows at
-least ten minutes of uninterrupted sleep.
-
-
-
-<h5>Parameters</h5>
-
-| Parameter | Example | Description |
-| ---- | ---- | ---- | 
-| `file` | `file=hypno.txt` | Optionally, read stage information from a file |
-| `W`| `W=wake` | Set the annotation class for _wake_ epochs |
-| `N1`  | `N1=NREM1` | Set the annotaiton class for _N1_ epochs |
-| `N2`  | `N2=NREM2` | Set the annotaiton class for _N2_ epochs |
-| `N3`  | `N3=NREM3` | Set the annotaiton class for _N3_ epochs |
-| `R` | `REM=REM` | Set the annotaiton class for _REM_ epochs |
-| `?`   | `?=UNKNOWN` | Set the annotation class for _unscored/unknown_ epochs |
-| `epoch` | | Display epoch-level output |
-| `req-pre-post` | `req-pre-post=5` | For epoch-level transition flags, only consider _post_ transition stage `FLANKING_ALL` values equal to or greater than this number of epochs (default 4) |
-| `flanking-collapse-nrem` | `flanking-collapse-nrem=F`|  Collapse all NREM stages when considering flanking epoch similarity (default `T`) |
-
-
-<h5>Output</h5>
-
-Individual-level summary statistics (strata: _none_)
-
-| Variable | Description |
-| --- | --- |
-| `TST` | Total sleep time |
-| `TPST` | Total persistent sleep time |
-| `TIB` | Time in bed |
-| `TWT` | Total wake time |
-| `WASO` | Wake after sleep onset |
-| | |
-| `LIGHTS_OFF` | Lights off time (hours since midnight) |
-| `SLEEP_ONSET` | Sleep onset time (hours since midnight) |
-| `SLEEP_MIDPOINT` | Sleep midpoint time (hours since midnight) |
-| `LIGHTS_ON` | Lights on time (hours since midnight) |
-| `FINAL_WAKE` | Final wake time (hours since midnight) |
-| | |
-| `SLP_EFF` | Sleep efficiency (see note above) |
-| `SLP_EFF2` | Alternate sleep efficiency (see note above) |
-| `SLP_MAIN_EFF` | Sleep maintenance efficiency (see note above) |
-| `SLP_LAT` | Sleep latency (minutes from lights off) |
-| `PER_SLP_LAT` | Persistent sleep latency (mins from lights off) |
-| `REM_LAT` | REM latency (minutes from onset of sleep) |
-| | |
-| `MINS_N1` | Total duration of N1 sleep (mins) |
-| `MINS_N2` | Total duration of N2 sleep (mins) |
-| `MINS_N3` | Total duration of N3 sleep (mins) |
-| `MINS_N4` | Total duration of N4 (NREM4) sleep (mins) |
-| `MINS_REM` | Total duration of REM sleep (mins) |
-| `PCT_N1` | Proportion N1 of total sleep time |
-| `PCT_N2` | Proportion N2 of total sleep time |
-| `PCT_N3` | Proportion N3 of total sleep time |
-| `PCT_N4` | Proportion N4 (NREM4) of total sleep time |
-| `PCT_REM` | Proportion REM of total sleep time |
-| | |
-| `NREMC` | Number of sleep cycles |
-| `NREMC_MINS` | Mean duration of each sleep cycle |
-| | |
-| `CONF` | The number of epochs with conflicting stage assignments (e.g. if overlapping staging) | 
-| `OTHR` | Number of epochs with a nonstandard/missing stage annotation |
 
 Epoch-level output (option: `epoch`, strata: `E`)
 
@@ -334,7 +335,7 @@ Transition probabilities (strata: `PRE` x `POST`)
 | `P_POST_COND_PRE` | Conditional probability P( post stage | pre stage ) |
 
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 Here we run `HYPNO` on `nsrr02` from the [tutorial](../tut/tut1.md) data:
 ```
@@ -449,13 +450,18 @@ might be called _ascending_.
 __Transition and flanking epoch defintions:__ 
 
 The epoch-level variables `TR_NR2R`, `TR_NR2W`, etc, coumt the number
-of epochs of NREM sleep remaining until a transition to some other state (REM or wake respectively).
-Similar variables are defined for transitions from REM and wake.   The corresponding `TOT_` variables indicate
-the total number of NREM epochs in that segment - i.e. and so can be used to select "stable" periods of some state
-of a minimum duration prior to a transition to some other state.   As noted above, the `HYPNO` option `req-pre-post`
-option can be used to specify a minimum duration of the _post_ stage in order to trigger these flags; by default this is 4 epochs (2 minutes).
-That is, is epoch 1227 below was in fact back to `N2` sleep, then the command would not have flagged these earlier N2 epochs as being
-_prior to wake_.
+of epochs of NREM sleep remaining until a transition to some other
+state (REM or wake respectively).  Similar variables are defined for
+transitions from REM and wake.  The corresponding `TOT_` variables
+indicate the total number of NREM epochs in that segment - i.e. and so
+can be used to select "stable" periods of some state of a minimum
+duration prior to a transition to some other state.  As noted above,
+the `HYPNO` option `req-pre-post` option can be used to specify a
+minimum duration of the _post_ stage in order to trigger these flags;
+by default this is 4 epochs (2 minutes).  That is, is epoch 1227 below
+was in fact back to `N2` sleep, then the command would not have
+flagged these earlier N2 epochs as being _prior to wake_.
+
 
 ```
      E       STAGE   TOT_NR2R  TOT_NR2W   TR_NR2R   TR_NR2W
@@ -570,7 +576,7 @@ mapped to `N3` sleep.
     them as generic annotations however.
 
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | ---- | ---- | ---- | 
@@ -581,10 +587,10 @@ mapped to `N3` sleep.
 | `R`   | `R=REM`   | Set the annotaiton class for _REM_ epochs |
 | `?`   | `?=UNKNOWN` | Set the annotation class for _unscored/unknown_ epochs |
 | `dump` | | Write stage labels to standard out (minimal output )|
-| `eannot` | `eannot=s.txt` | Write stage labels to a file |
+| `eannot` | `s.txt` | Write stage labels to a file |
+| `min` | | Dump minimalistic stage labels to standard output stream |
 
-
-<h5>Output</h5>
+<h3>Output</h3>
 
 | Variable | Description |
 | ---- | ---- |
@@ -604,7 +610,7 @@ hypnogram-like representation of the night:
 plot( d$E , d$STAGE_N ) 
 ```
 
-<h5>See also</h5>
+<h3>See also</h3>
 
 The [`lstages()`](../ext/R/ref.md#lstages) function in
 [_lunaR_](../ext/R/index.md) provides a quick way to run the `STAGE` command

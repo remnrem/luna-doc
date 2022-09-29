@@ -67,14 +67,14 @@ _Macro-architecture_
   [`HYPNO`](ref/hypnograms.md#hypno), to add an annotation indicating
   which NREM cycle an epoch belongs to
 
- - fixed an issue when [`HYPNO`](ref/hypno.md#hypno) is called twice on the same EDF
+ - fixed an issue when [`HYPNO`](ref/hypnograms.md#hypno) is called twice on the same EDF
  
  - added `first` (mins) and `first-anchor` (`T0`, `T1` or `T2`)
    options, to report hypnogram stats for only the first _N_ minutes
    (setting the rest to `L`)
 
  - fixed a bug impacting some of the elapsed time metrics from
-  [`HYPNO`](ref/hypno.md#hypno) (`E_*` etc) if the recording started
+  [`HYPNO`](ref/hypnograms.md#hypno) (`E_*` etc) if the recording started
   at or after midnight
 
  - added and documented the new [`SOAP`](ref/soap.md#soap),
@@ -474,7 +474,7 @@ _Other new commands/functionality_
   option `flanking-collapse-nrem` (default T), i.e. flank based on any
   NREM stage (1, 2 or 3) 4) option `req-pre-post`, to only consider
   stage transitions that have `FLANKING_ALL` >= `x` for the `POST`
-  stage; defaults to 4 (2 mins). Added 'CONFLICT' and `TOTHR` outputs.
+  stage; defaults to 4 (2 mins). Added 'CONF' and `OTHR` outputs.
 
 _Minor modifications/fixes_
 
