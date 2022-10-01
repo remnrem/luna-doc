@@ -32,7 +32,7 @@ shhs1-0000	./shhs1-0000.edf	./shhs1-0000-nsrr.xml
 ```
 
 We can view the manually-scored hypnogram using the R `lhypno()`
-function in [LunaR](../luna/ext/R/index.md):
+function in [LunaR](../ext/R/index.md):
 
 ```
 library(luna)
@@ -99,7 +99,7 @@ By default, SOAP will:
     The SOAP command requires existing stage annotation,
     i.e. similar to the `HYPNO` command.  That is, it does _not_ predict
     sleep stages from scratch.  In Luna, we'll see how this different task
-    can be done using the [`POPS`](../ref/pops/pops.md) command, as described below.
+    can be done using the [`POPS`](../ref/pops.md) command, as described below.
 
 
 Under the _assumptions_ that a) the signal data contain sufficient

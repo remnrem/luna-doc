@@ -154,8 +154,8 @@ __Coupling/connectivity:__
 [`TSYNC`](cc.md): _cross-correlation & phase delay,_
 [`GP`](cc.md#gp): _Granger prediction._
 __Interval-based:__
-[`OVERLAP`](overlap.md#overlap): _single-sample overlap analysis,_
-[`--overlap`](overlap.md#-overlap): _multi-sample overlap analysis,_ 
+[`OVERLAP`](intervals.md#overlap): _single-sample overlap analysis,_
+[`--overlap`](intervals.md#-overlap): _multi-sample overlap analysis,_ 
 [`MEANS`](intervals.md#means): _signal mean by annotation,_
 [`PEAKS`](intervals.md#peaks): _detect/cache peaks,_
 [`TLOCK`](intervals.md#tlock): _time-locked averaging._
@@ -174,9 +174,9 @@ __Microstates:__
 [](ms.md)
 [`MS`](ms.md#ms): _EEG microstates,_
 [`--kmer`](ms.md#-kmer): _sequence motifs,_
-[`--cmp-maps`](ms.md$-cmp-maps): _group/indiv map spatial analysis,_
-[`--label-maps`](ms.md$-label-maps): _label maps given a template,_
-[`--correl-maps`](ms.md$-correl-maps): _spatial correlations._
+[`--cmp-maps`](ms.md#-cmp-maps): _group/indiv map spatial analysis,_
+[`--label-maps`](ms.md#-label-maps): _label maps given a template,_
+[`--correl-maps`](ms.md#-correl-maps): _spatial correlations._
 __Clustering:__
 [`EXE`](clustering.md): _time-series clustering._
 __Association:__

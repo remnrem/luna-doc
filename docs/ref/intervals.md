@@ -461,7 +461,7 @@ several reasonably intuitive parameters:
 Luna also allows for imposing some absolute min/max amplitude and
 duration thresholds on detected peaks, for both a "core" peak region,
 and for flanking regions.  Also, it allows detected peaks to be saved
-as [annotations](ref/annotations.md).
+as [annotations](annotations.md).
 
 
 <h5>Parameters</h5>
@@ -495,7 +495,7 @@ _Creating annotations based on detected peaks_
 
 <h5>Outputs</h5>
 
-No formal output, other than some notes to the console. The primary output of this command is to create an [annotation](ref/annotations.md)
+No formal output, other than some notes to the console. The primary output of this command is to create an [annotation](annotations.md)
 based on detected peaks currently.
 
 
