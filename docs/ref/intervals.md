@@ -20,19 +20,19 @@ individual or (if using the [`--overlap`](#-overlap) command) multiple
 individuals. One or more annotation classes must be set as _seeds_;
 during randomisation, seeds are shuffled to generate empirical null
 distributions for evaluated metrics.  Shuffling all events together
-largely preserves the inter-event time distribution.  One exception is that annotations will "wrap"
+largely preserves the inter-event time distribution (one exception is that annotations will "wrap"
 around if shuffled past the end of the analysed region (i.e. they will
 appear near the start of the analysis region).
 
 _Background intervals and shuffling_
 
 By default, the analysis region spans from 0 seconds (EDF start) to the end of the
-last annotation.  Alternatively, a set of "background" annotations can
+last annotation.  Alternatively, a set of _background_ annotations can
 be specified explicitly (the `bg` option) such that only annotations
 that fall within a background interval (e.g. all QC+ NREM epochs) are
-included.  Shuffling occurs
+included.  Shuffling then occurs
 only _within_ each contiguous background region.  Note that both test and
-background annotations are "flattened" prior to analysis, i.e.  merging
+background annotations are _flattened_ prior to analysis, i.e.  merging
 overlapping and contiguous annotations of the same class into a single interval/segment.
 
 By default, seeds are shuffled by a
@@ -297,12 +297,9 @@ Seed - _any other_ overlap (strata: `SEED`)
 
 
 Note, the `OVERLAP` command does not look at, or require, any signal data present in the EDF.
-As such, it can be run based on annotation (`.annot` files) only - either via the [`--overlap`](#-overlap)
+As such, it can be run based on annotation (`.annot`) files alone - either via the [`--overlap`](#-overlap)
 command describd below (but for a single sample), or by specifying an empty sample list (`.`) to make
-Luna generate a dummy/empty EDF in memory, as described [here](../luna/args.md#empty-edfs) 
-
-this command can be used without an accompanying EDF, either by using
-[`--overlap`](#-overlap) with just a single sample, 
+Luna generate a dummy/empty EDF in memory, as described [here](../luna/args.md#empty-edfs):
 
 ```
 luna . --nr=10000 --rs=1 annot-file=test.annot -o out.db \
@@ -312,7 +309,6 @@ luna . --nr=10000 --rs=1 annot-file=test.annot -o out.db \
 The implied duration (i.e. 10,000 times 1 second = 10,000 seconds in
 the above example) should be sufficiently large to contain all
 annotataions specified; with `bg`, this implicitly defines the _background_.
-
 
 
 ## --overlap
