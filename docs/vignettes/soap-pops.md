@@ -55,7 +55,7 @@ lhypno( k$HYPNO$E$STAGE )
 ![img](../img/soap-pops/hypno-orig.png){:width="100%"}
 
 
-## Evaluating overal staging quality
+## Evaluating overall staging quality
    
 The above hypnogram above _looks_ quite reasonable, albeit with a
 relatively short sleep duration, i.e. TST is under five hours.
@@ -86,7 +86,7 @@ By default, SOAP will:
  - apply a singular vector decomposition (SVD) to the
    epoch-by-frequency bin matrix (as described [here](../ref/psc.md))
    to extract a smaller number (e.g. 10) of orthogonal components,
-   retaining only those that are significangtly correlated with the
+   retaining only those that are significantly correlated with the
    observed staging
 
  - fit a simple linear (or quadratic) discriminant analysis (LDA/QDA)
@@ -152,7 +152,7 @@ Running the default version of SOAP we see the following output in the console:
         Tot:    0.01    0.28    0.08    0.12    0.51    1.00
 ```
 
-The key measure is the _kappa_ cofficient - here it is 0.89 which is
+The key measure is the _kappa_ coefficient - here it is 0.89 which is
 high.  This is from a 5-class classification of sleep stages: N1, N2,
 N3, R, W.   (If the study did not include one of these stages, SOAP automatically drops it;
 the only requirement is that there are at least two stages with a minimum number of observations
@@ -236,7 +236,7 @@ information in the EEG (i.e. precisely because we scrambled it).
 
 ![img](../img/soap-pops/soap0-pred.png){:width="100%"}
 
-We can also look at the posterior probabilities as well as the most-likley stages under the SOAP model.  (The POPS output follows the same structure.)  Here we see the posteriors from the original SOAP analysis (i.e. with the true/observed staging).  Each line shows the probabilties "stacked" to sum to 1.0, for a given epoch.  In the real data, the predictions were "confident" in the sense that the maximum posterior was typically near 1.0.   In contrast, the completely scrambled data shows a very different pattern (note, the plots are sorted such that the most likely stage is plotted at the bottom):
+We can also look at the posterior probabilities as well as the most-likely stages under the SOAP model.  (The POPS output follows the same structure.)  Here we see the posteriors from the original SOAP analysis (i.e. with the true/observed staging).  Each line shows the probabilities "stacked" to sum to 1.0, for a given epoch.  In the real data, the predictions were "confident" in the sense that the maximum posterior was typically near 1.0.   In contrast, the completely scrambled data shows a very different pattern (note, the plots are sorted such that the most likely stage is plotted at the bottom):
 
 ![img](../img/soap-pops/soap0-post.png){:width="100%"}
 
@@ -260,11 +260,11 @@ If you ever see this type of pattern (plus a low kappa), it is telling you there
     
 ### Swapped files
 
-In the previous example, any quick visual inspection of the obsreved
+In the previous example, any quick visual inspection of the observed
 hypnogram (i.e. corresponding to the Observed stages plot above) would
 indicate that the data are not consistent with a typical looking human
 hypnogram, and so we wouldn't really need SOAP to tell us that.  What
-if we did have stages that _looked_ densible, but did not align with
+if we did have stages that _looked_ sensible, but did not align with
 the individual on whom we have signal data though?  To see, here we
 swap another person's staging in, and see what happens. i.e. here the stages in `other.eannot`
 are from somebody else:
@@ -291,7 +291,7 @@ is nowhere near the level of performance we'd expect with real data:
 
 To contextualize this result, here is a histogram of kappa values from
 thousands of people in the SHHS (wave 1) -- values of kappa under 0.5
-are very rare, and likley indicate (major) issues with the staging.
+are very rare, and likely indicate (major) issues with the staging.
 Most individuals have kappas of 0.8 or greater:
 
 ![img](../img/soap-pops/shhs-soap.png)
@@ -325,7 +325,7 @@ and the console indicates that now many epochs are unstaged:
 ```
   final epoch counts: ?:484 N1:10 N2:275 N3:84 R:68 W:163
 ```
-Based on the observed data, SOAP will effectively try to fill in the remaining, unstaged epchs: in this case, it
+Based on the observed data, SOAP will effectively try to fill in the remaining, unstaged epochs: in this case, it
 appears to do quite a good job:
 ```
 # full original
@@ -361,7 +361,7 @@ SOAP also generate _probabilistic stage assignments_ based on the
 original categorical/discrete staging.  This may be useful, for
 example, to restrict certain analyses only to _"high confidence"_
 intervals, or to derive hypnogram statistics (e.g. stage duration)
-based on probablistically-weighted epoch counts.  Although beyond the scope of
+based on probabilistically-weighted epoch counts.  Although beyond the scope of
 this vignette, this approach may better handle "mixed epochs", if the SOAP model
 places weight on multiple stages.
 
@@ -396,10 +396,10 @@ In this particular case, given a reasonably high kappa, we might do
 well to accept these revised predictions over the original ones.  That
 is, when SOAP changes the staging for an epoch, it is really saying
 (for example): "although staged R, this epoch looks much more like
-most of the other epochs labelled N3, than it does to most of the othe
+most of the other epochs labelled N3, than it does to most of the other
 epochs labelled R".  Naturally there is no guarantee that any changes
 SOAP makes will always be the correct ones.  In some cases, it might
-be more likley to make staging worse on average, not better -- this
+be more likely to make staging worse on average, not better -- this
 will in large part depend on the (unknowable) type of data, and the
 types/extent of staging errors made.  In future work, we plan to
 evaluate empirically the conditions under which using SOAP may improve
@@ -421,7 +421,7 @@ necessarily start at the 0-second EDF start, or some other time)?
 Although this may be considered a _niche_ case, we have come across
 exactly this type of scenario more than once when working with legacy
 datasets - e.g. as might happen if only parts of the night were
-extracted fro much longer / 24-hour recordings, and the time-stamps
+extracted for much longer / 24-hour recordings, and the time-stamps
 have been lost during the export process, with original datasets no
 longer available.  (If nothing else, it is a nice proof-of-principle demonstration of the SOAP model.)
 
@@ -459,8 +459,8 @@ destrat place.db +PLACE | behead
       OLAP_STG   1
 ```
 
-Here we see the most liklely offset is `29`, which is the correct
-answer (i.e. staging epooch `1` corresponds signal epoch `1+29 = 30`,
+Here we see the most likely offset is `29`, which is the correct
+answer (i.e. staging epoch `1` corresponds signal epoch `1+29 = 30`,
 based on how we extracted the epochs above).  We can plot the kappa for
 all possible alignments, to get a sense of how specific this placement was:
 ```
@@ -478,12 +478,12 @@ lines( d$OFFSET , d$K , type="l" ,  col="darkgreen" )
 
 We see there really is quite a marked spike at the exact true offset.
 Although it will depend on a number of factors, and there are
-certaonly scenarios that could mislead `PLACE`, in general, with
+certainly scenarios that could mislead `PLACE`, in general, with
 reasonably typical inputs, the `PLACE` command appears to do a good
 job of resolving alignments within a single epoch.
 
 Of course, one might say: _why not just use an automated stager,
-rather than trying to rescus partial, manual staging?_ This is also a
+rather than trying to rescue partial, manual staging?_ This is also a
 reasonable idea - we could do so with `POPS` below, for example.
 However, there may be circumstances where the montages are very
 different (e.g. only intracranial EEG leads, or from a wearable
@@ -562,7 +562,7 @@ options as noted above).
 
 This library (`m1`) is available for download at this [Dropbox
 link](https://www.dropbox.com/s/lha9ibincmvpod3/m1.zip?dl=0).  This is
-a ZIP file (13MB) called `m1.zip`.  After downling, expanding it will
+a ZIP file (13MB) called `m1.zip`.  After downloading, expanding it will
 result in a folder called `m1` (_model 1_). You then will run `POPS`
 using `lib` to specify the model root (`m1`) and `path` to point to
 this folder (e.g. `~/working/sleep/pops/m1` or wherever you saved it).
