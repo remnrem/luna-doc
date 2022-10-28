@@ -202,9 +202,9 @@ sleep stage, we indeed confirm that the end aberrant epochs are all
 wake: (plot not shown).
 
 ```
-plot( d$T , d$VAL  , ylab = "RMS(ECG)" , xlab = "Epoch" , pch=20 , col = ss$STAGE  )
+plot( d$T , d$VAL  , ylab = "RMS(ECG)" , xlab = "Epoch" , pch=20 , col = as.factor( ss$STAGE  ) ) 
 cols <- sort(unique(ss$STAGE))
-legend("topleft",legend=cols , fill = cols ) 
+legend("topleft",legend=cols , fill = as.factor( cols ) ) 
 ```
 
 Simply ignoring these final points (which roughly corresponds to
@@ -232,7 +232,7 @@ luna s.lst -o stage.db -s 'EPOCH & HYPNO epoch'
 ```
 
 This generate a large number of variables, as described [here](../ref/hypnograms.md#hypno).
-There are three different strata groups in the output from `STAGE`:
+There are various different strata groups in the output from `STAGE`:
 
 ```
 destrat stage.db
@@ -249,20 +249,27 @@ distinct strata group(s):
 --------------:--------------:---------------:---------------------------
   [EPOCH]     : .            : 1 level(s)    : DUR INC NE
               :              :               : 
-  [HYPNO]     : .            : 1 level(s)    : CONF MINS_N1 MINS_N2 MINS_N3 MINS_REM
-              :              :               : NREMC NREMC_MINS OTHR PCT_N1 PCT_N2
-              :              :               : PCT_N3 PCT_REM PER_SLP_LAT REM_LAT
-              :              :               : SLP_EFF SLP_EFF2 SLP_LAT SLP_MAIN_EFF
-              :              :               : T1_LIGHTS_OFF T2_SLEEP_ONSET T3_SLEEP_MIDPOINT
-              :              :               : T4_FINAL_WAKE T5_LIGHTS_ON TIB
-              :              :               : TPST TRT TST TWT WASO
+  [HYPNO]     : .            : 1 level(s)    : CONF E0_START E1_LIGHTS_OFF E2_SLEEP_ONSET
+              :              :               : E3_SLEEP_MIDPOINT E4_FINAL_WAKE
+              :              :               : E5_LIGHTS_ON E6_STOP EINS FIXED_LIGHTS
+              :              :               : FIXED_SLEEP FIXED_WAKE FWT HMS0_START
+              :              :               : HMS1_LIGHTS_OFF HMS2_SLEEP_ONSET
+              :              :               : HMS3_SLEEP_MIDPOINT HMS4_FINAL_WAKE
+              :              :               : HMS5_LIGHTS_ON HMS6_STOP LOST LOT
+              :              :               : LZW NREMC NREMC_MINS OTHR REM_LAT
+              :              :               : REM_LAT2 SE SFI SINS SME SOL SOL_PER
+              :              :               : SPT SPT_PER T0_START T1_LIGHTS_OFF
+              :              :               : T2_SLEEP_ONSET T3_SLEEP_MIDPOINT
+              :              :               : T4_FINAL_WAKE T5_LIGHTS_ON T6_STOP
+              :              :               : TIB TI_RNR TI_S TI_S3 TRT TST TST_PER
+              :              :               : TWT WASO
               :              :               : 
   [HYPNO]     : E            : (...)         : CLOCK_HOURS CLOCK_TIME CYCLE CYCLE_POS_ABS
               :              :               : CYCLE_POS_REL E_N1 E_N2 E_N3 E_REM
               :              :               : E_SLEEP E_WAKE E_WASO FLANKING_ALL
               :              :               : FLANKING_MIN MINS N2_WGT NEAREST_WAKE
-              :              :               : PCT_E_N1 PCT_E_N2 PCT_E_N3 PCT_E_REM
-              :              :               : PCT_E_SLEEP PERIOD PERSISTENT_SLEEP
+              :              :               : OSTAGE PCT_E_N1 PCT_E_N2 PCT_E_N3
+              :              :               : PCT_E_REM PCT_E_SLEEP PERIOD PERSISTENT_SLEEP
               :              :               : STAGE STAGE_N TOT_NR2R TOT_NR2W
               :              :               : TOT_R2NR TOT_R2W TOT_W2NR TOT_W2R
               :              :               : TR_NR2R TR_NR2W TR_R2NR TR_R2W
@@ -271,26 +278,34 @@ distinct strata group(s):
   [HYPNO]     : C            : 6 level(s)    : NREMC_MINS NREMC_N NREMC_NREM_MINS
               :              :               : NREMC_OTHER_MINS NREMC_REM_MINS
               :              :               : NREMC_START
-              :              :               :
+              :              :               : 
+  [HYPNO]     : SS           : 13 level(s)   : BOUT_05 BOUT_10 BOUT_MD BOUT_MN
+              :              :               : BOUT_MX BOUT_N MINS PCT
+              :              :               : 
+  [HYPNO]     : N            : 141 level(s)  : FIRST_EPOCH LAST_EPOCH MINS STAGE
+              :              :               : START STOP
+              :              :               : 
   [HYPNO]     : PRE POST     : 9 level(s)    : N P P_POST_COND_PRE P_PRE_COND_POST
               :              :               :
 --------------:--------------:---------------:-------------------------
 ```
 
 The first (`.`) `HYPNO` group is a set of variables with no
-stratifiers: that is, simply one value per individual/EDF.  These
-include minutes of N2 sleep (`MINS_N2`).  To view the number of
-minutes of each sleep stage for the three individuals, and also the
-number of NREM cycles `NREMC`, we can use:
+stratifiers: that is, simply one value per individual/EDF, such as
+Total Sleep Time (`TST`).
+
+Stage durations are stratifed by `SS` (sleep stage).
+To view the number of minutes of each sleep stage for the three individuals,
+`NREMC`, we can use:
 
 ```
-destrat stage.db +HYPNO -v MINS_N1 MINS_N2 MINS_N3 MINS_REM NREMC
+destrat stage.db +HYPNO -r SS/N1,N2,N3,R -v MINS
 ```
 ```
-ID      MINS_N1 MINS_N2 MINS_N3 MINS_REM NREMC
-nsrr01  54.5    261.5   8       119      6
-nsrr02  5.5     199.5   92.5    60       5
-nsrr03  26      187.5   10.5    0        3
+ID       MINS.SS_N1   MINS.SS_N2    MINS.SS_N3    MINS.SS_R
+nsrr01   54.5         261.5         8.5           119
+nsrr02   5.5          199.5         92.5          60
+nsrr03   26           187.5         10.5          0
 ```
 
 To view cycle-level variables (`C` factor), we can use the following
@@ -503,39 +518,39 @@ epochs. As such, we can still attach the annotations from the file
  mapping 2 distinct epoch-annotations (1364 in total) from cmd/ps-nsrr01.eannot
 ```
 
-We then apply a mask based on this annotation: 980 epochs have the
-flag set to be excluded (i.e. from the file); of those, only 329 must
+We then apply a mask based on this annotation: 720 epochs have the
+flag set to be excluded (i.e. from the file); of those, only 209 must
 be within the 11pm to 3am window, as only that many epochs have their
 status changed (i.e. because we've set these `MASK` commands up to
-only ever _mask_, not to _unmask_, epochs), leaving us with 152
+only ever _mask_, not to _unmask_, epochs), leaving us with 272
 epochs:
 
 ```
  CMD #5: MASK
- set masking mode to 'mask' (default)
- based on exc 980 epochs match; 329 newly masked, 0 unmasked, 1035 unchanged
- total of 152 of 1364 retained
+  set masking mode to 'mask' (default)
+  based on exc 720 epochs match; 209 newly masked, 0 unmasked, 1155 unchanged
+  total of 272 of 1364 retained
 ```
 
-Next, we further mask based on not being in NREM2 sleep, which drops us to 142 epochs:
+Next, we further mask based on not being in N2 sleep, which drops us to 235 epochs:
 
 ```
  CMD #6: MASK
  set masking mode to 'mask' (default)
- based on NREM2 523 epochs match; 10 newly masked, 0 unmasked, 1354 unchanged
- total of 142 of 1364 retained
+ based on N2 523 epochs match; 37 newly masked, 0 unmasked, 1327 unchanged
+ total of 235 of 1364 retained
 ```
 
 Finally, we screen for matching any apnea or hypopnea event, which
-takes us down to 55 epochs:
+takes us down to 86 epochs:
 
 ```
  CMD #7: MASK
  set masking mode to 'mask' (default)
- based on apnea_obstructive 60 epochs match; 3 newly masked, 0 unmasked, 1361 unchanged
- total of 139 of 1364 retained
- based on hypopnea 509 epochs match; 84 newly masked, 0 unmasked, 1280 unchanged
- total of 55 of 1364 retained
+  based on apnea/obstructive 60 epochs match; 7 newly masked, 0 unmasked, 1357 unchanged
+  total of 228 of 1364 retained
+  based on hypopnea 509 epochs match; 142 newly masked, 0 unmasked, 1222 unchanged
+  total of 86 of 1364 retained
 ```
 
 ## Manipulating EDFs
@@ -600,6 +615,8 @@ nsrr01	WRITE	.	.	NR1	40920
 nsrr01	WRITE	.	.	NR2	40920
 nsrr01	WRITE	.	.	DUR1	40920
 nsrr01	WRITE	.	.	DUR2	40920
+  data are not truly discontinuous
+  writing as a standard EDF
   saved new EDF, newedfs/learn-nsrr01-v2.edf
 
 ___________________________________________________________________
@@ -738,8 +755,7 @@ distinct strata group(s):
   [MASK]        : EMASK             : 1 level(s)    : N_MASK_SET N_MASK_UNSET N_MATCHES
                 :                   :               : N_RETAINED N_TOTAL N_UNCHANGED
                 :                   :               :
-                :                   :               : 
-  [RESTRUCTURE] : .                 : 1 level(s)    : DUR1 DUR2 NR1 NR2
+  [RESTRUCTURE] : .                 : 1 level(s)    : DUR1 DUR2 NA NR1 NR2 NS
                 :                   :               : 
   [SIGSTATS]    : CH                : 1 level(s)    : H1 H2 H3
                 :                   :               : 
@@ -947,14 +963,13 @@ head(d)
 ```
 ```
       ID  CH    F      PSD
-1 nsrr01 EEG 0.50 25.28248
-2 nsrr01 EEG 0.75 34.89674
-3 nsrr01 EEG 1.00 39.10505
-4 nsrr01 EEG 1.25 30.11147
-5 nsrr01 EEG 1.50 22.39349
-6 nsrr01 EEG 1.75 18.93800
+1 nsrr01 EEG 0.50 26.09547
+2 nsrr01 EEG 0.75 36.36182
+3 nsrr01 EEG 1.00 39.85385
+4 nsrr01 EEG 1.25 30.42863
+5 nsrr01 EEG 1.50 22.48063
+6 nsrr01 EEG 1.75 19.02125
 ```
-
 
 We can create 3 plots, on a log-scale, of 
 

@@ -340,7 +340,8 @@ which contains the six variables including the mean (`MEAN`) along with
 names(d)
 ```
 ```
-[1] "ID"     "CH"     "MAX"    "MEAN"   "MEDIAN" "MIN"    "RMS"    "SKEW"  
+ [1] "ID"   "CH"   "KURT" "MAX"  "MEAN" "MIN"  "P01"  "P02"  "P05"  "P10"  "P20"  "P30" 
+[13] "P40"  "P50"  "P60"  "P70"  "P80"  "P90"  "P95"  "P98"  "P99"  "RMS"  "SD"   "SKEW"
 ```
 Using R's basic row/column subsetting functions, we can pull out the required information as follows:
 ```
@@ -388,14 +389,14 @@ To see what those annotations classes are, we can use the [`lannots()`](^lannots
 lannots()
 ```
 ```
- [1] "NREM1"             "NREM2"     "NREM3"          "NREM4"   "REM"
- [6] "apnea_obstructive" "arousal"   "artifact_SpO2"  "desat"   "hypopnea"
-[11] "wake"  
+ [1] "N1"                "N2"                "N3"                "R"                
+ [5] "W"                 "apnea/obstructive" "arousal"           "artifact/SpO2"    
+ [9] "desat"             "hypopnea"         
 ```
 Re-running `lannots()` with a single annotation class name as a parameter, we'll get a list of 
 the intervals (in seconds elapsed since the start of the EDF):
 ```
-lannots( "apnea_obstructive" )
+lannots( "apnea/obstructive" )
 ```
 ```
 [[1]]
@@ -465,8 +466,8 @@ a <- letable( annots = lannots() )
     table( ss ) 
     ```
     ```
-    NREM1 NREM2 NREM3 NREM4   REM  wake 
-      109   523    16     1   238   477 
+    N1  N2  N3   R   W 
+    109 523  17 238 477 
     ```
 
     All NSRR data have annotations formatted in such a
@@ -499,17 +500,17 @@ alternatively, just write it directly:
 d <- k$ANNOTS$ANNOT
 ```
 
-If we restrict to rows where the annotation class name is `apnea_obstructive`, we'll see that `COUNT`s 
+If we restrict to rows where the annotation class name is `apnea/obstructive`, we'll see that `COUNT`s 
 for each individual.
 
 ```
-d[ d$ANNOT == "apnea_obstructive" , ]
+d[ d$ANNOT == "apnea/obstructive" , ]
 ```
 ```
        ID             ANNOT COUNT    DUR
-14 nsrr01 apnea_obstructive    37  824.5
-15 nsrr02 apnea_obstructive     5   67.7
-16 nsrr03 apnea_obstructive   163 3795.6
+14 nsrr01 apnea/obstructive    37  824.5
+15 nsrr02 apnea/obstructive     5   67.7
+16 nsrr03 apnea/obstructive   163 3795.6
 ```
 
 Reassuringly, these match what was obtained in the previous tutorial
@@ -517,7 +518,7 @@ section.  To consider only events during REM, we can re-run but including a
 [`MASK`](../ref/masks.md#mask) statement:
 
 ```
-k <- leval.project( sl , "MASK ifnot=REM & ANNOTS" )
+k <- leval.project( sl , "MASK ifnot=R & ANNOTS" )
 ```
 
 Repeating the above steps to extract the output:
@@ -527,12 +528,12 @@ d <- k$ANNOTS$ANNOT
 ```
 
 ```
-d[ d$ANNOT == "apnea_obstructive" , ]
+d[ d$ANNOT == "apnea/obstructive" , ]
 ```
 ```
       ID             ANNOT COUNT   DUR
-7 nsrr01 apnea_obstructive    27 668.4
-8 nsrr02 apnea_obstructive     3  43.4
+7 nsrr01 apnea/obstructive    27 668.4
+8 nsrr02 apnea/obstructive     3  43.4
 ```
 
 Again, these results match what we observed with _lunaC_.
@@ -577,10 +578,10 @@ luna s.lst stage=NREM1 sig=EEG -o out.db < cmd/first.txt
 In _lunaR_, we can set _Luna environment variables_ with the
 [`lset()`](^lset) function:
 ```
-lset( "stage","NREM1" )
+lset( "stage","N1" )
 ```
 ```
-setting [stage] to [NREM1]
+setting [stage] to [N1]
 ```
 
 We can query if a value exists, with [`lvar()`](^lvar):
@@ -652,10 +653,18 @@ are currently just for NREM1 sleep:
 lx( k , "STATS" )
 ```
 ```
-ID     CH  STAGE    MAX   MEAN  MEDIAN      MIN    RMS    SKEW
-nsrr01 EEG NREM1  59.31 -0.295 -0.4901  -81.862  7.354   0.015
-nsrr02 EEG NREM1  49.50  0.007  0.4901  -72.058 10.361  -0.487
-nsrr03 EEG NREM1 125.00  0.198  0.4901 -124.019 12.302  -0.461
+      ID  CH STAGE      KURT       MAX         MEAN        MIN       P01       P02
+1 nsrr01 EEG    N1  1.770623  59.31373 -0.295451220  -81.86275 -18.13725 -16.17647
+2 nsrr02 EEG    N1  1.976144  49.50980  0.007177659  -72.05882 -28.92157 -23.03922
+3 nsrr03 EEG    N1 37.534412 125.00000  0.198371041 -124.01961 -25.98039 -20.09804
+        P05        P10       P20       P30       P40        P50      P60      P70      P80
+1 -12.25490  -9.313725 -6.372549 -3.431373 -1.470588 -0.4901961 1.470588 3.431373 5.392157
+2 -17.15686 -12.254902 -7.352941 -4.411765 -1.470588  0.4901961 2.450980 5.392157 8.333333
+3 -14.21569 -10.294118 -6.372549 -3.431373 -1.470588  0.4901961 2.450980 4.411765 7.352941
+        P90      P95      P98      P99       RMS        SD        SKEW
+1  8.333333 11.27451 15.19608 18.13725  7.354944  7.349016  0.01513765
+2 12.254902 16.17647 20.09804 24.01961 10.361542 10.361666 -0.48778254
+3 11.274510 14.21569 20.09804 26.96078 12.302106 12.300538 -0.46132928
 ```
 
 To obtain the values for other sleep stages, we can just repeat the
@@ -664,7 +673,7 @@ collate, we'll do the following.  First, we'll define the stages we
 want to iterate over:
 
 ```
-stgs <- c( "NREM1", "NREM2", "NREM3" , "REM"  )
+stgs <- c( "N1", "N2", "N3" , "R"  )
 ```
 We'll then define a _single_ (empty) list to hold results from _all_ stages:
 ```
@@ -748,10 +757,10 @@ performed:
 lx(k)
 ```
 ```
-NREM1 : EPOCH MASK RESTRUCTURE STATS 
-NREM2 : EPOCH MASK RESTRUCTURE STATS 
-NREM3 : EPOCH MASK RESTRUCTURE STATS 
-REM : EPOCH MASK RESTRUCTURE STATS 
+N1 : EPOCH MASK RESTRUCTURE STATS 
+N2 : EPOCH MASK RESTRUCTURE STATS 
+N3 : EPOCH MASK RESTRUCTURE STATS 
+R : EPOCH MASK RESTRUCTURE STATS 
 ```
 
 We cannot use `lx()` to extract a particular table from a particular
@@ -761,20 +770,21 @@ the way we have above.  So, instead if `lx( k , "STATS" )`, we'd run
 ```
 lx2( k , "STATS" )
 ```
-which conveniently compiles all the similar results from different sleep stages into a _single_ table:
+which conveniently compiles all the similar results from different sleep stages into a _single_ table (nb.
+some columns omitted for clarity):
 ```
-            ID  CH STAGE     MAX     MEAN   MEDIAN      MIN     RMS      SD
-NREM1.1 nsrr01 EEG NREM1  59.313 -0.29545 -0.49019  -81.862  7.3549  7.3490
-NREM1.2 nsrr02 EEG NREM1  49.509  0.00717  0.49019  -72.058 10.3615 10.3616
-NREM1.3 nsrr03 EEG NREM1 125.000  0.19837  0.49019 -124.019 12.3021 12.3005
-NREM2.1 nsrr01 EEG NREM2 125.000 -0.31312 -0.49019 -124.019 10.6460 10.6414
-NREM2.2 nsrr02 EEG NREM2 125.000 -0.13494  0.49019 -124.019 14.7424 14.7418
-NREM2.3 nsrr03 EEG NREM2 125.000  0.12660  0.49019 -124.019 14.4967 14.4961
-NREM3.1 nsrr01 EEG NREM3 121.078 -0.47093 -0.49019 -112.254 13.2500 13.2417
-NREM3.2 nsrr02 EEG NREM3 125.000 -0.13073  0.49019 -124.019 20.0546 20.0542
-NREM3.3 nsrr03 EEG NREM3 125.000  0.17191  0.49019 -124.019 18.9800 18.9794
-REM.1   nsrr01 EEG   REM  85.784 -0.37150 -0.49019  -82.843  7.5635  7.5544
-REM.2   nsrr02 EEG   REM 125.000 -0.38422  0.49019 -124.019 14.1464 14.1412
+         ID  CH STAGE   MAX     MEAN   MEDIAN      MIN     RMS      SD
+N1.1 nsrr01 EEG N1   59.313 -0.29545 -0.49019  -81.862  7.3549  7.3490
+N1.2 nsrr02 EEG N1   49.509  0.00717  0.49019  -72.058 10.3615 10.3616
+N1.3 nsrr03 EEG N1  125.000  0.19837  0.49019 -124.019 12.3021 12.3005
+N2.1 nsrr01 EEG N2  125.000 -0.31312 -0.49019 -124.019 10.6460 10.6414
+N2.2 nsrr02 EEG N2  125.000 -0.13494  0.49019 -124.019 14.7424 14.7418
+N2.3 nsrr03 EEG N2  125.000  0.12660  0.49019 -124.019 14.4967 14.4961
+N3.1 nsrr01 EEG N3  121.078 -0.47093 -0.49019 -112.254 13.2500 13.2417
+N3.2 nsrr02 EEG N3  125.000 -0.13073  0.49019 -124.019 20.0546 20.0542
+N3.3 nsrr03 EEG N3  125.000  0.17191  0.49019 -124.019 18.9800 18.9794
+R.1  nsrr01 EEG  R   85.784 -0.37150 -0.49019  -82.843  7.5635  7.5544
+R.2  nsrr02 EEG  R  125.000 -0.38422  0.49019 -124.019 14.1464 14.1412
 ```
 
 Because we used `TAG` in the script, we have a variable named `STAGE`
@@ -792,17 +802,17 @@ d[ , c("ID","STAGE","RMS")]
 ```
 ```
             ID STAGE       RMS
-NREM1.1 nsrr01 NREM1  7.354944
-NREM1.2 nsrr02 NREM1 10.361542
-NREM1.3 nsrr03 NREM1 12.302106
-NREM2.1 nsrr01 NREM2 10.646079
-NREM2.2 nsrr02 NREM2 14.742420
-NREM2.3 nsrr03 NREM2 14.496728
-NREM3.1 nsrr01 NREM3 13.250009
-NREM3.2 nsrr02 NREM3 20.054659
-NREM3.3 nsrr03 NREM3 18.980088
-REM.1   nsrr01   REM  7.563595
-REM.2   nsrr02   REM 14.146456
+NREM1.1 nsrr01    N1  7.354944
+NREM1.2 nsrr02    N1 10.361542
+NREM1.3 nsrr03    N1 12.302106
+NREM2.1 nsrr01    N2 10.646079
+NREM2.2 nsrr02    N2 14.742420
+NREM2.3 nsrr03    N2 14.496728
+NREM3.1 nsrr01    N3 13.250009
+NREM3.2 nsrr02    N3 20.054659
+NREM3.3 nsrr03    N3 18.980088
+REM.1   nsrr01     R  7.563595
+REM.2   nsrr02     R 14.146456
 ```
 
 To get a nice tabulation, we could do the following: 
@@ -813,7 +823,7 @@ ways to do this, if needed):
 with( d , tapply( RMS , list( ID , STAGE ) , mean ) )
 ```
 ```
-           NREM1    NREM2    NREM3       REM
+              N1       N2       N3         R
 nsrr01  7.354944 10.64608 13.25001  7.563595
 nsrr02 10.361542 14.74242 20.05466 14.146456
 nsrr03 12.302106 14.49673 18.98009        NA
@@ -896,6 +906,8 @@ folders, `edfs` and `cmd`.  Now run a command that generates an `out.db` file: e
 ```
 luna s.lst -o out.db -s "EPOCH & STATS sig=ECG,EEG epoch"
 ```
+(Note: depending on the set up, you may need to run this from the home directory
+inside Docker, if you have write permission issues based on your user.)
 As before, you can use destrat to summarize and query this database:
 ```
 destrat out.db
@@ -987,10 +999,8 @@ That's better.  We can check those channel names with `lchs()`:
 lchs()
 ```
 ```
- [1] "SaO2"     "PR"       "EEG(sec)" "ECG"     
- [5] "EMG"      "EOG(L)"   "EOG(R)"   "EEG"     
- [9] "AIRFLOW"  "THOR RES" "ABDO RES" "POSITION"
-[13] "LIGHT"    "OX STAT" 
+ [1] "SaO2"     "PR"       "EEG_sec_" "ECG"      "EMG"      "EOG_L_"   "EOG_R_"  
+ [8] "EEG"      "AIRFLOW"  "THOR_RES" "ABDO_RES" "POSITION" "LIGHT"    "OX_STAT" 
 ```
 
 
@@ -1014,7 +1024,7 @@ setting [alias] to [EEG2|EEG(sec)]
 setting [alias] to [OXSTAT|OX STAT]
 setting [eeg] to [EEG1,EEG2]
 setting [myepoch] to [10]
-setting [nrem] to [NREM1,NREM2,NREM3]
+setting [nrem] to [N1,N2,N3]
 ```
 
 Note that if we now request `lchs()` again, Luna will automatically use the [_primary aliases_](../luna/args.md#aliases), i.e. `EEG1`, `EEG2` and `OXSTAT`:
@@ -1022,10 +1032,8 @@ Note that if we now request `lchs()` again, Luna will automatically use the [_pr
 lchs()
 ```
 ```
- [1] "SaO2"     "PR"       "EEG2"     "ECG"     
- [5] "EMG"      "EOG(L)"   "EOG(R)"   "EEG1"    
- [9] "AIRFLOW"  "THOR RES" "ABDO RES" "POSITION"
-[13] "LIGHT"    "OXSTAT"  
+ [1] "SaO2"     "PR"       "EEG2"     "ECG"      "EMG"      "EOG_L_"   "EOG_R_"  
+ [8] "EEG1"     "AIRFLOW"  "THOR_RES" "ABDO_RES" "POSITION" "LIGHT"    "OXSTAT"  
 ```
 
 That is, we can still refer to the original `EEG(sec)` as either
@@ -1163,8 +1171,8 @@ To get a very quick summary of sleep macro-architecture, we can tabulate the val
 table( lstages()  ) / 2 
 ```
 ```
-NREM1 NREM2 NREM3 NREM4   REM  wake 
- 54.5 261.5   8.0   0.5 119.0 238.5 
+   N1    N2    N3     R     W 
+ 54.5 261.5   8.5 119.0 238.5 
 ```
 
 Running the [`HYPNO`](../ref/hypnograms.md#hypno) command for all three individuals:
@@ -1184,16 +1192,27 @@ d <- lx( k , "HYPNO" , "BL" )
     tabulated for every command.  You can also run `lx()` (or destrat,
     if on the command line).
 
-To extract minutes of each stage from this output for all individuals:
-
+To extract minutes of each stage for all individuals - these are stratified by sleep stage (`SS`):
 ```
-d[ , c("ID" , "MINS_N1" , "MINS_N2" , "MINS_N3" , "MINS_REM" , "NREMC") ] 
+d <- lx( k , "HYPNO" , "SS" )
 ```
 ```
-      ID MINS_N1 MINS_N2 MINS_N3 MINS_REM NREMC
-1 nsrr01    54.5   261.5     8.0      119     6
-2 nsrr02     5.5   199.5    92.5       60     5
-3 nsrr03    26.0   187.5    10.5        0     3
+d[ d$SS %in% c("N1","N2","N3","R") ,c("ID","SS","MINS")]
+```
+```
+       ID SS  MINS
+7  nsrr01 N1  54.5
+8  nsrr02 N1   5.5
+9  nsrr03 N1  26.0
+10 nsrr01 N2 261.5
+11 nsrr02 N2 199.5
+12 nsrr03 N2 187.5
+22 nsrr01 N3   8.5
+23 nsrr02 N3  92.5
+24 nsrr03 N3  10.5
+28 nsrr01  R 119.0
+29 nsrr02  R  60.0
+30 nsrr03  R   0.0
 ```
 
 Cycle-level and epoch-level output can be extracted with the commands:
@@ -1240,7 +1259,7 @@ lattach( sl , 1 )
 ```
 and run the `HYPNO` command:
 ```
-k <- leval( "HYPNO" ) 
+k <- leval( "HYPNO epoch" ) 
 ```
 from which we can identify epochs of _persistent sleep_, from the epoch-level output, here extracting it directly rather than using `lx()`:
 ```
@@ -1253,7 +1272,7 @@ table( ps)
 ```
 ps
   0   1 
-980 384 
+720 644 
 ```
 
 In _lunaR_, we can attach a new annotation with either the
@@ -1309,11 +1328,10 @@ We can check that it has been added as follows:
 lannots()
 ```
 ```
- [1] "NREM1"             "NREM2"             "NREM3"            
- [4] "NREM4"             "REM"               "SleepStage"       
- [7] "apnea_obstructive" "arousal"           "artifact_SpO2"    
+ [1] "N1"                "N2"                "N3"               
+ [4] "R"                 "SleepStage"        "W"                
+ [7] "apnea/obstructive" "arousal"           "artifact/SpO2"    
 [10] "desat"             "hypopnea"          "persistent_sleep" 
-[13] "wake"             
 ```
 
 Finally, here we illustrate how to use multiple `leval()` statements
@@ -1353,23 +1371,24 @@ We next apply the persistent sleep mask:
 leval( "MASK mask-ifnot=persistent_sleep" )
 ```
 ```
-nsrr01 : 14 signals, 13 annotations, 11:22:00 duration, 152 unmasked 30-sec epochs, and 1212 masked
+nsrr01 : 14 (of 14) signals, 12 annotations, 11:22:00 duration, 272 unmasked 30-sec epochs, and 1092 masked
+
 ```
-That takes us down to 152 epochs; we next restrict to NREM2 sleep only:
+That takes us down to 272 epochs; we next restrict to NREM2 sleep only:
 ```
-leval( "MASK mask-ifnot=NREM2" )
-```
-```
-nsrr01 : 14 signals, 13 annotations, 11:22:00 duration, 142 unmasked 30-sec epochs, and 1222 masked
-```
-This takes us to 142 epochs; we next exclude epochs with any apnea or hypopnea events:
-```
-leval( "MASK mask-if=apnea_obstructive,hypopnea" )
+leval( "MASK mask-ifnot=N2" )
 ```
 ```
-nsrr01 : 14 signals, 13 annotations, 11:22:00 duration, 55 unmasked 30-sec epochs, and 1309 masked
+nsrr01 : 14 (of 14) signals, 12 annotations, 11.22.00 duration, 235 unmasked 30-sec epochs, and 1129 masked
 ```
-This gives us 55 epochs, as per the previous example with _lunaC_.
+This takes us to 235 epochs; we next exclude epochs with any apnea or hypopnea events:
+```
+leval( "MASK mask-if=apnea/obstructive,hypopnea" )
+```
+```
+nsrr01 : 14 (of 14) signals, 12 annotations, 11.22.00 duration, 86 unmasked 30-sec epochs, and 1278 masked
+```
+This gives us 86 epochs, as per the previous example with _lunaC_.
 
 
 We can confirm these steps by viewing the results of `letable()` and including these relevant annotations: 
@@ -1391,18 +1410,18 @@ epoch numbers, start times and clock-time however (`E0`, `SEC0` and
 `HMS`).  For example, the first epoch to be included (the new epoch #1) was the old epoch #124, etc.
 
 If we run a `RESTRUCTURE` command, all masked epochs are permanently dropped from the internal EDF, and so we'll 
-end up with a 55-epoch (27.5 minutes) dataset, but for which there are no masked epochs:
+end up with a 86-epoch (43 minutes) dataset, but for which there are no masked epochs:
 
 ```
 leval( "RE" ) 
 ```
 ```
-nsrr01 : 14 signals, 13 annotations, 00:27:30 duration, 55 unmasked 30-sec epochs, and 0 masked
+nsrr01 : 14 (of 14) signals, 12 annotations, 00.43.00 duration, 86 unmasked 30-sec epochs, and 0 masked
 ```
 
 Again, we can view the `letable()` for this:
 ```
-d <- letable( annots = c( "persistent_sleep" , "NREM2" , "apnea_obstructive" , "hypopnea" ) )
+d <- letable( annots = c( "persistent_sleep" , "N2" , "apnea/obstructive" , "hypopnea" ) )
 ```
 
 All masked epochs have now been dropped, although Luna still retains the original time/epoch encoding in `E0`, etc.

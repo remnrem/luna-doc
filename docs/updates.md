@@ -41,6 +41,46 @@ _LunaR_
 
 - additional `lheatmap()` options added
 
+### Microstates
+
+ - `--label-maps` now outputs
+```
+ID	KT	FLIP	K1	MAPPED	SPC
+.	D	0	1	1	0.994548052142096
+.	C	0	2	1	0.972204262924326
+.	A	0	3	1	0.988131018834142
+.	B	0	4	1	0.996294406621555
+```
+ and (will) add a message if match is not highest correl SPC `OPTIMAL == 0 `
+
+ - also, it now allows to match on min sum (1-r)^p where p = 2 by default;
+ this is now also the default stat for compare-maps (perm.) tests
+
+- added `verbose` option for info to the log
+
+-->
+
+
+<!--
+
+## v0.28 
+
+ - added `xbg` - i.e. interval to excise from the background, to OVERLAP 
+ 
+ - `offset` option of `EPOCH` can now take _hh:mm_ and _hh:mm:ss_
+   arguments, as well as elasped seconds
+
+ - now gives an error if specified filename for a new EDF file
+   (e.g. from `WRITE`) is the same as the input EDF (was allowed
+   previosly, but could cause problems and lead to corrupt output)
+
+ - `HYPNO` now outputs proper epoch time, i.e. if used EPOCH align so
+ that epochs are not starting from 0; (as is, it assumes epoch 1
+ starts at 0 sec); also note that `MINS` is the elapsed time since epoch #1,
+ not necessarily EDF start under these conditions
+
+
+
 -->
 
 

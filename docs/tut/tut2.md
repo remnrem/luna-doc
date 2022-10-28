@@ -207,15 +207,15 @@ distinct strata group(s):
 -------------:------------:------------:---------------------------
   [EPOCH]    : .          : 1 level(s) : DUR INC NE
              :            :            : 
-  [STATS]    : CH         : 3 level(s) : MAX MEAN MEDIAN.MEAN MEDIAN.MEDIAN
-             :            :            : MEDIAN.RMS MEDIAN.SKEW MIN NE NE1
-             :            :            : P01 P02 P05 P10 P20 P30 P40 P50
-             :            :            : P60 P70 P80 P90 P95 P98 P99 RMS
-             :            :            : SD SKEW
+  [STATS]    : CH         : 3 level(s) : KURT MAX MEAN MEDIAN.KURT MEDIAN.MEAN
+             :            :            : MEDIAN.MEDIAN MEDIAN.RMS MEDIAN.SKEW
+             :            :            : MIN NE NE1 P01 P02 P05 P10 P20
+             :            :            : P30 P40 P50 P60 P70 P80 P90 P95
+             :            :            : P98 P99 RMS SD SKEW
              :            :            : 
-  [STATS]    : E CH       : (...)      : MAX MEAN MEDIAN MIN P01 P02 P05
-             :            :            : P10 P20 P30 P40 P50 P60 P70 P80
-             :            :            : P90 P95 P98 P99 RMS SKEW
+  [STATS]    : E CH       : (...)      : KURT MAX MEAN MEDIAN MIN P01 P02
+             :            :            : P05 P10 P20 P30 P40 P50 P60 P70
+             :            :            : P80 P90 P95 P98 P99 RMS SKEW
              :            :            : 
 -------------:------------:------------:---------------------------
 ```
@@ -248,12 +248,12 @@ Individuals: 3
 Commands: 1
      STATS
 
-Variables: 27
-     STATS/MAX STATS/MEAN STATS/MEDIAN.MEAN STATS/MEDIAN.MEDIAN STATS/MEDIAN.RMS
-      STATS/MEDIAN.SKEW STATS/MIN STATS/NE STATS/NE1 STATS/P01 STATS/P02 STATS/P05
-      STATS/P10 STATS/P20 STATS/P30 STATS/P40 STATS/P50 STATS/P60 STATS/P70 STATS/P80
-      STATS/P90 STATS/P95 STATS/P98 STATS/P99 STATS/RMS STATS/SD STATS/SKEW
-
+Variables: 29
+     STATS/KURT STATS/MAX STATS/MEAN STATS/MEDIAN.KURT STATS/MEDIAN.MEAN
+      STATS/MEDIAN.MEDIAN STATS/MEDIAN.RMS STATS/MEDIAN.SKEW STATS/MIN STATS/NE
+      STATS/NE1 STATS/P01 STATS/P02 STATS/P05 STATS/P10 STATS/P20 STATS/P30
+      STATS/P40 STATS/P50 STATS/P60 STATS/P70 STATS/P80 STATS/P90 STATS/P95
+      STATS/P98 STATS/P99 STATS/RMS STATS/SD STATS/SKEW
 ```
 
 Adding the `epoch` option to the `STATS` command generated

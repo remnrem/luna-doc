@@ -443,11 +443,13 @@ annot.db: 1 command(s), 3 individual(s), 5 variable(s), 28345 values
 distinct strata group(s):
   commands      : factors           : levels        : variables 
 ----------------:-------------------:---------------:---------------------------
-  [ANNOTS]      : ANNOT             : 12 level(s)   : COUNT DUR
+  [ANNOTS]      : ANNOT             : 11 level(s)   : COUNT DUR
                 :                   :               : 
-  [ANNOTS]      : ANNOT INST        : 6081 level(s) : COUNT DUR
+  [ANNOTS]      : ANNOT INST        : 11 level(s)   : COUNT DUR
                 :                   :               : 
-  [ANNOTS]      : ANNOT INST T      : (...)         : START STOP VAL
+  [ANNOTS]      : ANNOT INST T      : (...)         : CH START START_ELAPSED_HMS START_HMS
+                :                   :               : STOP STOP_ELAPSED_HMS STOP_HMS
+                :                   :               : VAL
                 :                   :               : 
 ----------------:-------------------:---------------:---------------------------
 ```
@@ -506,11 +508,11 @@ _any_ overlap with a REM epoch, in this example.  To include only
 events that _start_ during a REM epoch, add the `start` option:
 
 ```
-luna s.lst -o annot.db -s 'EPOCH & MASK ifnot=REM & ANNOTS start'
+luna s.lst -o annot.db -s 'EPOCH & MASK ifnot=R & ANNOTS start'
 ```
 
 ```
-destrat annot.db +ANNOTS -r ANNOT/apnea_obstructive -v COUNT
+destrat annot.db +ANNOTS -r ANNOT/apnea/obstructive -v COUNT
 ```
 ```
 ID      ANNOT                   COUNT
@@ -729,7 +731,7 @@ see this is noted here also:)
 ```
  CMD #3: MASK
  set masking mode to 'force'
- based on REM 0 epochs match;  newly masked 1364 epochs, unmasked 0 and left 0 unchanged
+ based on R 0 epochs match;  newly masked 1364 epochs, unmasked 0 and left 0 unchanged
  total of 0 of 1364 retained for analysis
 ```
  
