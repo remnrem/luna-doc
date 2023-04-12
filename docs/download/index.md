@@ -8,10 +8,12 @@ Latest stable Luna command-line tool (binaries and source):
 
 | Platform | Link |
 | ----- | ----- |
+| __Source code (all platforms)__ | [https://github.com/remnrem/luna-base/archive/refs/tags/v0.28.tar.gz](https://github.com/remnrem/luna-base/archive/refs/tags/v0.28.tar.gz) |
 | macOS (Intel/x86_64) binary executable | [https://github.com/remnrem/luna-base/releases/download/v0.28/mac_luna.tar.gz](https://github.com/remnrem/luna-base/releases/download/v0.28/mac_luna.tar.gz) |
-| macOS (Silicon/ARM64) binary executable | [http://zzz.bwh.harvard.edu/dist/luna/macOS-arm64.gz](http://zzz.bwh.harvard.edu/dist/luna/macOS-arm64-v0.28.gz)|
 | Windows binary executable | [https://github.com/remnrem/luna-base/releases/download/v0.28/win_luna.zip](https://github.com/remnrem/luna-base/releases/download/v0.28/win_luna.zip) |
-| Source code (all platforms) | [https://github.com/remnrem/luna-base/archive/refs/tags/v0.28.tar.gz](https://github.com/remnrem/luna-base/archive/refs/tags/v0.28.tar.gz) |
+
+<!-- | macOS (Silicon/ARM64) binary executable | [http://zzz.bwh.harvard.edu/dist/luna/macOS-arm64.gz](http://zzz.bwh.harvard.edu/dist/luna/macOS-arm64-v0.28.gz)| -->
+
 
 Latest development source (Luna and _lunaR_):
 
@@ -28,7 +30,7 @@ Luna is released under the
 allowing free sharing and modification of the source code.  There are
 three basic ways to obtain Luna:
 
-- [source code](source.md) for _lunaC_ and _lunaR_, along with
+- ultimately, the best route is to compile from source: see [here](source.md) for _lunaC_ and _lunaR_, along with
   instructions for compilation
 
 - [binary executables](exec.md) for _lunaC_ for Mac OS and Windows
@@ -38,13 +40,9 @@ three basic ways to obtain Luna:
   _lunaC_ and _lunaR_) and comes with R (and RStudio) and the tutorial data pre-installed.
 
 
-!!! hint "Advice for Linux"
-    For most up-to-date Linux distributions, we recommend pulling the
+!!! hint "Advice for Linux & macOS users"
+    For most up-to-date Linux and macOS distributions, we recommend pulling the
     [source](source.md) and compiling directly.
-
-!!! hint "Advice for Mac OS"
-    For most Mac users, we recommend downloading the [binaries](exec.md) 
-    or using the [Dockerized](docker.md) version.
  
 !!! hint "Advice for Windows" 
     For Windows, we recommend using the
