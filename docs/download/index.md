@@ -2,6 +2,25 @@
 
 <p align="right"><em>Current Luna release: <b>v0.28</b> (11-Apr-2023)</em></p>
 
+## Quick links
+
+Latest stable Luna command-line tool (binaries and source):
+
+| Platform | Link |
+| ----- | ----- |
+| macOS (Intel/x86_64) binary executable | [https://github.com/remnrem/luna-base/releases/download/v0.28/mac_luna.tar.gz](https://github.com/remnrem/luna-base/releases/download/v0.28/mac_luna.tar.gz) |
+| macOS (Silicon/ARM64) binary executable | [http://zzz.bwh.harvard.edu/dist/luna/macOS-arm64.gz](http://zzz.bwh.harvard.edu/dist/luna/macOS-arm64-v0.28.gz)|
+| Windows binary executable | [https://github.com/remnrem/luna-base/releases/download/v0.28/win_luna.zip](https://github.com/remnrem/luna-base/releases/download/v0.28/win_luna.zip) |
+| Source code (all platforms) | [https://github.com/remnrem/luna-base/archive/refs/tags/v0.28.tar.gz](https://github.com/remnrem/luna-base/archive/refs/tags/v0.28.tar.gz) |
+
+Latest development source (Luna and _lunaR_):
+
+| Platform | Link |
+| ----- | ----- |
+| Luna source code (all platforms) | [https://github.com/remnrem/luna-base/](https://github.com/remnrem/luna-base/) |
+| _lunaR_ source code (all platforms) | [https://github.com/remnrem/luna/](https://github.com/remnrem/luna/) |
+
+
 ## Installation options 
 
 Luna is released under the

@@ -34,7 +34,14 @@ that you figure out how to do the following:
 
 ## _lunaC_
 
-1. Visit <https://github.com/remnrem/luna-base/releases> and select the folder appropriate platform: macOS, Windows or Linux (Ubuntu x86_64)
+1. Select the binary (ZIP file) from the table below (or or visit <https://github.com/remnrem/luna-base/releases>) and select the folder appropriate platform: macOS, Windows or Linux (Ubuntu x86_64)
+
+| Platform | Link |
+| ----- | ----- |
+| macOS (Intel/x86_64) binary executable | [https://github.com/remnrem/luna-base/releases/download/v0.28/mac_luna.tar.gz](https://github.com/remnrem/luna-base/releases/download/v0.28/mac_luna.tar.gz) |
+| macOS (Silicon/ARM64) binary executable | [http://zzz.bwh.harvard.edu/dist/luna/macOS-arm64.gz](http://zzz.bwh.harvard.edu/dist/luna/macOS-arm64-v0.28.gz)|
+| Windows binary executable | [https://github.com/remnrem/luna-base/releases/download/v0.28/win_luna.zip](https://github.com/remnrem/luna-base/releases/download/v0.28/win_luna.zip) |
+| Source code (all platforms) | [https://github.com/remnrem/luna-base/archive/refs/tags/v0.28.tar.gz](https://github.com/remnrem/luna-base/archive/refs/tags/v0.28.tar.gz) | 
 
 2. Go the the command line on your machine, i.e. [Terminal] for macOS.
 
