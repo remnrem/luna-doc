@@ -79,7 +79,7 @@ files - either on the local (user's) filesystem, or on the host
 
 Please note that within a single R process, you can only run a single instance of _Moonlight_.   If you try to open multiple windows from the same instance, you will see the following error message: 
 
-![img](../img/mlwarn.png)
+![img](img/mlwarn.png)
 
 This is typically harmless - it just means that you've swapped browser
 windows, and if you simply continue working in that new window,

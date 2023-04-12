@@ -162,8 +162,8 @@ Secondary/advanced options:
 | `lights-on` | `08:00:00` | Specify a _lights_on_ time, i.e. ignore after |
 | `th` | 3 | Remove epochs with component outliers at this SD level | 
 | `trim` | 10 | Trim leading/trailing wake, to keep _N_ epochs before/after first/final sleep |          
-| `end-wake` | 120 | Threshold for trimming excessive WASO (mins) - see [`HYPNO`](hypno.md#hypno) notes |
-| `end-sleep` | 5 | Threshold for trimming excessive WASO (mins) - see [`HYPNO`](hypno.md#hypno) notes |
+| `end-wake` | 120 | Threshold for trimming excessive WASO (mins) - see [`HYPNO`](hypnograms.md#hypno) notes |
+| `end-sleep` | 5 | Threshold for trimming excessive WASO (mins) - see [`HYPNO`](hypnograms.md#hypno) notes |
 | `pc` | 0.05 | Require components to have p-value below this, from one-way ANOVA with stage | 
 | `qda` | | Use QDA instead of LDA |
 | `dump-svd` | `f` | Write PCA/SVD components to `f.U`, `f.W` and `f.V` |

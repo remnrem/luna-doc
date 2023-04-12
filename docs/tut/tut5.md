@@ -2,7 +2,7 @@
 
 In this final section, we'll repeat some (but not all) of the steps from
 the previous tutorial
-pages, using [_Moonlight_](../moonlight/index.md) instead of the
+pages, using [_Moonlight_](../moonlight.md) instead of the
 command-line ([_lunaC_](../luna/args.md)) or R
 ([_lunaR_](../ext/R/index.md)) packages.  As might be expected, this
 makes some things easier, but other things harder: that is the reason
@@ -38,7 +38,7 @@ when it appears to start a new session.
     necessarily have restrictions on the number of
     concurrent users this service is able to support.  If the app gives a message that the maximum number
     of users has been reached, try again later.  Alternatively, follow
-    [these instructions](../moonlight/moonlight-install.md) to use locally either a Dockerized
+    [these instructions](../moonlight-install.md) to use locally either a Dockerized
     version of _Moonlight_ or install and run it directly using _lunaR_.
 
 
@@ -606,4 +606,4 @@ increased noise).
 __This concludes the _Moonlight_ tutorial, seeded on the original Luna
  (and _lunaR_) tutorials.  _Moonlight_ has a number of other
 capabilities not even mentioned here. To learn about these other features (including
-automated sleep staging) please visit [this page](../moonlight/index.md).__
+automated sleep staging) please visit [this page](../moonlight.md).__

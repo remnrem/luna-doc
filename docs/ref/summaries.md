@@ -1057,7 +1057,7 @@ information to tell us what those values are.  For example, we may know that the
 | `3` | Front position |
 
 For this type of signal, it can often be convenient to create a correspondoing interval-based annotation also,
-which can be accomplished via the [`S2A`](../annotations.md#s2a) (signal-to-annotation) command. 
+which can be accomplished via the [`S2A`](annotations.md#s2a) (signal-to-annotation) command. 
 
 ```
 luna s.lst -s 'S2A sig=POSITION encoding=left,0,right,1,supine,2,prone,3 & WRITE-ANNOTS hms file=^.annot '
