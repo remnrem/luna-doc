@@ -48,6 +48,12 @@ Hierarchical cluster analysis parameters:
 | `k` | `k=10` | Maximum number of clusters (stopping rule) |
 | `mx` | `mx=20` | Maximum cluster size |
 
+Extracting representative epochs heuristic:
+
+| Parameter | Example | Description |
+|--- | --- | --- |
+| `representative` | `representative=5` | Select 5 representative epochs |
+
 
 <h5>Output</h5>
 
@@ -75,6 +81,25 @@ Epoch-level cluster assignments (strata: `E`)
 | Variable | Description |
 | --- | --- |
 |`CL`| Cluster seed (epoch number) |
+
+
+If selecting _representative epochs_ was performed, the additional outputs will be generated:
+
+Epoch-level examplar assignments (strata: `E`)
+
+| Variable | Description |
+| --- | --- |
+| `K` | Exemplar/cluster number |
+| `KE` | Epoch number of the exemplar | 
+
+Class-level details (strata: `K`)
+
+| Variable | Description |
+| --- | --- |
+|`E`| Epoch number of this exemplar |
+|`N`| Number of epochs associated w/ this exemplar |
+
+See [below](#representative-epochs) for an example of using the `representative` option.
 
 
 <h5>Example</h5>
@@ -230,3 +255,68 @@ very high levels of artifact, they will cluster separately.
 Although simply looking at the raw data would likely provide a
 quick and simple way to similarly spot gross artifact, these types of visual summaries may be useful in the context of automated
 pipelines that deal with large numbers of studies.
+
+### Representative epochs
+
+The `representative` option (with argument _k_) will find _k_
+_representative_/_exemplar_ epochs (and associate every epoch to the
+best-matching exemplar).  This is conceptually similar to the
+hierarchical clustering approach.   It uses a heuristic as described below.
+
+
+The basic heuristic seeds on the epoch-by-epoch distance matrix, and iteratively makes splits of the epochs (using 
+ [Otsu's method](helpers.md#-otsu) on the distribution of distances).  For each split a _representative_ epoch is selected
+ as that which is most similar (lowest median distance) to all other epochs in that split. After making _k_ splits, each epoch is
+ assigned to the nearest representative/exemplar value. 
+
+```
+luna s.lst -o out.db -s ' EPOCH & EXE sig=C3 representative=5 '
+```
+
+Note, it is necessary to explicitly `EPOCH` the data before running `EXE representative`. 
+
+
+Here, we see five splits, as requested, with exemplar epochs `1169`, `294`, etc.
+
+```
+destrat out.db +EXE -r K
+```
+```
+ID      K    E      N
+id01  1    1169   127
+id01  2    294    396
+id01  3    1305   199
+id01  4    40     301
+id01  5    318    341
+```
+```
+destrat out.db +EXE -r E | head -15 
+```
+```
+ID      E     K    KE
+id01    1     4    40
+id01    2     4    40
+id01    3     4    40
+id01    4     4    40
+id01    5     4    40
+id01    6     4    40
+id01    7     4    40
+id01    8     4    40
+id01    9     5    318
+id01    10    4    40
+id01    11    4    40
+id01    12    4    40
+id01    13    4    40
+id01    14    4    40
+...
+```
+
+i.e. most of the initial epochs are assigned to class `4` (which has exemplar epoch 40).   The exemplar epochs can be plotted to show a _typical_ example of that class.
+
+
+The [_Moonlight_](../moonlight.md) vewier has an _EXE_ panel that implements `EXE representative` and shows the outputs: here it runs `representative=5` to select five examplars.  These are shown in the plots below (on the right - color-coded black, red, green, blue and cyan).  The raw signal plotted above each is the 30-seconds signal of the _exemplar_ epoch in each case.  (The left plot is a heatmap of the distance matrix - with colder colors for less similar epochs):
+
+![img](../img/mlref/ml-ref32.png)
+
+That is, the above output is based solely on running `EXE representative` as above.
+

@@ -16,7 +16,7 @@ _Miscellaneous functions designed to help with Luna workflows_
 
 _Automatically compile a sample list_
 
-_to be added_
+See [here](../luna/args.md#-build-option) for details.
 
 <h3>Parameters</h3>
 
@@ -24,15 +24,11 @@ _to be added_
 | --- | --- | --- |
 | `-nsrr` |  | Assume NSRR file names |
 | `-ext` | | Include this extension |
+| `-nospan` | | Do not span folders when name-matching |
 
 <h3>Output</h3>
 
 A sample list written to the standard output stream.
-
-<h3>Example</h3>
-
-_to be added_
-
 
 ## --repath
 
@@ -178,26 +174,6 @@ _to be added_
 <h3>Example</h3>
 
 _to be added_
-
-
-
-## --build
-
-_Automatically compile a sample list_
-
-See [here](../luna/args.md#-build-option) for details.
-
-<h3>Parameters</h3>
-
-| Parameter | Example | Description |
-| --- | --- | --- |
-| `-nsrr` |  | Assume NSRR file names |
-| `-ext` | | Include this extension |
-
-<h3>Output</h3>
-
-A sample list written to standard output.
-
 
 
 ## --otsu

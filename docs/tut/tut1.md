@@ -8,8 +8,10 @@ a handful of commands quickly. The [second section](tut2.md) loops
 back over the same material, but aiming to give more context and
 detail.  The [third section](tut3.md) extends the range of commands
 towards some more genuinely useful analyses of the sleep EEG.  The
-[final section](tut4.md) performs the same steps but using
-[_lunaR_](../ext/R/index.md) instead of [_lunaC_](../luna/args.md).   
+[fourth section](tut4.md) performs the same steps but using
+[_lunaR_](../ext/R/index.md) instead of [_lunaC_](../luna/args.md).
+The final section then retraces many of these steps using the interactive
+[_Moonlight_](../moonlight.md) tool. 
 
 !!! note "Data used in this tutorial"
     This tutorial, based on
@@ -54,8 +56,8 @@ using the terminal, unzip the contents:
 unzip tutorial.zip 
 ```
 
-This should create a folder named `edfs` with six files
-(`learn-nsrr01.edf`, `learn-nsrr01-profusion.xml`, etc), a second
+This should create a folder named `tutorial` which contains: a folder named
+`edfs` with six files (`learn-nsrr01.edf`, `learn-nsrr01-profusion.xml`, etc), a second
 folder named `cmd` (which contains some text files we'll use later in
 this tutorial, given here purely to save you copying and pasting or
 typing things in) and a _sample-list_ file named `s.lst` which defines
@@ -122,8 +124,9 @@ This should write output to a file called `res.txt`, as well as some
 information (the _log_) to the console/terminal, as follows:
 
 ```
+
 ===================================================================
-+++ luna | v0.26.0, 11-Nov-2021 | starting 01-Dec-2021 11:13:58  +++
++++ luna | v0.28.0, 14-Mar-2022 | starting 25-Mar-2023 08:20:29 +++
 ===================================================================
 input(s): s.lst
 output  : .
@@ -131,23 +134,24 @@ commands: c1	DESC
 
 ___________________________________________________________________
 Processing: nsrr01 [ #1 ]
- duration: 11.22.00 | 40920 secs ( clocktime 21.58.17 - 09.20.16 )
+ duration: 11.22.00 | 40920 secs | clocktime 21.58.17 - 09.20.17
 
- signals: 14 (of 14) selected in a standard EDF file:
-  SaO2 | PR | EEG_sec_ | ECG | EMG | EOG_L_ | EOG_R_ | EEG
+ signals: 14 (of 14) selected in a standard EDF file
+  SaO2 | PR | EEG_sec | ECG | EMG | EOG_L | EOG_R | EEG
   AIRFLOW | THOR_RES | ABDO_RES | POSITION | LIGHT | OX_STAT
 
  annotations:
-  N1 (x109) | N2 (x523) | N3 (x17) | R (x238)
-  W (x477) | apnea/obstructive (x37) | arousal (x194) | artifact/SpO2 (x59)
-  desat (x254) | hypopnea (x361)
+  Arousal (x194) | Hypopnea (x361) | N1 (x109) | N2 (x523)
+  N3 (x17) | Obstructive_Apnea (x37) | R (x238) | SpO2_artifact (x59)
+  SpO2_desaturation (x254) | W (x477)
 
  variables:
-  airflow=AIRFLOW | ecg=ECG | eeg=EEG_sec_,EEG | effort=THOR_RES,A...
-  emg=EMG | eog=EOG_L_,EOG... | hr=PR | id=nsrr01 | light=LIGHT
+  airflow=AIRFLOW | ecg=ECG | eeg=EEG_sec,EEG | effort=THOR_RES,A...
+  emg=EMG | eog=EOG_L,EOG_R | hr=PR | id=nsrr01 | light=LIGHT
   oxygen=SaO2,OX_STAT | position=POSITION
  ..................................................................
  CMD #1: DESC
+   options: sig=*
 
 ... (cont'd) ...
 
@@ -155,7 +159,7 @@ ___________________________________________________________________
 ...processed 3 EDFs, done.
 ...processed 1 command set(s),  all of which passed
 -------------------------------------------------------------------
-+++ luna | finishing 01-Dec-2021 11:13:59                       +++
++++ luna | finishing 25-Mar-2023 08:20:29                       +++
 ===================================================================
 ```
 
@@ -171,30 +175,31 @@ cat res.txt
 ```
 EDF filename      : edfs/learn-nsrr01.edf
 ID                : nsrr01
-Clock time        : 21:58:17 - 09:20:17
-Duration          : 11:22:00
+Clock time        : 21.58.17 - 09.20.17
+Duration          : 11:22:00  40920 sec
 # signals         : 14
-Signals           : SaO2[1] PR[1] EEG(sec)[125] ECG[250] EMG[125] EOG(L)[50] 
-                    EOG(R)[50] EEG[125] AIRFLOW[10] THOR RES[10] ABDO RES[10] 
-                    POSITION[1] LIGHT[1] OX STAT[1]
+Signals           : SaO2[1] PR[1] EEG_sec[125] ECG[250] EMG[125] EOG_L[50]
+                    EOG_R[50] EEG[125] AIRFLOW[10] THOR_RES[10] ABDO_RES[10] 
+                    POSITION[1] LIGHT[1] OX_STAT[1]
 
 EDF filename      : edfs/learn-nsrr02.edf
 ID                : nsrr02
-Clock time        : 21:18:06 - 07:15:36
-Duration          : 09:57:30
+Clock time        : 21.18.06 - 07.15.36
+Duration          : 09:57:30  35850 sec
 # signals         : 14
-Signals           : SaO2[1] PR[1] EEG(sec)[125] ECG[250] EMG[125] EOG(L)[50] 
-                    EOG(R)[50] EEG[125] AIRFLOW[10] THOR RES[10] ABDO RES[10] 
-                    POSITION[1] LIGHT[1] OX STAT[1]
+Signals           : SaO2[1] PR[1] EEG_sec[125] ECG[250] EMG[125] EOG_L[50]
+                    EOG_R[50] EEG[125] AIRFLOW[10] THOR_RES[10] ABDO_RES[10]
+                    POSITION[1] LIGHT[1] OX_STAT[1]
 
 EDF filename      : edfs/learn-nsrr03.edf
 ID                : nsrr03
-Clock time        : 20:15:00 - 07:37:00
-Duration          : 11:22:00
+Clock time        : 20.15.00 - 07.37.00
+Duration          : 11:22:00  40920 sec
 # signals         : 14
-Signals           : SaO2[1] PR[1] EEG(sec)[125] ECG[250] EMG[125] EOG(L)[50] 
-                    EOG(R)[50] EEG[125] AIRFLOW[10] THOR RES[10] ABDO RES[10] 
-                    POSITION[1] LIGHT[1] OX STAT[1]
+Signals           : SaO2[1] PR[1] EEG_sec[125] ECG[250] EMG[125] EOG_L[50]
+                    EOG_R[50] EEG[125] AIRFLOW[10] THOR_RES[10] ABDO_RES[10]
+                    POSITION[1] LIGHT[1] OX_STAT[1]
+
 ```
 
 In other words, each EDF contains 14 signals, spanning approximately
@@ -228,14 +233,15 @@ to work with.
 
 Specifically, Luna (by default) will:
 
- - change different flavors of NSRR annotation label that mean to same
- thing (e.g. `Arousal ()`, `Arousal|Arousal (STANDARD)`, etc) to a
- single term (`arousal`); this behavior can be turned off with the
- `nsrr-remap=F` flag
+ - try to identify common _sleep stage annotations_ and change them to a consistent format,
+ e.g. `Sleep Stage 1` becomes `N1`.  This behavior can be turned off with the
+  `annot-remap=F` flag.  (Note, prior to v0.28, Luna used to convert a greater number of
+  terms automatically, e.g. for arousals; for transparency of processing, these
+  steps must now be done explicitly, by adding `nsrr-remap=T`, see below).
  
  - replace all spaces in channel and annotation names with an
    underscore (e.g. `THOR RES` to `THOR_RES`); this behavior can be
-   turned off with the `keep-spaces=F` flag
+   turned off with the `keep-spaces=T` flag
 
  - in addition to the prior point, Luna will also _sanitize_ special
    characters in labels that are likely to cause problems downstream,
@@ -245,38 +251,35 @@ Specifically, Luna (by default) will:
 Running the same command but with these flags set (and also just running for the first individual in the sample list):
 
 ```
-luna s.lst 1 nsrr-remap=F sanitize=F keep-spaces=T -s DESC 
+luna s.lst 1 sanitize=F keep-spaces=T -s DESC 
 ```
 The console now prints the "original" labels:
 ```
- signals: 14 (of 14) selected in a standard EDF file:
+ signals: 14 (of 14) selected in a standard EDF file
   SaO2 | PR | EEG(sec) | ECG | EMG | EOG(L) | EOG(R) | EEG
   AIRFLOW | THOR RES | ABDO RES | POSITION | LIGHT | OX STAT
 
  annotations:
-  Arousal () (x194) | Hypopnea (x361) | NREM1 (x109) | NREM2 (x523)
-  NREM3 (x16) | NREM4 (x1) | Obstructive Apnea (x37) | REM (x238)
-  SpO2 artifact (x59) | SpO2 desaturation (x254) | wake (x477)
+  Arousal () (x194) | Hypopnea (x361) | N1 (x109) | N2 (x523)
+  N3 (x17) | Obstructive Apnea (x37) | R (x238) | SpO2 artifact (x59)
+  SpO2 desaturation (x254) | W (x477)
 ```
-i.e. versus Luna's default representation:
+Running with the `nsrr-remap=T` option changes the annotations to these values:
 ```
- signals: 14 (of 14) selected in a standard EDF file:
-  SaO2 | PR | EEG_sec_ | ECG | EMG | EOG_L_ | EOG_R_ | EEG
-  AIRFLOW | THOR_RES | ABDO_RES | POSITION | LIGHT | OX_STAT
-
  annotations:
   N1 (x109) | N2 (x523) | N3 (x17) | R (x238)
-  W (x477) | apnea/obstructive (x37) | arousal (x194) | artifact/SpO2 (x59)
+  W (x477) | apnea:obstructive (x37) | arousal (x194) | artifact:SpO2 (x59)
   desat (x254) | hypopnea (x361)
 ```
 
 For example:
- - `Obstructive Apnea` becomes `apnea/obstructive`
- - `NREM2` becomes `N2`
- - `THOR RES` becomes `THOR_RES`
- - `EOG(L)` becomes `EOG_L_` (because `sanitize` is true by default)
 
-Why do we make these changes?  Because, similar to R or Matlab, Luna
+ - `Obstructive Apnea` becomes `apnea:obstructive` (from `nsrr-remap=T`)
+ - as before, `NREM2` becomes `N2` (by default, unless `annot-remap=F`)
+ - `THOR RES` becomes `THOR_RES` (unless `keep-spaces=T`)
+ - `EOG(L)` becomes `EOG_L_` (by `sanitize=T`)
+
+Making these changes can be useful as similar to R or Matlab, Luna
 is fundamentally a command-line tool and so uses text input to specify
 operations. As such, having spaces or special characters creates many
 unnecessary problems (e.g. for commands such as
@@ -299,18 +302,13 @@ tutorial.
 luna s.lst -s STATS
 ```
 ```
-nsrr01  STATS  CH/SaO2  .  MAX     99.1196
-nsrr01  STATS  CH/SaO2  .  MIN     0.10071
-nsrr01  STATS  CH/SaO2  .  MEAN    76.9242
-nsrr01  STATS  CH/SaO2  .  MEDIAN  95.1156
-nsrr01  STATS  CH/SaO2  .  SD      37.4744
-nsrr01  STATS  CH/SaO2  .  RMS     85.5665
-nsrr01  STATS  CH/PR    .  MAX     200
-nsrr01  STATS  CH/PR    .  MIN     0.201419
-nsrr01  STATS  CH/PR    .  MEAN    57.3485
-nsrr01  STATS  CH/PR    .  MEDIAN  67.1916
-nsrr01  STATS  CH/PR    .  SD      30.4955
-nsrr01  STATS  CH/PR    .  RMS     64.9523
+nsrr01     STATS     CH/SaO2     .     MEAN     76.9242
+nsrr01     STATS     CH/SaO2     .     MAX      99.1196
+nsrr01     STATS     CH/SaO2     .     MIN      0.10071
+nsrr01     STATS     CH/SaO2     .     SKEW    -1.54459
+nsrr01     STATS     CH/SaO2     .     KURT     0.424721
+nsrr01     STATS     CH/SaO2     .     RMS      85.5665
+nsrr01     STATS     CH/SaO2     .     SD       37.4744
 ... (cont'd)
 ```
 
@@ -353,7 +351,7 @@ destrat res.db +STATS -c CH/ECG,EMG,SaO2 -p 3 -v MEAN | behead
 
 More complicated than it needs to be?  For this simple example,
 certainly.  However, the value of _destrat_ and its _stratified
-output_ (called [_lout_](../luna/destrat.md)) databases will become more apparent when
+output_ (called [_lunout_](../luna/destrat.md)) databases will become more apparent when
 working with larger and more complex result sets.  That is, in real
 analyses results may be stratified by multiple factors (such as
 channel, sleep stage, frequency or power band, epoch, event or class
@@ -460,13 +458,13 @@ output _strata_ from this command.  As an example, to get the count
 the `ANNOT` factor):
 
 ```
-destrat annot.db +ANNOTS -r ANNOT/apnea/obstructive -v COUNT
+destrat annot.db +ANNOTS -r ANNOT/Obstructive_Apnea -v COUNT
 ```
 ```
-ID      ANNOT                   COUNT
-nsrr01  apnea/obstructive       37
-nsrr02  apnea/obstructive       5
-nsrr03  apnea/obstructive       163
+ID         ANNOT                 COUNT
+nsrr01     Obstructive_Apnea     37
+nsrr02     Obstructive_Apnea     5
+nsrr03     Obstructive_Apnea     163
 ```
 
 To count only apneas that occur during REM sleep, we can _epoch_ the
@@ -489,15 +487,15 @@ luna s.lst -o annot.db -s 'EPOCH & MASK ifnot=R & ANNOTS'
 Using _destrat_ to extract the `COUNT` variable once more:
 
 ```
-destrat annot.db +ANNOTS -r ANNOT/apnea/obstructive -v COUNT
+destrat annot.db +ANNOTS -r ANNOT/Obstructive_Apnea -v COUNT
 ```
 
 we obtain the number of events during REM: 
 
 ```
 ID      ANNOT                   COUNT
-nsrr01  apnea/obstructive       27
-nsrr02  apnea/obstructive       3
+nsrr01  Obstructive_Apnea       27
+nsrr02  Obstructive_Apnea       3
 ```
 
 There is no output for the last individual `nsrr03`, as he or she did
@@ -512,12 +510,12 @@ luna s.lst -o annot.db -s 'EPOCH & MASK ifnot=R & ANNOTS start'
 ```
 
 ```
-destrat annot.db +ANNOTS -r ANNOT/apnea/obstructive -v COUNT
+destrat annot.db +ANNOTS -r ANNOT/Obstructive_Apnea -v COUNT
 ```
 ```
 ID      ANNOT                   COUNT
-nsrr01  apnea_obstructive       26
-nsrr02  apnea_obstructive       2
+nsrr01  Obstructive_Apnea       26
+nsrr02  Obstructive_Apnea       2
 ```
 
 ## Putting it together
@@ -674,7 +672,7 @@ destrat out.db +STATS -r CH -c STAGE -v RMS -p 3 | behead
                        CH   EEG                 
              RMS.STAGE_N1   7.355               
              RMS.STAGE_N2   10.646              
-             RMS.STAGE_N3   13.250              
+             RMS.STAGE_N3   13.015              
               RMS.STAGE_R   7.564               
 
                        ID   nsrr02              
@@ -692,7 +690,6 @@ destrat out.db +STATS -r CH -c STAGE -v RMS -p 3 | behead
               RMS.STAGE_R   NA                  
 ```
 
-
 As another example of extracting output, we can get the number
 of records in the EDF for each stage/individual, as this value is
 output after any `RESTRUCTURE` command: `DUR2` is the duration in
@@ -705,7 +702,7 @@ destrat out.db +RESTRUCTURE -c STAGE -v DUR2 | behead
                        ID   nsrr01              
             DUR2.STAGE_N1   3270                
             DUR2.STAGE_N2   15690               
-            DUR2.STAGE_N3   480                 
+            DUR2.STAGE_N3   510                 
              DUR2.STAGE_R   7140                
 
                        ID   nsrr02              
@@ -719,7 +716,6 @@ destrat out.db +RESTRUCTURE -c STAGE -v DUR2 | behead
             DUR2.STAGE_N2   11250               
             DUR2.STAGE_N3   630                 
              DUR2.STAGE_R   0                   
-
 ```
 
 This explains the `NA` (not available) output for the `RMS` for the

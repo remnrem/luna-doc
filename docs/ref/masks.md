@@ -63,9 +63,20 @@ A few important points about how masks and restructuring EDFs work in Luna:
   only filter and modify the unmasked epochs, leaving the contiguous
   masked epochs with the unfiltered, raw signal.  Thus, if the goal is
   to apply a `FILTER` to a subset of unmasked epochs, one should use
-  the `RESTRUCTURE` command after setting the `MASK` and before
+  the `RESTRUCTURE` (or short form `RE`) command after setting the `MASK` and before
   running the `FILTER`.  In general, if you are unsure, it is safer to
-  `RESTRUCTURE` the data once the desired `MASK` has been set.
+  `RESTRUCTURE` the data once the desired `MASK` has been set.  As of v0.28,
+  Luna will give a warning to the console if it ever finds itself being asked
+  to perform any _whole signal_ analysis when some epochs are masked:
+  ```
+  luna s.lst -s ' MASK epoch=1 & FILTER sig=EEG highpass=1 order=10 '
+  ```
+  ```
+  *** warning - running a command that pulls the whole trace
+  ***           but currently an epoch mask set has been set;
+  ***           for this operation to skip masked epochs,
+  ***           you need to run RE (RESTRUCTURE) beforehand
+  ```
 
 - After applying `MASK/RESTRUCTURE` commands, there will typically be
   fewer epochs.  Importantly, however, Luna will track the mapping of
@@ -882,7 +893,12 @@ _Produces an epoch-by-epoch tabulation of the current mask_
 
 <h3>Options</h3>
 
-No options.
+| Option | Example | Description |
+| ---- | ----- | ----- |
+| `annot` | `mask` | Adds epoch-level annotation called `mask` to indicate mask status |
+| `annot-unmasked` | `T` | If `T`, add an annotation when an epoch is _unmasked_ (default is opposite) |
+| `output` | `F` | If `F`, suppress output, i.e. just add the annotation, if `annot` | 
+
 
 <h3>Output</h3>
 

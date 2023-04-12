@@ -27,6 +27,7 @@ has been applied.
 | `sig` | `sig=C3` | Signal to output (only one)  |
 | `edf-dir` | `edf-dir=edfs/` | Set folder where new EDFs should be written |
 | `edf-tag` | `edf-tag=v2` | Add a tag to each new EDF filename |
+| `edf`     | `edf=f1`     | Write to edf `f1.edf` | 
 | `sample-list` | `sample-list=v2.lst` | Name of the new sample-list |
 
 <h5>Output</h5>
@@ -424,7 +425,10 @@ context too.
 
 <h5>Parameters</h5>
 
-None.
+| Parameter | Description |
+| --- | --- |
+| `annot` | Add annotations to mark segment/gap boundaries |
+
 
 <h5>Output</h5>
 
@@ -507,6 +511,16 @@ nsrr01 1    0.0333333  2        120      240    22.02.17   360   22.04.17
 nsrr01 2    0.0166667  1        60       630    22.08.47   690   22.09.47
 nsrr01 3    0.0416667  2.5      150      2070   22.32.47   2220  22.35.17
 ```
+
+If annotations are added, the default labels are `segment` and `gap` (with the instance ID
+reflecting the number of each).  These labels can be changed with the special variables `annot-segment` and `annot-gap` (i.e.
+if there is a pre-existing annotation with that label:
+
+```
+luna s.lst annot-gap=G -s 'SEGMENTS annot & WRITE-ANNOTS file=^.annot'
+```
+
+See [this vignette](../vignettes/merge.md) for an example of using `SEGMENTS annot` to track changes from an EDF+D to an EDF file.
 
 ## SEDF
 

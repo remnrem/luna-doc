@@ -31,15 +31,15 @@ commands: c1	EPOCH
 
 ___________________________________________________________________
 Processing: nsrr02 [ #2 ]
- duration: 09.57.30 | 35850 secs ( clocktime 21.18.06 - 07.15.35 )
+ duration: 09.57.30 | 35850 secs | clocktime 21.18.06 - 07.15.36
 
- signals: 2 (of 14) selected in a standard EDF file:
+ signals: 2 (of 14) selected in a standard EDF file
   ECG | EMG
 
  annotations:
-  N1 (x11) | N2 (x399) | N3 (x185) | R (x120)
-  W (x480) | apnea/obstructive (x5) | arousal (x51) | artifact/SpO2 (x34)
-  desat (x66) | hypopnea (x101)
+  Arousal (x51) | Hypopnea (x101) | N1 (x11) | N2 (x399)
+  N3 (x185) | Obstructive_Apnea (x5) | R (x120) | SpO2_artifact (x34)
+  SpO2_desaturation (x66) | W (x480)
 
  variables:
   ecg=ECG | emg=EMG | id=nsrr02
@@ -99,7 +99,7 @@ d <- read.table( "res.txt" , header=F , sep="\t" , stringsAsFactors=F )
 ```
 
 !!! hint
-    As you'll see in the [next section](tut4.md) of this tutorial, it is now possible to read _lout_ databases
+    As you'll see in the [next section](tut4.md) of this tutorial, it is now possible to read _lunout_ databases
     directly into R
     
 After loading the data, it is convenient to relabel the 6 columns to
@@ -214,8 +214,9 @@ individual, which tracks with the progression of sleep and wake in a
 semi-predictable manner:
 
 ```
-plot( d$T[ 1:950 ] , d$VAL[ 1:950 ]  , ylab = "RMS(ECG)" , xlab = "Epoch" , pch=20 , col = ss$STAGE ) 
-legend("bottomleft",legend=cols , fill = cols )
+inc <- 1:950
+plot( d$T[inc], d$VAL[inc], ylab="RMS(ECG)", xlab="Epoch", pch=20, col=as.factor(ss$STAGE[inc]) ) 
+legend("bottomleft",legend=cols , fill = as.factor( cols ) ) 
 ```
 
 ![img](../img/epoch-plot2.png){width="100%"}
@@ -299,7 +300,7 @@ To view the number of minutes of each sleep stage for the three individuals,
 `NREMC`, we can use:
 
 ```
-destrat stage.db +HYPNO -r SS/N1,N2,N3,R -v MINS
+destrat stage.db +HYPNO -c SS/N1,N2,N3,R -v MINS
 ```
 ```
 ID       MINS.SS_N1   MINS.SS_N2    MINS.SS_N3    MINS.SS_R
@@ -348,46 +349,46 @@ destrat stage.db +HYPNO -i nsrr01  -r E  -v STAGE FLANKING_MIN CLOCK_TIME
 ```
 ```
 ID       E      CLOCK_TIME   FLANKING_MIN  STAGE
-nsrr01   1      21:58:17     0             Wake 
-nsrr01   2      21:58:47     1             Wake 
-nsrr01   3      21:59:17     2             Wake 
-nsrr01   4      21:59:47     3             Wake 
-nsrr01   5      22:00:17     4             Wake 
-nsrr01   6      22:00:47     5             Wake 
-nsrr01   7      22:01:17     6             Wake 
-nsrr01   8      22:01:47     7             Wake 
-nsrr01   9      22:02:17     8             Wake 
-nsrr01   10     22:02:47     9             Wake 
-nsrr01   11     22:03:17     10            Wake 
+nsrr01   1      21:58:17     0             W 
+nsrr01   2      21:58:47     1             W 
+nsrr01   3      21:59:17     2             W 
+nsrr01   4      21:59:47     3             W 
+nsrr01   5      22:00:17     4             W 
+nsrr01   6      22:00:47     5             W 
+nsrr01   7      22:01:17     6             W 
+nsrr01   8      22:01:47     7             W 
+nsrr01   9      22:02:17     8             W 
+nsrr01   10     22:02:47     9             W 
+nsrr01   11     22:03:17     10            W 
  ... cont'd ...                     
-nsrr01   183    23:29:17     0             NREM1
-nsrr01   184    23:29:47     0             NREM2
-nsrr01   185    23:30:17     0             Wake 
-nsrr01   186    23:30:47     0             NREM1
-nsrr01   187    23:31:17     0             NREM2
-nsrr01   188    23:31:47     1             NREM2
-nsrr01   189    23:32:17     2             NREM2
-nsrr01   190    23:32:47     3             NREM2
-nsrr01   191    23:33:17     4             NREM2
-nsrr01   192    23:33:47     5             NREM2
-nsrr01   193    23:34:17     6             NREM2
-nsrr01   194    23:34:47     7             NREM2
-nsrr01   195    23:35:17     8             NREM2
-nsrr01   196    23:35:47     9             NREM2
-nsrr01   197    23:36:17     10            NREM2
-nsrr01   198    23:36:47     10            NREM2
-nsrr01   199    23:37:17     9             NREM2
-nsrr01   200    23:37:47     8             NREM2
-nsrr01   201    23:38:17     7             NREM2
-nsrr01   202    23:38:47     6             NREM2
-nsrr01   203    23:39:17     5             NREM2
-nsrr01   204    23:39:47     4             NREM2
-nsrr01   205    23:40:17     3             NREM2
-nsrr01   206    23:40:47     2             NREM2
-nsrr01   207    23:41:17     1             NREM2
-nsrr01   208    23:41:47     0             NREM2
-nsrr01   209    23:42:17     0             Wake 
-nsrr01   210    23:42:47     0             NREM2
+nsrr01   183    23:29:17     0             N1
+nsrr01   184    23:29:47     0             N2
+nsrr01   185    23:30:17     0             W 
+nsrr01   186    23:30:47     0             N1
+nsrr01   187    23:31:17     0             N2
+nsrr01   188    23:31:47     1             N2
+nsrr01   189    23:32:17     2             N2
+nsrr01   190    23:32:47     3             N2
+nsrr01   191    23:33:17     4             N2
+nsrr01   192    23:33:47     5             N2
+nsrr01   193    23:34:17     6             N2
+nsrr01   194    23:34:47     7             N2
+nsrr01   195    23:35:17     8             N2
+nsrr01   196    23:35:47     9             N2
+nsrr01   197    23:36:17     10            N2
+nsrr01   198    23:36:47     10            N2
+nsrr01   199    23:37:17     9             N2
+nsrr01   200    23:37:47     8             N2
+nsrr01   201    23:38:17     7             N2
+nsrr01   202    23:38:47     6             N2
+nsrr01   203    23:39:17     5             N2
+nsrr01   204    23:39:47     4             N2
+nsrr01   205    23:40:17     3             N2
+nsrr01   206    23:40:47     2             N2
+nsrr01   207    23:41:17     1             N2
+nsrr01   208    23:41:47     0             N2
+nsrr01   209    23:42:17     0             W 
+nsrr01   210    23:42:47     0             N2
  ... cont'd 
 ```
 
@@ -407,11 +408,12 @@ For the first individual, we can use `awk` to extract the indicator
 
 ```
 destrat stage.db +HYPNO -i nsrr01 -r E -v PERSISTENT_SLEEP \
-  | awk ' NR>1 { print $3 } ' > cmd/ps-nsrr01.eannot 
+  | awk ' NR>1 { print "PS"$3 } ' > cmd/ps-nsrr01.eannot 
 ```
 
 which generates an [epoch-annotation
-file](../ref/annotations.md#eannot-files) `ps-nsrr01.eannot`.  
+file](../ref/annotations.md#eannot-files) `ps-nsrr01.eannot` with the two labels `PS0` and `PS1`
+to indicate persistent sleep or not.
 
 !!! note "Windows users"
     For users who do not have `awk` immediately available on your system, the output
@@ -425,10 +427,10 @@ The following Luna command script (`cmd/third.txt`) might then be used:
 EPOCH
 MASK none
 MASK hms=23:00:00-03:00:00
-EPOCH-ANNOT file=cmd/ps-^.eannot recode=0=exc,1=inc
-MASK mask-if=exc
-MASK mask-ifnot=NREM2
-MASK mask-if=apnea_obstructive,hypopnea
+EPOCH-ANNOT file=cmd/ps-^.eannot 
+MASK mask-if=PS0
+MASK mask-ifnot=N2
+MASK mask-if=apnea:obstructive,hypopnea
 DUMP-MASK
 ```
 
@@ -446,29 +448,26 @@ command.)
     You must use 24 hour hh:mm:ss notation, so 11pm is 23:00:00.
 
 We then read the [.eannot](../ref/annotations.md#eannot-files) file
-as an epoch-level annotation, optionally _recoding_ the 0 and 1 labels
-to have the slightly more meaningful labels of `exc` and `inc`
-(i.e. to _exclude_ or _include_ epochs) based on the absence or
-presence of persistent sleep.  That is, we _mask_ those _excluded_
-epochs.  Note that we've used a special character `^` in the script --
+as an epoch-level annotation and _mask_ those epochs to be _excluded_, i.e.
+those with `PS0`.  Note that we've used a special character `^` in the script --
 this is expanded into the current ID of the EDF (based on the first
 column of the sample-list), thereby providing a convenient way to use
 a single command script across multiple individuals. That is, here it
 looked for a file called `cmd/ps-nsrr01.eannot`.
 
 We then mask any epoch that is not stage 2 NREM sleep (annotation
-`NREM2`).  Finally, we mask any epochs that contain at least one apnea
+`N2`).  Finally, we mask any epochs that contain at least one apnea
 or hypopnea event. Because these tutorial files come from the NSRR,
 and so have associated [annotation files](../ref/annotations.md), we
 know about these types of respiratory events, i.e. they were manually
 annotated.  Luna has a set of automatic functions that [recast NSRR
 annotations](../nsrr.md) into a single, clean set: this page is where
-`apnea_obstructive` and `hypopnea` are [defined](../nsrr.md#respiratory-events).
+`apnea:obstructive` and `hypopnea` are [defined](https://gitlab-scm.partners.org/zzz-public/nsrr/-/tree/master/common).
 
 
 !!! Note 
     Here we used the `mask-ifnot` rather than `ifnot` flag: the
-    difference is that the former will not unmask NREM2 epochs that
+    difference is that the former will not unmask N2 epochs that
     were previously masked.  Remember:
     
     * To _mask_ or _set the mask to true_ means to **exclude** that epoch.  
@@ -482,8 +481,13 @@ Let's run this command, just for `nsrr01`, in order to study the output sent to 
 that describes the masking process (i.e. we'll ignore the output in `out.db`):
 
 ```
-luna s.lst nsrr01 -o out.db < cmd/third.txt
+luna s.lst id=nsrr01 nsrr-remap=T -o out.db < cmd/third.txt
 ```
+
+Note that the script used the NSRR remapped annotation terms
+(i.e. `apnea:obstructive`) and so we must include the `nsrr-remap=T`
+flag to make that mapping.  Alternatively, we could simply have
+written the script to reference `Obstructive Apnea` instead.
 
 Looking at the output written to the console, we can track what
 happened at each `MASK` stage.  First, all epochs are included (with
@@ -513,8 +517,6 @@ epochs. As such, we can still attach the annotations from the file
 
 ```
  CMD #4: EPOCH-ANNOT
-  remapping from 0 to exc
-  remapping from 1 to inc
  mapping 2 distinct epoch-annotations (1364 in total) from cmd/ps-nsrr01.eannot
 ```
 
@@ -547,7 +549,7 @@ takes us down to 86 epochs:
 ```
  CMD #7: MASK
  set masking mode to 'mask' (default)
-  based on apnea/obstructive 60 epochs match; 7 newly masked, 0 unmasked, 1357 unchanged
+  based on apnea:obstructive 60 epochs match; 7 newly masked, 0 unmasked, 1357 unchanged
   total of 228 of 1364 retained
   based on hypopnea 509 epochs match; 142 newly masked, 0 unmasked, 1222 unchanged
   total of 86 of 1364 retained
@@ -576,15 +578,15 @@ luna s.lst @cmd/vars.txt sig=EEG1,EEG2 < cmd/fourth.txt
 ```
 ```
 Processing: nsrr01 [ #1 ]
- duration: 11.22.00 | 40920 secs ( clocktime 21.58.17 - 09.20.16 )
+ duration: 11.22.00 | 40920 secs | clocktime 21.58.17 - 09.20.17
 
  signals: 2 (of 14) selected in a standard EDF file:
   EEG2 | EEG1
 
  annotations:
-  N1 (x109) | N2 (x523) | N3 (x17) | R (x238)
-  W (x477) | apnea/obstructive (x37) | arousal (x194) | artifact/SpO2 (x59)
-  desat (x254) | hypopnea (x361)
+  Arousal (x194) | Hypopnea (x361) | N1 (x109) | N2 (x523)
+  N3 (x17) | Obstructive_Apnea (x37) | R (x238) | SpO2_artifact (x59)
+  SpO2_desaturation (x254) | W (x477)
 
  variables:
   eeg=EEG2,EEG1 | id=nsrr01
@@ -617,6 +619,7 @@ nsrr01	WRITE	.	.	DUR1	40920
 nsrr01	WRITE	.	.	DUR2	40920
   data are not truly discontinuous
   writing as a standard EDF
+  writing 2 channels
   saved new EDF, newedfs/learn-nsrr01-v2.edf
 
 ___________________________________________________________________
@@ -662,7 +665,7 @@ nsrr03     newedfs/learn-nsrr03-v2.edf
 We can also inspect the new sets of EDFs, using the `SUMMARY` command on `new.lst`:
 
 ```
-luna new.lst nsrr01 -s SUMMARY
+luna new.lst id=nsrr01 -s SUMMARY
 ```
 ```
 EDF filename   : newedfs/learn-nsrr01-v2.edf
@@ -918,7 +921,7 @@ Specifically, if we had a command file as follows:
 
 ```
 EPOCH 
-MASK ifnot=NREM2
+MASK ifnot=N2
 RESTRUCTURE
 FILTER bandpass=0.3,35 ripple=0.02 tw=1
 ARTIFACTS mask
@@ -929,7 +932,7 @@ PSD spectrum
 ```
 
 then the following command should epoch the signals, only include
-NREM2 epochs, filter the EEG and attempt to remove epochs that contain
+N2 epochs, filter the EEG and attempt to remove epochs that contain
 gross artifact, and then calculate the power spectra, both for
 classical bands (delta, alpha, sigma, etc) and also for each frequency
 bin (subject to the resolution determined by the sampling frequency
@@ -980,7 +983,7 @@ for (i in ids) plot( d$F[ d$ID == i ] , log( d$PSD[ d$ID == i ] ) ,
   type="l" , xlab="Hz" , ylab="log(uV^2/Hz)" , lwd=2,main=i) 
 ```
 
-![img](../img/psd.png){width="100%"}
+![img](../img/psd.png)
 
 Especially for the second individual, we see the characteristic peak
 in the sigma band (11-15Hz), typically representing spindle activity
@@ -1048,23 +1051,24 @@ nsrr03 EEG  0.72       0.19
 ```
 
 Because we added the `annot` option, Luna generated some annotations
-that represent the spindle calls.  These are then saved in the final
+that represent the spindle calls and some associated per-spindle meta-data (e.g. amplitude `amp`).
+These are then saved in the final
 command, `WRITE-ANNOTS` to [.annot](../ref/annotations.md) files.
 
 ```
 head spindles-nsrr01.txt 
 ```
 ```
-# spindles | Spindle intervals
-class      instance   channel   start      stop        meta
-spindles   15         EEG       2706.560   2707.176    .
-spindles   11         EEG       2834.640   2835.224    .
-spindles   15         EEG       2868.120   2868.752    .
-spindles   11         EEG       2868.832   2869.656    .
-spindles   15         EEG       2870.896   2871.408    .
-spindles   15         EEG       2905.008   2905.696    .
-spindles   15         EEG       2949.696   2950.520    .
-spindles   11         EEG       2969.200   2969.768    .
+class     instance channel  start     stop      meta
+spindles  15       EEG      2706.560  2707.176  amp=11.067|dur=0.616|frq=13.798|isa=0.790
+spindles  11       EEG      2834.640  2835.224  amp=19.170|dur=0.584|frq=10.274|isa=0.839
+spindles  15       EEG      2868.120  2868.752  amp=12.517|dur=0.632|frq=13.449|isa=0.889
+spindles  11       EEG      2868.832  2869.656  amp=15.997|dur=0.824|frq=10.315|isa=0.993
+spindles  15       EEG      2870.896  2871.408  amp=13.363|dur=0.512|frq=13.671|isa=0.900
+spindles  15       EEG      2905.008  2905.696  amp=16.057|dur=0.688|frq=13.081|isa=1.643
+spindles  15       EEG      2949.696  2950.520  amp=19.656|dur=0.824|frq=14.563|isa=2.408
+spindles  11       EEG      2969.200  2969.768  amp=15.151|dur=0.568|frq=9.6831|isa=0.823
+spindles  11       EEG      2978.264  2979.192  amp=14.449|dur=0.928|frq=10.237|isa=0.924
 ...
 ```
 

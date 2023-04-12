@@ -1,7 +1,7 @@
 	
 # /R/epeat
 
-In this final section, we'll repeat the steps of the previous three
+In this section, we'll repeat the steps of the previous three
 tutorial pages, but using [_lunaR_](../ext/R/index.md) instead of
 [_lunaC_](../luna/args.md).  That is, these sections mirror the
 sections from the past three tutorials, and we'll try to accomplish
@@ -147,12 +147,12 @@ leval( "DESC" )
 ```
 EDF filename      : edfs/learn-nsrr01.edf
 ID                : nsrr01
-Clock time        : 21:58:17 - 09:20:17
-Duration          : 11:22:00
+Clock time        : 21.58.17 - 09.20.16
+Duration          : 11:22:00  40920 sec
 # signals         : 14
-Signals           : SaO2[1] PR[1] EEG(sec)[125] ECG[250] EMG[125] EOG(L)[50] 
-                    EOG(R)[50] EEG[125] AIRFLOW[10] THOR RES[10] ABDO RES[10] 
-                    POSITION[1] LIGHT[1] OX STAT[1] 
+Signals           : SaO2[1] PR[1] EEG_sec[125] ECG[250] EMG[125] EOG_L[50]
+                    EOG_R[50] EEG[125] AIRFLOW[10] THOR_RES[10] ABDO_RES[10] POSITION[1]
+                    LIGHT[1] OX_STAT[1]
 ```
 
 To recap: here we've used a combination of _lunaR_ commands to
@@ -326,7 +326,7 @@ View(k)
 
 
 To mirror the previous tutorial section, we need now to extract the
-_"signal means for the ECG, EMG and SaO2".  Here we can use the
+_"signal means for the ECG, EMG and SaO2"_.  Here we can use the
 [`lx()`](^lx) function with an additional parameter (the command
 name), which will, in this case (as there is only a single table
 associated with this command's output) will return a data-frame with
@@ -389,14 +389,14 @@ To see what those annotations classes are, we can use the [`lannots()`](^lannots
 lannots()
 ```
 ```
- [1] "N1"                "N2"                "N3"                "R"                
- [5] "W"                 "apnea/obstructive" "arousal"           "artifact/SpO2"    
- [9] "desat"             "hypopnea"         
+ [1] "Arousal"           "Hypopnea"          "N1"               
+ [4] "N2"                "N3"                "Obstructive_Apnea"
+ [7] "R"                 "SpO2_artifact"     "SpO2_desaturation"
 ```
 Re-running `lannots()` with a single annotation class name as a parameter, we'll get a list of 
 the intervals (in seconds elapsed since the start of the EDF):
 ```
-lannots( "apnea/obstructive" )
+lannots( "Obstructive_Apnea" )
 ```
 ```
 [[1]]
@@ -466,7 +466,7 @@ a <- letable( annots = lannots() )
     table( ss ) 
     ```
     ```
-    N1  N2  N3   R   W 
+     N1  N2  N3   R   W 
     109 523  17 238 477 
     ```
 
@@ -500,17 +500,17 @@ alternatively, just write it directly:
 d <- k$ANNOTS$ANNOT
 ```
 
-If we restrict to rows where the annotation class name is `apnea/obstructive`, we'll see that `COUNT`s 
+If we restrict to rows where the annotation class name is `Obstructive_Apnea`, we'll see that `COUNT`s 
 for each individual.
 
 ```
-d[ d$ANNOT == "apnea/obstructive" , ]
+d[ d$ANNOT == "Obstructive_Apnea" , ]
 ```
 ```
        ID             ANNOT COUNT    DUR
-14 nsrr01 apnea/obstructive    37  824.5
-15 nsrr02 apnea/obstructive     5   67.7
-16 nsrr03 apnea/obstructive   163 3795.6
+14 nsrr01 Obstructive_Apnea    37  824.5
+15 nsrr02 Obstructive_Apnea     5   67.7
+16 nsrr03 Obstructive_Apnea   163 3795.6
 ```
 
 Reassuringly, these match what was obtained in the previous tutorial
@@ -528,12 +528,12 @@ d <- k$ANNOTS$ANNOT
 ```
 
 ```
-d[ d$ANNOT == "apnea/obstructive" , ]
+d[ d$ANNOT == "Obstructive_Apnea" , ]
 ```
 ```
       ID             ANNOT COUNT   DUR
-7 nsrr01 apnea/obstructive    27 668.4
-8 nsrr02 apnea/obstructive     3  43.4
+7 nsrr01 Obstructive_Apnea    27 668.4
+8 nsrr02 Obstructive_Apnea     3  43.4
 ```
 
 Again, these results match what we observed with _lunaC_.
@@ -572,7 +572,7 @@ the command file.  When using _lunaC_, we'd specify the value of
 `sig` to define the [signal list](../luna/args.md#signal-lists). For example, 
 
 ```
-luna s.lst stage=NREM1 sig=EEG -o out.db < cmd/first.txt
+luna s.lst stage=N1 sig=EEG -o out.db < cmd/first.txt
 ```
 
 In _lunaR_, we can set _Luna environment variables_ with the
@@ -589,7 +589,7 @@ We can query if a value exists, with [`lvar()`](^lvar):
 lvar("stage")
 ```
 ```
-[1] "NREM1"
+[1] "N1"
 ```
 
 We can use a similar approach with `sig`, to specify which signal(s)
@@ -773,18 +773,19 @@ lx2( k , "STATS" )
 which conveniently compiles all the similar results from different sleep stages into a _single_ table (nb.
 some columns omitted for clarity):
 ```
-         ID  CH STAGE   MAX     MEAN   MEDIAN      MIN     RMS      SD
-N1.1 nsrr01 EEG N1   59.313 -0.29545 -0.49019  -81.862  7.3549  7.3490
-N1.2 nsrr02 EEG N1   49.509  0.00717  0.49019  -72.058 10.3615 10.3616
-N1.3 nsrr03 EEG N1  125.000  0.19837  0.49019 -124.019 12.3021 12.3005
-N2.1 nsrr01 EEG N2  125.000 -0.31312 -0.49019 -124.019 10.6460 10.6414
-N2.2 nsrr02 EEG N2  125.000 -0.13494  0.49019 -124.019 14.7424 14.7418
-N2.3 nsrr03 EEG N2  125.000  0.12660  0.49019 -124.019 14.4967 14.4961
-N3.1 nsrr01 EEG N3  121.078 -0.47093 -0.49019 -112.254 13.2500 13.2417
-N3.2 nsrr02 EEG N3  125.000 -0.13073  0.49019 -124.019 20.0546 20.0542
-N3.3 nsrr03 EEG N3  125.000  0.17191  0.49019 -124.019 18.9800 18.9794
-R.1  nsrr01 EEG  R   85.784 -0.37150 -0.49019  -82.843  7.5635  7.5544
-R.2  nsrr02 EEG  R  125.000 -0.38422  0.49019 -124.019 14.1464 14.1412
+         ID  CH STAGE      KURT       MAX         MEAN        MIN       P01
+N1.1 nsrr01 EEG    N1  1.770623  59.31373 -0.295451220  -81.86275 -18.13725
+N1.2 nsrr02 EEG    N1  1.976144  49.50980  0.007177659  -72.05882 -28.92157
+N1.3 nsrr03 EEG    N1 37.534412 125.00000  0.198371041 -124.01961 -25.98039
+N2.1 nsrr01 EEG    N2  2.935892 125.00000 -0.313127132 -124.01961 -27.94118
+N2.2 nsrr02 EEG    N2  6.550833 125.00000 -0.134945206 -124.01961 -40.68627
+N2.3 nsrr03 EEG    N2 20.749735 125.00000  0.126607059 -124.01961 -37.74510
+N3.1 nsrr01 EEG    N3  7.165718 121.07843 -0.454932718 -112.25490 -37.74510
+N3.2 nsrr02 EEG    N3  1.547826 125.00000 -0.130731673 -124.01961 -51.47059
+N3.3 nsrr03 EEG    N3  2.156775 125.00000  0.171914099 -124.01961 -47.54902
+R.1  nsrr01 EEG     R  2.869020  85.78431 -0.371502169  -82.84314 -19.11765
+R.2  nsrr02 EEG     R 22.273566 125.00000 -0.384220044 -124.01961 -44.60784
+...
 ```
 
 Because we used `TAG` in the script, we have a variable named `STAGE`
@@ -801,18 +802,18 @@ d <- lx2( k , "STATS")
 d[ , c("ID","STAGE","RMS")]
 ```
 ```
-            ID STAGE       RMS
-NREM1.1 nsrr01    N1  7.354944
-NREM1.2 nsrr02    N1 10.361542
-NREM1.3 nsrr03    N1 12.302106
-NREM2.1 nsrr01    N2 10.646079
-NREM2.2 nsrr02    N2 14.742420
-NREM2.3 nsrr03    N2 14.496728
-NREM3.1 nsrr01    N3 13.250009
-NREM3.2 nsrr02    N3 20.054659
-NREM3.3 nsrr03    N3 18.980088
-REM.1   nsrr01     R  7.563595
-REM.2   nsrr02     R 14.146456
+         ID STAGE       RMS
+N1.1 nsrr01    N1  7.354944
+N1.2 nsrr02    N1 10.361542
+N1.3 nsrr03    N1 12.302106
+N2.1 nsrr01    N2 10.646079
+N2.2 nsrr02    N2 14.742420
+N2.3 nsrr03    N2 14.496728
+N3.1 nsrr01    N3 13.014505
+N3.2 nsrr02    N3 20.054659
+N3.3 nsrr03    N3 18.980088
+R.1  nsrr01     R  7.563595
+R.2  nsrr02     R 14.146456
 ```
 
 To get a nice tabulation, we could do the following: 
@@ -824,7 +825,7 @@ with( d , tapply( RMS , list( ID , STAGE ) , mean ) )
 ```
 ```
               N1       N2       N3         R
-nsrr01  7.354944 10.64608 13.25001  7.563595
+nsrr01  7.354944 10.64608 13.01451  7.563595
 nsrr02 10.361542 14.74242 20.05466 14.146456
 nsrr03 12.302106 14.49673 18.98009        NA
 ```
@@ -999,8 +1000,9 @@ That's better.  We can check those channel names with `lchs()`:
 lchs()
 ```
 ```
- [1] "SaO2"     "PR"       "EEG_sec_" "ECG"      "EMG"      "EOG_L_"   "EOG_R_"  
- [8] "EEG"      "AIRFLOW"  "THOR_RES" "ABDO_RES" "POSITION" "LIGHT"    "OX_STAT" 
+ [1] "SaO2"     "PR"       "EEG_sec"  "ECG"      "EMG"      "EOG_L"   
+ [7] "EOG_R"    "EEG"      "AIRFLOW"  "THOR_RES" "ABDO_RES" "POSITION"
+[13] "LIGHT"    "OX_STAT" 
 ```
 
 
@@ -1032,12 +1034,14 @@ Note that if we now request `lchs()` again, Luna will automatically use the [_pr
 lchs()
 ```
 ```
- [1] "SaO2"     "PR"       "EEG2"     "ECG"      "EMG"      "EOG_L_"   "EOG_R_"  
- [8] "EEG1"     "AIRFLOW"  "THOR_RES" "ABDO_RES" "POSITION" "LIGHT"    "OXSTAT"  
+ [1] "SaO2"     "PR"       "EEG2"     "ECG"      "EMG"      "EOG_L"   
+ [7] "EOG_R"    "EEG1"     "AIRFLOW"  "THOR_RES" "ABDO_RES" "POSITION"
+[13] "LIGHT"    "OXSTAT"  
 ```
 
 That is, we can still refer to the original `EEG(sec)` as either
-`EEG(sec)` or `EEG2`, but all output will use `EEG2`.
+`EEG_sec` (i.e. `EEG(sec)` after sanitization) or `EEG2`, but all
+output will use `EEG2`.
 
 Finally, we can run the commands in `cmd/second.txt`:
 ```
@@ -1060,9 +1064,15 @@ lx( k , "STATS" )
 ```
 
 ```
-      ID   CH MAX       MEAN     MEDIAN       MIN       RMS        SD
-1 nsrr01 EEG1 125 -0.3140503 -0.4901961 -124.0196 10.242558 10.237744
-2 nsrr01 EEG2 125  1.4411837  1.4705882 -124.0196  9.771271  9.664407
+      ID   CH     KURT MAX       MEAN       MIN       P01       P02       P05
+1 nsrr01 EEG1 3.496488 125 -0.3138729 -124.0196 -26.96078 -22.05882 -16.17647
+2 nsrr01 EEG2 5.605977 125  1.4410615 -124.0196 -25.00000 -20.09804 -13.23529
+         P10       P20       P30        P40        P50      P60      P70
+1 -12.254902 -7.352941 -4.411765 -2.4509804 -0.4901961 1.470588 4.411765
+2  -9.313725 -5.392157 -2.450980 -0.4901961  1.4705882 3.431373 5.392157
+       P80      P90      P95      P98      P99       RMS        SD        SKEW
+1 6.372549 11.27451 16.17647 22.05882 26.96078 10.239962 10.235153  0.07195872
+2 8.333333 12.25490 16.17647 22.05882 25.98039  9.767967  9.661084 -0.06160423
 ```
 
 That is, we used the variable `${eeg}` which was set to `EEG1` and
@@ -1102,6 +1112,7 @@ We next extract the epoch-level output from `STATS`:
 ```
 d <- lx( k , "STATS" , "CH" , "E" ) 
 ``` 
+Here, showing only a subset of columns in the output below: 
 ```
 head(d)
 ```
@@ -1115,7 +1126,7 @@ head(d)
 6 nsrr02 ECG 6 1.25 0.003168627 0.02450980 -0.7401961 0.2720457 0.2720454
 ```
 
-As expected, `d` has 1195 rows, corresponding to the 1196 epochs (i.e. see `dim(d)`).
+As expected, `d` has 1195 rows, corresponding to the 1195 epochs (i.e. see `dim(d)`).
 
 The aim is to plot the RMS of the ECG channel coloured by sleep stage.
 To attach information on the sleep stage of an NSRR individual, we can
@@ -1328,10 +1339,10 @@ We can check that it has been added as follows:
 lannots()
 ```
 ```
- [1] "N1"                "N2"                "N3"               
- [4] "R"                 "SleepStage"        "W"                
- [7] "apnea/obstructive" "arousal"           "artifact/SpO2"    
-[10] "desat"             "hypopnea"          "persistent_sleep" 
+ [1] "Arousal"           "Hypopnea"          "N1"               
+ [4] "N2"                "N3"                "Obstructive_Apnea"
+ [7] "R"                 "SleepStage"        "SpO2_artifact"    
+[10] "SpO2_desaturation" "W"                 "persistent_sleep" 
 ```
 
 Finally, here we illustrate how to use multiple `leval()` statements
@@ -1383,7 +1394,7 @@ nsrr01 : 14 (of 14) signals, 12 annotations, 11.22.00 duration, 235 unmasked 30-
 ```
 This takes us to 235 epochs; we next exclude epochs with any apnea or hypopnea events:
 ```
-leval( "MASK mask-if=apnea/obstructive,hypopnea" )
+leval( "MASK mask-if=Obstructive_Apnea,Hypopnea" )
 ```
 ```
 nsrr01 : 14 (of 14) signals, 12 annotations, 11.22.00 duration, 86 unmasked 30-sec epochs, and 1278 masked
@@ -1394,7 +1405,7 @@ This gives us 86 epochs, as per the previous example with _lunaC_.
 We can confirm these steps by viewing the results of `letable()` and including these relevant annotations: 
 
 ```
-d <- letable( annots = c( "persistent_sleep" , "NREM2" , "apnea_obstructive" , "hypopnea" ) )
+d <- letable( annots = c( "persistent_sleep" , "N2" , "Obstructive_Apnea" , "Hypopnea" ) )
 ```
 
 We can view the epoch table here (if the image is too small, click to upon in a new browser tab):
@@ -1421,7 +1432,7 @@ nsrr01 : 14 (of 14) signals, 12 annotations, 00.43.00 duration, 86 unmasked 30-s
 
 Again, we can view the `letable()` for this:
 ```
-d <- letable( annots = c( "persistent_sleep" , "N2" , "apnea/obstructive" , "hypopnea" ) )
+d <- letable( annots = c( "persistent_sleep" , "N2" , "Obstructive_Apnea" , "Hypopnea" ) )
 ```
 
 All masked epochs have now been dropped, although Luna still retains the original time/epoch encoding in `E0`, etc.
@@ -1443,7 +1454,7 @@ through _lunaC_, which is as follows:
 ```
 mV 
 RESAMPLE sr=100
-FILTER bandpass=0.3,35 ripple=0.02 tw=1
+FILTER bandpass=0.3,35 ripple=0.02 tw=1 fft
 REFERENCE ref=EEG1 sig=EEG2 
 WRITE edf-tag=v2 edf-dir=newedfs/ sample-list=new.lst
 ```
@@ -1481,32 +1492,33 @@ leval.project( nsl , "DESC" )
 ```
 
 ```
-nsrr01 : 2 signals, 0 annotations, 11:22:00 duration
+nsrr01 : 2 (of 2) signals, 0 annotations, 11.22.00.000 duration
 evaluating...
 EDF filename      : newedfs/learn-nsrr01-v2.edf
 ID                : nsrr01
-Clock time        : 21:58:17 - 09:20:17
-Duration          : 11:22:00
+Clock time        : 21.58.17 - 09.20.17
+Duration          : 11:22:00  40920 sec
 # signals         : 2
 Signals           : EEG2[100] EEG1[100]
 
-nsrr02 : 2 signals, 0 annotations, 09:57:30 duration
+nsrr02 : 2 (of 2) signals, 0 annotations, 09.57.30.000 duration
 evaluating...
 EDF filename      : newedfs/learn-nsrr02-v2.edf
 ID                : nsrr02
-Clock time        : 21:18:06 - 07:15:36
-Duration          : 09:57:30
+Clock time        : 21.18.06 - 07.15.36
+Duration          : 09:57:30  35850 sec
 # signals         : 2
 Signals           : EEG2[100] EEG1[100]
 
-nsrr03 : 2 signals, 0 annotations, 11:22:00 duration
+nsrr03 : 2 (of 2) signals, 0 annotations, 11.22.00.000 duration
 evaluating...
 EDF filename      : newedfs/learn-nsrr03-v2.edf
 ID                : nsrr03
-Clock time        : 20:15:00 - 07:37:00
-Duration          : 11:22:00
+Clock time        : 20.15.00 - 07.37.00
+Duration          : 11:22:00  40920 sec
 # signals         : 2
 Signals           : EEG2[100] EEG1[100]
+
 ```
 
 ![img](../img/rt13.png){width="100%"}
@@ -1540,19 +1552,22 @@ Reset the Luna environment:
 ```
 lreset()
 ```
+
+_Before attaching the EDF_, we can specify that we want to restrict
+analyses to the `EEG` channel (no other variables were used in this
+script, so we didn't attach a parameter file, and so we use `EEG` and
+not the alias `EEG1` here):
+
+```
+lset( "sig" , "EEG" )
+```
+
 Attach `nsrr01`:
 
 ```
 lattach( sl , 1 ) 
 ```
 
-Specify that we want to restrict analyses to the `EEG` channel (no
-other variables were used in this script, so we didn't attach a
-parameter file, and so we use `EEG` and not the alias `EEG1` here):
-
-```
-lset( "sig" , "EEG" )
-```
 
 Run the script:
 ```
@@ -1563,8 +1578,8 @@ Extract channel-level (whole-night) statistics:
 lx( k , "SIGSTATS" , "CH" )  
 ```
 ```
-      ID   CH         CLIP       H1        H2        H3     RMS
-1 nsrr01 EEG1 2.707194e-06 78.38342 0.3536182 0.8316128 8.53764
+      ID  CH       H1        H2        H3
+1 nsrr01 EEG 78.38342 0.3536182 0.8316128
 ```
 
 Extract epoch-level statistics:
@@ -1584,19 +1599,19 @@ q <- leval( "STAGE" )
 ```
 > ss <- lx(q,"STAGE")
 > head(ss)
-      ID  E CLOCK_TIME MINS STAGE STAGE_N
-1 nsrr01 54   22:24:47 26.5 NREM1      -1
-2 nsrr01 55   22:25:17 27.0 NREM1      -1
-3 nsrr01 56   22:25:47 27.5 NREM1      -1
-4 nsrr01 58   22:26:47 28.5 NREM1      -1
-5 nsrr01 59   22:27:17 29.0 NREM1      -1
-6 nsrr01 60   22:27:47 29.5 NREM1      -1
+      ID  E CLOCK_TIME MINS OSTAGE STAGE STAGE_N START
+1 nsrr01 54   22:24:47 26.5     N1    N1      -1  1590
+2 nsrr01 55   22:25:17 27.0     N1    N1      -1  1620
+3 nsrr01 56   22:25:47 27.5     N1    N1      -1  1650
+4 nsrr01 58   22:26:47 28.5     N1    N1      -1  1710
+5 nsrr01 59   22:27:17 29.0     N1    N1      -1  1740
+6 nsrr01 60   22:27:47 29.5     N1    N1      -1  1770
 ```
 ```
 > dim(ss)
-[1] 887   6
-> dim(d)
 [1] 887   8
+> dim(d)
+[1] 887   6
 ```
 
 ```
@@ -1621,9 +1636,10 @@ based on these metrics.
 
 ```
 EPOCH 
-MASK if=wake
+MASK if=W
 RESTRUCTURE
 FILTER bandpass=0.3,35 ripple=0.02 tw=1
+SIGSTATS epoch
 ARTIFACTS mask
 CHEP-MASK ep-th=3,3,3
 CHEP epochs
@@ -1747,20 +1763,21 @@ plot( y$SEC - min(y$SEC) , y$EEG , type="l",
 
 
 In this final section, we'll re-run the `cmd/seventh.txt` script in _lunaR_:
+
 ```
 EPOCH 
-MASK ifnot=NREM2
+MASK ifnot=N2
 RESTRUCTURE
-FILTER bandpass=0.3,35 ripple=0.02 tw=1
+FILTER bandpass=0.3,35 ripple=0.02 tw=1 fft
 ARTIFACTS mask
-RESTRUCTURE
 CHEP-MASK ep-th=3,3,3
-CHEP epochs
+CHEP epoch
 RESTRUCTURE
 PSD spectrum
-SPINDLES fc=11,15  annots=spindles/
-WRITE-ANNOTS annot=spindles file=edfs/spindles-^.annot
+SPINDLES fc=11,15 annot=spindles
+WRITE-ANNOTS file=spindles-^.txt annot=spindles
 ```
+
 
 We'll first reset all environment variables:
 ```
@@ -1803,7 +1820,9 @@ to frequencies of 0.5 Hz and above:
 d <- d[ d$F >= 0.5 , ] 
 ```
 
-Plots of power spectra; create 3 plots, on a log-scale, of
+Plots of power spectra; create 3 plots, on a log-scale (nb. due to
+very minor changes in some of the default settings of Luna since making this plot,
+the exact contour of these PSDs may look slightly different from below):
 
 ```
 par(mfcol=c(1,3))
@@ -1827,7 +1846,7 @@ lset( "sig" , "EEG2" )
 We can specify the Luna commands on the R command line this time, instead of reading them from a file:
 
 ```
-k2 <- leval.project( sl , "EPOCH & MASK if=wake & PSD spectrum max=62" ) 
+k2 <- leval.project( sl , "EPOCH & MASK if=W & PSD spectrum max=62" ) 
 ```
 
 Extracting the PSD:
@@ -1861,13 +1880,12 @@ d[ , c("ID","CH","F","DENS") ]
 ```
 ```
       ID   CH  F      DENS
-1 nsrr01 EEG1 11 0.7223301
-2 nsrr02 EEG1 11 1.2708861
-3 nsrr03 EEG1 11 0.7019499
-
-4 nsrr01 EEG1 15 0.6330097
-5 nsrr02 EEG1 15 2.0151899
-6 nsrr03 EEG1 15 0.1838440
+1 nsrr01 EEG1 11 0.7300971
+2 nsrr02 EEG1 11 1.2860759
+3 nsrr03 EEG1 11 0.7242340
+4 nsrr01 EEG1 15 0.6407767
+5 nsrr02 EEG1 15 2.0556962
+6 nsrr03 EEG1 15 0.1949861
 ```
 
 We've now completed the steps of the previous _lunaC_ tutorial.  As
@@ -1930,12 +1948,13 @@ EPOCH : BL
 MASK : EMASK 
 PSD : CH B_CH CH_F 
 RESTRUCTURE : BL 
-SIGSTATS : CH CH_E 
-SPINDLES : CH_F CH_E_F CH_F_SPINDLE 
+SPINDLES : CH_F CH_F_SPINDLE 
 ```
 
+We can extract the time-points from the `SPINDLES` table that is
+stratified by `SPINDLE` as well as `CH` and `F` (i.e. the
+spindle-level results):
 
-We can extract the time-points from the `SPINDLES` table that is stratified by `SPINDLE` as well as `CH` and `F` (i.e. the spindle-level results):
 ```
 d <- lx( k , "SPINDLES" , "CH_F_SPINDLE" ) 
 ```
@@ -1945,10 +1964,10 @@ table( d$F )
 ```
 ```
  11  15 
-251 398 
+254 406 
 ```
 
-In other words, we detected 398 fast (15 Hz) spindles and 251 slow (11
+In other words, we detected 406 fast (15 Hz) spindles and 254 slow (11
 Hz) spindles.  That variable `START` (and `START_SP`) reflects the
 time in seconds (and in sample-points based on the current internal
 EDF) on when each spindle started; `STOP` variables are similarly
@@ -1978,7 +1997,7 @@ Luna will have written an [.annot file](../ref/annotations.md#annot) to the
 `edfs/` folder.  We can load those annotation files in as new annotations
 to be attached to the current EDF.  
 ```
-ladd.annot.file( "edfs/spindles-nsrr01.annot" ) 
+ladd.annot.file( "spindles-nsrr02.txt" ) 
 ```
 
 Now, when we ask for a list of attached annotations, we'll see a new one, `spindles`:
@@ -1987,34 +2006,27 @@ Now, when we ask for a list of attached annotations, we'll see a new one, `spind
 lannots()
 ```
 ```
- [1] "NREM1"             "NREM2"             "NREM3"            
- [4] "REM"               "apnea_obstructive" "arousal_standard" 
- [7] "artifact_SpO2"     "desat"             "hypopnea"         
-[10] "spindles"          "wake"             
-```
-
-Here we'll focus on the fast spindles; for convenience, we'll save the
-long annotation name as the variable `sp.label`:
-
-```
-sp.label <- "spindles"
+ [1] "Arousal"           "Hypopnea"          "N1"               
+ [4] "N2"                "N3"                "Obstructive_Apnea"
+ [7] "R"                 "SpO2_artifact"     "SpO2_desaturation"
+[10] "W"                 "spindles"         
 ```
 
 We'll then use the `lannots()` function with a annotation _class_ name
 specified, to get a list of intervals for that annotation:
 
 ```
-sp.intervals <- lannots( sp.label )
+sp.intervals <- lannots( "spindles" )
 ```
 
-This list is 998 elements in length, i.e. corresponding to the 998
+This list is 660 elements in length, i.e. corresponding to the 998
 spindles detected above:
 
 ```
 length(sp.intervals)
 ```
 ```
-[1] 998
+[1] 660
 ```
 
 Taking a peak at the contents of `sp.intervals`, we see each item is a
@@ -2027,20 +2039,13 @@ head( sp.intervals )
 
 ```
 [[1]]
-[1] 2706.560 2707.168
+[1] 2751.304 2751.896
 
 [[2]]
-[1] 2751.304 2751.888
-
-[[3]]
-[1] 2764.040 2764.584
+[1] 2764.040 2764.592
 
 ...
 ```
-
-Note: this information is naturally the same as we saw in the output of
-the `SPINDLES` command that we plotted above; here, we're just doing
-this two ways to introduce various _lunaR_ commands.
 
 
 Now let's take a look at some spindles in the raw EEG.  The
@@ -2057,33 +2062,11 @@ Here, we request the raw signal data from the channel with alias
 `EEG1` as well as the annotation channel `sp.label` (i.e. fast
 spindles).  The first argument indicates which interval(s) we want to
 look at -- for simplicity, here we'll request a single spindle, say
-the 98th, with `sp.intervals[99]`:
+the 221st, with `sp.intervals[221]`:
 
 ```
-d <- ldata.intervals( sp.intervals[ 98 ], chs="EEG1", annots=sp.label, w=5 )
+d <- ldata.intervals( sp.intervals[ 221 ], chs="EEG1", annots= "spindles", w=5 )
 ```
-
-<!---
-The resulting data-frame is 1391 rows (from `dim(d)`), i.e. which,
-given a sample rate of 125 Hz, corresponds to 10.8 seconds (5*2 seconds
-plus a spindle of length 0.8 seconds):
-
-```
-> ( 1350 - 10 * 125 ) / 125
-[1] 0.8
-```
-
-To check, we can consult the `DUR` of the first fast spindle in the previous output:
-
-```
-k$SPINDLES$CH_F_SPINDLE$DUR[ k$SPINDLES$CH_F_SPINDLE$F==15 ][ 98 ] 
-```
-```
-[1] 0.8
-```
-
---->
-
 
 Looking at the `d` data frame returned by `ldata.intervals()`:		
 
@@ -2091,13 +2074,13 @@ Looking at the `d` data frame returned by `ldata.intervals()`:
 head(d)
 ```
 ```
-               INT      SEC      EEG1 spindles
-1 4216.96->4228.09 4216.960   1.24806        0
-2 4216.96->4228.09 4216.968 -14.29313        0
-3 4216.96->4228.09 4216.976 -24.55900        0
-4 4216.96->4228.09 4216.984 -27.47900        0
-5 4216.96->4228.09 4216.992 -23.01936        0
-6 4216.96->4228.09 4217.000 -13.69465        0
+                 INT      SEC       EEG1 spindles
+1 15129.87->15140.66 15129.87 -11.184889        0
+2 15129.87->15140.66 15129.88 -10.571929        0
+3 15129.87->15140.66 15129.89 -11.300724        0
+4 15129.87->15140.66 15129.90  -9.616291        0
+5 15129.87->15140.66 15129.90  -5.364184        0
+6 15129.87->15140.66 15129.91  -3.394990        0
 ```
 
 The annotation field (final column) is `0` or `1` to indicate the
@@ -2110,7 +2093,7 @@ To plot this spindle, we could use something like the following:
 ```
 par(mfcol=c(2,1) , mar=c(2,4,0,0) )
 plot( d$EEG1 , type="l" , xaxt = 'n' , yaxt='n' , axes=F , ylab="EEG1" )
-plot( d[, sp.label ] , type="l" , lwd=2 , col="blue" , xaxt='n' , yaxt='n' , axes=F, ylab="Spindles" )
+plot( d[, "spindles" ] , type="l" , lwd=2 , col="blue" , xaxt='n' , yaxt='n' , axes=F, ylab="Spindles" )
 ```
 
 ![img](../img/rt20.png){width="100%"}
@@ -2151,30 +2134,31 @@ requesting all of these channels to be included in the output, by
 setting `chs` equal to `lchs()` (i.e. all channels):
 
 ```
-d <- ldata.intervals( sp.intervals[ 98 ], chs=lchs(), annots=sp.label, w=5 )
+d <- ldata.intervals( sp.intervals[ 221 ], chs=lchs(), annots="spindles" , w=5 )
 ```
 
 Run `head(d)` to confirm the structure of the new output.  We can now
 augment the plotting code to include these additional channels:
 
 ```
+png(file="rt21.png",res=100,width=800,height=500,units="px")
 par(mfcol=c(7,1) , mar=c(0,4,0,0) )
 plot( d$EEG1 , type="l" , xaxt = 'n' , yaxt='n' , axes=F , ylab="EEG1" )
-plot( d[, lsanitize( sp.label ) ] , type="l" , lwd=2 , col="blue" , xaxt='n' , yaxt='n' , axes=F, ylab="15Hz spindles" )
+plot( d[, "spindles" ] , type="l" , lwd=2 , col="blue" , xaxt='n' , yaxt='n' , axes=F, ylab="Spindles" )
 plot( d$EEG1_delta , type="l" , col=rgb(200,100,00,150,max=255) , axes=F , ylab="Delta" )
 plot( d$EEG1_theta , type="l" , col=rgb(100,200,0,150,max=255) , axes=F , ylab="Theta" )
 plot( d$EEG1_alpha , type="l" , col=rgb(0,200,100,150,max=255) , axes=F , ylab="Alpha" )
 plot( d$EEG1_sigma , type="l" , col=rgb(0,0,100,150,max=255) , axes=F , ylab="Sigma" )
 plot( d$EEG1_beta  ,  type="l" , col=rgb(100,0,100,150,max=255) , axes=F , ylab="Beta" )
+dev.off()
 ```
 
 ![img](../img/rt21.png){width="100%"}
 
-(_Note:_ the above image is from a prior run with a different spindle example from the above: we'll fix these
-tutorial pages soonish.)
-
-Finally, rather than having to manually re-run this code for each
-spindle, we can use the `literate()` function of Luna to automate this
+In practice, there would be few scenarios where one wants to extract particular spindles
+for visaulization, beyond didactic purposes.  To make this a little more useful, 
+rather than having to manually re-run this code for each
+spindle, we can use Luna's `literate()` function to automate this
 process.  Given a list of intervals (or epoch-by-epoch), `literate()`
 will iterate over each one, generate a data frame (by calling either
 `ldata.intervals()` or `ldata()`) and then pass that data-frame to a
@@ -2186,7 +2170,7 @@ user-defined function.  We'll wrap our plotting code in a function
 f1 <- function(d) { 
  par(mfcol=c(7,1) , mar=c(0,4,0,0) )
  plot( d$EEG1 , type="l" , xaxt = 'n' , yaxt='n' , axes=F , ylab="EEG1" )
- plot( d[, lsanitize( sp.label ) ] , type="l" , lwd=2 , col="blue" , xaxt='n' , yaxt='n' , axes=F, ylab="15Hz spindles" )
+ plot( d$spindles   , type="l" , lwd=2 , col="blue" , xaxt='n' , yaxt='n' , axes=F, ylab="Spindles" )
  plot( d$EEG1_delta , type="l" , col=rgb(200,100,00,150,max=255) , axes=F , ylab="Delta" )
  plot( d$EEG1_theta , type="l" , col=rgb(100,200,0,150,max=255) , axes=F , ylab="Theta" )
  plot( d$EEG1_alpha , type="l" , col=rgb(0,200,100,150,max=255) , axes=F , ylab="Alpha" )
@@ -2201,20 +2185,19 @@ That is, this is identical to the prior plotting code, simply inside a
 function that also prints the spindle interval to the console, and
 requests that the [enter] key be pressed to advance to the next
 spindle.  We can then instruct _lunaR_ to iterate over the annotation
-class `sp.label` (with `by.annot`), which will create a data-frame
+class `spindles` (with `by.annot`), which will create a data-frame
 similar to the ones above for each spindle, plus or minus 8 seconds in
 this case (`w=8`), and then pass it to the newly-defined `f1()` function:  
 
 ```
-literate( f1 , chs= lchs() , annots= sp.label ,  by.annot= sp.label , w = 8 ) 
+literate( f1 , chs= lchs() , annots= "spindles" ,  by.annot= "spindles" , w = 8 ) 
 ```
 
 !!! warning
-    TODO: falling at the lasy hurdle... the above command is broken for this example...  need to fix. 
-
-You could imagine easily adding some code to save each plot, or to make multiple plots
-per page, etc, for easy reviewing of all spindles detected in an EDF.   Some example below:
-
+    The current implementation of `literate()` can lead to issues if the function returns and error or is interupted: this should be fixed on the next release.
+    
+You could imagine adding some code to save each plot, or to make multiple plots
+per page, etc, for reviewing all spindles detected.  Some example below:
 
 ![img](../img/rt22.png){width="100%"}
 
@@ -2225,8 +2208,8 @@ per page, etc, for easy reviewing of all spindles detected in an EDF.   Some exa
 ![img](../img/rt25.png){width="100%"}
 
 
-That's the end of the tutorial.  If this was your first pass, there
-may have been a lot of material. Consult the [command
+That's the end of the tutorial.  If this was your first pass, that 
+was likely a lot of material to cover.  Consult the [command
 reference](../ref/index.md) for more details about specific commands.
 And visit these pages for more details on using
 [_lunaC_](../luna/args.md) and [_lunaR_](../ext/R/index.md).

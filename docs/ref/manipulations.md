@@ -24,8 +24,11 @@ _Commands to alter basic properties of the EDF and the signals therein_
 |[`ANON`](#anon)    | Strip ID information from EDF header |
 |[`SET-HEADERS`](#set-headers) | Directly specify certain EDF headers |
 |[`SET-VAR`](#set-var) | Directly specify Luna variables |
+|[`SET-TIMESTAMPS`](#set-timestamps) | Directly specify EDF record time-stamps |
 |[`RECTIFY`](#rectify) | Rectify a signal |
 |[`REVERSE`](#reverse) | Reverse a signal |
+|[`MOVING-AVERAGE`](#moving-average) | Moving average (or median) of a signal | 
+
 
 ## SIGNALS
 
@@ -79,14 +82,21 @@ first initiating Luna, and will be fixed for all individuals), as this
 command can use [variables](../luna/args.md#variables) (which may be
 [individual-specific](../luna/args.md#individual-variables)).
 
+It is also possible to supply a `file` of new labels for multiple signals instead.
+
 <h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | --- | --- | --- |
 | `sig` | `C3,C4` | List of channels to duplicate |
 | `new` | `C3_LM,C4_LM` | List of new labels (same size as `sig`) |
+| `file` | `f.txt` | File of old/new labels | 
 
 Note that you cannot use an existing channel label as a `new` label.
+
+If specifying a file, such files should be tab-delimited, containing exactly
+two fields per row (original label as per `sig`)
+and the new value as per `new`).
 
 
 <h3>Output</h3>
@@ -1036,9 +1046,12 @@ _to be added_
 ## ANON
 
 Sets the _in memory_ EDF header fields `Patient ID` and `Start Date` 
-fields to missing (a `.` character).  If a new EDF is
-generated with the `WRITE` command, it will have those fields blanked.
+fields to missing values as per the EDF spec (e.g. `X X X X` for EDF+ files, `.` for EDF). Any output
+of EDFs subsequently generated with the `WRITE` command will have those fields blanked.
 As with all Luna commands, this does not alter the original EDF.
+
+Also see the [`anon=T` special variable](../luna/args.md#anonymize-edf-headers),
+which wipes EDF headers _before_ attaching any annotation files.
 
 !!! note 
     This command does not alter the ID specified in the
@@ -1048,7 +1061,11 @@ As with all Luna commands, this does not alter the original EDF.
 
 <h3>Parameters</h3>
 
-No parameters.
+| Option | Example value | Description |
+| ---- | ---- | ---- |
+| `insert-id` | | If specified, will set the _Patient ID_ to the sample-list ID instead of null |
+| `root` | `cohort` | Will sequentially set IDs to `cohort_1`, `cohort_2`, etc |  
+
 
 <h3>Output</h3>
 
@@ -1106,6 +1123,14 @@ cannot be changed in this way - i.e. for those changes, use the relevant
 data-modifying command, e.g. `RESAMPLE`, `RECORD-SIZE`, `MINMAX`,
 etc).  That is, these options only modify the header and nothing else.
 
+Note that any start time/date changes and made _after_ any annotations
+are attached.  Internally, annotations are represented as elapsed time
+from the current EDF start - i.e. their alignment with the signal data
+will not change, but the output of `WRITE-ANNOTS` will differ if
+setting `hms` or `dhms` flags. See also the
+[`starttime`](../luna/args.md#set-edf-start-time) and
+[`startdate`](../luna/args.md#set-edf-start-date) special variables
+(which make the changes _before_ attaching annotations).
 
 
 <h3>Parameters</h3>
@@ -1172,6 +1197,31 @@ Sets an individual-level variable `var` to the text string `val`:
 luna s.lst -s 'SET-VAR var=val`
 ```
 
+## SET-TIMESTAMPS
+
+_Directly specify EDF record timestamps_
+
+This is an advanced function for directly manipulating EDF record
+timing.  Given a file with as many rows/values as there are EDF
+records in the current in-memory EDF, set each record to start at that
+time.  This can be used to generate toy datasets, e.g. with gaps.
+Note that this command does not adjust _annotations_ in any way.
+
+All times are expected in seconds, one value per line, and all values must be increasing.
+
+<h3>Parameters</h3>
+
+| Parameter | Example | Description |
+| ---- | ---- | ---- |
+| `file` | `timestxt` | Required text file of new time-stamps |
+
+<h3>Output</h3>
+
+None, except modifying the in-memory EDF and some information to the console.
+
+<h3>Example</h3>
+
+See [this vignette](../vignettes/merge.md) for an example of using `SET-TIMESTAMPS` to generate an example EDF+D file.
 
 ## RECTIFY
 
@@ -1240,9 +1290,31 @@ completely reversing a signal in the time-domain.
 | ---- | ---- | ---- |
 | `sig` | `C3,C4` | Signals to be reversed (or all, if this is absent) |
 
+<h3>Output</h3>
+
+None (other than to reverse the in-memory signal.
+
+## MOVING-AVERAGE
+
+_Applies a moving-average (or median) filter to a signal_ 
+
+Applies a moving average window to filter a signal based on either a) the mean, b) median, or c) ...
+
+<h3>Parameters</h3>
+
+Note that `median` and `tri` cannot be specified together.
+
+| Parameter | Example | Description |
+| ---- | ---- | ---- |
+| `sig` | `C3,C4` | Signals to be reversed (or all, if this is absent) |
+| `median` |  | Signals to be reversed (or all, if this is absent) |
+| `tri` |  | Signals to be reversed (or all, if this is absent) |
+| `hw` |  | Half-width (in seconds) of the triangular window |
+| `lwr` |  | Weight at triangular window edge (between 0 and 1) |
+| `epoch` |  | Signals to be reversed (or all, if this is absent) |
+
 
 <h3>Output</h3>
 
 None.
-
 

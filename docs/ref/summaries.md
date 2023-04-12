@@ -14,6 +14,7 @@ _Basic commands to give overviews of the structure of an EDF_
 |[`TAG`](#tag)         | Generic command to add a tag (level/factor) to the output |
 |[`STATS`](#stats)     | Basic signal statistics (min/max, mean, RMS, etc) |
 |[`SIGSTATS`](#sigstats)  | Hjorth parameters and other signal statistics |
+|[`TABULATE`](#tabulate) | Tabulate discrete values in a signal | 
 |[`DUPES`](#dupes) | Finds flat signals and digital duplicates |
 
 ## DESC
@@ -792,6 +793,8 @@ on [_unmasked_](masks.md) epochs only.
 | --- | --- | --- |
 | `sig` | `sig=C3,F3` | Restrict analysis to these channels | 
 | `epoch` | `epoch` | Calculate per-epoch statistics |
+| `pct` | `F` | Output percentiles (1st, 5th, 10th, etc) ( default: `T`) |
+| `min` |  | Only output the mean (_minimal_ output ) |
 
 <h3>Outputs</h3>
 
@@ -805,6 +808,7 @@ Whole-night, per-channel statistics, based on _all_ epochs (strata: `CH`)
 | `MEDIAN` | Signal median |
 | `RMS` | Signal root mean square | 
 | `SKEW` | Signal skewness |
+| `P01`, `P02`, `P05`, ..., `P99` | Percentile values (unless `pct=F`) |
 
 Per-epoch, per-channel statistics for _unmasked_ epochs only (option: `epoch`, strata: `CH` x `E`)
 
@@ -917,9 +921,177 @@ Per-channel epoch-level statistics (strata: `CH` x `E`)
 | `RMS`   | Signal root mean square |
 
 
+## TABULATE
+
+_Tabulates discrete values in a signal_
+
+Most signals in EDFs are continuously-valued; for _discrete_ signals
+(e.g. body position encoded as an integer value, or a binary 0/1
+status signal), the `TABULATE` command can provide useful summaries.
+
+<h5>Parameters</h5>
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `sig` | `sig=position,status` | Restrict analysis to these channels |
+| `req` | `req=1000,5000` | Count # of distinct values w/ at least this many (e.g. 1000 or 5000) observations |
+
+<h5>Output</h5>
+
+Per-channel tabulation statistics (strata: `CH`)
+
+| Variable | Description |
+| --- | --- |
+| `NV`  | Number of discrete values observed for this channel |
+
+Per-channel tabulation statistics of required counts (option: `req`; strata: `CH` x `REQ`)
+
+| Variable | Description |
+| --- | --- |
+| `NV`  | Number of discrete values observed with at least `REQ` observations per value |
+
+Per-channel/value tabulation statistics (strata: `CH` x `VALUE`)
+
+| Variable | Description |
+| --- | --- |
+| `N`  | Number of _sample points_ for this value/channel |
+
+
+<h5>Example</h5>
+
+Here we have an EDF with a `POSITION` channel that encodes body position
+via integer values in the EDF.  We can use `TABULATE` to give a breakdown of the observed values:
+
+```
+luna s.lst  -o out.db -s TABULATE sig=POSITION
+```
+We can first look at the `NV` to tell us how many unique values were observed:
+```
+destrat out.db +TABULATE -r CH 
+```
+```
+ID      CH           NV
+id001	POSITION     4
+```
+
+i.e. there are four distinct values observed for this signal.
+
+
+!!! info
+    Note, if the EDF had been masked and restructured, the observed values would
+    reflect only the retained portion of the dataset.
+
+To find out what those values are, we can look at the `CH` x `VALUE` strata of the output:
+
+```
+destrat out.db +TABULATE -r CH VALUE
+```
+```
+ID     CH        VALUE  N
+id001  POSITION  0      1029
+id001  POSITION  1      25515
+id001  POSITION  2      944
+id001  POSITION  3      13432
+```
+
+That is, the four values are `0`, `1`, `2` and `3`.  Note that they
+can actually be any floating point values, i.e. they need not start at
+`0` or be integers, although the output of `TABULATE` is more likely
+to be interpretable when the signal comprises a small set of integer
+values.  Also note that the 16-bit floating-point nature of EDF encoding
+means that (depending on how the signal was encoded with respect to physical and digital min/max
+values, _integer_ values may in fact be encoded as floating point values numerically close
+to the integer (e.g. `2.999` instead of `3`).
+
+The `N` variable here is the number of sample points observed -
+i.e. it should be divided by the sample rate of the channel to get the
+implied duration in seconds; in this case of a 1 Hz `POSITION` signal,
+the values can be directly interpreted as seconds.
+
+As a note, the `HEADERS` or `SUMMARY` options can also show the physical min/max in the EDF - e.g. here
+we also see a range from 0 to 3 (although just because the EDF has a certain min/max range specified in
+the header, this does not imply that the full range is necessarily observed in the actual signal):
+
+```
+Signal 12 : [POSITION]
+	sampling rate        : 1 Hz
+	# samples per record : 1
+	transducer type      : 
+	physical dimension   : 
+	min/max (phys)       : 0/3
+	EDF min/max (phys)   : 0/3
+	min/max (digital)    : 0/3
+	EDF min/max (digital): 0/3
+	pre-filtering        :                                                                                 
+```
+
+As a simple convenience feature, we can limit observations to only those with at least a certain number of occurrences
+with `req` option:
+```
+luna s.lst  -o out.db -s 'TABULATE sig=POSITION req=500,1000,5000'
+```
+
+Looking at the `CH` x `REQ` output stratum, we see `NV` varies as a
+function of `REQ`, i.e. only 2 values with over 5000 sample points
+(nb.  this also could have been trivially computed based on the `CH` x
+`VALUE` outputs of course):
+
+```
+destrat out.db +TABULATE -r CH REQ
+```
+```
+ID      CH        REQ     NV
+id001   POSITION  500     4
+id001   POSITION  1000    3
+id001   POSITION  5000    2
+```
+
+Finally, to interprete the data `POSITION` signal: if the values correspond to categories, we naturally need external
+information to tell us what those values are.  For example, we may know that the following mapping holds:
+
+| Signal value | Mapping | 
+|---|--- |
+| `0` | Left position |
+| `1` | Right position |
+| `2` | Supine position |
+| `3` | Front position |
+
+For this type of signal, it can often be convenient to create a correspondoing interval-based annotation also,
+which can be accomplished via the [`S2A`](../annotations.md#s2a) (signal-to-annotation) command. 
+
+```
+luna s.lst -s 'S2A sig=POSITION encoding=left,0,right,1,supine,2,prone,3 & WRITE-ANNOTS hms file=^.annot '
+```
+```
+  added 13 intervals for left based on -0.05 <= POSITION <= 0.05
+  added 28 intervals for prone based on 2.95 <= POSITION <= 3.05
+  added 30 intervals for right based on 0.95 <= POSITION <= 1.05
+  added 24 intervals for supine based on 1.95 <= POSITION <= 2.05
+```
+
+```
+class   instance        channel start   stop    meta
+start_hms       21.58.17        .       .       .       .
+duration_hms    11.22.00        .       .       .       .
+duration_sec    40920   .       .       .       .
+epoch_sec       30      .       .       .       .
+supine  .       POSITION        21:58:17        22:00:39        .
+right   .       POSITION        22:00:39        22:00:40        .
+prone   .       POSITION        22:00:40        22:00:42        .
+right   .       POSITION        22:00:42        22:00:43        .
+supine  .       POSITION        22:00:43        22:00:44        .
+right   .       POSITION        22:00:44        22:00:45        .
+supine  .       POSITION        22:00:45        22:00:49        .
+prone   .       POSITION        22:00:49        22:00:50        .
+...
+```
+
+
+
 ## DUPES
 
 _Finds digital/physical signal duplicates (and flat signals)_
 
 This function is designed to spot obviously redundant or empty channels in an EDF.
 
+--TODO--

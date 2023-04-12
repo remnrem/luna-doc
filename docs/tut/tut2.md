@@ -61,7 +61,7 @@ Luna expects the following arguments:
   convenience feature, and is equivalent to entering the same
   `variable=value` pairs on the command line.
 
-- optionally, a _lout_ output database following the `-o` ( or `-a`)
+- optionally, a _lunout_ output database following the `-o` ( or `-a`)
   argument.  If it doesn't exist it will be created; with `-o` it will
   overwrite any existing data, whereas `-a` appends on any existing
   data.
@@ -125,7 +125,7 @@ other web-search) will be helpful.
 
 By default, all output goes to _standard out_, i.e. the
 console/terminal by default.  When outputting plain text (instead of
-using a _lout_ database, see below), most Luna commands generate
+using a _lunout_ database, see below), most Luna commands generate
 output in a fixed format.  (The initial `DESC` command is in fact an
 exception, as one of the few commands that generate a simple,
 "human-readable" text file.)  The standard format comprises 6
@@ -177,7 +177,7 @@ nsrr01    CH/AIRFLOW    0.0664418
 ## Using destrat
 
 If the `-o` argument is given to Luna, instead of the column-based
-text output format described above, all output is sent to a _lout_
+text output format described above, all output is sent to a _lunout_
 database, which is designed for handling _stratified output_.  The
 tool [`destrat`](../luna/destrat.md) is designed to extract
 information from such databases, and _de-stratify_ it, to produce
@@ -542,50 +542,50 @@ luna s.lst nsrr01 @cmd/vars.txt -o res.db < cmd/second.txt
 input(s): s.lst
 output  : res.db
 commands: c1	EPOCH	len=${myepoch}
-        : c2	MASK	all=T
+        : c2	MASK	all
         : c3	MASK	unmask-if=${nrem}
         : c4	RESTRUCTURE	
         : c5	STATS	sig=${eeg}
 
 ___________________________________________________________________
 Processing: nsrr01 [ #1 ]
- duration: 11.22.00 | 40920 secs ( clocktime 21.58.17 - 09.20.16 )
+ duration: 11.22.00 | 40920 secs | clocktime 21.58.17 - 09.20.17
 
- signals: 14 (of 14) selected in a standard EDF file:
-  SaO2 | PR | EEG2 | ECG | EMG | EOG_L_ | EOG_R_ | EEG1
+ signals: 14 (of 14) selected in a standard EDF file
+  SaO2 | PR | EEG2 | ECG | EMG | EOG_L | EOG_R | EEG1
   AIRFLOW | THOR_RES | ABDO_RES | POSITION | LIGHT | OXSTAT
 
  annotations:
-  N1 (x109) | N2 (x523) | N3 (x17) | R (x238)
-  W (x477) | apnea/obstructive (x37) | arousal (x194) | artifact/SpO2 (x59)
-  desat (x254) | hypopnea (x361)
+  Arousal (x194) | Hypopnea (x361) | N1 (x109) | N2 (x523)
+  N3 (x17) | Obstructive_Apnea (x37) | R (x238) | SpO2_artifact (x59)
+  SpO2_desaturation (x254) | W (x477)
 
  variables:
   airflow=AIRFLOW | ecg=ECG | eeg=EEG2,EEG1 | effort=THOR_RES,A...
-  emg=EMG | eog=EOG_L_,EOG... | hr=PR | id=nsrr01 | light=LIGHT
+  emg=EMG | eog=EOG_L,EOG_R | hr=PR | id=nsrr01 | light=LIGHT
   oxygen=SaO2,OXSTAT | position=POSITION
  ..................................................................
  CMD #1: EPOCH
    options: len=10 sig=*
- set epochs, length 10 (step 10, offset 0), 4092 epochs
+  set epochs, length 10 (step 10, offset 0), 4092 epochs
  ..................................................................
  CMD #2: MASK
-   options: all=T sig=*
- reset all 4092 epochs to be masked
+   options: all sig=*
+  reset all 4092 epochs to be masked
  ..................................................................
  CMD #3: MASK
    options: sig=* unmask-if=N1,N2,N3
- set masking mode to 'unmask'
- based on N1 327 epochs match; 0 newly masked, 327 unmasked, 3765 unchanged
- total of 327 of 4092 retained
- based on N2 1569 epochs match; 0 newly masked, 1569 unmasked, 2523 unchanged
- total of 1896 of 4092 retained
- based on N3 51 epochs match; 0 newly masked, 51 unmasked, 4041 unchanged
- total of 1947 of 4092 retained
+  set masking mode to 'unmask'
+  based on N1 327 epochs match; 0 newly masked, 327 unmasked, 3765 unchanged
+  total of 327 of 4092 retained
+  based on N2 1569 epochs match; 0 newly masked, 1569 unmasked, 2523 unchanged
+  total of 1896 of 4092 retained
+  based on N3 51 epochs match; 0 newly masked, 51 unmasked, 4041 unchanged
+  total of 1947 of 4092 retained
  ..................................................................
  CMD #4: RESTRUCTURE
    options: sig=*
-  restructuring as an EDF+:   keeping 19470 records of 40920, resetting mask
+  restructuring as an EDF+: keeping 19470 records of 40920, resetting mask
   retaining 1947 epochs
  ..................................................................
  CMD #5: STATS

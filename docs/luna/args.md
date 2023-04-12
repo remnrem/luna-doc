@@ -20,7 +20,7 @@ Here, Luna expects a list of IDs, EDFs (and possibly [annotation files](#annotat
 a [sample list](args.md#sample-lists) file (`sample.lst`), reads a
 series of [commands](../ref/index.md) (`commands.txt`) to be applied to
 each EDF, and writes the output to a
-[_lout_](destrat.md) database file (`out.db`).  
+[_lunout_](destrat.md) database file (`out.db`).  
 
 !!! note "Types of command line arguments" 
     _lunaC_ expects the first
@@ -36,6 +36,7 @@ each EDF, and writes the output to a
     - terms starting with `@` are interpreted as [_parameter files_](#parameter-files), the contents of which are loaded in to define new variables and options
     - otherwise, terms that are numbers are interpreted as sample-list [_row numbers_](#ranges) (either a single row, or a range, depending if one or two numbers are specified)
     - otherwise, that term is assumed to be the ID of a _single_ individual to be analysed from the sample-list
+    - if specifying an ID on the command line, it is best to use the special variable form `id` (which can handle purely numeric IDs, i.e. interpreting it as an ID rather than than a row number in a sample list )
 
 ## Help
 
@@ -186,7 +187,7 @@ luna my.edf -s DESC
 ```
 You might subsequently run a command that drops channels and then calls `DESC`: 
 ```
-luna my.edf -s "SIGNALS drop=ECG,EMG & DESC"
+luna my.edf -s 'SIGNALS drop=ECG,EMG & DESC'
 ```
 in which case, only 4 channels will be reported. However, on 
 running the first command again:
@@ -278,7 +279,7 @@ head signals.txt
 If Luna finds `--fs` on the command line, it will
 interpret the first argument to be a text file (rather than a sample
 list or an EDF).  In this instance, we know that the sample rate is
-265 Hz (and so, implies 15,360/256 = 60 seconds of signal).
+256 Hz (and so, implies 15,360/256 = 60 seconds of signal).
 
 ```
 luna signals.txt --fs=256 -s DESC
@@ -460,9 +461,9 @@ subj2:
 night1.edf	night1.xml	night2.edf	night2.xml
 ```
 
-Here, we do not want to associated `subj1/night1.edf` with
+Here, we do not want to associate `subj1/night1.edf` with
 `subj2/night1.edf` or `sub2/night1.xml`.  Here, add the option
-`-nospan` to instruct Luna not to span folders when associating files:
+`-nospan` to instruct Luna not to _span_ folders when associating files:
 ```
 luna --build subj1 subj2 -nospan > s.lst 
 ```
@@ -562,12 +563,17 @@ For example, say we wished to set [`EPOCH`](../ref/epochs.md#epoch) an
 EDF and apply power spectral density estimation via the
 [`PSD`](../ref/power-spectra.md#psd) command to the channel named
 `EEG`, outputting spectra for each epoch.  For a sample-list `s.lst`
-and [output file](#lout-databases) `out.db`, we could specify this on
+and [output file](#lunout-databases) `out.db`, we could specify this on
 the command line as:
 
 ```
-luna s.lst -o out.db -s "EPOCH & PSD epoch sig=EEG"
+luna s.lst -o out.db -s 'EPOCH & PSD epoch sig=EEG'
 ```
+
+Note that we place the command string in single quotes, as otherwise
+the `&` character would be interpreted by the bash shell (to run the
+job in the background).  In general, putting any command-line script
+after `-s` in single quotes is advised. 
 
 Alternatively, we could place the following in a _plain-text_ file
 called `commands.txt` (or anything else, there are no limitations on
@@ -604,75 +610,6 @@ PSD
 ```
 
 
-<h4>Conditional blocks</h4>
-
-You can define blocks within a command file that are only executed if
-a [variable](#variables) is set to a non-null value, e.g. `1`.  If the variable is
-null (undefined or `0`) then those blocks are skipped, using the
-double-bracket syntax as follows:
-
-```
-
-EPOCH len=${l}
-
-[[var
-
-  SIGSTATS sig=${eeg} mask th=${thresholds}
-
-]]var
-
-PSD sig=${eeg}
-
-```
-
-If the variable `${var}` is null, then _all text_ (i.e. including other
-variable definitions and conditional statements as well as commands)
-will be skipped, up until the block closing (here `]]var`).  In this
-case, the `SIGSTATS` command will only be executed if `${var}` has
-been set to a non-null value:
-
-```
-luna my.edf var=1 < cmd.txt
-```
-
-Note how the variable _var_ is referenced without the usual `${}`
-syntax when paired with `[[` or `]]`. Also note that every block
-opening (e.g. `[[var`) requires a matching block closing
-(e.g. `]]var`).  Luna will give an error if it encounters a block closing 
-without having first encountered a closing.  
-
-It is possible to set nested conditional blocks:
-
-```
-% commands here always executed
-
-[[a
- 
- % commands here only executed if ${a} is non-null
-
- [[b
-   % commands here only executed if both ${a} and ${b} are non-null
- ]]b
-
- % commands here only executed if ${a} is non-null
-
-]]a
-
-% commands here always executed
-```
-
-Note that the indentation of blocks as above is optional; in fact,
-conditional statements can occur all on the same line, e.g. as below,
-where `${setmask}` determines whether the `SIGSTATS` command also
-includes optional parameters to set a mask:
-
-```
-EPOCH len=${l}
-
-SIGSTATS sig=${eeg} [[setmask  mask th=${thresholds}  ]]setmask
-
-PSD sig=${eeg}
-```
 
 
 ### Variables
@@ -784,6 +721,77 @@ shell from expanding the variable will achieve the desired effect:
  luna s.lst -s 'EPOCH & STATS sig=${eeg}'
 ```
 
+<h4>Conditional blocks</h4>
+
+You can define blocks within a command file that are only executed if
+a [variable](#variables) is set to a non-null value, e.g. `1`.  If the variable is
+null (undefined or `0`) then those blocks are skipped, using the
+double-bracket syntax as follows:
+
+```
+
+EPOCH len=${l}
+
+[[var
+
+  SIGSTATS sig=${eeg} mask th=${thresholds}
+
+]]var
+
+PSD sig=${eeg}
+
+```
+
+If the variable `${var}` is null, then _all text_ (i.e. including other
+variable definitions and conditional statements as well as commands)
+will be skipped, up until the block closing (here `]]var`).  In this
+case, the `SIGSTATS` command will only be executed if `${var}` has
+been set to a non-null value:
+
+```
+luna my.edf var=1 < cmd.txt
+```
+
+Note how the variable _var_ is referenced without the usual `${}`
+syntax when paired with `[[` or `]]`. Also note that every block
+opening (e.g. `[[var`) requires a matching block closing
+(e.g. `]]var`).  Luna will give an error if it encounters a block closing 
+without having first encountered a closing.  
+
+It is possible to set nested conditional blocks:
+
+```
+% commands here always executed
+
+[[a
+ 
+ % commands here only executed if ${a} is non-null
+
+ [[b
+   % commands here only executed if both ${a} and ${b} are non-null
+ ]]b
+
+ % commands here only executed if ${a} is non-null
+
+]]a
+
+% commands here always executed
+```
+
+Note that the indentation of blocks as above is optional; in fact,
+conditional statements can occur all on the same line, e.g. as below,
+where `${setmask}` determines whether the `SIGSTATS` command also
+includes optional parameters to set a mask:
+
+```
+EPOCH len=${l}
+
+SIGSTATS sig=${eeg} [[setmask  mask th=${thresholds}  ]]setmask
+
+PSD sig=${eeg}
+```
+
+
 
 <h4>Expansions of numeric sequences</h4>
 
@@ -851,7 +859,7 @@ The log information will give a summary of the attached variables for each indiv
   emg=EMG | eog=EOG(L),EOG... | hr=PR | id=nsrr01 | light=LIGHT
   oxygen=SaO2,OX_STAT | position=POSITION | var1=22 | var2=EEG1,EEG2 | var3=T
 ```
-Note that the other _automatic_ variables losted here (`airflow`, etc) come from Luna's automatic assignment of [_channel types_](#channel-types).
+Note that the other _automatic_ variables listed here (`airflow`, etc) come from Luna's automatic assignment of [_channel types_](#channel-types).
 If the script (`my-commands.txt`) contained references to `${var1}`, etc, then these would be substituted
 as appropriate, for each individual: e.g. if the files had channels labelled (or aliased) to `EEG1` and `EEG2`,
 then this command would run the `PSD` command for both channels, only for `EEG1`, or for neither, in the first, second
@@ -1033,10 +1041,10 @@ to below:
 
 | Format | Description |
 | ---- | ---- | 
-| [EDF+](../ref/annotations.md#edf-annotations-channel) | EDF+ Annotations Channel | 
-| [NSRR XML](../ref/annotations.md#nsrr-xml-files) | Format used by the [National Sleep Research Resource](http://sleepdata.org) to distribute sleep staging, and information on manually-scored arousals, movements and artifacts |
 | [.annot](../ref/annotations.md#annot-files) | Generic Luna annotation files (as well as `.annot`, `.txt` and `.tsv` extensions are valid) | 
 | [.eannot](../ref/annotations.md#eannot-files) | Simple epoch-level annotation files (can also be loaded with the [`EPOCH-ANNOT`](../ref/epochs.md#epoch-annot) command) | 
+| [EDF+](../ref/annotations.md#edf-annotations-channel) | EDF+ Annotations Channel | 
+| [NSRR XML](../ref/annotations.md#nsrr-xml-files) | Format used by the [National Sleep Research Resource](http://sleepdata.org) to distribute sleep staging, and information on manually-scored arousals, movements and artifacts |
 
 ### Ranges
 
@@ -1065,7 +1073,13 @@ luna s.lst 2 < commands.txt
     If a number is given after the sample list, it is always
     interpreted as the position in the sample list, not an ID.  In
     other words, best not to use pure numbers as IDs in the sample
-    list if possible.  
+    list if possible.  If the IDs are numeric, you can always us `id`
+
+    ```
+    lune s.lst id=22 -o out.db < cmd.txt
+    ```
+    i.e. this will look for an EDF with the ID (first column in `s.lst`) that matches the ID `22` (nb. matching
+    is for a string, so `022` != `22`) 
 
 To operate on a range of subjects within a sample list, just give two numbers: e.g. 
 ```
@@ -1098,18 +1112,12 @@ Internally, all coordinates are converted to spherical coordinates on a unit sph
 
 ## Special variables
 
-<----
-silent
-verbose
-id
-wildcard=^
-sanitize
-fix-edf "auto-correct" truncated/over-long EDFs
+<!---
+
 sec-dp
 spaces=_
 keep-spaces
-keep-annot-spaces
-keep-channel-spaces
+
 class-instance-delimiter split class/annot remappings (ABC/DEF|XYZ)
 combine-annots
 annot-whitelist
@@ -1117,58 +1125,48 @@ annot-unmapped
 annot-keyval  (key=val char)
 align-annots  e.g. align-annots=W,N1,N2,N3,R
 
-
 inst-hms         make instance ID time, if blank
 force-inst-hms   force above
 
 epoch-check=5    for .eannot length
 
 
-annot-folder annot-folders
-annots-file  (and +3 plurals)
-annots annot
-
-skip-sl-annots
-skip-edf-annots
-skip-annots
-skip-all-annots     do not read EDF or ANNOT annotations
-
 force-edf
 
 
-tt-prepend
-tt-append
-
-ss-prefix sleepp stage prefix
-vars
-ids  ID remapper
-
-ch-match TYPES
-ch-exact
-ch-clear
-
 fail-list
 
-compressed
 
-nsrr-remap
-remap
-tab-only  fix delimiter to tab only for .annot
 
-upper set channel names as all UPPERCASE
 
-epoch-len
-
-<----
+--->
 
 Currently, the _special variables_ used by Luna are as tabulated below.  These can be assigned values on the
-command line, or via an @included [_parameter file_](#parameter-files).
+command line, or via an @included [_parameter file_](#parameter-files).  If used on the command line, special variables
+must always be paired with an equals (`=`) character and assigned a value (e.g. `silent=T` or `silent=F`) - otherwise, they will
+be interpreted as an ID to match in the sample list.
 
 | Special Variable | Description |
 | ---- | ---- | 
-| [`path`](#search-paths) | Set search path for files in sample lists | 
+| `silent` | Runs Luna silently if set to `T`  |
+| `verbose` | Runs Luna in verbose mode if set to `T` |
+| `id` | Only analyse this ID from the sample list, e.g. `id=study-001` | 
 | [`exclude`](#exclude-lists) | Specify a file of IDs to exclude from analysis |
 | [`include`](#include-lists) | Specify a file of IDs to include from analysis |
+| [`ids`](#swapping-ids) | Specify a file of remapped IDs |
+| [`path`](#search-paths) | Set search path for files in sample lists |
+|  |
+| [`anon`](#anonymize-edf-headers) | Anonymize EDF headers | 
+| [`starttime`](#set-edf-start-time) | Set EDF start time |
+| [`startdate`](#set-edf-start-date) | Set EDF start date | 
+|  |
+| `wildcard` | Set individual ID wildcard for scripts (default is `^`) |
+| `sanitize` | Change special character labels to `_` if this is set to `T` |
+| `upper` | Set all channel labels to uppercase if set to `T` | 
+| |
+| `fix-edf` |  Attempt to correct truncated/over-long EDFs if `T` |
+| |
+
 | |
 | [`sig`](#signal-lists)| Include this signal(s) in analysis | 
 | [`alias`](#aliases)| Specify a channel alias |
@@ -1181,26 +1179,50 @@ command line, or via an @included [_parameter file_](#parameter-files).
 | [`keep-annot-spaces`](#spaces-in-channel-names) | Retain spaces in annotation names if set to true|
 | |
 | [`remap`](#remapping-annotations)| Specify an annotation remapping (cf. channel aliases) | 
-| [`annot-file`](#annot-file) | Specify annotations to attach on the command line |
-| [`annots`](#annotations)| Only load this (comma-delimited) list of annotations (rather than all) |
+| [`annot-file`](#attaching-annotations) | Specify annotations to attach on the command line |
+| [`annots`](#annotations)| (Or `annot`). Load only this (comma-delimited) list of annotation classes (rather than all) |
+| `tab-only` | Only allow tabs (vs tabs and spaces) as delimiters in `.annot` files |
+| [`annot-keyval`] | Set _key=value_ delimiter for annotation meta-date (default: `=`) |
+| [`align-annots`] | (Advanced) Align these annotations (comma-delimited list) to EDF record start, assuming 1 second records |
+| [`class-inst-delimiter`] | Specify character to delimit annotation classes and instances (default: `:`) |
+| [`combine-annots`] | Character to use when combining classes and instance IDs (default: '_' ) | 
+| [`annot-whitelist`] | Read only these annotations |
+| [`annot-unmapped`] | Read only these annotations |
+| [`annot-remap`] | Read only these annotations |
+
+| [`sec-dp`] | Set number of decimal places for annotation time outputs (default: 3) |
+| [`add-ellipsis`] | For `WRITE-ANNOTS` of `.annot`only, set zero-duration events to have `...` stop fields |
+| [`annot-segment`] | Label for segment annotation from `SEGMENTS annot` (default: `segment`) |
+| [`annot-gap`] | Label for gap annotation from `SEGMENTS annot` (default: `gap`) |
+| | 
 | [`force-edf`](#annotations)       | Skip EDF annotations _and_ time-track from any EDF+, and force as a continuous EDF |
-| [`skip-annots`](#annotations)     | Skip XML and other (external) annotations (default: no)  |
-| [`skip-edf-annots`](#annotations) |	Skip EDF Annotations tracks from any EDF+ (default: no) |
-| [`skip-all-annots`](#annotations) | Same as `skip-annots=1` and `skip-edf-annots=1` combined (default: no) |
-| [`inst-hms`](#inst-hms) | Automatically assign missing annotation instance IDs (from XML) based on time |
-| [`nsrr-remap`](#nsrr-remap) | Set whether NSRR automatic remapping is on or off (annotation labels) | 
+| [`skip-annots`](#annotations) | (Or `skip-all-annots`). Same as `skip-sl-annots=T` and `skip-edf-annots=T` combined (default: F)  |
+| [`skip-sl-annots`](#annotations)  | Skip annotation files specified in the sample list (default: F) |
+| [`skip-edf-annots`](#annotations) | Skip EDF Annotations tracks from any EDF+ (default: F) |
+| [`inst-hms`](#inst-hms) | Assign missing annotation instance IDs based on time |
+| [`force-inst-hms`](#inst-hms) | Always assign annotation instance IDs based on time |
+| [`annot-remap`](#remapping-annotations) | Set automatic remapping of stages (default: `T`) |
+| [`nsrr-remap`](#remapping-annotations) | Set extra NSRR remapping of annotations (default: `F`) |
+| [`edf-annot-class`](#edf-annotations) | Read these EDF+ (comma-delimited) labels as _classes_ (default: `N1,N2,N3,R,W,?,arousal,LM,NR`)|
+| [`edf-annot-class-all`](#edf-annotations( Read all EDF+ labels as _classes_ (default: `F`) |
 | |
-| [`vars`](#vars) | Specify file with individual-level variables/values |
+| [`vars`](#individual-variables) | Specify file with individual-level variables/values |
+| [`ids`](#id-mapping) | Specify an ID-mapping file | 
 | [`tt-prepend`](#text-tables) | Add value to start of text-table file names (equiv. `tt-prefix`) |
 | [`tt-append`](#text-tables) | Add value to end of text-table file names (equiv. `tt-suffix`) |
 | [`compressed`](#text-tables) | Y/N to force all `-t` text-table output to compressed (Y) or not (N) |
 | |
 | [`epoch-len`](#epoch-len) | Specify the default epoch duration |
 | [`no-epoch-check`](#no-epoch-check) | Do not enforce epoch check for .eannot files |
+| [`epoch-check`] | Set tolerance value for epoch check (default: 5) |
 | [`assume-pm-start`](#force-evening-start-time)| Force morning times (after _X_ am) to be _X_ pm  |
 | |
 | [_power bands (various)_](#spectral-power-bands)| Change default power bands (delta, theta, etc.) | 
-
+| |
+| [`assume-stage-duration`](#stage-annotations) | Assume zero-duration stage labels are of epoch-length |
+| [`ss-prefix`](#stage-annotations) | Set stage annotation prefix |
+| [`ss-pops`](#stage-annotations) | Same as `ss-prefix=p` |
+| [`ss-soap`](#stage-annotations) | Same as `ss-prefix=s` |
 
 Any other variables specified on the command line or a [_parameter
 file_](#parameter-files) are interpreted as typical variables, that
@@ -1392,25 +1414,18 @@ remap      REM|REMS|"REM Sleep"|"Rapid eye movement sleep"
 ```
 This will remap any of the three forms listed to the primary label: `REM`.
 
-!!! warning "Automatric NSRR remappings"
+!!! warning "Automatic annotation remappings"
     Note that Luna by defaults
-    add in some _default_ annotaton remappings, to help working with
-    NSRR data.  See [here](../nsrr.md#annotation-aliases) for more
-    details.  This can sometimes mean that any remapping you specify
-    conflicts with an internal one.  This is because, by definition,
-    the same label cannot be both a primary value (i.e. to-be-mapped-to)
-    as well as listed as an alias (to-be-mapped-from) value.  If you
-    get an error message, then add `nsrr-remap=F` _before_ the `remap`
-    you want to add. This will turn off all automatic remappings of
-    annotations.  (These remappings are all listed on
-    [this](../nsrr.md#annotation-aliases) page.)  Note that this is one of the few instances in which
-    the _order_ of options is important, i.e. the `nsrr-remap=F` (which effectively clears the internal cache of mapping terms) must occur 
-    _before_ new remappings are added (whether this is on the command line or via a [parameter file](#parameter-files).
+    add in some _default_ annotaton remappings for sleep stages, e.g.
+    turning `Stage NREM1` to `N1`, etc, so that the `HYPNO`, `SOAP` and `POPS` commands
+    know which labels to expect.  This can be disabled by setting `annot-remap=F`. It is also possible to turn on some more
+    mappings for common NSRR labels (e.g. arousals, apnea, etc) by adding `nsrr-remap=T`.  Note that the order
+    of `annot-remap` and `nsrr-remap` will matter (as `annot-remap` turns off _all_ annotation remappings.
 
 ### Spaces in channel and annotation names
 
 As of v0.24, Luna will by default swap all spaces in channel or
-annotation names with an underscore (`_`) character.  You can change the character swapped in
+annotation names with an underscore (`_`) character, and will also _trim_ any leading or trailing space/underscore characters.  You can change the character swapped in
 by setting the special variable `spaces`
 ```
 luna s.lst spaces=/ < cmd.txt
@@ -1515,12 +1530,51 @@ exclude	skip.txt
 ```
 These individuals/EDFs will be skipped in all analyses. 
 
+
 ### Include lists
 
-Similar to [	exclude-lists](#exclude-lists) except this means that
+Similar to [exclude-lists](#exclude-lists) except this means that
 only individuals in the specified file will be included, everybody
 else will be excluded.  You cannot specify an `include-list` and
 `exclude-list` together.
+
+### Swapping IDs
+
+The `ids` special variable takes a file (e.g. `ids=file.txt`), for which each row should have exactly two tab-delimited fields: e.g.
+```
+id1	newid1
+id2	newid2
+```
+Luna will then swap the original ID (as supplied from the [sample list](#sample-lists) to the new value, if it is encountered. 
+
+### Anonymize EDF headers
+
+Adding `anon=T` will wipe the EDF headers (the EDF header _Patient
+ID_, _Recording Information_ and _Start date_ fields will be set to
+their default _null_ values as per the EDF spec.)  This is similar to the [`ANON`](../ref/manipulations.md#anon) command
+except this is performed _before_ any annotations are attached.  This will influence how dates are interpreted in
+any annotation files that use dates, therefore.  In contrast, the `ANON` command allows a greater degree of flexibility
+in terms of which fields are wiped.
+
+### Set EDF start time
+
+This special variable sets the EDF start time (header) value to the specified string, e.g. `starttime=20.30.05`.   This should
+use EDF spec. for the values: i.e. 8 characters, 24-hour times, _hh.mm.ss_ format with period (`.`) delimiters.   Unlike
+the [`SET-HEADERS`](../ref/manipulations.md#set-headers) command, this change is made on first attaching the EDF, _before_ any
+annotations are attached: annotation times will therefore reflect these changes, depending on whether they use relative or
+absolute values, etc.
+
+### Set EDF start date
+
+This special variable sets the EDF start date (header) value to the
+specified string, e.g. `startdate=25.12.00`.  This should use EDF
+spec. for the values: i.e. 8 characters, _dd.mm.yy_ format with period
+(`.`) delimiters. Dates cannot be before `01.01.85` which is the
+_null_ date as per EDF spec. Unlike the
+[`SET-HEADERS`](../ref/manipulations.md#set-headers) command, this
+change is made on first attaching the EDF, _before_ any annotations
+are attached: annotation times will therefore reflect these changes,
+depending on whether they use relative or absolute values, etc.
 
 
 ### Attaching annotations
@@ -1551,6 +1605,23 @@ annot          wake,artifact1
 This can be useful if the sample-list otherwise specifies that many
 annotations are loaded by default (e.g. by pointing to an annotation
 folder for that individual/EDF).
+
+### EDF+ annotations
+
+Unless `skip-edf-annot=T` or `skip-annots=T`, Luna will read any `EDF
+Annotations` channels from an EDF+ file and treat them as standard
+annotations (i.e. as if they were read from an `.annot` or XML file).
+
+As EDF+ annotations can often contain notes, Luna will not assign a
+_class_ to each unique annotation: rather, all annotations are
+assigned to the `edf_annot` _class_, with the _instance_ ID set the
+the value in the EDF+.  This behavior can be changed by setting the
+special variable `edf-annot-class-all=T`.  Alternatively, a subset of
+EDF+ annotations can be set to _classes_, and everything else pooled
+under the `edf_annot` class, with `edf-annot-class=X,Y,Z` option.  By
+default, the following special values are treated this way (after
+annotation remapping, unless `annot-remap=F` to handle variation in
+stage labels): `N1,N2,N3,R,W,?,arousal,LM,NR`
 
 
 ### Other annotation options
@@ -1586,6 +1657,27 @@ calculate the implied number of epochs in the EDF).
 ```
 epoch-len	20
 ```
+
+### Stage annotations
+
+Unless `annot-remap=F`, Luna will attempt to map a set of "typical"
+stage labels (e.g. `Stage N1`, `Stage NREM1`, `NREM1`, etc) to a
+standard set of labels: the five main stages are:
+
+```
+  N1  N2  N3  R   W 
+```
+and `L` is a lights-on epoch and `?` is unknown/missing.
+
+If working with other sets of stage labels (e.g. from manual scoring as well as POPS, etc) it can be useful to distinguish them by a prefix.  The `ss-prefix` special variable can achieve this, e.g. by `ss-prefix=p` will change the above to
+```
+  pN1  pN2  pN3  pR  pW 
+```
+Commands such as `HYPNO` that depend on these labels will then use those values if they exist, instead of the standard ones.
+
+Also, when reading stage labels from an annotation file, the `assume-stage-duration=T` will change zero-duration labels to be of epoch length.  (Sometimes
+an annotation file does not explicitly specify the duration/end of each stage, and so (if each annotation is indeed one epoch), this can be convenient.) 
+
 
 ### Fix truncated EDFs
 
@@ -1718,7 +1810,7 @@ messages will be sent to the `stderr` also.
 
 ```
 ===================================================================
-+++ luna | v0.2, 12-Dec-2018 | starting process 2019-01-10 14:20:10
++++ luna | v0.28.0, 14-Mar-2023 | starting 10-Apr-2023 10:56:45 +++
 ===================================================================
 input(s): s.lst
 output  : .
@@ -1726,33 +1818,39 @@ commands: c1	DESC
 
 ___________________________________________________________________
 Processing: nsrr01 [ #1 ]
- total duration 11:22:00, with last time-point at 11:22:00
- 40920 records, each of 1 second(s)
+ duration 11.22.00, 40920s | time 21.58.17 - 09.20.17 | date 01.01.85
 
- signals: 14 (of 14) selected in a standard EDF file:
-  SaO2 | PR | EEG(sec) | ECG | EMG | EOG(L) | EOG(R) | EEG
-  AIRFLOW | THOR RES | ABDO RES | POSITION | LIGHT | OX STAT
+ signals: 14 (of 14) selected in a standard EDF file
+  SaO2 | PR | EEG_sec | ECG | EMG | EOG_L | EOG_R | EEG
+  AIRFLOW | THOR_RES | ABDO_RES | POSITION | LIGHT | OX_STAT
 
  annotations:
-  [Arousal ()] 194 event(s) (from edfs/learn-nsrr01-profusion.xml)
-  [Hypopnea] 361 event(s) (from edfs/learn-nsrr01-profusion.xml)
-  [NREM1] 109 event(s) (from edfs/learn-nsrr01-profusion.xml)
-  [NREM2] 523 event(s) (from edfs/learn-nsrr01-profusion.xml)
-  [NREM3] 16 event(s) (from edfs/learn-nsrr01-profusion.xml)
-  [NREM4] 1 event(s) (from edfs/learn-nsrr01-profusion.xml)
-  [Obstructive Apnea] 37 event(s) (from edfs/learn-nsrr01-profusion.xml)
-  [REM] 238 event(s) (from edfs/learn-nsrr01-profusion.xml)
-  [SpO2 artifact] 59 event(s) (from edfs/learn-nsrr01-profusion.xml)
-  [SpO2 desaturation] 254 event(s) (from edfs/learn-nsrr01-profusion.xml)
-  [Wake] 477 event(s) (from edfs/learn-nsrr01-profusion.xml)
+  Arousal (x194) | Hypopnea (x361) | N1 (x109) | N2 (x523)
+  N3 (x17) | Obstructive_Apnea (x37) | R (x238) | SpO2_artifact (x59)
+  SpO2_desaturation (x254) | W (x477)
+
+ variables:
+  airflow=AIRFLOW | ecg=ECG | eeg=EEG_sec,EEG | effort=THOR_RES,A...
+  emg=EMG | eog=EOG_L,EOG_R | hr=PR | id=nsrr01 | light=LIGHT
+  oxygen=SaO2,OX_STAT | position=POSITION
  ..................................................................
  CMD #1: DESC
+   options: sig=*
+EDF filename      : edfs/learn-nsrr01.edf
+ID                : nsrr01
+Clock time        : 21.58.17 - 09.20.17
+Duration          : 11:22:00  40920 sec
+# signals         : 14
+Signals           : SaO2[1] PR[1] EEG_sec[125] ECG[250] EMG[125] EOG_L[50]
+                    EOG_R[50] EEG[125] AIRFLOW[10] THOR_RES[10] ABDO_RES[10] 
+                    POSITION[1] LIGHT[1] OX_STAT[1]
+
 
 ___________________________________________________________________
 ...processed 1 EDFs, done.
-...processed 1 command(s),  all of which passed
+...processed 1 command set(s),  all of which passed
 -------------------------------------------------------------------
-+++ luna | finishing process 2019-01-10 14:20:10
++++ luna | finishing 10-Apr-2023 10:56:45                       +++
 ===================================================================
 ```
 
@@ -1836,7 +1934,7 @@ the entire EDF, and so only occur once.
 
 This format is primarily used for debugging or in some other very
 focused cases.  Although it is relatively easy to parse, in general
-you'll want to use Luna's [text-tables](#text-tables) or [_lout_ databases](#lout-databases),
+you'll want to use Luna's [text-tables](#text-tables) or [_lunout_ databases](#lunout-databases),
 described next.
 
 ### Text-tables 
@@ -1889,11 +1987,11 @@ Alternatively, to set _all_ output files to not be compressed, set
 !!! warning "Known issues"
     Text-tables are provisionally introduced in Luna v0.23; please see [this link](destrat.md#text-tables) for some known issues with the initial implementation of the `-t` flag.
 
-### _lout_ databases
+### _lunout_ databases
 
 This is the primary mode of output for most Luna commands.  Here we
 run the same command as in the [previous section](#default-text-output)
-but instead using a [_lout_ database](destrat.md) to collect the
+but instead using a [_lunout_ database](destrat.md) to collect the
 output, with `-o`:
 
 ```

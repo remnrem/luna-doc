@@ -14,7 +14,7 @@
 |Command |Description |	       
 |---|---|
 | [`DFA`](#dfa) | Detrended flucation analysis |
-| [`ASYMM`](#dfa) | Detrended flucation analysis |
+| [`ASYMM`](#dfa) | Lateralization indices |
 | [`A2C`](#a2c) | Annotation to cache entry |
 | [`L1OUT`](#l1out)    | Leave-one-out interpolation-based signal check |
 | [`ED`](#ed)      | Diagnostic for electrical bridging |

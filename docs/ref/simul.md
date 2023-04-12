@@ -389,19 +389,20 @@ luna . -o out.db --nr=10 --rs=1 \
 
 _Generate, or add-in, artificial test signals_
 
-!!! info "Redundant command"
-    This command is now redundant given `SIMUL`, but is decribed here for completeness
+_This command is largely redundant (given `SIMUL`), but is decribed here for completeness._
 
 This is a simple command to generate test signal data (on top of an existing EDF).  Currently, it
-only generates sine wave signals.
+only generates sine wave signals, or pulses of a given duration.
 
 <h5>Parameters</h5>
 
 | Parameter | Example | Description |
 | ---- | ----- | ----- |
-| `sig` | `sig=C3,C4` | Signals to be modified |
+| `sig` | `sig=C3,C4` | Signals to be modified/created (existing or new) |
+| `sr` | 200 | Set sample rate if not an existing channel |
+| `add` | | Add to an existing channel (versus overwrite it) | 
 | `sine` | `sine=10,20` | Generate a sine wave with specified frequency (10 Hz), amplitude (20 units) and optionally phase |
-| `clear` | | If present, clear the signal before adding in this component |
+| `impulse` | `impulse=0.5,1,100` | Set impulse of amplitude `1` for 100 samples, starting at 0.5 way through the recording; multiple values are possible `impulse=T,A,D,T,A,D,...` , i.e. time/amplitude/duration | 
 
 
 <h5>Output</h5>
@@ -423,3 +424,5 @@ Plotting the output of `MTM`:
 
 ![img](../img/siggen.png){width="100%"}
 
+
+Also, see [this vignette](../vignettes/merge.md#simulating-data) for an example of using `SIGGEN` to generate a toy dataset.

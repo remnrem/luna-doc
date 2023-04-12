@@ -1,11 +1,13 @@
 
 # Updates, additions and fixes
 
-Current stable version: __v0.27__ (main [downloads](download/index.md) page)
+Current stable version: __v0.28__ (main [downloads](download/index.md) page)
 
 <!--
 IN FLIGHT / TODO
-
+  - `RIPPLES`
+  - `GED`
+  - `NMF` 
   - `ORDER` command (or that command-line 'sig' sets order)
   - loops in scripts [todo]
   - channel range selector [C3][C4] .. use same syntax as [C3][1..4] .. will have to wait and expand on a per-EDF basis ... 
@@ -13,37 +15,121 @@ IN FLIGHT / TODO
   - add EDF+ to EDF converter  (zero-pad and add MASK for discontinuities)
      add an explicit COUPL command that uses caches
  
- - __Global coherence statistics__ via the [`SYNC` command](ref/cc.md#sync)  
+  - __Global coherence statistics__ via the [`SYNC` command](ref/cc.md#sync)  
   - prototype [`TCLST`] command for time-series clustering
-  - `RIPPLES`
-  - `NMF` 
-
-   - ??PLANNED: amend annots when force-edf (from EDF+D to +C/EDF)
 
 _Predictive modelling_ 
-
  - adding [LightGBM]() library support and compilation flag
-
  - new [`ASSOC`] command
-
  - added new `MASSOC` set of functions
 
 _LunaR_
-
-
  - `lunaR` is now in CRAN
-
- - documention (e.g. `?leval`) added to the lunaR package
- 
- - a new `moonlight()` interactive viewer 
-
+ - documention (e.g. `?leval`) added to the lunaR package 
  - new `lload()`, `lhead()` and `lcols()` convenience functions 
+ - additional `lheatmap()` options added
 
-- additional `lheatmap()` options added
+-->
 
-### Microstates
+## v0.28 (10-Apr-2023)
 
- - `--label-maps` now outputs
+_Moonlight_
+
+ - new interactive [_Moonlight_](moonlight.md) viewer (public demostration host: [http://remnrem.net](http://remnrem.net))
+
+ - extended [tutorial](tut/tut5.md) that uses _Moonlight_ to recapitulate the prior Luna/lunaR tutorials 
+
+_Vignettes_
+
+ - new vignette on [merging EDFs](vignettes/merge.md) and working with EDF+D files
+
+ - new vignette on how Luna expects [time/date information in annotation files](vignettes/times.md)
+
+_Major new functionality_
+
+ - new [`FREEZE`](ref/freezes.md#freeze) and
+   [`THAW`](ref/freezes.md#thaw) commands to make and revert to prior
+   snapshots of the in-memory dataset
+
+ - new [`TABULATE`](ref/summaries.md#tabulate) option to summarize
+   channels with discrete sets of values, e.g. body position
+
+ - new [`MOVING-AVERAGE`](ref/manipulations.md#moving-average) command 
+
+ - major improvements to [`--merge`](ref/helpers.md#-merge) which can now handle gaps between consecutive files and will generate EDF+Ds
+
+ - new `add` option for [`MTM`](ref/power-spectra.md) to generate a
+   new signal (with the same sample rate as the original); also, `MTM`
+   now outputs estimates of the spectral slope as well as `PSD` and
+   `IRASA`.
+
+ - new [`SET-TIMESTAMPS`](ref/manipulations.md#set-timestamps) utility command
+
+ - new `annot` option for the [`SEGMENTS`](ref/outputs.md#segments)
+   command; as demo'ed in [this vignette](vignettes/merge.md), it is
+   useful when making standard EDF from EDF+D files
+ 
+ - for [`WRITE-ANNOTS`](ref/annotations.md#write-annots) we now make
+   as default `no-specials=T`; i.e. add options `specials` instead of
+   `no-specials`; and likewise `headers` from `no-headers`.  We've also added `dhms` and `minimal` options.
+
+ - added `impulse` option to [`SIGGEN`](   (T,A,D)  and `add` not clear; makes new channle, or updates/replaces an existing one. 
+
+ - new [`REMAP`](ref/annotations.md#remap) command to perform annotation remapping on _already-loaded_x data;
+ 
+ - new [`EXE`](ref/clustering.md#representative-epochs) option `representative` to extract _K_ examplar epochs via a clustering heuristic based on permutation distribution clustering
+ 
+_Minor changes/additions_
+
+ - added [`starttime`](luna/args.md#set-edf-start-time) and
+   [`startdate`](luna/args.md#set-edf-start-date) command-line special
+   variables to force EDF header changes (prior to attaching
+   annotations)
+
+ - new [`anon=T`](luna/args.md#anonymize-edf-headers) special variable to set EDF headers to null values
+   upon loading; this is similar to runnong [`ANON`](ref/manipulations.md#anon), although `ANON`
+   allows a few extra options); as with `starttime` and `startdate`,
+   this setting is enacted _before_ attaching annotations (i.e. and so
+   can influence how annotations are aligned)
+
+ - added support for [dates in annotation files](ref/annotations.md), e.g. _dd-mm-yyy-hh:mm:ss_, as
+ illustrated in [this vignette](vignettes/times.md)
+
+ - added the `pct` option to [`STATS`](ref/summaries.md#stats) to avoid calculation of percentiles `pct=F`. Also `min=T` will only give the mean.
+
+ - [`SOAP`](ref/soap.md) now respects _lights on_ (`L`) epochs, i.e. unlike for missing (`?`) epochs, it completely excludes them
+
+ - new `offset` option for [`WRITE-ANNOT`](ref/annotations.md#write-annots)
+
+ - Luna now gives a warning message to the console if looking at an
+   etnire signal (e.g. from `FILTER`) but some epochs are masked -
+   i.e. as this means that those epochs will be included in that step
+   (if not running `RE` beforehand to remove them)
+
+ - added `annot` feature to [`DUMP-MASK`](ref/masks.md#dump-mask) to create annotation based on the mask (as well as `output=F` and `annot-unmasked=T`)
+
+ - added `file` option to [`RENAME`](ref/manipulations.md#rename) - takes a file of tab-delimited old/new channel name pairs instead of `sig`/`new` from the command line
+ 
+ - added the `xbg` option to specify intervals to excise certain intervals from the background in [`OVERLAP`](ref/intervals.md#overlap)
+
+ - `offset` option of [`EPOCH`](ref/epochs.md#epoch) can now take _hh:mm_ and _hh:mm:ss_
+   arguments, as well as elasped seconds
+
+ - now gives an error if specified filename for a new EDF file
+   (e.g. from [`WRITE`](ref/outputs.md#write)) is the same as the input EDF. (This was allowed
+   previously, but could cause problems and lead to corrupt outputs...)
+
+ - `anchor` argument for [`SPINDLES`](ref/spindles-so.md#spindles) to
+   specify between -1 and +1 for spindle start stop (0 = midpoint) for
+   SO-coupling analysis.  If not specified, default is the point of
+   maximal CWT (i.e. typically, but not necessarily near the middle);
+   `offset=0.1` (-N ro +N seconds, default = 0) adds offset to above
+   _anchor_ for SO-coupling, i.e. can be combined with `couple`,
+   i.e. look at SO phase and overlap 0.2 seconds *before* the start of
+   a spindle; Gives new `ANCHOR` strata in output for coupling
+   analyses.  Can specify multiple anchor/offsets.
+
+ - EEG microstates `--label-maps` command now outputs
 ```
 ID	KT	FLIP	K1	MAPPED	SPC
 .	D	0	1	1	0.994548052142096
@@ -53,36 +139,32 @@ ID	KT	FLIP	K1	MAPPED	SPC
 ```
  and (will) add a message if match is not highest correl SPC `OPTIMAL == 0 `
 
- - also, it now allows to match on min sum (1-r)^p where p = 2 by default;
- this is now also the default stat for compare-maps (perm.) tests
+ - also, it now allows to matching on the minimum sum `(1-r)^p` where `p = 2` by default;
+  this is now also the default stat for `compare-maps` (perm.) tests; added `verbose` option for info to the log
 
-- added `verbose` option for info to the log
-
--->
-
-
-<!--
-
-## v0.28 
-
- - added `xbg` - i.e. interval to excise from the background, to OVERLAP 
+ - for EEG microstate analysis, added a `grouped` option to allow A/a --> 'A' two-group mappings (i.e. case-invariant analysis, if K = 4 + 4 = 8 
  
- - `offset` option of `EPOCH` can now take _hh:mm_ and _hh:mm:ss_
-   arguments, as well as elasped seconds
 
- - now gives an error if specified filename for a new EDF file
-   (e.g. from `WRITE`) is the same as the input EDF (was allowed
-   previosly, but could cause problems and lead to corrupt output)
+_Misc. fixes_
 
- - `HYPNO` now outputs proper epoch time, i.e. if used EPOCH align so
+ - [`HYPNO`](ref/hypnograms.md#hypno) now outputs proper epoch time, i.e. if used EPOCH align so
  that epochs are not starting from 0; (as is, it assumes epoch 1
  starts at 0 sec); also note that `MINS` is the elapsed time since epoch #1,
  not necessarily EDF start under these conditions
 
+ - annotation class/instance delimiter has been changed to have a default value of `:` (rather than `/` as before)
 
+ - NSRR automatic-remapping is now turned off by default: enable with `nsrr-remap=T`; added `annot-remap` to separately control remapping of stage annotations
 
--->
+ - automatic _sanitization_ of annotation labels is now on by default
 
+ - changed behavior of `keep-spaces` and `sanitize` to be similar for both channel and annotation labels; also, labels are now always trimmed
+ on both whitespace and sanitized insert character (underscore by default)
+  
+ - stopped the `HEADERS` command from writing out EDF Annotation channels
+
+ - changed lunaR to attach EDF+ annotations on attaching an EDF+
+ 
 
 ## v0.27 (27-Sep-2022)
 
@@ -562,6 +644,10 @@ _Minor modifications/fixes_
   epochs
 
 - added `annot`, `hms` and `no-specials` options to `WRITE-ANNOTS`
+
+- added date-time support for annotations (in clocktime_t) and `dhms` flag for `WRITE-ANNOTS`
+
+- added test for non-integer sample rates
 
 - now the `HEADERS` command respects the `sig` option; also, some
   changes to variable output names

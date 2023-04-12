@@ -529,6 +529,11 @@ step in increments of 30 seconds, so for all intents and purposes, this will be 
 | `dB`    |   | Report power in dB units |
 | `dump-tapers` | | Report the taper coefficients in the output |
 | `mean-center` | | Mean center segments prior to analysis | 
+| `slope` | | Output the spectral slope |
+| `epoch-slope` | | Output the spectral slope per epoch (or `slope-epoch`) |
+| `slope-th` | 4 | SD threshold at which to remove individual power estimates (default: 3 ) |
+| `slope-th2` | 4 | SD threshold at which to remove epochs (default: 3 ) |
+| `add` | `mtm` | Add new channels with MTM power values, in format `mtm_CH_F` | 
 
 <h3>Output</h3>
 
@@ -545,6 +550,13 @@ Epoch-level (_segment_) power spectra (option: `epoch`, strata: `SEG` x `CH` x `
 | ----- | ----- | 
 | `MTM` | Spectral power via the multitaper method |
 
+
+If the `add` option is specified, multiple new channels will be added
+with the computed power values (same sample rate as the original
+signal, with values averaged over any overlapping windows).  If adding
+channels, it is typically a good idea to reduce the number of
+frequency bins considered (with `min` and `max`) as one channel is
+added per bin/channel.
 
 <h3>Example</h3>
 

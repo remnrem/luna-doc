@@ -778,9 +778,6 @@ to be the start time of the first instance of any of the listed annotations: i.e
 luna s.lst -s 'EPOCH align=W,N1,N2,N3,R,U verbose & HYPNO'
 ```
 
-## EDF record alignment
-
-<NCH-SDB example>
 
 
 

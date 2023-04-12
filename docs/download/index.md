@@ -1,6 +1,6 @@
 # Downloads
 
-<p align="right"><em>Current Luna release: <b>v0.27</b> (27-Sep-2022)</em></p>
+<p align="right"><em>Current Luna release: <b>v0.28</b> (11-Apr-2023)</em></p>
 
 ## Installation options 
 
@@ -36,8 +36,8 @@ three basic ways to obtain Luna:
 ## Data resources
 
 The [data](data.md) page contains a number of resources that can be
-used with Luna on any platform, namely the [tutorial data](../tut/tut1.md)
-and resources to support working with [NSRR data](../nsrr.md).
+used with Luna on any platform, including the [tutorial data](../tut/tut1.md).
+
 
 ## Changelog and known issues
 

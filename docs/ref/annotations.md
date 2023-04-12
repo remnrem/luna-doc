@@ -11,6 +11,7 @@ to EDFs, and how to view and summarize their contents._
 | [.eannot files](#eannot-files) | `.eannot` file format |
 | [NSRR XML files](#nsrr-xml-files) | NSRR XML annotation files |
 | [`--xml`](#-xml) & [`--xml2`](#-xml2) | View NSRR XML annotation files |
+| [`REMAP`](#remap) | Apply annotation remappings after loading | 
 | [`ANNOTS`](#annots)       | Tabulate all annotations |
 | [`WRITE-ANNOTS`](#write-annots) | Write annotations as `.annot` or `.xml` |
 | [`SPANNING`](#spanning)   | Report on _coverage_ of annotations |
@@ -96,7 +97,7 @@ There are numerous options and alternatives the supplement this basic format, as
 
  - [Column formats](#columnformats) : full (six-column) versus reduced (3 or 4 column) formats
  - [Headers](#headers) : optional rows prior to data rows
- - [Time-encoding specifications](#timeencoding) : different ways to specify the start/stop times of intervals/events
+ - [Time-encoding specifications](#time-encoding) : different ways to specify the start/stop times of intervals/events
 
 ### Columns
 
@@ -192,9 +193,18 @@ within a single `.annot` file.
 
  - __Elapsed seconds:__ this is the default - any numerical value is interpreted as seconds elapsed relative from the EDF start time (i.e. as specified in the EDF header)
 
- - __Clock-time:__ any times with the format _hh:mm:ss_ or _hh.mm.ss_ are assumed to be 24-hour clock-times. These can include fractions of a second, e.g. `23:03:01.524` (which is also the same as `23.03.01.524`, i.e. if the EDF `.` character is used to delimit hours, minutes and seconds insted of the colon (`:`) character)
+ - __Clock-time:__ any times with the format _hh:mm:ss_ or _hh.mm.ss_
+   are assumed to be 24-hour clock-times. These can include fractions
+   of a second, e.g. `23:03:01.524` (which is also the same as
+   `23.03.01.524`, i.e. if the EDF `.` character is used to delimit
+   hours, minutes and seconds insted of the colon (`:`) character).
+   It is also possible to include dates explicitly in the form
+   _dd-mm-yy-hh:mm:ss_, i.e. `31-12-99-23:59:59`.
 
- - __Elapsed hh:mm:ss:__ any time starting `0+` is assumed to be an elapsed time specified in _hh:mm:ss_ format rather than a clock-time, e.g. `0+00:00:30`, `0+00:01:00` corresponds to 30 and 60 seconds past the EDF start
+ - __Elapsed hh:mm:ss:__ any time starting `0+` is assumed to be an
+   elapsed time specified in _hh:mm:ss_ format rather than a
+   clock-time, e.g. `0+00:00:30`, `0+00:01:00` corresponds to 30 and
+   60 seconds past the EDF start
 
  - __Epoch-encoding:__ instead of elapsed or clock times, it is also possible to specify start and stop times in terms of epochs by starting entries with the `e` character: see below for more details
  
@@ -719,6 +729,68 @@ luna ma0844az_1-1+.edf -o out.db  -s  ' MASK mask-ifnot=edf_annot[HVT_00:30|HVT_
     we would be able to use this second (more readable) form.   Neither quotes nor braces are needed in the simpler format first given above.
 
 
+## REMAP
+
+_Remap annotation labels after loading_
+
+This command replicates the functionality of the [`remap`](#../luna/args.md#remapping-annotations) command, but can be applied _after_
+a dataset is first attached.  It also allows for some flexibility in the format of the remapping file.
+
+<h3>Parameters</h3>
+
+|  Parameter | Example | Description |
+| --- | --- | --- |
+| `file` | `f1.txt` | Required file with mappings |
+| `remap-col` | `T` or `F` | Optionally, specify whether a `remap` column is present |  
+| `optional-remap-col` | | Allows but does not require a `remap` column | 
+| `allow-spaces` | | Optionally, allow space as well as tab delimiters |
+| `verbose` | | Verbose output to the console | 
+
+<h3>Output</h3>
+
+No direct output, except for messages to the console log if `verbose` is specified.
+
+Any remappings will be available for output via the [`ALIASES`](summaries.md#aliases) command however.
+
+<h3>Example</h3>
+
+If `f.txt` is a tab-delimited file containing:
+```
+remap    A|B|C
+remap	 Y|Z
+```
+
+then the following command would map any annotations `B` or `C` to
+`A`, and any annotations `Z` to `Y`:
+
+```
+luna s.lst -s ' REMAP file=f.txt remap-col=T & ANNOTS ' 
+```
+
+This is equivalent to _including_ the file as follows:
+```
+luna s.lst @f.txt -s ' ANNOTS ' 
+```
+
+Alternatively, if `f.txt` was instead space-delimited and as follows:
+```
+A B|C
+Y Z
+```
+then
+```
+luna s.lst -s ' REMAP file=f.txt remap-col=F allow-spaces & ANNOTS '
+```
+would have the same effect as above.   It is also possible to write `f.txt` as:
+```
+A|B|C
+Y|Z
+```
+In all cases, `A` and `Y` will be the primary annotation labels used.
+
+Standard rules apply with respect to spaces, capitalization and
+special characters (i.e. this is not case-sensitive by default, etc)
+
 
 ## ANNOTS
 
@@ -802,15 +874,16 @@ Luna assumes that annotation data may arrive in subtly different
 formats: the generic `.annot` format tries to make some allowances for
 this, by making it easier to convert to .annot, for example:
  
- - using _hh:mm:ss_ versus _elapsed second_ versus _epoch encoding_
+ - using (clock-time or elapsed) _hh:mm:ss_ versus _elapsed second_ versus _epoch encoding_
  - ellipses to indicate that start continues until the next point
  - the _class_ versus _instance_ ID distinction
  - optional headers and columns (e.g. for channels or meta-data)
+ - ability to include dates for longer recordingsd
 
-When writing `.annot` files, Luna always adheres to a standard, full specification however:
+When writing `.annot` files, Luna adheres to a standard, full specification:
  
  - full six-columns
- - all headers present
+ - headers present
  - explicit start and stop times for annotations (although these can either be in elapsed seconds or clocktime)
  - ordered by time of occurrence 
  - all annotations (or a specified subset therefore) are written to a single file
@@ -823,11 +896,17 @@ When writing `.annot` files, Luna always adheres to a standard, full specificati
 |  Parameter | Example | Description |
 | --- | --- | --- |
 | `file` | `a.annot` | File name - should end if `.annot` (unless XML) | 
+| `headers` | | Include verbose header rows in `.annot` |
+| `minimal` | | Do not include main `class...` header row ( or `min`) |
+| `specials` | | Add _special_ internal annotatons: e.g. `epoch_len`, etc | 
 | `annot` | `N1,N2,N3,R,W` | Only output these options (versus all) |
 | `hms` | | Write in _hh:mm:ss_ output rather than elapsed seconds |
+| `dhms` | | Write in _dd-mm-yyyy-hh:mm:ss_ output rather than elapsed seconds |
 | `collapse` | | For a discontinuous EDF, collapse annotation times (see below) |
 | `xml` | | Write to XML annotation format instead of `.annot` |
 | `add-ellipsis` | | For zero-duration annotations, add `...` as the second field, i.e. extend to the next annotation |
+| `min-dur` | 1 | Set a minimum duration of events (in seconds) for them to be output |  
+| `offset` | -0.22 | Apply an offset of, e.g. -0.22 seconds, to all annotations when writing out |
 
 <h3>Output</h3>
 

@@ -46,8 +46,8 @@ nav:
      - Tutorial: 'tut/tut1.md'
      - lunaC: 'luna/args.md'
      - lunaR: 'ext/R/index.md'
-     - Commands: 'ref/index.md'
-     - NSRR: 'nsrr.md'
+     - Moonlight: 'moonlight.md'
+     - Commands: 'ref/index.md'     
      - Vignettes: 'vignettes/index.md'
      - Downloads: 'download/index.md'
      - FAQ: 'faq.md'
@@ -60,6 +60,7 @@ nav:
      - 'Take two': 'tut/tut2.md'
      - 'Deeper dive': 'tut/tut3.md'
      - '/R/epeat': 'tut/tut4.md'
+     - 'Moonlight': 'tut/tut5.md'
 
  - lunaC:
     - 'Overview' : 'luna/args.md'
@@ -73,7 +74,11 @@ nav:
     - Example usage: 'ext/R/example.md'
     - Reference: 'ext/R/ref.md'
     - Plotting: 'ext/R/viz.md'
-    
+
+ - Moonlight:
+    - 'Overview' : 'moonlight.md'
+    - 'Access' : 'moonlight-install.md'
+
  - Commands:
     - 'Overview': 'ref/index.md'
     - 'Summaries': 'ref/summaries.md'
@@ -81,6 +86,7 @@ nav:
     - 'Expressions': 'ref/evals.md'
     - 'Epochs': 'ref/epochs.md'
     - 'Masks': 'ref/masks.md'
+    - 'Freezes': 'ref/freezes.md'
     - 'Canonical signals': 'ref/canonical.md'
     - 'Manipulations': 'ref/manipulations.md'
     - 'Outputs': 'ref/outputs.md'
@@ -103,12 +109,10 @@ nav:
     - 'Helpers' : 'ref/helpers.md'
     - 'Experimental ': 'ref/exp.md'
  
- - NSRR:
-    - 'Working with NSRR data' : 'nsrr.md'
-    - 'NAP web portal' : 'nap.md' 
-
  - Vignettes: 
     - 'Index' : 'vignettes/index.md'
+    - 'About time' : 'vignettes/times.md'
+    - 'Merging EDFs' : 'vignettes/merge.md'
     - 'SOAP/POPS staging' : 'vignettes/soap-pops.md'
     - 'EEG microstates' : 'vignettes/microstates.md'
     - 'Artifacts' : 'vignettes/chep.md'

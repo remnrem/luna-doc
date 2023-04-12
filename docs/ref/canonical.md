@@ -14,7 +14,6 @@ efforts (the linked document gives some motivating examples in actual multi-coho
 | [Canonical definitions](#canonical-signal-definitions) | Syntax for defining canonical signal rules |
 | [`CANONICAL`](#canonical) | Generate _canonical_ signals |
 
-
 ## Canonical signal definitions
 
 The `CANONICAL` command is designed to help producing sets of EDFs

@@ -95,28 +95,34 @@ apt-get install libfftw3-dev
 brew install fftw 
 ```
 
-These options should install FFTW so that it is accessible
+If these options install FFTW so that it is accessible
 system-wide, so no special steps will be necessary when compiling
-Luna.
+Luna.   If not, you will need to add an extra argument when compiling Luna.  For
+example, newere versions of Homebrew place files under `/opt/homebrew/` which will
+not, by default, by in the system path (i.e. check by typing
+```
+echo $PATH
+```
+You can either add that folder to the path, or add `FFTW=/opt/homebrew/` when running `make` as shown below.
 
 
 __Option 2) Compile FFTW from source__
 
 Alternatively, go to the [FFTW download page](http://www.fftw.org/download.html) to
 pull the latest source.  The current version used to compile Luna is
-3.3.8, which you can directly download from this link:
-[`http://www.fftw.org/fftw-3.3.8.tar.gz`](http://www.fftw.org/fftw-3.3.8.tar.gz).
+3.3.10, which you can directly download from this link:
+[`http://www.fftw.org/fftw-3.3.10.tar.gz`](http://www.fftw.org/fftw-3.3.10.tar.gz).
 
-Let's say you download `fftw-3.3.8.tar.gz` to the directory
+Let's say you download `fftw-3.3.10.tar.gz` to the directory
 `/home/joe/fftw/`.  The following should compile and install FFTW _in
 that directory_ (i.e. rather than system-wide):
 
 ```
 cd /home/joe/fftw/
 
-tar -xzvf fftw-3.3.8.tar.gz
+tar -xzvf fftw-3.3.10.tar.gz
 
-cd fftw-3.3.8
+cd fftw-3.3.10
 
 ./configure --enable-shared --prefix=/home/joe/fftw/
 
@@ -279,18 +285,26 @@ To use the [`POPS`](../ref/pops.md) and other commands, you need to
 enable the [LightGBM](https://lightgbm.readthedocs.io) library when
 compiling Luna.  First obtain the LightGBM library on your system, following the
 steps described in the documentation link above.   On many systems, a package manager
-may be able to achieve this in a single step: e.g.
+may be able to achieve this in a single step: e.g. on macOS
+
 ```
 brew install lightgbm
 ```
+
+Determine where this is installed and whether it is in your path: e.g. newer versions of homebrew on macOS place
+these files in `/opt/homebrew/` which needs to be explicitly passed to `LGBM_PATH=/opt/homebrew/` below.
+
 
 Then, when compiling Luna from source, add the `LGBM=1` flag: e.g.
 ```
 make -j 4 ARCH=MAC LGBM=1 
 ```
 
-If LightGBM is installed in a nonstandard location, you can point to it with the `LGBM_PATH` variable.   For example, to install
-on Linux in a local folder, following the documentation [here](https://lightgbm.readthedocs.io/en/latest/Installation-Guide.html#linux):
+If LightGBM is installed in a nonstandard location, you can point to
+it with the `LGBM_PATH` variable.  For example, to install on Linux in
+a local folder, following the documentation
+[here](https://lightgbm.readthedocs.io/en/latest/Installation-Guide.html#linux):
+
 ```
 mkdir ~/tmp
 cd ~/tmp
@@ -301,8 +315,28 @@ cd build
 cmake ..
 make -j4
 ```
+
 Then, when building Luna, add, for example:
+
 ```
 cd ~/src/luna-base/
 make -j4 LGBM=1 LGBM_PATH=~/tmp/LightGBM
+```
+
+
+### LightGBM and lunaR
+
+Assuming LightGBM is in your system path, you can build _lunaR_ with
+LGBM support by adding the `LGBM=1` flag:
+
+```
+LGBM=1 EXTRA_PKG_LIBS=-l_lightgbm R CMD INSTALL luna
+```
+
+Otherwise, you can specify additional flags using `EXTRA_PKG_CPPFLAGS`
+and `EXTRA_PKG_LIBS` to point to the LighGBM headers and libraries,
+e.g.:
+
+```
+LGBM=1 EXTRA_PKG_CPPFLAGS="-I/opt/homebrew/include" EXTRA_PKG_LIBS="-L/opt/homebrew/lib -l_lightgbm" R CMD INSTALL luna
 ```
