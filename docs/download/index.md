@@ -10,10 +10,22 @@ Latest stable Luna command-line tool (binaries and source):
 | ----- | ----- |
 | __Source code (all platforms)__ | [https://github.com/remnrem/luna-base/archive/refs/tags/v0.28.tar.gz](https://github.com/remnrem/luna-base/archive/refs/tags/v0.28.tar.gz) |
 | macOS (Intel/x86_64) binary executable | [https://github.com/remnrem/luna-base/releases/download/v0.28/mac_luna.tar.gz](https://github.com/remnrem/luna-base/releases/download/v0.28/mac_luna.tar.gz) |
+| macOS (Silicon/ARM64) binary executable | [http://zzz.bwh.harvard.edu/dist/luna/macOS-arm64.gz](http://zzz.bwh.harvard.edu/dist/luna/macOS-arm64-v0.28.gz)|
 | Windows binary executable | [https://github.com/remnrem/luna-base/releases/download/v0.28/win_luna.zip](https://github.com/remnrem/luna-base/releases/download/v0.28/win_luna.zip) |
 
-<!-- | macOS (Silicon/ARM64) binary executable | [http://zzz.bwh.harvard.edu/dist/luna/macOS-arm64.gz](http://zzz.bwh.harvard.edu/dist/luna/macOS-arm64-v0.28.gz)| -->
-
+The binary distributions each contain a folder with the main executables
+(`luna`, `destrat`, etc) and some necessary libraries).  All files
+must be kept in the same folder. Add this folder to your system's path environment variable,
+e.g. on macOS:
+```
+export PATH=$PATH:/Users/john/downloads/luna-v0.28/
+```
+so that you can just type `luna` in any location and it will run the executable here. 
+For macOS, see [these notes](exec.md##macos-installation-notes) about how to get rid of
+harmless security warnings that will be shown the first time you try
+to run the code.  Also note that these are _command-line tools_ -
+i.e. use the terminal/command prompt on your machine rather than
+clicking on the icons.  
 
 Latest development source (Luna and _lunaR_):
 
