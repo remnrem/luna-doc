@@ -436,11 +436,10 @@ Here we'll apply Luna's default `PSD` command (which implements Welch's method) 
 same 20-second segment, working directly with the EDF and saving the output in a Luna-format [database](../luna/args.md#output) (with
 the `-o` option):
 ```
-luna s.lst pp3_N3_mast
-     -o out/welch.db 
-     -s 'EPOCH dur=20 & 
-         MASK sec=1660-1680 & RE & 
-         PSD sig=Cz spectrum'
+luna s.lst pp3_N3_mast -o out/welch.db \
+      -s 'EPOCH dur=20 & 
+          MASK sec=1660-1680 & RE & 
+          PSD sig=Cz spectrum '
 ```
 To view the results, we use the [`destrat`](../luna/destrat.md) utility that accompanies Luna (only showing the relevant rows here):
 ```
@@ -545,12 +544,10 @@ adding the `pow2` option to `PSD`.
 So, let's try again, repeating the above command but with these additional options:
 
 ```
-luna s.lst pp3_N3_mast
-     -o out/welch.db
+luna s.lst pp3_N3_mast  -o out/welch.db \
      -s 'EPOCH dur=20 &
          MASK sec=1660-1680 & RE &
-         PSD sig=Cz spectrum
-             segment-sec=5 segment-overlap=2.5 min=0 max=30 pow2 '
+         PSD sig=Cz spectrum segment-sec=5 segment-overlap=2.5 min=0 max=30 pow2 '
 
 ```
 ![img](../img/cf/luna.welch.2.png){width="100%"}
@@ -577,12 +574,10 @@ circumstances.  We can make Luna use a Hamming window instead, by adding the
 `hamming` option:
 
 ```
-luna s.lst pp3_N3_mast
-     -o out/welch.db
+luna s.lst pp3_N3_mast  -o out/welch.db \
      -s 'EPOCH dur=20 &
          MASK sec=1660-1680 & RE &
-         PSD sig=Cz spectrum segment-sec=5 segment-overlap=2.5
-             min=0 max=30 pow2 hamming'
+         PSD sig=Cz spectrum segment-sec=5 segment-overlap=2.5  min=0 max=30 pow2 hamming '
 
 ```
 
@@ -706,7 +701,7 @@ Next, we'll define a simple `ftopo()` function, which uses the `akima` library f
 library( akima )
 ftopo <- function( ch , z , np = 40 , nc = 0 , main = "" , 
          cols=colorRampPalette(c("black","#220000","darkred", "red4" , "red",
-	                         "orangered1","orange","yellow","white"))(100))
+                                  "orangered1","orange","yellow","white"))(100))
 {
  ch <- toupper(ch)
  d <- data.frame(ch, z )
@@ -769,7 +764,7 @@ write( format( sineWave , digits=20 ) , file="sine.txt" , ncolumns = 1 )
 We can then use Luna's `HILBERT` command, coupled with reading in the `sine.txt` file directly, to estimate the phase of the signal:
 
 ```
-luna sine.txt --fs=400 epoch-len=4
+luna sine.txt --fs=400 epoch-len=4 \
      -s 'HILBERT phase &
          MATRIX file=out/ht.txt'
 ```
@@ -884,20 +879,20 @@ by default uses a Hamming-window FIR of the specified order, with transition fre
 slow component:
 
 ```
-luna wave2.txt --fs=400 epoch-len=20
+luna wave2.txt --fs=400 epoch-len=20 \
      -s 'HILBERT f=0.35,2.25 order=2000 phase & MATRIX file=out/fh.slow'
 ```     
 
 We can do likewise for the spindle component:
 ```
-luna wave2.txt --fs=400 epoch-len=20
+luna wave2.txt --fs=400 epoch-len=20 \
      -s 'HILBERT f=11.5,14.5 order=2000 phase & MATRIX file=out/fh.spindle'
 ```     
 
 Finally, we can output the bandpass-filtered spindle-frequency signal, as plotted by _C&F_ in Figure 5B:
 
 ```
-luna wave2.txt --fs=400 epoch-len=20
+luna wave2.txt --fs=400 epoch-len=20 \
      -s 'FILTER bandpass=11.5,14.5 order=2000 & MATRIX file=out/filt.spindle'
 ```
 
@@ -919,7 +914,7 @@ We can use the `CWT` command in Luna, which is parallel to `HILBERT`, in that it
 
 Here we can specify a wavelet using the same notation as _C&F_, by giving a center frequency (`fc`) and FWHM in the time domain (here 0.25 seconds):
 ```
-luna wave2.txt --fs=400 epoch-len=20
+luna wave2.txt --fs=400 epoch-len=20 \
      -s 'CWT fc=13 fwhm=0.25 phase & MATRIX file=out/cwt.spindle'
 ```
 
@@ -957,7 +952,7 @@ by adding the option `wrapped`.   This then produces output that corresponds clo
 the results obtain by _C&F_'s Matlab code (when using wrapped wavelets, i.e. Figure 5Ci).
 
 ```
-luna wave2.txt --fs=400 epoch-len=20
+luna wave2.txt --fs=400 epoch-len=20 \
      -s 'CWT fc=13 fwhm=0.25 phase wrapped & MATRIX file=out/cwt.spindle'
 ```
 Plotting the spindle-band filtered signal, with the magnitude from filter-Hilbert (left) and CWT (right), we see broadly comparable results.
@@ -986,12 +981,9 @@ components to generate an empirical null distribution for each metric:
 Their example considers a single 30-second epoch epoch from the EDF `pp2_N3_mast`.  We can recreate those results here, with the `CC` command.
 
 ```
-luna s.lst pp2_N3_mast 
-     -o out/pac1.db 
-     -s 'MASK epoch=1 &
-         CC sig=AFz,Oz nreps=1000 pac
-            fc=0.8094 fwhm=3.5149 
-            fc2=10.1493 fwhm2=0.5525'
+luna s.lst pp2_N3_mast  -o out/pac1.db  \
+     -s 'MASK epoch=1 & RE 
+         CC sig=AFz,Oz nreps=1000 pac fc=0.8094 fwhm=3.5149 fc2=10.1493 fwhm2=0.5525'
 ```
 
 The `nreps` option specifies the number of time-shifted surrogates to use (per epoch) in order to estiamte the normalized _dPAC_ metric (`dPAC_Z`).
@@ -1001,7 +993,7 @@ Note that the `CC` command includes cross-channel options also, and so all outpu
 `CH1` and `CH2` are the same (i.e. dPAC is an intra-channel, but cross-frequency analysis).   Looking at the relevant lines of output:
 
 ```
-destrat o.db +CC -r CH1 CH2 F1 F2  
+destrat out/pac1.db +CC -r CH1 CH2 F1 F2  
 ```
 
 ```
@@ -1029,12 +1021,9 @@ They use the code [here](../img/cf/matlab.html#dPAC) to create these plots:
 Note, in this analysis they use 20 epochs from the EDF `pp3_N3_mast`.  They consider two spindle frequencies also (_slow_ and _fast_)
 to be coupled with the slow (<1 Hz) activity.  We'll recreate this here using Luna and the `CC` command (restricted to the first 20 epochs, as per _C&F_):
 ```
-luna s.lst pp3_N3_mast
-     -o out/pac2.db
+luna s.lst pp3_N3_mast -o out/pac2.db \
      -s 'MASK epoch=1-20 & RE &
-         CC sig=${eeg} nreps=200 pac 
-            fc=0.8094 fwhm=3.5149
-	    fc2=11.4481,14.5656 fwhm2=0.5059,0.4242 '
+         CC sig=${eeg} nreps=200 pac fc=0.8094 fwhm=3.5149 fc2=11.4481,14.5656 fwhm2=0.5059,0.4242 '
 ```
 i.e. note how `fc2` and `fwhm2` take multiple comma-delimited values.   The `CC` command considers all pairs of `fc` by `fc2` frequencies in this CFC/PAC analyses (with
 wavelets specified by the corresponding FWHM values in `fwhm` and `fwhm2`).  Extracting the output:
@@ -1077,11 +1066,9 @@ cross-frequency coupling (i.e. dPAC), by adding the `xch`
 
 
 ```
-luna s.lst pp3_N3_mast
-     -o out/wpli.db
+luna s.lst pp3_N3_mast -o out/wpli.db \
      -s 'MASK epoch=1-20 & RE &
-         CC sig=AFz,Oz xch nreps=200
-         fc-range=0.5000,30.0000 fwhm-range=5,0.25 num=35 '
+         CC sig=AFz,Oz xch nreps=200 fc-range=0.5000,30.0000 fwhm-range=5,0.25 num=35 '
 ```
 
 ```

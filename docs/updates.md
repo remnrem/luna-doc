@@ -31,6 +31,32 @@ _LunaR_
 
 -->
 
+
+## v0.29 (not-yet-released )
+
+ - added `bins` options to `S2A` and `bins-label` - given `bins=min,max,n` to make `n` bins of equal span, to make annots `B1`, `B2`, etc... `Bn` (or `bins-label` instead of `B`)
+ 
+ - added `REC_DUR_SEC` and `REC_DUR_HMS` in `HEADERS` which used to be `TOT_*`.  Now, `TOT_DUR_SEC` and `TOT_DUR_HMS` reflect the full duration, including any gaps (i.e. if EDF+D)
+
+ - `RESAMPLE` has a new `downsample` argument; only channels with rates above the `sr` value
+ 
+ - can now correctly take `.edfz` and `.edf.gz` file on the command line (versus a sample list) 
+
+ - `SPINDLES` and phsae-coupling
+ 
+ - `PEAKS` now output annotatons (`annot`) as well as cache; can include `w` to add window (sec) around each point
+
+ - upgraded Eigen library to 3.4.0
+
+ - upgraded to sqlite library v3.41.2
+ 
+ - added `EDGER` tool: (slides/ for opts)
+ 
+ - added `ngaus` option to `FILTER` to implement narrow-band filter
+   via a frequency-domain Gaussian (parameters: frequency domain
+   central mean and FWHM of the Gaussian, `ngaus=11,2`)
+
+
 ## v0.28 (10-Apr-2023)
 
 _Moonlight_

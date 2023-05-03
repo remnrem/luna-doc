@@ -327,16 +327,43 @@ make -j4 LGBM=1 LGBM_PATH=~/tmp/LightGBM
 ### LightGBM and lunaR
 
 Assuming LightGBM is in your system path, you can build _lunaR_ with
-LGBM support by adding the `LGBM=1` flag:
+LGBM support by adding the `LGBM=1` flag (so that the base Luna library will be
+compiled with LGBM support) and `EXTRA_PKG_LIBS` (so that the R library will link to
+the LGBM library):
 
 ```
-LGBM=1 EXTRA_PKG_LIBS=-l_lightgbm R CMD INSTALL luna
+LGBM=1 EXTRA_PKG_LIBS="-l_lightgbm" R CMD INSTALL luna
 ```
 
 Otherwise, you can specify additional flags using `EXTRA_PKG_CPPFLAGS`
-and `EXTRA_PKG_LIBS` to point to the LighGBM headers and libraries,
-e.g.:
+and `EXTRA_PKG_LIBS` to point to the LighGBM headers and libraries.  As a full example:
+
+ - if FFTW has been manually installed at `/Users/mary/src/fftw3-3.3.10`
+
+ - if LGBM has been manually installed at `/Users/mary/src/LightGBM`
+
+ - to correctly build the base Luna library (the prerequisite for
+ install the R package) we need to pass Luna information on the
+ location of FFTW (via `FFTW`) and to include LightGBM (`LGBM=1`) and
+ also point to its location (`LGBM_PATH`)
+
+ - we also,separately need to tell the R library compilaton step about the locations of both libraries, via `EXTRA_PKG_LIBS`
+
+In all:
 
 ```
-LGBM=1 EXTRA_PKG_CPPFLAGS="-I/opt/homebrew/include" EXTRA_PKG_LIBS="-L/opt/homebrew/lib -l_lightgbm" R CMD INSTALL luna
+FFTW="/Users/albert/fftw-3.3.10/" \
+ LGBM=1 \
+ LGBM_PATH="/Users/albert/src/LightGBM/" \
+ EXTRA_PKG_LIBS="-L/Users/albert/src/LightGBM/ -L/Users/albert/src/fftw-3.3.10/ -l_lightgbm" \
+ R CMD INSTALL luna
+```
+
+As a second example: if FFTW is avaialable system wide, but say LGBM has been installed outside of the system path (say from `brew install` on newer Macs):
+
+```
+LGBM=1 \
+ LGBM_PATH="/opt/homebrew/include" \
+ EXTRA_PKG_LIBS="-L/opt/homebrew/lib -l_lightgbm" \
+ R CMD INSTALL luna
 ```
