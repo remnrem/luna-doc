@@ -34,6 +34,8 @@ _LunaR_
 
 ## v0.29 (not-yet-released )
 
+ - fixed `stratify-by-phase` output to avoid double-couting
+ 
  - added `bins` options to `S2A` and `bins-label` - given `bins=min,max,n` to make `n` bins of equal span, to make annots `B1`, `B2`, etc... `Bn` (or `bins-label` instead of `B`)
  
  - added `REC_DUR_SEC` and `REC_DUR_HMS` in `HEADERS` which used to be `TOT_*`.  Now, `TOT_DUR_SEC` and `TOT_DUR_HMS` reflect the full duration, including any gaps (i.e. if EDF+D)

@@ -12,7 +12,7 @@ extension library for R ([_lunaR_](ext/R/index.md)).
 
 ## Which? 
 
-The current version is the _beta-release_ __v0.25.5 (31-March-2021)__.
+The current version is the _beta-release_ __v0.28 (10-Apr-2023)__.
 Use `luna -v` to display the specific build date/time.
 
 ## Where?
@@ -26,10 +26,10 @@ School](https://hms.harvard.edu/), Boston, MA, United States.
 Luna was primarily developed by Shaun Purcell, with input from
 a number of colleagues:
 
-- Shyamal Agarwal for work on automating the build distribution -- and
-  onging work on the to-be-released web-based NSRR Automated Pipeline
-  (NAP) built around Luna
+- Senthil Pananivelu for maintaining distributions and work on Moonlight & Moonbeam
 - Nataliia Kozhemiako for input into multiple EEG analytic components and the revised artifact detection workflows
+- Shyamal Agarwal for work on automating the build distribution and NSRR's Automated Pipeline (NAP) built around Luna
+- Michael Rueschman for input on Moonlight & Moonbeam
 - Alexander Kent for testing and feedback
 - Susan Redline and her team developing the [National Sleep Research Resource](http://sleepdata.org)
 - Dennis Dean for sharing his original SpectralTrainFig code-base
