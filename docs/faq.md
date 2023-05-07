@@ -121,6 +121,10 @@ Luna uses a number of excellent open-source components, in particular:
 
 - [R Project for Statistical Computing](http://www.r-project.org)
 
+- [Eigen](https://eigen.tuxfamily.org/index.php?title=Main_Page) C/C++ matrix/linear algebra library
+
+- [LightGBM](https://lightgbm.readthedocs.io/en/v3.3.5/index.html) gradient boosting, tree-based learning algorithm library
+
 - Chapters and example code from [Mike X
   Cohen](http://mikexcohen.com)'s fabulously clear and practical book:
   _Analyzing neural time series data_
