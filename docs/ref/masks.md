@@ -11,156 +11,133 @@ channels/signals_
 | [`RESTRUCTURE`](#restructure) (or [`RE`](#restructure))  | Remove masked out epochs (and channels) based on the standard mask |
 | [`CHEP`](#chep) | Process CHannel/EPoch _CHEP_ masks and modify the standard mask based on them |
 
-Luna uses two types of _masks_: one that is only defined per epoch (the _standard_ or _epoch-level_ mask),
-and one which is also specific to each channel and epoch pair (the so-called CHannel/EPoch or _CHEP_ mask).
-The graphic below illustrates how these two masks are related and some of the key commands which operate on
-them:
+Luna uses two types of _masks_ that work together: one that is only
+defined per epoch (the _standard_ or _epoch-level_ mask), and one
+which is also specific to each channel and epoch pair (the so-called
+CHannel/EPoch or _CHEP_ mask).  The full range of _CHEP_ mask options
+will typically only be used with high-density EEG data (i.e. multiple,
+broadly comparable channels, used in combination with interpolation of
+bad channels/epochs). The graphic below illustrates how these two
+masks are related and some of the key commands which operate on them:
 
 ![img](../img/chep-mask.png){width="100%"}
 
 
-## `MASK`
+## MASK
 
 This is the principal command for manipulating EDFs in-memory, at the
-level of retaining or excluding (_masking_) certain epochs.
-Operationally, a _mask_ is a flag for each epoch that says whether it
-should be "in" or "out" of a particular analysis. 
+level of retaining or excluding (_masking_) certain epochs.  A _mask_
+is a flag for each epoch that says whether it should be "in" or "out"
+for a subsequent [restructuring](#restructure) of the dataset.
 
 Once a _mask_ has been set, it can be modified (or cleared) by
 subsequent `MASK` commands.  The behavior of the `MASK` command can be
 changed to alter how it is merged with any previous masks that may
-have been set.  Having applied one or more `MASK` commands, the
+have been set.  Having applied one or more `MASK` or `CHEP` commands, the
 resultant mask can be output (using the [`DUMP-MASK`](#dump-mask)
-command) or used to select particular intervals of the EDF (using the
+command) or used to select particular records of the EDF (using the
 [`RESTRUCTURE`](#restructure) command).
 
-A few important points about how masks and restructuring EDFs work in Luna:
 
-- You can set one or more masks, but nothing is fundamentally changed
-  until a `RESTRUCTURE` command is issued.  Prior to that command, the
-  mask could be cleared and you would be working with the same version
-  of the data as before.  
+_Masked versus restructured datasets_
 
-- Once the `RESTRUCTURE` command has been issued, all masked epochs
-  are permanently removed from the in-memory representation of the
-  EDF. Any dropped epochs or channels cannot be restored without
-  reloading the original EDF by running Luna a second time on that
-  EDF.
+The cartoon below illustrates the distinction between a _masked_ and a
+_restructured_ dataset.  After setting a mask, no data are removed: rather,
+a flag is set to for certain epochs to indicate they are masked.  A mask
+can be reset, in which case, scenario B would revert to scenario A below.
 
-- The `RESTRUCTURE` command only alters the in-memory representation
-  of the EDF, not the original on-disk EDF itself.  In fact, no Luna
-  commands will ever alter the original EDF.  The `WRITE` command can
-  be used to generate a _new_ EDF after `MASK`-ing and
-  `RESTRUCTURE`-ing the data.
+![img](../img/masks1.png)
 
-- Some commands will automatically skip masked epochs
-  (e.g. `SIGSTATS`).  Other commands have options for including or
-  excluding masked epochs (e.g. `ANNOTS`).  Many commands will operate
-  on the entire signal however, _whether or not epochs are masked_.
-  For example, the [`FILTER`](fir-filters.md#filter) command applies a
-  FIR filter (e.g. bandpass) to a signal, and replaces the original
-  signal with the filtered version.  Here, it would not make sense to
-  only filter and modify the unmasked epochs, leaving the contiguous
-  masked epochs with the unfiltered, raw signal.  Thus, if the goal is
-  to apply a `FILTER` to a subset of unmasked epochs, one should use
-  the `RESTRUCTURE` (or short form `RE`) command after setting the `MASK` and before
-  running the `FILTER`.  In general, if you are unsure, it is safer to
-  `RESTRUCTURE` the data once the desired `MASK` has been set.  As of v0.28,
-  Luna will give a warning to the console if it ever finds itself being asked
-  to perform any _whole signal_ analysis when some epochs are masked:
-  ```
-  luna s.lst -s ' MASK epoch=1 & FILTER sig=EEG highpass=1 order=10 '
-  ```
-  ```
-  *** warning - running a command that pulls the whole trace
-  ***           but currently an epoch mask set has been set;
-  ***           for this operation to skip masked epochs,
-  ***           you need to run RE (RESTRUCTURE) beforehand
-  ```
-
-- After applying `MASK/RESTRUCTURE` commands, there will typically be
-  fewer epochs.  Importantly, however, Luna will track the mapping of
-  epochs however, so that epoch codes and other time-stamps listed in
-  output refer to the original EDF, not the reduced version.  Consider
-  this example of a 10-epoch dataset, with five of the epochs masked
-  (i.e. set to be removed, so MASK is `1`).
-
-```
-Before RESTRUCTURE               After RESTRUCTURE
-
-E       MASK                     E       MASK
-------------                     ------------
-1       0                        1       0
-2       1                        4       0
-3       1                        5       0
-4       0                        7       0
-5       0                        8       0
-6       1                        10      0
-7       0
-8       0
-9       1
-10      0
-``` 
-
-After issuing a `RESTRUCTURE` command, the data will contain only five
-epochs, and the mask will be effectively cleared (i.e. only unmasked
-epochs are left).  However, `E`, the original epoch numbering (as well as
-any time-interval output, e.g. of individual spindles from the
-`SPINDLES` command) will still be given with respect to the original
-EDF, and so are more interpretable in subsequent analyses or
-visualizations.  This temporal information is retained even if
-subsequent `MASK/RESTRUCTURE` commands are applied during the same run of Luna.
-For example, if another mask were set on this reduced dataset:
-
-```
-Before RESTRUCTURE               After RESTRUCTURE
-
-E       MASK                     E       MASK
-------------                     ------------
-1       0                        1       0
-4       0                        4       0
-5       1                        7       0
-7       0                        8       0
-8       0                   
-10      1                   
-``` 
-
-Epoch encoding and the internal _time-track_ information is retained,
-respecting potential _discontinuities_ in the data, until another
-`EPOCH` command is issued.  At that point, the data are assumed to
-represent a _continuous_ EDF.
+In contrast, after a restructure command, masked epochs are removed
+and cannot be retrieved (except if using the [data
+freeze](freezes.md#freeze) mechanism). The distinction can be
+important because some commands do not work with masked data
+(i.e. state B) - they would pull in the entire signal, i.e. across all
+epochs, whether masked or not.  For this reason, it is often safer to
+restructure the data after setting a mask (even though Luna will emit
+a warning if you try applying such a command to masked data). Commands
+that internally operate on an epoch-by-epoch basis could be applied to
+either state B or C, and would give identical results.  This
+[table](epochs.md#command-table) details which commands can be used
+in which contexts.
 
 
 <h3>Parameters</h3>
 
 The `MASK` command takes a variety of parameters to modify its
 behavior.  You should only specify _one_ of these options for any one
-`MASK` command however.  To apply a series of masks, simply specify
-sequential `MASK` commands.
+`MASK` command however; multiple `MASK` commands can be specified sequentially.
 
 There are three general types of mask:
 
- - those based on [_annotations_](annotations.md), using either Luna's
-   newer [_eval_](annotations.md#evalannotations.md#eval), or the 
-   original syntax (for basic masks, the original syntax is a
-   little simpler, but for more complex masks, _eval_ expressions will be better)
- - those based on _times intervals_, either specified in terms of
-   clock-time, elapsed-time or epoch count
+ - those based on [_annotations_](annotations.md), using either the default syntax
+  or (for more involved, niche scenarios) Luna's
+   [_eval_](annotations.md#evalannotations.md#eval),   
+ - those based on _time intervals_, specified in terms of
+   clock-time, elapsed-time or epoch number
  - other miscellaneous masks
 
+_Annotation-based mask syntax:_
 
-Original annotation-based mask syntax:
+These commands take one or more annotation class labels as arguments:
 
 | Option | Example | Description | 
 | ---- | ----- | ----- | 
-| `if`           | `if=N2`           | Mask N2 epochs; unmask non-N2 epochs |
-| `ifnot`        | `ifnot=N2`        | Mask non-N2 epochs; unmask N2 epochs |
+| `if`           | `if=N2`           | Mask epochs with N2 annotations; unmask other epochs |
+| `ifnot`        | `ifnot=N2,N3`     | Mask epochs without either N2 or N3 annotations; unmask other epochs |
 | | | |
-| `mask-if`      | `mask-if=N2 `     | Mask N2 epochs; leave non-N2 epochs as they are |
-| `mask-ifnot`   | `mask-ifnot=N2`   | Mask non-N2 epochs, leave N2 epochs as they are |
+| `mask-if`      | `mask-if=N2,N3 `  | Mask epochs with either N2 or N3 annotations; _leave other epochs as is_ |
+| `mask-ifnot`   | `mask-ifnot=N2`   | Mask epochs without annotations; _leave other epochs as is_ |
 | | | |
-| `unmask-if`    | `unmask-if=N2`    | Unmask N2 epochs; leave non-N2 epochs as they are |
-| `unmask-ifnot` | `unmask-ifnot=N2` | Unmask non-N2 epochs; leave N2 epochs as they are |
+| `unmask-if`    | `unmask-if=N2`    | Unmask epochs with N2 annotations; _leave other epochs as is_ |
+| `unmask-ifnot` | `unmask-ifnot=N2` | Unmask epochs without N2 annotations; _leave other epochs as is_ |
+
+
+All six arguments above (`if`, `ifnot`, `mask-if`, `mask-ifnot`,
+`unmask-if` and `unmask-ifnot`) can take multiple comma-delimited
+annotations (as shown in some of the above examples). Multiple
+annotations will by default match an epoch if any of the listed
+annotations span that epoch (i.e. _or_ logic).
+
+To instead specify _and_ logic for multiple annotations, add a `-all`
+suffix to any of the above commands, which will modify its behavior.
+For example:
+
+| Option | Example | Description |
+| ---- | ----- | ----- |
+| `mask-if` | `mask-if=N2,N3`  | Mask epochs spanned by either N2 _or_ N3 annotations (equivalently `mask-if-any`) |
+| `mask-if-all` | `mask-if-all=N2,arousal` | Mask epochs spanned by both an N2 _and_ an arousal annotation |
+
+Although it does not change behavior, for clarity, the basic
+_or_-logic options can be written with an `-any` suffix:
+e.g. `if-any=N1,N2,N3`.  Functionally, `if` and `if-any` are
+identical (as is the case for the other five core mask options above), however.
+
+One can use the `*` character as a wildcard at the _end_ of an annotation label to select a group of annotations:
+```
+  MASK mask-if=artifact_*
+```
+would be equivalent to writing, e.g., 
+```
+  MASK mask-if=artifact_EEG,artifact_EOG,artifact_RESP
+```
+assuming that these three annotations existed for that record. 
+
+_Full versus partial epoch matching:_
+
+By default, annotation-based masks match an epoch if the specifed
+annotation(s) have _any degree_ of overlap with that epoch.
+Alternatively, masks can require that the _entire epoch_ is spanned by
+that annotation in order to make a match, by adding a `+` symbol
+before the annotation label: for example,
+```
+ MASK if=+arousal
+```
+will only mask epochs that are completely spanned by an arousal; in contrast,
+```
+ MASK if=arousal
+```
+will also match epochs that have any extent of overlapping `arousal`.
 
 
 [_Eval_ expression](annotations.md#eval)-based masks:
@@ -172,16 +149,21 @@ Original annotation-based mask syntax:
 | `mask-expr`   | `mask-expr="if(annot1) && annot2.v2 > 0.95" ` | Mask epochs for which the expression is true |
 | `unmask-expr` | `unmask-expr="if(annot1) && annot2.v2 > 0.95"` | Unmask epochs for which the expression is true |
 
-Options to include/exclude epochs based on time intervals rather than annotations:
+
+_Including/excluding epochs based on time intervals_
+
+Rather than annotations, these options mask certain epochs based on
+time intervals or epoch connts.
 
 | Option | Example | Description | 
 | ---- | ----- | ----- | 
-| `epoch`        | `epoch=6,9-10,20-25` | Mask epochs outside of this set of epochs |
+| `epoch`        | `epoch=6,9-10,20-25` | Mask epochs outside of this set of epochs (i.e. include these ones) |
 | `mask-epoch`   | `mask-epoch=20-50` | As above, except mask epochs inside this range | 
 | `sec`     | `sec=0-60` | Set mask to include all epochs that span the interval from 0 to 60 seconds (i.e. these are _unmasked_, all other epochs are _masked_)|
-| `hms`     | `hms=8:00-9:00` | Set mask to include all epochs that span the interval from 8am to 9am |
+| `hms`     | `hms=8:00-9:00` | Set mask to include all epochs that span the interval from 8am to 9am (uses 24-hour clock) |
 
-Several miscellaneous options:
+
+_Other miscellaneous mask options_
 
 | Option | Example | Description | 
 | ---- | ----- | ----- | 
@@ -191,6 +173,16 @@ Several miscellaneous options:
 | `random`  | `MASK random=50` | Select up to 50 from currently unmasked epochs | 
 | `leading` | `MASK leading=wake` | Remove all epochs up to the first epoch _without_ this annotation |
 | `flanked` | `MASK flanked=N2,2` | Include only N2 epochs flanked by at least 2 other N2 epochs | 
+
+
+As noted above, a single `MASK` command can only have a single option.  Mask commands can be specified sequentially to
+build up more complex filters: e.g. to select N2 epochs between 10pm and midnight:
+
+```
+MASK hms=22:00-00:00
+MASK mask-ifnot=N2
+RE
+```
 
 
 <h3>Outputs</h3>
@@ -218,7 +210,7 @@ may yield the following output:
  total of 971 of 1022 retained
 ```
 
-The same information is also tabulated in any specified [_lout_](../luna/destrat.md) database as follows.
+The same information is also tabulated in any specified [_lunout_](../luna/destrat.md) database as follows.
 
 Output stratified by mask (strata: `EPOCH_MASK`):
 
@@ -230,9 +222,11 @@ Output stratified by mask (strata: `EPOCH_MASK`):
 | `N_UNCHANGED` | Number of epochs whose mask status was not changed by this operation |
 | `N_RETAINED` | Number of epochs retained after this operation | 
 | `N_TOTAL` | Total number of epochs |
+| `MATCH_LOGIC` | `OR` or `AND` if based on an annotation mask |
+| `MATCH_TYPE` | Primary annotation maask, e.g. `ifnot` |
+| `MASK_MODE` | `force`, `mask` or `unmask` |
 
-
-For the above example, these values would be as follows:
+For the above example, these values would be as follows (some outputs excluded):
 
 ```
 ID     EPOCH_MASK  N_MASK_SET  N_MASK_UNSET  N_MATCHES  N_RETAINED  N_TOTAL  N_UNCHANGED
@@ -252,7 +246,7 @@ context and general principles, along with examples of using masks.
 - When an EDF is first loaded, all epochs are _unmasked_.
 
 - Whether or not an epoch is masked is typically specified in terms of
-  the _annotations_ associated with that epoch, or _when_ that epoch occur.s
+  the _annotations_ associated with that epoch, or _when_ that epoch occurs.
 
 - Masking, by itself, doesn't actually remove any epochs: it only
   flags those to be removed.
@@ -263,19 +257,16 @@ context and general principles, along with examples of using masks.
 
 - Annotations used in masking (i.e. the _input_ of the `MASK` command)
  can still be scored with fraction-of-a-second resolution, however,
- such as arousal events.  In this case, Luna evaluates epochs as
+ such as arousal events.  In this case, by default Luna evaluates epochs as
  _containing at least one_ arousal event versus _not containing any_
- arousal events.
+ arousal events.  The `+` special syntax (`+annotation`) will mask only if
+ `annotaiton` spans the entire epoch.
 
 !!! hint "Masks with finer temporal resolution" 
-    To achieve a mask with
-    a finer temporal resolution, you can always set the epoch size to be 
-    smaller (e.g. `EPOCH len=1`) before applying the mask (and it can
-    be reset back to `len=30` or another value after `RESTRUCTURE`-ing
-    the data).  However, epochs cannot be smaller than the EDF 
-    [record size](manipulations.md#record-size), and so there is currently 
-    no effective way to achieve mask EDFs at _sample-point_ levels of 
-    temporal resolution.
+    To achieve a mask with a finer temporal resolution, you can always
+    set the epoch size to be smaller (e.g. `EPOCH len=1`) before
+    applying the mask (and it can be reset back to `len=30` or another
+    value after `RESTRUCTURE`-ing the data).
 
 
 ### Mask modes
@@ -300,299 +291,50 @@ way to combine masks. For example, in this instance, the second mask
 MASK if=A
 MASK if=B
 ```
-In contrast, 
+In contrast, either
+```
+MASK if=A,B
+```
+or
 ```
 MASK mask-if=A
 MASK mask-if=B
 ```
+would give the intended result of masking epochs that have an annotation of either `A` __or__ `B`.
 
-is the same as saying "mask epochs that have annotation `A` __or__
-`B`".  (See below for how multiple annotations can be
-combined in a single `MASK` statement.)
+Note that the single-line form is more convenient if you are using a variable to define masks:
+```
+MASK ifnot=${stage}
+```
+would allow stage to be say just N2 epochs (`stage=N2`) but also combined NREM epochs (`stage=N1,N2,N3`).
 
- 
+
 ### Multiple annotations 
 
-You can mask based on multiple annotations or features by specifying a
-series of `MASK` commands.  Using the original syntax, Luna also
-provides a convenience feature of giving comma-delimited list
-(e.g. `mask-if=A,B`), which is internally expanded out into two
-commands (`mask-if=A` followed by `mask-if=B`).  As detailed below, however,
-this imposes some limitations and complications on using the original
-syntax with multiple masks.  This is in large part why we also offer
-the significantly more flexible [_eval_](evals.md) masks.
+Annotation masks let you specify a comma-delimited
+list. By default, an epoch will match if at least one of those
+annotations spans the epochs.  If the `-all` suffix is added
+(e.g. `ifnot-all=X,Y`) then an epoch will match if _all_ annotations
+are present.
 
-!!! alert "The bottom line"
-    	  To mask epochs that are _either_ `A`, `B` or `C`, for example, use:
-	  ```
-	  MASK mask-if=A,B,C
-	  ```
-	  To _unmask_ epochs that are _either_ `A`, `B` or `C`, for example, use:
-	  ```
-	  MASK unmask-if=A,B,C
-	  ```
-	  _For all other types of masks involving multiple annotations_, you should use an 
-	  [eval expression](evals.md), which allow you to 
-	  write complex expressions in relatively straightforward manner.   For example, to
-	  mask epochs that either 1) contain _both_ `A` and `B` or 2) only `C`, and _neither_ `A` or `B`:
-	  ```
-	  MASK mask=" ( if(A) && if(B) ) || ( if(C) && ! ( if(A) || if(B) ) ) "
-	  ```
-	  You can just follow the above rules, along with consulting the
-	  [eval](evals.md) syntax (e.g. `&&` means _and_ and `||` means _or_).  
+Alternatively, you can mask based on multiple annotations or features
+by specifying a series of `MASK` commands - although, take care to
+note the _mask mode_ as above (some masks will wipe out the effects of
+prior masks).
 
-The text below isn't crucial reading, so feel free to [skip to the
-next section](#matching-instance-ids) but it will give some more
-insight into how and why Luna masks work the way they do. Here we
-outline the ways in which the original mask syntax _can_ and _cannot_
-be used with multiple annotations, which correspond to two categories:
+Another alternative is to use the
+[`MAKE-ANNOTS`](annotations.md#make-annots) command to generate new
+annotations on-the-fly, as functions of pairs of existing annotations.
+The resulting new annotation can then be given to a `MASK` command.
 
-__Logical ORs using `mask-if` and `unmask-if`__
-
-The `mask-if` and `unmask-if` options alone can take a comma-delimited
-list of annotations, and will combine them using OR logic.  For example:
-
+Finally, yet another option is to use the more flexible but more complex [_eval_](evals.md) masks.  For example, 
+to mask epochs that either 1) contain _both_ `A` and `B` or 2) only `C`, and _neither_ `A` or `B`:
 ```
-MASK mask-if=A,B
+MASK mask-expr=" ( if(A) && if(B) ) || ( if(C) && ! ( if(A) || if(B) ) ) "
 ```
-
-will mask epochs that have _either_ `A` or `B` annotations.  Using a
-comma-delimited list is identical to writing serial `MASK` commands:
-
-```
-MASK mask-if=A
-MASK mask-if=B
-```
-
-This multiple-annotation syntax for the `mask-if` and `unmask-if`
-options can often be convenient, particularly when wishing to specify
-list of annotations that are encoded as a single
-[_variable_](../luna/args.md#variables).   For example, if a variable `${excl}` has been defined to specify a long
-list of possible artifacts and reasons to exclude an epoch from
-analysis, then rather than writing out multiple `MASK` statements,
-the following could be used:
-
-```
-MASK mask-if=${excl}
-```
-
-Similarly, if the variable `${sleep}` was defined as:
-
-``` 
-sleep=N1,N2,N3,REM 
-```
-one could then write: 
-```
-MASK all
-MASK unmask-if=${sleep}
-```
-to restrict analysis to sleep epochs only (noting that all epochs
-start off unmasked, this masks everything and then unmasks all sleep
-epochs).  
-
-Arguably, this is more convenient than using _eval_ expressions, and
-is a primary reason why the original mask syntax is retained in Luna.
-
-
-__Everything else__
-
-However, it is __not possible__ to use the comma-delimited, multiple-annotation
-syntax with any other of the original mask options: i.e. neither `if`,
-`ifnot`, `mask-ifnot` nor `unmask-ifnot`.  For example, in the example
-above with `${sleep}` it is __not possible__ to write:
-
-```
-MASK mask-ifnot=${sleep}
-```
-In fact, Luna will give an error:
-```
-error : cannot specify multiple annotations with an 'ifnot' mask
-```
-
-Why not?  To explain this, let's take a peek at _what's behind the mask_...
-
-When using the original syntax, Luna implements multiple-annotation
-masks as a series of sequential masks.  To see where the problem is
-(in the process, hopefully gain insight into how Luna masks work),
-consider the following tables, in which we show the mask status as we
-step through the sequential commands.  Here we have annotation `A` on
-the top row, where `.` means epochs that do _not_ have an `A`.  The
-second row is similar, but for a second annotation `B`.  That is,
-there are four types of epoch given these two annotations.
-
-
-This first table is what would happen if Luna tried to _sequentially_ evaluate
-`if=A,B` (where the _goal_ is to mask epochs that have either `A` or
-`B`):
-
-```
-                A   A   .   .
-                B   .   B   .
-------------------------------
-goal            1   1   1   0
-------------------------------
-start           0   0   0   0
-if=A           [1] [1] [0] [0]
-if=B           [1] [0] [1] [0]
-```
-
-That is, the _goal_ is obviously to mask (set to `1`) the first three
-types of epoch.  The three rows underneath show the starting mask
-state (i.e. starts as all unmasked) and then the state _after_ each
-subsequent mask has been applied.  Brackets (`[ ]`) around a mask
-value indicate that it has changed (or would have been changed if the
-prior value were different) under that mask.  So, for `if=A,B` the
-problem is obvious, in that every epoch is always changed; therefore
-the second mask wipes out the effect of the first when applied
-sequentially.
-
-
-What about masks with modifiers (i.e. `mask` or `unmask` before the
-condition) that _don't_ reset every epoch and so do not necessarily wipe out previous 
-masks if applied sequentially?  We know `mask-if=A,B` is acceptable: 
-```
-                A   A   .   .
-                B   .   B   .
-------------------------------
-goal            1   1   1   0
-------------------------------
-start           0   0   0   0
-mask-if=A      [1] [1]  0   0 
-mask-if=B      [1]  1  [1]  0 
-```
-
-That is, this works because we do not unmask the epochs that are `A`
-but not `B` in the second step (i.e. as this command only ever works
-to _mask_ epochs).
-
-But why isn't the similar-looking form `mask-ifnot=A,B` (as in the
-`${sleep}` example above) allowed then?  Writing it out as two sequential 
-masks:
-```
-                A   A   .   .
-                B   .   B   .
-------------------------------
-goal            0   0   0   1
-------------------------------
-start           0   0   0   0
-mask-ifnot=A    0   0  [1] [1]
-mask-ifnot=B    0  [1]  1  [1]
-``` 
-
-That is, the goal of `mask-ifnot=A,B` is to mask epochs that are
-not-`A` _and_ not-`B`. Evaluating the two `mask-ifnot` statements sequentially, however, we
-implicitly get _OR_ rather than _AND_ logic combining them (i.e. as
-the `mask-` modifier means to only ever mask, never unmask epochs).  A
-similar logic applies from `unmask-ifnot`. This is why Luna only allows you to specify multiple annotations with
-`mask-if` and `unmask-if` options, as they can be evaluated as
-separate, sequential commands and still give the right answer.
-
-So, how would one specify a mask for `A` _and_ `B` then?  Or for
-neither `A` _nor_ `B`?   Once you begin to have more complex expressions, the best route
-is to use [eval expression](evals.md) masks.  For `A` _and_ `B`:
-```
-MASK expr=" if(A) && if(B) "
-```
-For neither `A` nor `B`:
-
-```
-MASK expr=" ! ( if(A) || if(B) ) "
-```
-or, equivalently:
-
-```
-MASK expr=" ifnot(A) && ifnot(B) "
-```
-
-
-We _can_ achieve these goals with the original syntax (whether using
-multiple-annotations explicitly in a single command or not), it is
-just less intuitive.  For example, to achieve a mask of `A` and `B` we could
-do the following:
-
-
-```
-MASK mask-if=A
-MASK unmask-ifnot=B
-```
-```
-                A   A   .   .
-                B   .   B   .
-------------------------------
-goal            1   0   0   0
-------------------------------
-start           0   0   0   0
-mask-if=A      [1] [1]  0   0
-unmask-ifnot=B  1  [0]  0  [0]
-```
-
-
-What about the a mask of neither `A` _nor_ `B` using the original
-syntax?  Similarly, it is possible to combine different
-original-syntax commands:
-
-```
-MASK mask-ifnot=A
-MASK unmask-if=B
-```
-```
-                A   A   .   .
-                B   .   B   .
-------------------------------
-goal            0   0   0   1
-------------------------------
-start           0   0   0   0
-mask-ifnot=A    0   0  [1] [1]
-unmask-if=B     0   0  [0]  1
-```
-
-Alternatively, you can achieve the same effect through different
-combinations of masks. Here we start by setting all epochs to be
-masked, and then unmask any that are `A` _or_ `B`:
-
-```
-MASK all
-MASK unmask-if=A,B
-```
-```
-                A   A   .   .
-                B   .   B   .
-------------------------------
-goal            0   0   0   1
-------------------------------
-all             1   1   1   1
-unmask-if=A    [0] [0]  1   1
-unmask-if=B    [0]  0  [0]  1
-``` 
-
-As yet another option, we could use the `flip` command:
-
-
-```
-MASK mask-if=A,B
-MASK flip
-```
-```
-                A   A   .   .
-                B   .   B   .
-------------------------------
-goal            0   0   0   1
-------------------------------
-start           0   0   0   0
-mask-if=A      [1] [1]  0   0
-mask-if=B      [1]  1  [1]  0
-flip           [0] [0] [0] [1]
-``` 
-
-
-So, these things are _possible_ but as you can see, it would be easy
-to make an error in specifying these masks, even when only considering
-two annotations.  So, again, the bottom line is that if you are
-struggling to express the required mask, consider using an [eval
-expression](evals.md) instead. Also, pay close attention to what is
-being written in the log file, and use the [`DUMP-MASK`](#dump-masks)
-or [`ANNOTS`](annotations.md#annots) commands to sanity check whether
-a given mask is working as intended.
+Consult the [eval](evals.md) syntax (e.g. `&&` means _and_ and `||` means _or_),
+which is quite generic (although care is needed with exact syntax and there are one or two
+edge cases as listed on the linked page).
 
 
 ### Matching _instance_ IDs
@@ -662,33 +404,11 @@ fine.  In this latter case, one could specify the previous N2/N3 mask
 as follows:
 
 ```
-MASK all
-MASK unmask-if=N2,N3
+MASK mask-ifnot=N2,N3
 ``` 
 
-!!! Note
-    Perhaps confusingly, unlike the restrictions related to
-    matching on multiple class-level annotations (noted in the
-    previous section), within a single annotation class it is possible
-    to match to multiple instance IDs (using OR logic) with _any_ of
-    the six primary mask options.  This is because these expressions
-    (e.g. `[N2|N3]`) are not evaluated as serial `MASK`
-    statements. So, whereas
-    ```
-    MASK mask-ifnot=N2,N3          (not allowed)
-    ```
-    would not work, the following is okay:
-    ```
-    MASK mask-ifnot=SS[N2|N3]      (is okay!)
-    ```
-    This is because the first formulation would expand to the serial (and nonsensical) statements:
-    ```
-    MASK mask-ifnot=N2
-    MASK mask-ifnot=N3             (i.e. would always mask all epochs...)
-    ```
 
-
-### EVAL
+### EVAL expressions
 
 It is possible for _eval_ statements to return a _null_ or _undefined_
 answer, for instance if a requested variable is not present.  The table below describes 
@@ -796,11 +516,7 @@ MASK hms=8:00-9:00
     Duration          : 00:00:30
     ```
     To select intervals at a finer temporal resolution, you can always
-    set the `EPOCH` duration to be smaller.  (Note, however, you cannot
-    set the epoch duration to be shorter than the EDF record size,
-    which is often, but not always, 1 second.  You can, however, alter
-    the record size of the EDF with the
-    [`RECORD-SIZE`](manipulations.md#record-size) command.) 
+    set the `EPOCH` duration to be smaller.
 
     Re-running with a shorter epoch size:
     ```
@@ -866,10 +582,10 @@ MASK flip
 
 The `leading` option masks all epochs until it comes across an epoch
 that does _not_ have the given annotation.  For example, to remove
-leading `wake` epochs:
+leading wake (`W`) epochs:
 
 ```
-MASK leading=wake
+MASK leading=W
 RESTRUCTURE
 ```
 
@@ -883,8 +599,110 @@ transition, you would use (assuming 30-second epochs):
 MASK flanked=N2,2
 ```
 
-!!! alert "TODO/Internal note"
-    `leading` and `flanked` options are currently broken; they only apply to old-stype _epoch-annotations_ .... needs to be fixed
+!!! alert "TODO:"
+    `leading` and `flanked` options are currently broken; they only apply to old-type _epoch-annotations_ 
+
+
+### Tips on usage
+
+At the risk of repeating some of the points made above, here we give a
+few important points about how masks and restructuring EDFs work in
+Luna:
+
+- You can set one or more masks, but nothing is fundamentally changed
+  until a `RESTRUCTURE` (or, equivalently, `RE`) command is issued.
+  Prior to that command, the mask could be cleared and you would be
+  working with the same version of the data as before.
+
+- Once the `RESTRUCTURE` command has been issued, all masked epochs
+  are permanently removed from the in-memory representation of the
+  EDF. Any dropped epochs or channels cannot be restored without
+  reloading the original EDF by running Luna a second time on that
+  EDF.
+
+- The `RESTRUCTURE` command only alters the in-memory representation
+  of the EDF, not the original on-disk EDF itself.  In fact, no Luna
+  commands will ever alter the original EDF.  The `WRITE` command can
+  be used to generate a _new_ EDF after `MASK`-ing and
+  `RESTRUCTURE`-ing the data.
+
+- Some commands will automatically skip masked epochs
+  (e.g. `CHEP-MASK`).  Other commands have options for including or
+  excluding masked epochs (e.g. `ANNOTS`).  Many commands will operate
+  on the entire signal however, _whether or not epochs are masked_.
+  For example, the [`FILTER`](fir-filters.md#filter) command applies a
+  FIR filter (e.g. bandpass) to a signal, and replaces the original
+  signal with the filtered version.  Here, it would not make sense to
+  only filter and modify the unmasked epochs, leaving the contiguous
+  masked epochs with the unfiltered, raw signal.  Thus, if the goal is
+  to apply a `FILTER` to a subset of unmasked epochs, one should use
+  the `RESTRUCTURE` (or short form `RE`) command after setting the `MASK` and before
+  running the `FILTER`.  In general, if you are unsure, it is safer to
+  `RESTRUCTURE` the data once the desired `MASK` has been set.  As of v0.28,
+  Luna will give a warning to the console if it ever finds itself being asked
+  to perform any _whole signal_ analysis when some epochs are masked:
+  ```
+  luna s.lst -s ' MASK epoch=1 & FILTER sig=EEG highpass=1 order=10 '
+  ```
+  ```
+  *** warning - running a command that pulls the whole trace
+  ***           but currently an epoch mask set has been set;
+  ***           for this operation to skip masked epochs,
+  ***           you need to run RE (RESTRUCTURE) beforehand
+  ```
+
+- After applying `MASK/RESTRUCTURE` commands, there will typically be
+  fewer epochs.  Importantly, however, Luna will track the mapping of
+  epochs however, so that epoch codes and other time-stamps listed in
+  output refer to the original EDF, not the reduced version.  Consider
+  this example of a 10-epoch dataset, with five of the epochs masked
+  (i.e. set to be removed, so MASK is `1`).
+
+```
+Before RESTRUCTURE               After RESTRUCTURE
+
+E       MASK                     E       MASK
+------------                     ------------
+1       0                        1       0
+2       1                        4       0
+3       1                        5       0
+4       0                        7       0
+5       0                        8       0
+6       1                        10      0
+7       0
+8       0
+9       1
+10      0
+``` 
+
+After issuing a `RESTRUCTURE` command, the data will contain only five
+epochs, and the mask will be effectively cleared (i.e. only unmasked
+epochs are left).  However, `E`, the original epoch numbering (as well as
+any time-interval output, e.g. of individual spindles from the
+`SPINDLES` command) will still be given with respect to the original
+EDF, and so are more interpretable in subsequent analyses or
+visualizations.  This temporal information is retained even if
+subsequent `MASK/RESTRUCTURE` commands are applied during the same run of Luna.
+For example, if another mask were set on this reduced dataset:
+
+```
+Before RESTRUCTURE               After RESTRUCTURE
+
+E       MASK                     E       MASK
+------------                     ------------
+1       0                        1       0
+4       0                        4       0
+5       1                        7       0
+7       0                        8       0
+8       0                   
+10      1                   
+``` 
+
+Epoch encoding and the internal _time-track_ information is retained,
+respecting potential _discontinuities_ in the data, until another
+`EPOCH` command is issued.  At that point, the data are assumed to
+represent a _continuous_ EDF.
+
 
 
 ## `DUMP-MASK`
@@ -908,21 +726,21 @@ Epoch-level tabulation (strata: `E`)
 
 | Variable | Description |
 | ---- | ---- | 
-| `EPOCH_MASK`  | Mask status: `0` is unmasked (included), and `1` is masked (i.e. excluded) |
+| `EMASK`  | Mask status: `0` is unmasked (included), and `1` is masked (i.e. excluded) |
 
 <h3>Example</h3>
 
 Apply a simple mask:
 ```
-luna s.lst -o out.db -s "EPOCH & MASK epoch=5-8 & DUMP-MASK"
+luna s.lst -o out.db -s ' MASK epoch=5-8 & DUMP-MASK '
 ```
 and then look at the output (using `head` to restrict to the first ten rows):
 ```
-destrat out.db +DUMP-MASK -r E -v EPOCH_MASK | head 
+destrat out.db +DUMP-MASK -r E | head 
 ```
 which yields:
 ```
-ID        E   EPOCH_MASK
+ID        E   EMASK
 id00001   1   1
 id00001   2   1
 id00001   3   1
@@ -943,7 +761,10 @@ _Restructures the in-memory dataset after a mask has been set_
 
 <h3>Options</h3>
 
-None
+| Option | Description |
+| ---- | ----- |
+| `verbose` | Output additional record-level information | 
+
 
 <h3>Outputs</h3>
 
@@ -960,6 +781,15 @@ The number of records refers to the internal structure of the EDF file
 (i.e. based on its record size, that is often but not always 1
 second).
 
+Record-level information (strata: `REC`, options: `verbose`)
+
+| Variable | Description |
+| ----   | ---- |
+| `EPOCH ` | Epoch(s) spanning this record |
+| `MASK`   | Mask status for this record, given epoch-level mask |
+| `RETAINED` | Whether this record was retained prior to this `RESTRUCTURE` |
+| `START` | Start time of this record ( seconds from  start) |
+| `STOP` | Stop time of this record (seconds from start) | 
 
 <h3>Example</h3>
 

@@ -27,18 +27,38 @@ Core parameters are as follows:
 | `lowpass`  | `lowpass=35` | Low-pass filter with cutoff of 35 Hz |
 | `highpass` | `highpass=0.3` | High-pass filter between 0.3 and 35 Hz |
 | `bandstop` | `bandstop=55,65` | Band-stop filter between 0.3 and 35 Hz |
-| `fft`      | | Use FFT to implement the filter rather than time-domain convolution |
+| `fft`      | Use FFT to implement the filter (this is now the default) |
 
-By default, the `FILTER` command uses the Kaiser window approach to define the filter, which requires the two following parameters:
+By default, the `FILTER` command uses the Kaiser window approach to
+define the filter, which requires the two following parameters:
 
 | Parameter | Example | Description |
 | --- | --- | --- |
-| `ripple`   | `ripple=0.02` | Ripple (as a proportion) |
+| `ripple`   | `ripple=0.01` | Ripple (as a proportion) |
 | `tw`       | `tw=1` | Transition width (in Hz) | 
+| `tw`       | `tw=0.5,5` | Separate lower and upper transition widths for a bandpass filter (in Hz) | 
+
+Note that if using `bandpass tw=lwr,upr` then you need to specify two values for `ripple` also (althogh
+these can be similar).
+
+!!! info "Ripple and stopband attenuation"
+    The `ripple` parameter is related to stopband attenuation by the relation
+    `A = -20log10(ripple)`, such that a `ripple=0.01` corresponds to -40 dB stopband attenuation.
 
 
-Alternatively, it is possible to a) read the FIR coefficients in from a file, or b) use the window method to design a FIR with
-a fixed filter order, using either a Bartlett, Hann, Blackman or rectangular window:
+_Alternative filters_
+
+Alternatively, it is possible to
+
+ - read the FIR coefficients in from a `file`
+
+ - use the window method to design a FIR with a fixed filter order,
+  using either a Bartlett, Hann, Blackman or rectangular window
+
+ - use a narrow-band Gaussian filter, defined by a center frequecy and
+   FWHM (full-width half-maximum) bandwidth, with `ngaus`
+
+ - use an IIR Buttworth or Chebyshev filter
 
 | Parameter | Example | Description |
 | --- | --- | --- |
@@ -49,7 +69,23 @@ a fixed filter order, using either a Bartlett, Hann, Blackman or rectangular win
 | `bartlett` | | Specify a Bartlett window |
 | `hann` | | Specify a Hann window |
 | `blackman` | | Specify a Blackman window |
+| `ngaus` | `ngaus=12,2` | Specify a narrow-band Gaussian filter (center frequency, FWHM) | 
+| `butterworth` | `butterworth=4` | A Butterworth IIR filter of fixed order (see below) |
+| `chebyshev` | `chebyshev=4,1` | A Chebyshev IIR filter of fixed order and ripple factor (see below) |
 
+_IIR filters_
+
+[Butterworth](https://en.wikipedia.org/wiki/Butterworth_filter) and
+[Chebyshev](https://en.wikipedia.org/wiki/Chebyshev_filter) (type I)
+filters require one of `bandpass=f1,f2`, `bandstop=f1,f2`,
+`lowpass=f1` and `highpass=f1` options.  Butterworth takes a single
+parameter, the filter order; Chebyshev takes two: order and the ripple
+factor epsilon - see the above link for a definition of how the ripple
+factor relates to passband ripple in dB.  Chebyshev filters are
+sharper than the Butterworth filter, whereas Butterworth filters
+control passband ripple.  Note that both IIR introduce phase delays:
+in general, FIR filters are probably preferable choices.
+ 
 <h3>Output</h3>
 
 After running `FILTER`, the in-memory signal for a filtered channel

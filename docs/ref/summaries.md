@@ -723,8 +723,8 @@ appears as an additional factor:
 
 
 ```
- [STATS]  : CH run    : 28 level(s)  : MAX MEAN MEDIAN MEDIAN.MEAN MEDIAN.MEDIAN
-          :           :              : MEDIAN.RMS MEDIAN.SKEW MIN NE NE1
+ [STATS]  : CH run    : 28 level(s)  : MAX MEAN MEDIAN MEAN_MD MEDIAN_MD
+          :           :              : RMS_MD SKEW_MD MIN NE NE1
           :           :              : RMS SKEW
           :           :              : 
  [STATS]  : E CH run  : (...)        : MAX MEAN MEDIAN MIN RMS SKEW
@@ -825,12 +825,12 @@ Additional whole-night, per-channel statistics, only using _unmasked_ epochs (op
 
 | Variable | Description |
 | --- | --- |
-| `NE`          | Total number of epochs in record |
-| `NE1`         | Number of _unmasked_ epochs actually used in calculations |
-| `MEDIAN.MEAN` | Median of all per-epoch means | 
-| `MEDIAN.MEDIAN` | Median of all per-epoch medians |
-| `MEDIAN.RMS` | Median of all per-epoch RMS values |
-| `MEDIAN.SKEW` | Median of all per-epoch skewness values |
+| `NE`        | Total number of epochs in record |
+| `NE1`       | Number of _unmasked_ epochs actually used in calculations |
+| `MEAN_MD`   | Median of all per-epoch means | 
+| `MEDIAN_MD` | Median of all per-epoch medians |
+| `RMS_MD`    | Median of all per-epoch RMS values |
+| `SKEW_MD`   | Median of all per-epoch skewness values |
 
 
 <h3>Example</h3>

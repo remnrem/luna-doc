@@ -29,8 +29,10 @@ This command is set up to define clusters with respect to three types of _adjace
 
  - by pairs of channels (e.g. for connectivity measures, the pair `C3-F1` might be considered adjacent to `CZ-FZ`)
 
+ - by time (e.g. for peri-event data)
+
 These stratifiers are automatically determined by the presence of `F`,
-`CH` or `CH1` and `CH2` columns in the dependent variable files.
+`CH` or `CH1` and `CH2` or `T` columns in the dependent variable files.
 
 The idea behind cluster-based analyses non-parametric analysis
 (outlined [here](https://pubmed.ncbi.nlm.nih.gov/17517438/)) is that
@@ -70,6 +72,7 @@ Primary parameters to specify the data and any outlier actions for the dependent
 | `covar` | `AGE,SEX` | Covariates, coded numerically (binary 0/1 or real-valued, assumed to be columns in `iv-file`) |
 | `dv-file` | `spec.txt,psd.txt` | One or more dependent variable files, in _long-format_ (see below) |
 | `dv` | `DENS,AMP` | The name of one or more DVs (assumed to be columns in the `dv-file` set |
+| `all-dvs` | | Use all DVs from the DV files (equivalent to `dv=*`) |
 | `th` | `5` | SD units for individual-level DV outlier removal (note: case-wise deletion) |
 | `winsor` | `0.02` | Proportion (e.g. 2% here) for Winsorizing the DV (no outlier removal) |
 
@@ -81,6 +84,7 @@ Parameters for the (cluster-based) permutation:
 | `clocs` | `clocs.txt` | File containing channel location information, described [here](spatial.md#clocs) |
 | `th-spatial` | 0.5 | Threshold for defining adjacent channels (Euclidean distance, 0 to 2) |
 | `th-freq` | 1 | Threshold for defining adjacent frequencies (Hz) |
+| `th-time` | 0.5 | Threshold for defining adjacent time-points (seconds) |
 | `th-cluster` | 2 | Absolute value of t-statistic for inclusion in a cluster |
 
 Secondary parameters
@@ -106,8 +110,9 @@ Variable-level output (strata: `VAR`):
 | `CH1` | First channel (for variables stratified by channel-pairs) |
 | `CH2` | Second channel (for variables stratified by channel-pairs) |
 | `F` | Frequency (Hz) (for variables stratified by frequency) |
+| `T` | Time (e.g seconds) (for variables stratified by time) | 
 | `B` | Beta from linear regression |
-| `T` | The correspondong t-statistic | 
+| `STAT` | The correspondong t-statistic | 
 | `PU` | Uncorrected empirical significance value |
 | `PC` | Family-wise corrected empirical significance value |
 | `CLST` | For variables assigned to a nominally-significant cluster (P<0.05), the cluster number _K_ (else 0) |
@@ -248,7 +253,7 @@ The point-wise (i.e. variable-by-variable) output can be extracted as follows:
 destrat out.db +CPT -r VAR 
 ```
 ``` 
-ID  VAR           B             CH    CLST   F       PC        PU         T
+ID  VAR           B             CH    CLST   F       PC        PU          STAT
 .   AF3~0.5~PSD   -0.07959794   AF3   0      0.5     0.68131   0.02297   -2.339
 .   AF3~0.75~PSD  -0.09944737   AF3   0      0.75    0.09191   0.00299   -3.426
 .   AF3~1~PSD     -0.08683515   AF3   0      1       0.28371   0.00299   -2.923
@@ -262,6 +267,7 @@ ID  VAR           B             CH    CLST   F       PC        PU         T
 
 !!! hint
     The `ID` field in the output of the CPT command is always `.`, i.e. as this reflects sample-level output rather than any one observation.
+    Also note that outputs in later versions of Luna will now include a `T` field as the time-stratifier, and the `VAR` labels are expanded to reflect this additional extra stratifier.
 
 The variable names (under `VAR`) are automatically constructed from
 the specified `dv` variables (i.e. `PSD` here) and any frequency and

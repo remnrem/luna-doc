@@ -99,7 +99,7 @@ The index below gives a listing of all major _lunaR_ functions:
 | [`leval.project()`](ref.md#levalproject)       | Evaluates an arbitrary set of Luna commands for all members of a project |
 | [`lcmd()`](ref.md#lcmd)         | Reads and parses a Luna command script from a file |
 | [`literate()`](ref.md#literate) | Applies an arbitrary R function to signal data, one epoch or interval at a time |
-| [`ldb()`](ref.md#ldb)           | Imports data from a [_lout_ database](../../luna/destrat.md) as an R list object |
+| [`ldb()`](ref.md#ldb)           | Imports data from a [_lunout_ database](../../luna/destrat.md) as an R list object |
 | [`lx()`](ref.md#lx)             | Extracts table(s) from objects returned by `ldb()`, `leval()` or `leval.project() |
 | [`lx2()`](ref.md#lx2)           | Like `lx()` but for lists of returned objects |
 | [`lid()`](ref.md#lid)           | Extract a particular individual from a returned data frame |

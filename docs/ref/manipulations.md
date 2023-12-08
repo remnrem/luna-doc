@@ -10,6 +10,7 @@ _Commands to alter basic properties of the EDF and the signals therein_
 |[`RESAMPLE`](#resample) | Resample signal(s) | 
 |[`ENFORCE-SR`](#enforce-sr) | Require a particular sample rate |
 |[`REFERENCE`](#reference) | Re-reference signals |
+|[`DEREFERENCE`](#dereference) | De-reference signals |
 |[`CANONICAL`](#canonical) | Generate _canonical_ signals |
 |[`MINMAX`](#minmax) | Set digital/physical min/max across channels |
 |[`uV`](#uv) | Rescale units to uV |
@@ -261,16 +262,26 @@ Signals           : EEG[125] EEG_V2[125]
 _Changes the sampling rate of a signal_
 
 Uses functions from `libsamplerate` to upsample or downsample signals.
-Within a maximum upsampling/downsampling of 256, there are no
+Within a maximum upsampling/downsampling factor of 256, there are no
 constraints on the new sample rate (i.e. the ratio of old and new
 sample rates need not be a rational number).
+
+The `downsample` and `upsample-if` options can be used to control whether a channel is resampled:
+
+ - `downsample` means that channels will only ever be downsampled, otherwise left _as is_
+
+ - `upsample-if=50` means that channels will only be resampled (up or down) if the rate is above, e.g. 50 Hz.  This option can
+ avoid "garbage channels" (e.g. a channel labelled as an EEG but with a sample rate of 10 Hz, for example) being included.
 
 <h3>Parameters</h3>
 
 | Parameter | Example | Description | 
 | --- | --- | --- | 
 | `sig` | `sig=C3,C4` | Signal list |
-| `sr` | `sr=100` | New sampling rate (Hz) | 
+| `sr` | `sr=128` | New sampling rate (Hz) | 
+| `downsample` | | Only channels with rates _above_ `sr` will be downsampled
+| `upsample-if` | `upsample-if=100` | Only resample if the original sample rate is greater than this value | 
+
 
 <h3>Output</h3>
 
@@ -325,6 +336,8 @@ _Re-references signals with respect to one or more other signals_
 | `sig` | `sig=C3,C4` | Signal(s) to re-reference | 
 | `ref` | `ref=A1,A2` | Signal(s) to provide the reference | 
 | `pairwise` | | Perform pairwise re-referencing between `sig` and `ref` (see below) |
+| `new` | `new=C3_LM` | Generate a new channel instead of altering `sig` | 
+| `sr` | `sr=128` | Resample all channels first to this sample rate |
 
 Both `sig` and `ref` are required parameters. If more than one
 channel is given as the reference (in a comma-delimited list), the
@@ -344,11 +357,20 @@ With `pairwise`:
        C4 - A2
 ```
 
+If using `new`, only a single channel can be re-referenced.
 
 <h3>Output</h3>
 
 No output, other than a note to the log.  In memory, the updated
 `sig` channels will contain the re-referenced values.
+
+## DEREFERENCE
+
+_De-references signals with respect to one or more other signals_
+
+This command is a mirror of `REFERENCE`: instead of subtracting another reference signal, this simply adds it back in, i.e.
+effectively removing an existing reference.  The options (`new`, `pairwise`, `sr`, `sig` and `ref`) are otherwise similar,
+see above for details.
 
 
 ## MINMAX

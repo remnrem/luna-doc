@@ -47,6 +47,7 @@ nav:
      - lunaC: 'luna/args.md'
      - lunaR: 'ext/R/index.md'
      - Moonlight: 'moonlight.md'
+     - Hypnoscope: 'hypnoscope.md'
      - Commands: 'ref/index.md'     
      - Vignettes: 'vignettes/index.md'
      - Downloads: 'download/index.md'
@@ -77,8 +78,13 @@ nav:
 
  - Moonlight:
     - 'Overview' : 'moonlight.md'
+    - 'Moonbeam' : 'moonbeam.md'
     - 'Access' : 'moonlight-install.md'
 
+ - Hypnoscope:
+    - 'Overview' : 'hypnoscope.md'
+    - 'Access' : 'hypnoscope-install.md'
+    
  - Commands:
     - 'Overview': 'ref/index.md'
     - 'Summaries': 'ref/summaries.md'
@@ -86,9 +92,10 @@ nav:
     - 'Expressions': 'ref/evals.md'
     - 'Epochs': 'ref/epochs.md'
     - 'Masks': 'ref/masks.md'
-    - 'Freezes': 'ref/freezes.md'
+    - 'Freezes & caches': 'ref/freezes.md'
     - 'Canonical signals': 'ref/canonical.md'
     - 'Manipulations': 'ref/manipulations.md'
+    - 'Alignment': 'ref/alignment.md'
     - 'Outputs': 'ref/outputs.md'
     - 'Filters': 'ref/fir-filters.md'
     - 'Artifacts': 'ref/artifacts.md'
@@ -105,6 +112,7 @@ nav:
     - 'EEG microstates': 'ref/ms.md'
     - 'Clustering': 'ref/clustering.md'
     - 'Association' : 'ref/assoc.md'
+    - 'Prediction' : 'ref/predict.md'
     - 'Simulation' : 'ref/simul.md'
     - 'Helpers' : 'ref/helpers.md'
     - 'Experimental ': 'ref/exp.md'

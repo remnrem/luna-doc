@@ -1,4 +1,4 @@
-# Moonlight
+# Moonlight 
 
 ![img](img/mlref/ml-ref0.png)
 
@@ -10,9 +10,27 @@ well as visualization, _Moonlight_ supports basic analyses and
 manipulation of sleep data, a range of summary statistics, and
 hypnogram-based analyses including automated staging using
 [POPS](ref/pops.md).  Below we give a brief tour of the current main
-components. _Moonlight_ is actively under development - please let us
-know of any rough edges or missing functionality.
+components.
 
+!!! info "Moonbeam & National Sleep Research Resource Data"
+    _Moonlight_ also includes the [_Moonbeam_](moonbeam.md) extension that
+    allows [NSRR](sleepdata.org) users to directly pull NSRR signal data into _Moonlight_ via the web,
+    described [here](moonbeam.md)
+
+
+!!! warning "Moonlight development and scope"
+     _Moonlight_ is actively
+     under development - please let us know of any rough edges or
+     missing functionality.  Note that _Moonlight_ is __not__ designed
+     to be a performant, general purpose EDF viewer, although it does
+     support basic viewing abilities.  The niche _Moonlight_ attempts
+     to fill is to provide some sleep-specific functionality
+     (including hypnogram statistics and automated staging) as well as
+     tight coupling of Luna analyses, i.e. the ability to actively
+     manipulate PSG data in this context.  It also provides tools for
+     viewing [annotation data](ref/annotations.md) alongside signal
+     data.
+     
 ## Access
 
 See [these notes](moonlight-install.md) on how to access _Moonlight_.  Briefly, you can:
@@ -57,7 +75,7 @@ of which show some aspect of the uploaded EDF:
 
  - [_Manips_](#manips) : manipulations of the attached signals: resampling, rereferencing, filtering, copying, renaming, etc
 
- - [_Norms_](#norms) : prototype of a population-based norms model for EEG and other metrics
+ - [_Models_](#models) : prototypes of predictive models and population-based norms model for EEG and other metrics
 
  - [_Luna_](#luna) : evaluation of arbitrary Luna commands  
 
@@ -334,9 +352,16 @@ available.
 _Moonlight_ currently supports two precomputed POPS models for automated sleep staging.   POPS can be run whether or not any original stage
 annotations are present.  
 
- - `M1` : single EEG model - expects a central EEG, contra-lateral mastoid referenced (although, in practice, the model is likely to be reasonably robust to other channels, e.g. frontal, or with linked-mastoid referencing used, etc)
+ - `M1` : single EEG model - expects a central EEG, contra-lateral
+   mastoid referenced (although, in practice, the model is likely to
+   be reasonably robust to other channels, e.g. frontal, or with
+   linked-mastoid referencing used, etc)
 
- - `M2` : similar to `M1`, except expecting two central EEGs (i.e. `C3-M2` and `C4-M1` typically).  This uses POPS channel _equivalance_ options to fit two single-EEG models and select the most _confident_ predictions automatically (i.e. highest posterior for that epoch).
+ - `M2` : similar to `M1`, except expecting two central EEGs
+   (i.e. `C3-M2` and `C4-M1` typically).  This uses POPS channel
+   _equivalance_ options to fit two single-EEG models and select the
+   most _confident_ predictions automatically (i.e. highest posterior
+   for that epoch).
 
 Both models expect signals to have been band-pass filtered 0.3 - 35 Hz
 -- you can check the _Pre-filter_ button if the signals have not been
@@ -345,19 +370,35 @@ filtered, and then _Moonlight_ will perform the filtering on-the-fly.
 will appear as new channels in the dataset, with `_FLT` and `_NORM`
 extensions.)
 
-Checking `SHAP` will produce SHAP information content scores for different features used: this is an advanced feature that will not be
-of use for most users and will slow down POPS also.    
+Checking `SHAP` will produce SHAP information content scores for
+different features used: this is an advanced feature that will not be
+of use for most users and will slow down POPS also.
 
-After clicking _Run POPS_, it can take around 5 to 10 seconds typically (depending on recording duration and original sample rate) to generate the predictions, which will appear as below:
+After clicking _Run POPS_, it can take around 5 to 10 seconds
+typically (depending on recording duration and original sample rate)
+to generate the predictions, which will appear as below:
 
 ![img](img/mlref/ml-ref19.png)
 
-Above, the _Summaries_ sub-panel shows a plot that is similar in structure to the SOAP plot described above (i.e. top two rows show POPS predictions, the bottom row shows any original staging).   Beneath this, measures such as kappa and implied stage durations are shown, similar to SOAP. 
+Above, the _Summaries_ sub-panel shows a plot that is similar in
+structure to the SOAP plot described above (i.e. top two rows show
+POPS predictions, the bottom row shows any original staging).  Beneath
+this, measures such as kappa and implied stage durations are shown,
+similar to SOAP.
 
-The _Epochs_ sub-panel lists the predicted stages along with the posterior probabilties and the original stages (if present).  This can be copied to the Clipboard and saved. 
+The _Epochs_ sub-panel lists the predicted stages along with the
+posterior probabilties and the original stages (if present).  This can
+be copied to the Clipboard and saved.
 
 ![img](img/mlref/ml-ref20.png)
 
+The POPS panel also contains buttons to:
+
+ - automatically perform contra-lateral mastoid referencing on the selected central EEGs (assuming that either `A1` and `A2`, or `M1` and `M2` exist)
+
+ - export the POPS staging to a file
+
+ - two buttons to determine whether the primary hypnogram (i.e. Moonlight's awareness of sleep stage) should be based on any original staging (observed) versus the new POPS staging
 
 ## Annots
 
@@ -414,7 +455,7 @@ Epoch-level statistics are also available under the _Stats/Epochs_ sub-panel.
 ![img](img/mlref/ml-ref26.png)
 
 
-## Time/freq
+## Time/frequency analyses
 
 ![img](img/mlref/ml-ref12.png)
 
@@ -490,57 +531,201 @@ quick way to see the overall structure of a signal, and to zoom in on aberrant e
 
 ![img](img/mlref/ml-ref13.png)
 
-This panel provies a series of sub-panels to perform basic manipulations of signals.
-
-_documentation for each sub-panel to be added_
+This panel provies a series of sub-panels to perform basic
+manipulations of signals, most of which are self-explantory wrappers
+around a corresponding Luna command (e.g. `REFERENCE`, `FILTER`,
+`MASK`, `RESAMPLE`, etc)
 
 ### Rereference
 
+Reference channels specified selected in the left _Channels_ box by the signal(s) in the _Reference(s)_ box, then selecting _Re-reference_ button.  If more than one _reference_
+channel is selected, the average of those signals is taken first (i.e. to support linked-mastoid referencing, or common average referencing).
+
+The _CM-reference_ button will automatically look for the channels
+`C3`, `C4`, `F3`, `F4`, `O1` and `O2` as well as `M1`/`M2` (or
+`A1`/`A2`) and perform the appropriate rereferencing, e.g. `C3`-`M2`,
+`C4`-`M1`, etc.
+
+Note that rereferencing does not change the label of the signal, so the user is responsible for tracking which signals have or have not been rereferenced. 
+
 ### Resample
+
+The channels selected in the _Channels_ box are resampled to sample rate as specified in the _Sample rate (Hz)_ box (after clicking _Resample_)
 
 ### Bandpass filter
 
+Applies a FIR (Kaiser-window) bandpass filter to one or more signals selected in _Channel(s)_.  
+
 ### Rename
+
+Renames a single channel to a new label.
 
 ### Drop
 
+Drops one or more channels.
+
 ### Copy
+
+Copies a single channel and assigns a new label.
 
 ### Transform
 
+An advanced feature, this applies an arbitrary [_Eval_ transform](ref/evals.md#trans) expression to a single channel.
+
 ### Mask
+
+Applies a [mask](ref/masks.md#mask) to the current data, by selecting
+one or more annotations, indicating whether epochs with those
+annotations should be included (i.e. `MASK mask-ifnot`) or excluded
+(i.e. `MASK mask-if`) and then pressing the _Set_ button.   Here is an
+example of a mask used to include on N2 epochs - after running, note how the track
+at the top changes (just under the hypnogram) to reflect masked (gray) versus unmasked (orange)
+epochs:
+
+![img](img/mlref/ml-mask.png)
+
+Alternative options (that do not use use the _Mask_ or _Annotations_
+boxes are a) the _Flip_ button, which simply flips the current mask,
+and b) the ability to write a generic [mask](ref/masks.md#mask)
+argument (and then click _Set_ to apply it).
 
 ### Map channels
 
+This is a wrapper around the [`CANONICAL`](ref/canonical.md) command,
+to map channel labels to a common standard.  The current NSRR
+canonical mapping file can be read in automatically  via _Insert NSRR defaults_ button.
+
 ### Map annots
 
+This is a wrapper around the [`REMAP`](ref/annotations.md#remap) command,
+to map annotationns to a common standard.  The current NSRR
+annotation mapping file can be read in automatically via _Insert NSRR defaults_ button.
 
-## Norms
+## Models
 
+![img](img/mlref/ml-models-hdr.png)
 
+This tab is designed to host an hopefully growing set of predictive
+models and other resources, including population norm data for common
+sleep metrics.  The _models_ are initially based around Luna's
+[`PREDICT`](ref/predict.md) command and the models therein.
+
+### SUN2019: Adult age prediction
+
+This is a wrapper around the [`PREDICT`](ref/predict.md) command for
+the [SUN2019](https://pubmed.ncbi.nlm.nih.gov/30448611/) model to
+predict adult "brain age" from the sleep EEG.  It requires sleep
+staging to be present (either from attached annotations, or previously
+generated by the Moonlight/Luna POPS stager (see above).
+
+The model assumes at least one central EEG: one or more central EEGs
+can be selected from the _Central channel(s)_ box.  The individuals
+observed (chronological) age should be specified in the top box.
+Also, the threshold to flag outliers can be changed (default of 5 SD
+units).  After pressing _Predict_ and waiting 10-20 seconds, the
+output tables as shown below should be generated.  The primary output
+for this model is `Y1`, a bias-corrected estimate of biological/brain
+age based on the sleep EEG.  The difference between this and observed
+age can be interpreted as a _brain age index_, see the above
+manuscript for rationale and applications.
+
+![img](img/mlref/ml-models-sun2019.png)
+
+!!! hint "Processing many samples"
+    If working with multiple recordings, this analysis can be automated by running directly on the command line
+    as shown [here](ref/predict.md#sun2019).
+
+_We thank Drs. Sun, Westover and colleagues for sharing their work to support this implementation of their model._
+
+### Population norms
+
+This tab presents normative data for several sleep EEG metrics based
+on the publication of [Sun et
+al](https://pubmed.ncbi.nlm.nih.gov/36739622/).  Given an attached EDF
+with staging and appropriate channels (frontal, central or occipital),
+it calculates several metrics in the same manner as the original
+paper, and then plots the results against the normative dataset as
+used in the above study.
+  
 ![img](img/mlref/ml-ref33.png)
 
-_documentation to be added_
+_We thank Drs. Sun, Westover and colleagues for sharing their work to support this implementation of their ._
 
 ## Luna
 
 ![img](img/mlref/ml-ref14.png)
 
-_documentation to be added_
+This panel allows arbitrary [Luna commands](ref.md) to be executed on
+the currently attached EDF/annotation dataset, as well as providing a
+simple graphical viewer.
+
+!!! warning "Limits of use and practical considerations"
+    Although it can be convenient to use this feature to run specific one-off Luna commands in a flexible manner,
+    this is __not__ designed as a mature "front-end" for Luna.  Learning to use Luna via the standard command-line
+    is by far the best (most efficient and most reproducible) approach.  Certain errors may not always be well caught
+    by Moonlight, leading a a grayed-out screen: it can usually be more informative to see the whole console outputs
+    from the command line.   Alternatively, if running Moonlight locally via R or a Docker container, at least then one
+    will be able to see Luna's console output directly, which can be helpful to assist debugging, etc.
 
 ### Commands
 
-_documentation to be added_
+As one simple example, given an attached dataset (the _Example_ dataset) here we run the [`TABULATE`](ref/summaries.md#tabulate) command, i.e.
+equivalent to running
+```
+luna s.lst -o out.db -s ' TABULATE sig=POSITION ' 
+```
+
+assuming the `s.lst` pointed to the appropriate EDF/annotation pair. After clicking _Execute_,
+the console output appers in the gray window, and any output tables (i.e. what would have been the
+contents of `out.db`) are listed in the _Tables_ tab. Selecting one of those will display it
+in the table in the lower half of the panel:
 
 ![img](img/mlref/ml-ref34.png)
+
+
+As a second example, here we run a spectral analysis using the [`PSD`](ref/power-spectra.md#psd) command, running a multi-part command,
+with commands separated either by new-lines, or by `&` symbols (i.e. the same as when using the standard command-line version of Luna):
+```
+MASK ifnot=N2
+RE
+PSD sig=EEG,EEG_sec spectrum dB max=65
+```
+
+which gives the output in the console:
+
 ![img](img/mlref/ml-ref35.png)
+
+Looking at the first table: band power (i.e. outputs stratified by band (`B`) and channel (`CH`), we see this table:
+
 ![img](img/mlref/ml-ref36.png)
+
+If outputs are better digested visually, one can either copy the table (at the bottom, each table with have a _Copy_ button that copies it to the clipboard),
+or select the adjacent _Plots_ subpanel after running a Luna command. 
 
 ### Plots
 
-_documentation to be added_
+The _Plots_ subpanel is designed to view any previously executed command from the _Commands_ subpanel of _Luna_.  Assuming the
+above example has just been performed, we could select the power spectra which is the table stratified by both frequency bin (`F`)
+and channel (`F`).    See the main [Luna documentation](ref/index.md) for a description of the outputs of each command.
+
+This tab provides a limited but potentially still convenient way to visualize some of the Luna outputs, in the form of scatter plots.  To
+see a power spectra emitted from the previous command, select `F` for the _X-axis_, and `PSD` for the _Y-axis_.  You should then see the following
+plots:
 
 ![img](img/mlref/ml-ref37.png)
 
+Here it is plotting values for both channels in the same plot, which is not what is desired (especially as it draws the line back between channels).
+That is, remember that this _Plot_ function is completely generic, and so does not understand what a particular plot should look like.   We can however
+select a _Stratifier_ as channel (`CH`) which means that separate scatter plots will be made for each level (unique value) of the stratifier.  This gives
+two plots, one per channel, that show clearer results:
+
 ![img](img/mlref/ml-ref38.png)
+
+
+In this case, if you wanted to restrict the range of frequencies, you'd need to re-run the Luna command changing `max` to something higher or lower.  Obviously for
+more advanced/fine-grained manipulation, one should use a proper statistical/graphics package, however: this is designed for situations where a quick view of some
+results can be of use.
+
+
+_This concludes our Moonlight tour_
 

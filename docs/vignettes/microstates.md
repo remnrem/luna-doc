@@ -323,7 +323,7 @@ subject1        CBABABABABABDBABABDABDADBAB....
 
 The previous _backfitting_ step also calculates a number of statistics that describe
 the distribution of microstates for that individial.   We can extract them from the `fit.db`
-[output file](../luna/args.md#lout-databases)
+[output file](../luna/args.md#lunout-databases)
 
 The following command extracts, for each of the four states:
 

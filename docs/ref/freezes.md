@@ -1,6 +1,16 @@
-# Data freezes
+# Data freezes and caches
 
-_Saving/reverting to snapshots of the dataset_
+_Saving/reverting to snapshots of the dataset and derived metrics_
+
+
+| Command | Description | 
+| ---- | ------ | 
+| [`FREEZE`](#freeze) | Make a named freeze of the current datatset |
+| [`THAW`](#thaw) | Revert to a previous data freeze |
+| [`CACHE`](#cache) | Cache operations |
+
+
+_Freezes_
 
 As Luna processes an EDF, it first reads the header, followed by
 some number of records and/or channels from the body of the EDF, on an
@@ -18,11 +28,15 @@ from disk multiple times, say if restricting to N2 epochs only with a
 mask, but then reverting to the full dataset and subsequently
 restricting to N3 epochs only, etc.)
 
+_Caches_
 
-| Command | Description | 
-| ---- | ------ | 
-| [`FREEZE`](#freeze) | Make a named freeze of the current datatset |
-| [`THAW`](#thaw) | Revert to a previous data freeze |
+Although conceptually different, this page also describes _caches_, a
+second internal mechanism that tracks state inside a single Luna run.
+In this case case, the cache tracks either values generated internally
+by a particular command (e.g. `SPINDLE cache-peaks`) or generic Luna
+outputs.  The most obvious use-case for working with the cache is the [`PREDICT`](predict.md#predict)
+command.
+
 
 ## FREEZE
 
@@ -40,8 +54,12 @@ freezes are not saved after the last command has finished for that EDF.
 | Option | Example | Description |
 | ---- | ----- | ----- |
 | `tag` | `tag=f1`  | Make freeze called `f1` |
+| `preserve-cache` | Retain any caches from the current freeze when thawing an prior freeze | 
 
 Alternatively, `tag` can be dropped and the freeze name is specified directly after `FREEZE`.
+
+By default, `THAW` wipes any changes to the cache made after the
+paired `FREEZE`, unless `preserve-cache` is specified.
 
 <h3>Output</h3>
 
@@ -105,7 +123,7 @@ THAW F2
 DESC
 MATRIX sig=C3,C3_V2 file=a3.txt
 ```
- 
+
 When running, we see the key steps logged in the console, starting with
 making the first freeze `F1`:
 
@@ -320,3 +338,153 @@ None (other than changing the state of the current in-memory EDF).
 See the example above given for the `FREEZE` command.
 
 
+## CACHE
+
+_Use/display an internal cache for inter-command communication_
+
+!!! warning
+    This is an advanced command used primarily in conjunction with other specific Luna commands: most
+    users can likely safely ignore it.  The information here is primarily for our own internal reference.
+    
+Internally, Luna uses a _cache_ mechanism to store information in
+several ways, such that it can be shared between different commands
+running on the same dataset/EDF. One exemplar use of the cache mechanism is
+when working with the [`PREDICT`](predict.md#predict) command, which expects
+_features_ to be derived from one or more Luna commands (e.g. spectral
+power) which are then combined with a _model_ (read by the `PREDICT`
+command) to make a prediction.
+
+<h5>Parameters</h5>
+
+| Option | Description |
+| ----- | ----- |
+| `cache` | The cache name |
+| `record` | Set up the cache to track certain output, using a `command,variable,{strata}` form |
+| `clear` | Clears the cache |
+| `import` | Imports a cache from long-format output for the current individual |
+| `factors`, `v` | Used with `import`, see below |
+| `dump` |  Dump cache contents to the console (with `num`, `int`, `text` or `bool`) |
+
+Various other commands use the cache indirectly: for example, the
+`SPINDLES` command has a `cache-peaks` option to store the sample
+points of spindle peaks (see below for an example).
+
+Cache types are either _numeric_ (`num`), _integer_ (`int`), _textual_
+(`text`) or true/false (`bool`).  Caches from `record` are always
+_numeric_, but caches set by other commands may use different types.
+
+<h5>Outputs</h5>
+
+No formal outputs, except from `dump` which prints to the console.
+
+<h5>Example</h5>
+
+To illustrate how the cache can capture (`record`) specific outputs and store them in the cache, consider this script:
+```
+CACHE cache=p1 record=HEADERS,CH,SR
+HEADERS
+CACHE dump num=p1 
+```
+
+It first sets up a cache called `p1` and instructs it to record any
+`SR` variables emitted from a subsequent `HEADERS` command; as `SR` is
+a channel-specific variable, it always is stratified by `CH`
+(channel), as described in the [`HEADERS`](summaries.md#headers)
+documentation.  That is, the `record` option takes at least two
+arguments (the command, the variable name) followed by any
+"stratifying" factors that define that variable (in this case just
+`CH`). Finally, it dumps the cache to the console, as seen here:
+
+```
+ CMD #4: CACHE
+   options: dump num=p1 sig=*
+cache: p1[num]
+strata: CH=A1
+value: HEADERS:SR=128
+strata: CH=A2
+value: HEADERS:SR=128
+strata: CH=ABDO_EFFORT
+value: HEADERS:SR=32
+strata: CH=AIRFLOW
+value: HEADERS:SR=32
+strata: CH=C3
+value: HEADERS:SR=128
+...
+```
+
+Above we see that `AIRFLOW` has a sample rate of 32 Hz, whereas `C3`
+has a sample rate of 128 Hz, for example. The same information can be
+extracted from the output of the above run, assuming it was saved to
+`out.db`:
+
+```
+destrat out.db +HEADERS -r CH  > o.1
+```
+```
+head o.1
+```
+```
+ID   CH     DMAX    DMIN  PDIM  PMAX   PMIN  POS      SENS   SR   TRANS TYPE
+id1  C3    32767  -32768    mV  0.51  -0.51    1  1.55e-05  128  EEG C3  EEG
+id1  C4    32767  -32768    mV  0.51  -0.51    2  1.55e-05  128  EEG C4  EEG
+id1  A1    32767  -32768    mV  0.51  -0.51    3  1.55e-05  128  EEG A1  REF
+id1  A2    32767  -32768    mV  0.51  -0.51    4  1.55e-05  128  EEG A2  REF
+id1  LOC   32767  -32768    mV  0.51  -0.51    5  1.55e-05  128 EEG LOC  EOG
+id1  ROC   32767  -32768    mV  0.51  -0.51    6  1.55e-05  128 EEG ROC  EOG
+id1  ECG2  32767  -32768    mV  1.02  -1.02    7  3.11e-05  256     ECG  ECG
+...
+```
+
+This "long-format" output can be _imported_ back into the cache as follows:
+```
+luna s.lst -s ' CACHE cache=p1 import=o.1 factors=CH v=SR & CACHE dump num=p1 '
+```
+Note that if you did not specify the appropriate `factors` or `v` (variable) options,
+it would 1) report for all variables, not just `SR`, but also 2) not track which
+values belong to which channels, and so inputs would overwrite each other, with the
+final dump just showing the final row of `o.1` :
+```
+luna s.lst -s ' CACHE cache=p1 import=o.1 & CACHE dump num=p1 '
+```
+```
+value: DMAX=32767
+value: DMIN=-32768
+value: PMAX=120
+value: PMIN=40
+value: POS=28
+value: SENS=0.00122072
+value: SR=1024
+```
+where the last row happens to be:
+```
+ID      CH   DMAX    DMIN  PDIM  PMAX  PMIN  POS     SEN  S   SR   TRANS TYPE
+id1  HRate  32767  -32768   bpm   120    40   28  0.00122   1024    Off   HR
+```
+
+Note that only numeric values are included in the cache here.
+
+For the `SPINDLES` example, the `cache-peaks` option generates a integer cache:
+```
+luna s.lst -o out.db -s 'MASK ifnot=N2 & RE & SPINDLES sig=C3 cache-peaks=p1 & CACHE dump int=p1 ' 
+```
+
+```
+ CMD #4: CACHE
+   options: dump int=p1 sig=*
+cache: p1[int]
+strata: CH=C3
+strata: F=13.5
+value: (695 element vector)
+```
+
+The is not directly manipulated, but rather may be passed to other Luna commands, e.g. `TLOCK`.  
+
+
+!!! info "Preserving the cache"
+    If using the cache to store derived metrics, you may often want to stop a [`RESTRUCTURE`](masks.md#restructure)
+    or [`THAW`](#thaw) operation from wiping the cache, which is the default behavior.  The reason for this is that
+    some cache values may point to intervals of signals using sample-points as the index, which could potentially
+    be invalidated after either of these two operations if the number of epochs changes.  However, for metrics
+    that will not be impacted by this (e.g. storing outputs for `PREDICT`), then you can preserve the cache
+    by adding `preserve-cache` to any `RE` or `THAW` command.
+    

@@ -359,11 +359,13 @@ FFTW="/Users/albert/fftw-3.3.10/" \
  R CMD INSTALL luna
 ```
 
-As a second example: if FFTW is avaialable system wide, but say LGBM has been installed outside of the system path (say from `brew install` on newer Macs):
+As a second example: if FFTW is avaialable system wide, but say LGBM
+has been installed outside of the system path (say from `brew install`
+on newer Macs):
 
 ```
 LGBM=1 \
- LGBM_PATH="/opt/homebrew/include" \
+ LGBM_PATH="/opt/homebrew/" \
  EXTRA_PKG_LIBS="-L/opt/homebrew/lib -l_lightgbm" \
  R CMD INSTALL luna
 ```

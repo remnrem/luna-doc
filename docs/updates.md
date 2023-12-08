@@ -1,62 +1,382 @@
 
 # Updates, additions and fixes
 
-Current stable version: __v0.28__ (main [downloads](download/index.md) page)
+Current stable version: __v0.99__ (main [downloads](download/index.md) page)
 
 <!--
+
+v1.00
+
+_Predictive modelling_ 
+ - adding [LightGBM]() library support and compilation flag
+ - new [`ASSOC`] command
+ - added new `MASSOC` set of functions
+   - new command PREP-MASSOC 
+
+Also
+  - finish docs
+  - new vignnetes
+  - new models
+
 IN FLIGHT / TODO
+ 
+- TODO - `PERI` command ; 
   - `RIPPLES`
   - `GED`
   - `NMF` 
   - `ORDER` command (or that command-line 'sig' sets order)
   - loops in scripts [todo]
   - channel range selector [C3][C4] .. use same syntax as [C3][1..4] .. will have to wait and expand on a per-EDF basis ... 
-
   - add EDF+ to EDF converter  (zero-pad and add MASK for discontinuities)
-     add an explicit COUPL command that uses caches
- 
-  - __Global coherence statistics__ via the [`SYNC` command](ref/cc.md#sync)  
-  - prototype [`TCLST`] command for time-series clustering
-
-_Predictive modelling_ 
- - adding [LightGBM]() library support and compilation flag
- - new [`ASSOC`] command
- - added new `MASSOC` set of functions
-
+  - explicit COUPL command that uses caches
+   - __Global coherence statistics__ via the [`SYNC` command](ref/cc.md#sync)  
+   - prototype [`TCLST`] command for time-series clustering
 _LunaR_
  - `lunaR` is now in CRAN
  - documention (e.g. `?leval`) added to the lunaR package 
  - new `lload()`, `lhead()` and `lcols()` convenience functions 
  - additional `lheatmap()` options added
-
 -->
 
 
-## v0.29 (not-yet-released )
+## v0.99 (5-Dec-2023)
 
- - fixed `stratify-by-phase` output to avoid double-couting
- 
- - added `bins` options to `S2A` and `bins-label` - given `bins=min,max,n` to make `n` bins of equal span, to make annots `B1`, `B2`, etc... `Bn` (or `bins-label` instead of `B`)
- 
- - added `REC_DUR_SEC` and `REC_DUR_HMS` in `HEADERS` which used to be `TOT_*`.  Now, `TOT_DUR_SEC` and `TOT_DUR_HMS` reflect the full duration, including any gaps (i.e. if EDF+D)
+This release (leaping from v0.28 to v0.99 in a single bound) contains
+a large number of incremental fixes and additions, as well as a few
+more major features including: 1) automatically generated
+hypnogram-based annotations, 2) reworked [`MASK`](ref/masks.md#mask)
+interface to simplify masks based on multiple annotations, 3) allowing
+generic (variably-sized) epochs based on annotations, 4) a new
+framework to implement model-based prediction given PSG-derived
+features, in the [`PREDICT`](../ref/predict.md) command, also suppored
+in Moonlight, 5) epoch-wise analysis using the mutlitaper command
+[`MTM`](ref/power-spectra.md#mtm), 6) ability to generate new
+annotations conveniently on-the-fly based on pairwise contrasts of
+existing ones, 7) the [Moonbeam](moonbeam.md) utility, that allows
+NSRR data to be pulled directly into Moonlight (for NSRR users) and 8)
+a prototype of a new utility for viewing hypnograms
+([Hypnoscope](hypnoscope.md)).
 
- - `RESAMPLE` has a new `downsample` argument; only channels with rates above the `sr` value
- 
- - can now correctly take `.edfz` and `.edf.gz` file on the command line (versus a sample list) 
 
- - `SPINDLES` and phsae-coupling
- 
- - `PEAKS` now output annotatons (`annot`) as well as cache; can include `w` to add window (sec) around each point
+_Hypnograms_
 
- - upgraded Eigen library to 3.4.0
+ - __major:__ the [`HYPNO`](ref/hypnograms.md#hypno) now has the `annot` option, which
+   adds a series of hypnogram-based annotations, e.g. that can be used
+   in subsequent mask operations, or output, etc.
 
- - upgraded to sqlite library v3.41.2
+ - [`HYPNO`](ref/hypnograms.md#hypno) epoch-level output now has
+   `PRE`, `SPT`, and `POST` flags (0/1) to reflect epochs that are
+   pre-sleep, during the sleep period time, or post-slep; also, the
+   base-level output has two new variables, `PRE` and `POST` to give
+   the recording time pre- and post-sleep (anchored on EDF/recording
+   start/top times, rather than lights off, i.e. the
+   difference between `SOL` and `PRE` is that `SOL` is defined
+   relative to lights off.
+
+ - if a recording is entirely _LightsOut_ (`L` stage
+   annotation), then _Lights Off_ and _Lights On_ times will be now be
+   correctly shown as `NA`
+   
+ - changed [`HYPNO`](ref/hypnograms.md#hypno) `FLANKING_MIN` to
+   `FLANKING`, which is now an epoch count
+
+ - fixed a minor issue when running with a gapped (EDF+D) recording:
+   added new variables `TGT` (total gap time).  Gaps count as _missing_
+   and so do not enter the denominator for metrics (i.e. not in
+   `TRT` or `TIB`).  For cycle-level output, `NREMC_MINS` includes gaps,
+   whereas `NREMC_N` does not include gaps.
+
+ - epoch-level elapsed time outputs are now encoded from the _start_
+   of that epoch, i.e. 0 to _N_-1 rather than 1 to _N_
+
+_Prediction models_
+
+ - __major:__  initial implementation of a new [`PREDICT`](ref/predict.md) command 
+
+_Moonlight_
+
+ - __major:__ added a new [_Moonbeam_](moonbeam.md) feature to directly pull [NSRR](sleepdata.org) data into Moonlight for
+   NSRR users
+
+ - __major:__ added a new _Models_ tab to support model-based prediction of
+    metrics, initially an estimate of adult "brain-age" based on the
+    NREM sleep EEG, implementing a model described
+    [here](https://pubmed.ncbi.nlm.nih.gov/30448611/)
+
+_Hypnoscope_
+
+ - an initial implementation of the [Hypnoscope](hypnoscope.md)
+   utility for viewing multiple hypnograms and generating
+   hypnogram-based metrics
+
+_Signal processing_
+
+ - __major:__ the [`MTM`](ref/power-spectra.md#mtm) command now allows
+   epochwise analyses (as well as segments within those epochs);
+   `epoch-spectra`/`epoch-output` and
+   `segment-spectra`/`segment-output` control levels of epochwise and
+   segmentwise outputs; renamed `epoch-slopes` to `segment-slopes`
+
+ - [`MTM`](ref/power-spectra.md#mtm) now precomputes tapers, which greatly speeds up epochwise
+   analysis
+
+ - added bandpower outputs for [`MTM`](ref/power-spectra.md#mtm)
+   (`B`-stratified)
+
+ - added `kurt`/`kurt3` options to `PSD`, to give epoch-level kurtosis
+   (of power averaged over channels)
+
+ - added `speckurt`/`speckurt3` options to `MTM`, to give
+   _segment-level_ kurtsosis (of power averaged over channels,
+   _within_ epochs if any epochs are specified).  Also, added the
+   `alternate-speckurt` to support an alternate definition of
+   these (only used for Sun et al model)
+
+ - added `ratio`/`ratio1` options to both
+   [`PSD`](ref/power-spectra.md#psd) and
+   [`MTM`](ref/power-spectra.md#mtm) to give ratios of bandpowers for
+   prespecifed pairs of bands; `ratio1` implies `a/(1+b)`.
+
+ - both [`PSD`](ref/power-spectra.md#psd) and
+   [`MTM`](ref/power-spectra.md#mtm) now allow setting user-defined
+   power bands on the fly, e.g. `PSD sigma=12-16`.  (Previously, this
+   could only be done as a special variable setting, which would be
+   constant across all analyses.)
  
- - added `EDGER` tool: (slides/ for opts)
+ - added a new `PSD_CV` output (w/ both `dB` and `sd` specified) for
+   the [`PSD`](ref/power-spectra.md) command; this uses the
+   calculation for coefficients of variation assuming log-normal data,
+   i.e. `CV=sqrt(exp(s^2)-1)` where `s^2` is the natural log-scaled
+   variance.
+
+ - new more efficient cross-correlation [`XCORR`](ref/cc.md#XCORR) implementation and
+   new outputs
+
+
+_Artifact and alignment utilities_
+
+ - new [`EDGER`](ref/artifacts.md#edger) command, designed to identify
+   leading/trailing portions of recordings likely to be artifactual
  
- - added `ngaus` option to `FILTER` to implement narrow-band filter
+ - new [`ALIGN-EPOCHS`](ref/alignment.md#align-epochs) command
+
+ - new [`ALIGN-ANNOTS`](ref/alignment.md#align-annots) command
+
+ - new [`INSERT`](ref/alignment.md#insert) command, with
+   new FFT-based cross-correlation analysis to align signals from
+   different EDFs and insert them, optionally adjusting timings
+
+
+_Filters:_
+
+ - [`FILTER`](ref/fir-filters.md#filter) now accepts separate transition
+   band widths (`tw`) and ripples (`ripple`) 
+   for the lower and upper edges of a Kaiser-window
+   FIR filter, e.g. by `tw=0.5,5` and `ripple=0.01,0.01`,
+   corresponding to lower and upper edges respectively; the new filter
+   is generated by convolution of two separate highpass and lowpass
+   filters with those parameters.
+
+ - added `butterworth` and `chebyshev` IIR filters to the [`FILTER`](ref/fir-filters.md#filter)
+   command
+   
+ - added `ngaus` option to [`FILTER`](ref/fir-filters.md#filter) to implement narrow-band filter
    via a frequency-domain Gaussian (parameters: frequency domain
    central mean and FWHM of the Gaussian, `ngaus=11,2`)
+ 
+ - `fft` is now the default for [`FILTER`](ref/fir-filters.md#filter)
+
+
+_Masks, epochs, freezes and caches_
+
+ - __major:__ variable-sized ("generic") epochs are now supported by [`EPOCH`](ref/epochs.md#epoch), 
+   defined based on existing annotations: e.g. `EPOCH annot=X`. In
+   this context adding `else=Y` will generate a new annotation (`Y`)
+   which flags _not_ being in an defined epoch (based on `X`) but
+   respects gaps. Multiple annotations are allowed: `annot=A,B,C`.
+   Labels are given to epochs in the output now.
+
+ - for either conceptual or practical reasons, not all command
+   currently support variable-sized annotations (e.g. `COH` or
+   `HYPNO`) but this is flagged if attempting to run such a command in
+   the presence of variable-sized (generic, annotation-based) epochs.
+ 
+ - __major:__ reworked the primary [`MASK`](ref/masks.md#mask) command
+   to allow multiple annotations to be specified with implied _OR_ /
+   _AND_ logic: e.g. `MASK ifnot=N2,N3`.  The type of logic can be
+   controlled by explicitly specifying `ifnot-any=N2,N3` or
+   `ifnot-all=N2,arousal` to support _OR_ versus _AND_ logic
+   respectively (the former is the same as the default `ifnot`).
+   These are applied to all masks, e.g. `mask-if`, etc, as described
+   [here](ref/masks.md#mask).
+
+ - generic (annotation-based) masks can now use wildcards to complete
+   annotation names: `MASK ifnot=artifact_*`
+
+ - new `MASK` syntax `ifnot=+annot` means to match the epoch _only if
+   it is completely spanned by that annotation_.  (One cannot use both
+   `+` and `*` symbols together, however.)
+ 
+ - added the option [`EPOCH table`](ref/epochs.md#epoch) which dumps
+   ouutput (same as `verbose`) _but does not change the epoch
+   structure_, i.e. it only gives output.  The extra argument `masked`
+   will make the `table` output for both masked and unmasked epochs; the
+   `verbose` option also gives more output than previously
+ 
+ - the [`CACHE`](ref/freezes.md#cache) command has a new `record`
+   option, which can be used to pull any arbitrary outputs into the
+   cache (e.g. for use with a subsequent [`PREDICT`](ref/predict.md#predict) command)
+
+ - the [`THAW`](ref/freezes.md#thaw) command has a new
+   `preserve-cache` option so that the cache is not over-written;
+   i.e. it can be allowed to build up between successive `FREEZE` /
+   `THAW` operations
+
+ - the [`RE`](res/epochs.md#restructure) command has a new
+   `preserve-cache` option, which does not wipe the cache when
+   restructuring a dataset
+
+ - added a new [`C2A`](ref/freezes.md#c2a) cache to annotation command
+
+_Annotations_
+
+ - __major__: added a new [`MAKE-ANNOTS`](ref/annotations.md#make-annots)
+   command, to generate new annotations based on pairwise comparisons
+   of existing ones (union, intersection, if overlapped, if not
+   overlapped, using the syntax `A|B`, `A*B`, `A+B` and `A-B`
+   respectively); this also includes special behaviors if given the
+   options `epoch`, `epoch-num`, `flatten` or `split`
+
+ - the [`WRITE-ANNOTS`](ref/annotations.md#write-annots) now accepts
+   `prefix` to match w/ all annots starting with that; useful for
+   `prefix=h_`
+
+ - added `raw-annot` (and `raw-annots`) to specify subset of annots to
+   load - but unlike `annot` this does not apply _sanitization_ first
+   (if that is the global default)
+
+ - added `bins` and `bins-label` options to the
+   [`S2A`](ref/annotations.md#s2a) command: given `bins=min,max,n` to
+   make `n` bins of equal span, to make annots `B1`, `B2`, etc... `Bn`
+   (or `bins-label` instead of `B`)
+
+
+_Interval-based analyses:_
+
+ - the [`OVERLAP`](ref/intervals.md#overlap) command now accepts `*`
+   wildcards in seed/other/fixed specifications to match annots
+   `seed=sp*,so*` i.e. matches `sp_15`, `sp_11` etc
+
+ - the [`OVERLAP`](ref/intervals.md#overlap) command now has
+   `contrasts`, `event-perm`, `offsets` options.  Now one should add
+   `seed-seed=T` to get seed-seed pairs; adding seed-seed pileup is
+   now turned off by default, unless `pileup=T` is added
+
+- the [`OVERLAP`](ref/intervals.md#overlap) command now accepts
+   `rp=<annot>|<tag>,...` to get `rp_tag=xxx` from meta data for that
+   annotation, in which case it will set a 0-duration time-point at
+   that position
+
+
+_Spindle/slow oscillation detection:_
+
+ - added `COUPL_ALL` statistics to `SPINDLES`, which performs
+   spindle/SO analysis under both default (only using spindles that
+   overlap a detected SO) and `all-spindles` (calculating
+   `COUPL_ANGLE` and `COUPL_MAG` metrics based on all spindles); if
+   the `all-spindles` option is explicitly set, then these two sets
+   are identical, and only a single set is reported).
+
+ - Slow oscillation output (`SO`/`SPINDLES` commands) is changed: now
+   `SO_SLOPE` is output by default instead of `SLOPE_NEG2`.  The other
+   slopes are only generated w/ the `verbose` option. Additionally, it
+   now doesn't output `_neg` and `_pos` halfwaves as annotations, but
+   instead adds `rp_mid` `rp_pos` and `rp_neg` as _relative positions_
+   within the interval (scored 0..1); the
+   [`OVERLAP`](ref/intervals.md#overlap) command is now able to use
+   these `rp` (relative position) terms.  Finally, `SO` annotations do
+   not output `dur` now, only `frq`.
+ 
+ - [`SPINDLES`](ref/spindles-so.md#SPINDLES) annotations (from
+   the `annot` argument) now add `rp_mid` (as a 0-1 proportion) to indicate
+   the mid/peak of the spindle, i.e. rather than in the old time-point based form
+   `mid=tp:123456789`
+
+ - the `SPINDLES` command has a new `cache-peaks-sec` option
+ 
+ - `SPINDLES` now gives a message if `fc` is out-of-range given `q`.
+   In this case, added the option `noq` (i.e. equivalent to setting
+   `q=-999`)
+     
+ - fixed the `SPINDLES` option `stratify-by-phase` to avoid
+   double-counting
+
+
+
+_Minor additions and fixes_
+
+ - the [`SEGMENTS`](ref/outputs.md#segments) command now outputs the
+   largest segment size (for an EDF+D w/ gaps); also, option
+   `largest=L1` adds an annotation spannong the largest segment
+   called `L1`; in the case of ties, only the last will be added
+
+- fixed bug in `EDF` - when forcing a standard EDF structure, this
+   now updates the internal timetrack correctly, so that any
+   subsequent call to `timeline.wholetrace()` uses the correct
+   time-points
+ 
+ - added `min` and `max` options to `MINMAX`, to clip EDF physical
+   min/max values; can specify both or either; other wise `MINMAX`
+   sets all `sig` channels to the be same PMIN/PMAX and DMIN/DMAX.  If
+   `force` is specified with `min` or `max` then that value is always
+   set; otherwise, the physical min/max values are only changed if
+   they are smaller, i.e. clipping, not expanding the min/max range
+ 
+ - channel locations are now populated by default if not otherwise
+   specified (for a standard 64-channel 10/10 EEG only)
+
+ - automatically sets any EDF header reserved field characters 5-44 to
+   null (space) (also the first 5 chars if not `EDF+C` or `EDF+D`)
+
+ - new `srand=XXXX` special argument to set the RNG seed
+  
+ - added `REC_DUR_SEC` and `REC_DUR_HMS` to `HEADERS` which used to be
+  `TOT_*`.  Now, `TOT_DUR_SEC` and `TOT_DUR_HMS` reflect the full
+  duration, including any gaps (i.e. if an EDF+D)
+
+ - the [`RESAMPLE`](ref/manipulations.md#resample) command has a new
+   `downsample` argument: only channels with rates above the `sr`
+   value will be altered
+ 
+ - Luna can now correctly take `.edfz` and `.edf.gz` files on the
+   command line (versus from sample list)
+
+ - fixed issue with the [`CPT`](ref/association.md#cpt) command when
+    multiple classes of DV are specified; also added a `all-dvars` (or
+   `dv=*`) option to select all named DVs from the DV files; also, can
+   cluster based on time (`T`) as well as `F`, `CH`, `CH1` and `CH2`;
+   because of this, `STAT` output variable is now the t-statistic, and
+   `T` means any time-level stratifier
+
+ - the [`STATS`](ref/summaries.md#stats) command has renamed
+   `MEDIAN.X` to `X_MD`; also added `X_MN`
+
+ - [`STATS`](ref/summaries.md#stats) has a `kurt3` to specify
+ unadjusted kurtosis values (i.e.  veresus _excess_ values), such that
+ _X~N(0,1)_ has an expected value of 3.0, not 0;
+
+ - [`PEAKS`](ref/intervals.md#peaks) now output annotatons (`annot`) as well as cache; can
+   include `w` to add window (sec) around each point
+
+
+_Interal changes/library upgrades_
+
+ - upgraded to [Eigen](https://eigen.tuxfamily.org/) library to 3.4.0
+
+ - upgraded to [sqlite](https://www.sqlite.org/) library v3.41.2
+
+ - reorganized some of the codebase, in particular, moving most
+   TF-analyses into single `spectral/` folder
 
 
 ## v0.28 (10-Apr-2023)
@@ -175,6 +495,8 @@ ID	KT	FLIP	K1	MAPPED	SPC
 
 _Misc. fixes_
 
+ - fixed issue with `ECG-SUPPRESS` when high sample rate used (insufficient smoothing -> no R-peaks detected)
+ 
  - [`HYPNO`](ref/hypnograms.md#hypno) now outputs proper epoch time, i.e. if used EPOCH align so
  that epochs are not starting from 0; (as is, it assumes epoch 1
  starts at 0 sec); also note that `MINS` is the elapsed time since epoch #1,
@@ -219,9 +541,20 @@ _Macro-architecture_
 
  - fixed an issue when [`HYPNO`](ref/hypnograms.md#hypno) is called twice on the same EDF
  
- - added `first` (mins) and `first-anchor` (`T0`, `T1` or `T2`)
+ - added `first` (mins) and `anchor` (`T0`, `T1` or `T2`)
    options, to report hypnogram stats for only the first _N_ minutes
-   (setting the rest to `L`)
+   (setting the rest to `L`);   also, added `last` (which takes `T4` (default)
+   or `T5` or `T6` as _anchor_ values);  also, `clock` which, along with `first`
+   specifies an arbitrary anchor, based on the clock time;  this may come before
+   the EDF start;   the variable `SHORT` will be flagged if the requested window
+   does not fully overlap the available staging
+
+ - added elapsed stage duration times, i.e. seconds after anchor that
+   we see N minutes of N2 sleep, etc.   If indiv does not have N mins
+   of N2 sleep, a flag will be set;   SS x DUR..  T and SHORT.   Note that
+   E_* epoch level output gives the elapsed duration at the START at that epoch;
+   in contrast, this is indexed at the end... 
+   
 
  - fixed a bug impacting some of the elapsed time metrics from
   [`HYPNO`](ref/hypnograms.md#hypno) (`E_*` etc) if the recording started
@@ -506,14 +839,14 @@ _Other fixes, minor modifications and new features_
 
  - added `drop` and `keep` options to the `PSC` command
 
- - added `import=file.txt` command to `CACHE` to read from destrat
+ - added `import=file.txt` command to [`CACHE`]( to read from destrat
    output; can take `factors` and `v` param (as well as required
    `cache=`)
 
  - added `MASK epoch=all` to set a MASK but have it all empty ;
    i.e. to trim records not in an epoch
  
- - (for .annot only) added `align` option : given list of
+ - (for `.annot` only) added `align` option : given list of
    annots (or *) for all, align-annots-on=N1,N2, etc...  if not
    specified, find first instance of this annot, then align with 1
    second boundary (or `align-annots-res=X` if given) align /all/

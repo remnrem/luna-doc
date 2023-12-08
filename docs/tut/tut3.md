@@ -246,49 +246,53 @@ stage.db: 2 command(s), 3 individual(s), 66 variable(s), 107919 values
   command #2:	c2	Thu Aug 13 13:40:56 2020	HYPNO	sig=*
 -------------------------------------------------------------------------
 distinct strata group(s):
-  commands    : factors           : levels        : variables 
---------------:--------------:---------------:---------------------------
-  [EPOCH]     : .            : 1 level(s)    : DUR INC NE
-              :              :               : 
-  [HYPNO]     : .            : 1 level(s)    : CONF E0_START E1_LIGHTS_OFF E2_SLEEP_ONSET
-              :              :               : E3_SLEEP_MIDPOINT E4_FINAL_WAKE
-              :              :               : E5_LIGHTS_ON E6_STOP EINS FIXED_LIGHTS
-              :              :               : FIXED_SLEEP FIXED_WAKE FWT HMS0_START
-              :              :               : HMS1_LIGHTS_OFF HMS2_SLEEP_ONSET
-              :              :               : HMS3_SLEEP_MIDPOINT HMS4_FINAL_WAKE
-              :              :               : HMS5_LIGHTS_ON HMS6_STOP LOST LOT
-              :              :               : LZW NREMC NREMC_MINS OTHR REM_LAT
-              :              :               : REM_LAT2 SE SFI SINS SME SOL SOL_PER
-              :              :               : SPT SPT_PER T0_START T1_LIGHTS_OFF
-              :              :               : T2_SLEEP_ONSET T3_SLEEP_MIDPOINT
-              :              :               : T4_FINAL_WAKE T5_LIGHTS_ON T6_STOP
-              :              :               : TIB TI_RNR TI_S TI_S3 TRT TST TST_PER
-              :              :               : TWT WASO
-              :              :               : 
-  [HYPNO]     : E            : (...)         : CLOCK_HOURS CLOCK_TIME CYCLE CYCLE_POS_ABS
-              :              :               : CYCLE_POS_REL E_N1 E_N2 E_N3 E_REM
-              :              :               : E_SLEEP E_WAKE E_WASO FLANKING_ALL
-              :              :               : FLANKING_MIN MINS N2_WGT NEAREST_WAKE
-              :              :               : OSTAGE PCT_E_N1 PCT_E_N2 PCT_E_N3
-              :              :               : PCT_E_REM PCT_E_SLEEP PERIOD PERSISTENT_SLEEP
-              :              :               : STAGE STAGE_N TOT_NR2R TOT_NR2W
-              :              :               : TOT_R2NR TOT_R2W TOT_W2NR TOT_W2R
-              :              :               : TR_NR2R TR_NR2W TR_R2NR TR_R2W
-              :              :               : TR_W2NR TR_W2R WASO
-              :              :               : 
-  [HYPNO]     : C            : 6 level(s)    : NREMC_MINS NREMC_N NREMC_NREM_MINS
-              :              :               : NREMC_OTHER_MINS NREMC_REM_MINS
-              :              :               : NREMC_START
-              :              :               : 
-  [HYPNO]     : SS           : 13 level(s)   : BOUT_05 BOUT_10 BOUT_MD BOUT_MN
-              :              :               : BOUT_MX BOUT_N MINS PCT
-              :              :               : 
-  [HYPNO]     : N            : 141 level(s)  : FIRST_EPOCH LAST_EPOCH MINS STAGE
-              :              :               : START STOP
-              :              :               : 
-  [HYPNO]     : PRE POST     : 9 level(s)    : N P P_POST_COND_PRE P_PRE_COND_POST
-              :              :               :
---------------:--------------:---------------:-------------------------
+ commands  : factors   : levels      : variables 
+-----------:-----------:-------------:---------------------------
+ [EPOCH]   : .         : 1 level(s)  : DUR GENERIC INC NE OFFSET
+           :           :             : 
+ [HYPNO]   : .         : 1 level(s)  : CONF E0_START E1_LIGHTS_OFF E2_SLEEP_ONSET
+           :           :             : E3_SLEEP_MIDPOINT E4_FINAL_WAKE
+           :           :             : E5_LIGHTS_ON E6_STOP EINS FIXED_LIGHTS
+           :           :             : FIXED_SLEEP FIXED_WAKE FWT HMS0_START
+           :           :             : HMS1_LIGHTS_OFF HMS2_SLEEP_ONSET
+           :           :             : HMS3_SLEEP_MIDPOINT HMS4_FINAL_WAKE
+           :           :             : HMS5_LIGHTS_ON HMS6_STOP LOST LOT
+           :           :             : LZW LZW3 NREMC NREMC_MINS OTHR
+           :           :             : POST PRE REM_LAT REM_LAT2 SE SFI
+           :           :             : SINS SME SOL SOL_PER SPT SPT_PER
+           :           :             : T0_START T1_LIGHTS_OFF T2_SLEEP_ONSET
+           :           :             : T3_SLEEP_MIDPOINT T4_FINAL_WAKE
+           :           :             : T5_LIGHTS_ON T6_STOP TGT TIB TI_RNR
+           :           :             : TI_S TI_S3 TRT TST TST_PER TWT
+           :           :             : WASO
+           :           :             : 
+ [HYPNO]   : E         : (...)       : AFTER_GAP CLOCK_HOURS CLOCK_TIME
+           :           :             : CYCLE CYCLE_POS_ABS CYCLE_POS_REL
+           :           :             : E_N1 E_N2 E_N3 E_REM E_SLEEP E_WAKE
+           :           :             : E_WASO FLANKING FLANKING_ALL MINS
+           :           :             : N2_WGT NEAREST_WAKE OSTAGE PCT_E_N1
+           :           :             : PCT_E_N2 PCT_E_N3 PCT_E_REM PCT_E_SLEEP
+           :           :             : PERIOD PERSISTENT_SLEEP POST PRE
+           :           :             : SPT STAGE STAGE_N START_SEC TOT_NR2R
+           :           :             : TOT_NR2W TOT_R2NR TOT_R2W TOT_W2NR
+           :           :             : TOT_W2R TR_NR2R TR_NR2W TR_R2NR
+           :           :             : TR_R2W TR_W2NR TR_W2R WASO
+           :           :             : 
+ [HYPNO]   : C         : 6 level(s)  : NREMC_MINS NREMC_N NREMC_NREM_MINS
+           :           :             : NREMC_OTHER_MINS NREMC_REM_MINS
+           :           :             : NREMC_START
+           :           :             : 
+ [HYPNO]   : SS        : 11 level(s) : BOUT_05 BOUT_10 BOUT_MD BOUT_MN
+           :           :             : BOUT_MX BOUT_N DENS MINS PCT TA
+           :           :             : TS
+           :           :             : 
+ [HYPNO]   : N         : 141 level(s): FIRST_EPOCH LAST_EPOCH MINS STAGE
+           :           :             : START STOP
+           :           :             : 
+ [HYPNO]   : PRE POST  : 9 level(s)  : N P P_POST_COND_PRE P_PRE_COND_POST
+           :           :             :
+           :           :             : 
+-----------:-----------:-------------:---------------------------
 ```
 
 The first (`.`) `HYPNO` group is a set of variables with no
@@ -336,7 +340,9 @@ nsrr03   3    137.5       630
 To illustrate extracting epoch-level information: here we consider the
 designated sleep stage (`STAGE` variable), along with the time
 (`CLOCK_TIME`) and a measure of how many nearby epochs had the same
-stage (`FLANKING_MIN`).  The latter is the minimum number of
+stage (`FLANKING`).  By default, `FLANKING` treats all three NREM stages
+as similar for this particular analysis, unless the option `flanking-collapse-nrem=F`
+is passed to `HYPNO`. The latter is the minimum number of
 contiguous epochs, either forwards or backwards in time, that are
 similar to the index epoch (truncated at the start and end of the
 recording).  In other words, selecting epochs with 3 or more for this
@@ -345,97 +351,102 @@ after with a similar stage.  This can be used to select periods of
 sleep that are less likely to contain stage transitions, for example.
 
 ```
-destrat stage.db +HYPNO -i nsrr01  -r E  -v STAGE FLANKING_MIN CLOCK_TIME
+destrat stage.db +HYPNO -i nsrr01  -r E  -v STAGE FLANKING CLOCK_TIME
 ```
 ```
-ID       E      CLOCK_TIME   FLANKING_MIN  STAGE
-nsrr01   1      21:58:17     0             W 
-nsrr01   2      21:58:47     1             W 
-nsrr01   3      21:59:17     2             W 
-nsrr01   4      21:59:47     3             W 
-nsrr01   5      22:00:17     4             W 
-nsrr01   6      22:00:47     5             W 
-nsrr01   7      22:01:17     6             W 
-nsrr01   8      22:01:47     7             W 
-nsrr01   9      22:02:17     8             W 
-nsrr01   10     22:02:47     9             W 
-nsrr01   11     22:03:17     10            W 
+ID       E      CLOCK_TIME   FLANKING  STAGE
+nsrr01   1      21:58:17     0         W 
+nsrr01   2      21:58:47     1         W 
+nsrr01   3      21:59:17     2         W 
+nsrr01   4      21:59:47     3         W 
+nsrr01   5      22:00:17     4         W 
+nsrr01   6      22:00:47     5         W 
+nsrr01   7      22:01:17     6         W 
+nsrr01   8      22:01:47     7         W 
+nsrr01   9      22:02:17     8         W 
+nsrr01   10     22:02:47     9         W 
+nsrr01   11     22:03:17     10        W 
  ... cont'd ...                     
-nsrr01   183    23:29:17     0             N1
-nsrr01   184    23:29:47     0             N2
-nsrr01   185    23:30:17     0             W 
-nsrr01   186    23:30:47     0             N1
-nsrr01   187    23:31:17     0             N2
-nsrr01   188    23:31:47     1             N2
-nsrr01   189    23:32:17     2             N2
-nsrr01   190    23:32:47     3             N2
-nsrr01   191    23:33:17     4             N2
-nsrr01   192    23:33:47     5             N2
-nsrr01   193    23:34:17     6             N2
-nsrr01   194    23:34:47     7             N2
-nsrr01   195    23:35:17     8             N2
-nsrr01   196    23:35:47     9             N2
-nsrr01   197    23:36:17     10            N2
-nsrr01   198    23:36:47     10            N2
-nsrr01   199    23:37:17     9             N2
-nsrr01   200    23:37:47     8             N2
-nsrr01   201    23:38:17     7             N2
-nsrr01   202    23:38:47     6             N2
-nsrr01   203    23:39:17     5             N2
-nsrr01   204    23:39:47     4             N2
-nsrr01   205    23:40:17     3             N2
-nsrr01   206    23:40:47     2             N2
-nsrr01   207    23:41:17     1             N2
-nsrr01   208    23:41:47     0             N2
-nsrr01   209    23:42:17     0             W 
-nsrr01   210    23:42:47     0             N2
+nsrr01  183     23:29:17     0         N1 
+nsrr01  184     23:29:47     0         N2
+nsrr01  185     23:30:17     0         W 
+nsrr01  186     23:30:47     0         N1
+nsrr01  187     23:31:17     1         N2
+nsrr01  188     23:31:47     2         N2
+nsrr01  189     23:32:17     3         N2
+nsrr01  190     23:32:47     4         N2
+nsrr01  191     23:33:17     5         N2
+nsrr01  192     23:33:47     6         N2
+nsrr01  193     23:34:17     7         N2
+nsrr01  194     23:34:47     8         N2
+nsrr01  195     23:35:17     9         N2
+nsrr01  196     23:35:47     10        N2
+nsrr01  197     23:36:17     11        N2
+nsrr01  198     23:36:47     10        N2
+nsrr01  199     23:37:17     9         N2
+nsrr01  200     23:37:47     8         N2
+nsrr01  201     23:38:17     7         N2
+nsrr01  202     23:38:47     6         N2
+nsrr01  203     23:39:17     5         N2
+nsrr01  204     23:39:47     4         N2
+nsrr01  205     23:40:17     3         N2
+nsrr01  206     23:40:47     2         N2
+nsrr01  207     23:41:17     1         N2
+nsrr01  208     23:41:47     0         N2
+nsrr01  209     23:42:17     0         W 
+nsrr01  210     23:42:47     0         N2
  ... cont'd 
 ```
 
 ## Epoch-level masks
 
 To illustrate applying different epoch-level masks, consider the
-following (somewhat unrealistic) example: to select epochs that:
+following (somewhat unrealistic) example - to select epochs that:
 
-* are in persistent sleep as defined above (i.e. at least 10 minutes of sleep prior) 
 * occur between 11pm and 3am
+* are in persistent sleep as defined above (i.e. at least 10 minutes of sleep prior) 
 * are during stage 2 NREM sleep
 * do not contain any apnea or hypopnea events
 
-For the first individual, we can use `awk` to extract the indicator
-(0/1 for N/Y) of persistent sleep: (we ignore the header and print the
-3rd column)
+The following Luna command script (`cmd/third.txt`) shows one way of doing this, leveraging the
+ability of `HYPNO` to add annotations on-the-fly (to define persistent sleep):
 
 ```
-destrat stage.db +HYPNO -i nsrr01 -r E -v PERSISTENT_SLEEP \
-  | awk ' NR>1 { print "PS"$3 } ' > cmd/ps-nsrr01.eannot 
-```
+% with `annot`, HYPNO will add annotations to the EDF starting h_
+% and will include the epoch-level annotation h_persistent_sleep
+HYPNO annot
 
-which generates an [epoch-annotation
-file](../ref/annotations.md#eannot-files) `ps-nsrr01.eannot` with the two labels `PS0` and `PS1`
-to indicate persistent sleep or not.
-
-!!! note "Windows users"
-    For users who do not have `awk` immediately available on your system, the output
-    file `ps-nsrr01.eannot` is already present in the `cmd` tutorial folder, so you 
-    do not need to run the above command.  We'll see other ways in _lunaR_ to work
-    with epoch-level annotations.
-
-The following Luna command script (`cmd/third.txt`) might then be used:
-
-```
-EPOCH
+% not needed, but start by ensuring mask is reset
 MASK none
+
+% first select epochs based on clock-time
 MASK hms=23:00:00-03:00:00
-EPOCH-ANNOT file=cmd/ps-^.eannot 
-MASK mask-if=PS0
+
+% equivalently - at resolution of 1hr at least - could have
+% used annotations added by `HYPNO annot` 
+%MASK mask-ifnot=h_clock_23,h_clock_00,h_clock_01,h_clock_02
+
+% next, include only if in persistent sleep
+MASK mask-ifnot=h_persistent_sleep
+
+% select only N2 epochs
 MASK mask-ifnot=N2
-MASK mask-if=apnea:obstructive,hypopnea
+
+% and reject epochs with any respiratory event
+MASK mask-if=Obstructive_Apnea,Hypopnea
+
+% finally, output the mask
 DUMP-MASK
 ```
 
-This command file first epochs the dataset, in 30-second epochs by
-default.  Next, we clear the mask (i.e. to include all epochs).  We
+The above first runs `HYPNO` (which also epochs the data in 30-second
+epochs) but adds the flag `annot` which tells `HYPNO` to add a series
+of _annotations_ to the recording, largely based upon the hynogram.
+By default, these start with the prefix `h_` and include one that
+defines (at an epoch-level) persistent sleep, called
+`h_persistent_sleep`.
+
+Next, although not strictly necessary, we clear the mask (i.e. to include all epochs).  We
 then use the `hms` flag to mask any epoch outside of the specified
 range.  (Actually, this _includes_ any epoch that has any overlap with
 the interval between 23:00:00 and 03:00:00, i.e. so it will also
@@ -447,23 +458,12 @@ command.)
 !!! Info
     You must use 24 hour hh:mm:ss notation, so 11pm is 23:00:00.
 
-We then read the [.eannot](../ref/annotations.md#eannot-files) file
-as an epoch-level annotation and _mask_ those epochs to be _excluded_, i.e.
-those with `PS0`.  Note that we've used a special character `^` in the script --
-this is expanded into the current ID of the EDF (based on the first
-column of the sample-list), thereby providing a convenient way to use
-a single command script across multiple individuals. That is, here it
-looked for a file called `cmd/ps-nsrr01.eannot`.
+As shown above, `HYPNO annot` also emits some annotations corresponding to clock-times,
+and we could have used that `MASK` statement instead to achieve the same effect.
 
-We then mask any epoch that is not stage 2 NREM sleep (annotation
-`N2`).  Finally, we mask any epochs that contain at least one apnea
-or hypopnea event. Because these tutorial files come from the NSRR,
-and so have associated [annotation files](../ref/annotations.md), we
-know about these types of respiratory events, i.e. they were manually
-annotated.  Luna has a set of automatic functions that [recast NSRR
-annotations](../nsrr.md) into a single, clean set: this page is where
-`apnea:obstructive` and `hypopnea` are [defined](https://gitlab-scm.partners.org/zzz-public/nsrr/-/tree/master/common).
-
+It next masks any epochs that are _not_ labelled as `h_persistent_sleep`.
+Next, it masks any epoch that is not stage 2 NREM sleep (annotation
+`N2`).
 
 !!! Note 
     Here we used the `mask-ifnot` rather than `ifnot` flag: the
@@ -476,26 +476,36 @@ annotations](../nsrr.md) into a single, clean set: this page is where
     See the page on [masks](../ref/masks.md) for a detailed description of how 
     the `MASK` syntax works in Luna.
 
+Finally, it masks any epochs that contain at least one apnea or
+hypopnea event, using the labels `Obstructive_Apnea` and `Hypopnea` as
+they appear in the Luna console output (i.e. with an underscore
+replacing the space).
 
 Let's run this command, just for `nsrr01`, in order to study the output sent to the console
 that describes the masking process (i.e. we'll ignore the output in `out.db`):
 
 ```
-luna s.lst id=nsrr01 nsrr-remap=T -o out.db < cmd/third.txt
+luna s.lst id=nsrr01 -o out.db < cmd/third.txt
 ```
-
-Note that the script used the NSRR remapped annotation terms
-(i.e. `apnea:obstructive`) and so we must include the `nsrr-remap=T`
-flag to make that mapping.  Alternatively, we could simply have
-written the script to reference `Obstructive Apnea` instead.
-
 Looking at the output written to the console, we can track what
-happened at each `MASK` stage.  First, all epochs are included (with
+happened at each `MASK` stage.  First, the hypnogram derived
+annotations are added from running `HYPNO`, with a note that
+these will have a prefix `h_`:
+```
+ CMD #1: HYPNO
+   options: annot sig=*
+  set epochs to default 30 seconds, 1364 epochs
+  set 0 leading/trailing sleep epochs to '?' (given end-wake=120 and end-sleep=5)
+  creating hypnogram-derived annotations, with prefix h
+```
+To see a full list of the added annotations, either run a `ANNOTS` command or see the documentation
+page for [`HYPNO`](../ref/hypnograms.md#hypno).   Next,  all epochs are included (with
 the `none` mask option):
 
 ```
  CMD #2: MASK
- reset all 1364 epochs to be included
+  set masking mode to 'mask' (default)
+  reset all 1364 epochs to be included
 ```
 
 Next, epochs between 11pm and 3am are included, all other epochs are
@@ -505,55 +515,54 @@ so still _overlaps_ the 11pm-3am interval):
 
 ```
  CMD #3: MASK
- selecting epochs from 124 to 604; 883 newly masked, 0 unmasked, 0 unchanged
- total of 481 of 1364 retained
+  selecting epochs from 124 to 604; selecting from set of 481 epochs; 883 newly masked, 0 unmasked, 0 unchanged
+  total of 481 of 1364 retained
 ```
 
 At this point there are 481 _unmasked_ epochs, although because we
 have not yet issued any [`RESTRUCTURE`](../ref/masks.md#restructure)
 command, the effective duration of the _in-memory_ EDF is still 1364
-epochs. As such, we can still attach the annotations from the file
-`cmd/ps-nsrr01.eannot`, i.e. which is expecting 1364 epochs:
+epochs.  We next further mask epochs that are not in persistent sleep:
 
 ```
- CMD #4: EPOCH-ANNOT
- mapping 2 distinct epoch-annotations (1364 in total) from cmd/ps-nsrr01.eannot
-```
-
-We then apply a mask based on this annotation: 720 epochs have the
-flag set to be excluded (i.e. from the file); of those, only 209 must
-be within the 11pm to 3am window, as only that many epochs have their
-status changed (i.e. because we've set these `MASK` commands up to
-only ever _mask_, not to _unmask_, epochs), leaving us with 272
-epochs:
-
-```
- CMD #5: MASK
-  set masking mode to 'mask' (default)
-  based on exc 720 epochs match; 209 newly masked, 0 unmasked, 1155 unchanged
+ CMD #4: MASK
+  annots: h_persistent_sleep
+  applied annotation mask for 1 annotation(s)
+  644 epochs match; 209 newly masked, 0 unmasked, 1155 unchanged
   total of 272 of 1364 retained
 ```
+
+Based on this, it implies that 209 epochs are within the 11pm to 3am window but not
+in persistent sleep, as they are newly masked.  Only those epochs have their
+status changed (i.e. because we've set this `MASK` commands up to
+only ever _mask_, not to _unmask_, epochs), leaving us with 272
+epochs:
 
 Next, we further mask based on not being in N2 sleep, which drops us to 235 epochs:
 
 ```
- CMD #6: MASK
- set masking mode to 'mask' (default)
- based on N2 523 epochs match; 37 newly masked, 0 unmasked, 1327 unchanged
- total of 235 of 1364 retained
+ CMD #5: MASK
+  annots: N2
+  applied annotation mask for 1 annotation(s)
+  523 epochs match; 37 newly masked, 0 unmasked, 1327 unchanged
+  total of 235 of 1364 retained
 ```
 
-Finally, we screen for matching any apnea or hypopnea event, which
+Finally, we screen for matching any apnea _or_ hypopnea event, which
 takes us down to 86 epochs:
 
 ```
- CMD #7: MASK
- set masking mode to 'mask' (default)
-  based on apnea:obstructive 60 epochs match; 7 newly masked, 0 unmasked, 1357 unchanged
-  total of 228 of 1364 retained
-  based on hypopnea 509 epochs match; 142 newly masked, 0 unmasked, 1222 unchanged
+ CMD #6: MASK
+  annots: Hypopnea Obstructive_Apnea
+  applied annotation mask for 2 annotation(s) (using or-matching across multiple annotations)
+  558 epochs match; 149 newly masked, 0 unmasked, 1215 unchanged
   total of 86 of 1364 retained
 ```
+
+The final command writes the mask status (masked or not) to the
+output.  In practice, we would now likely perform a `RE` command to
+restructure the dataset, and then run subsequent commands or output a
+new EDF, etc.
 
 ## Manipulating EDFs
 
@@ -753,17 +762,19 @@ artifact.db: 5 command(s), 1 individual(s), 16 variable(s), 2677 values
 distinct strata group(s):
   commands      : factors           : levels        : variables 
 ----------------:-------------------:---------------:---------------------------
-  [EPOCH]       : .                 : 1 level(s)    : DUR INC NE
+  [EPOCH]       : .                 : 1 level(s)    : DUR GENERIC INC NE OFFSET
                 :                   :               : 
-  [MASK]        : EMASK             : 1 level(s)    : N_MASK_SET N_MASK_UNSET N_MATCHES
+  [MASK]        : EMASK             : 1 level(s)    : MASK_MODE MATCH_LOGIC MATCH_TYPE
+                :                   :               : N_MASK_SET N_MASK_UNSET N_MATCHES
                 :                   :               : N_RETAINED N_TOTAL N_UNCHANGED
                 :                   :               :
+                :                   :               : 
   [RESTRUCTURE] : .                 : 1 level(s)    : DUR1 DUR2 NA NR1 NR2 NS
                 :                   :               : 
   [SIGSTATS]    : CH                : 1 level(s)    : H1 H2 H3
                 :                   :               : 
   [SIGSTATS]    : E CH              : (...)         : H1 H2 H3
-                :                   :               : 
+                :                   :               :
 ----------------:-------------------:---------------:---------------------------
 ```
 
@@ -850,7 +861,7 @@ the `DUMP-MASK` command)
 destrat mask.db +DUMP-MASK -r E -v EMASK > mask.txt
 ```
 
-This has 888 rows: one header plus the 877 non-wake epochs (i.e. after
+This has 888 rows: one header plus the 887 non-wake epochs (i.e. after
 a `RESTRUCTURE` command, this is the "total" number of epochs left).
 Loading this file, plus the previous output from `SIGSTATS` into R, we
 can plot the per-epoch distribution of the Hjorth parameters, colored
@@ -1059,16 +1070,16 @@ command, `WRITE-ANNOTS` to [.annot](../ref/annotations.md) files.
 head spindles-nsrr01.txt 
 ```
 ```
-class     instance channel  start     stop      meta
-spindles  15       EEG      2706.560  2707.176  amp=11.067|dur=0.616|frq=13.798|isa=0.790
-spindles  11       EEG      2834.640  2835.224  amp=19.170|dur=0.584|frq=10.274|isa=0.839
-spindles  15       EEG      2868.120  2868.752  amp=12.517|dur=0.632|frq=13.449|isa=0.889
-spindles  11       EEG      2868.832  2869.656  amp=15.997|dur=0.824|frq=10.315|isa=0.993
-spindles  15       EEG      2870.896  2871.408  amp=13.363|dur=0.512|frq=13.671|isa=0.900
-spindles  15       EEG      2905.008  2905.696  amp=16.057|dur=0.688|frq=13.081|isa=1.643
-spindles  15       EEG      2949.696  2950.520  amp=19.656|dur=0.824|frq=14.563|isa=2.408
-spindles  11       EEG      2969.200  2969.768  amp=15.151|dur=0.568|frq=9.6831|isa=0.823
-spindles  11       EEG      2978.264  2979.192  amp=14.449|dur=0.928|frq=10.237|isa=0.924
+class    instance  channel    start       stop   meta
+spindles   15      EEG     2706.560   2707.176   amp=11.0679|dur=0.616|frq=13.7987|isa=0.790763|rp_mid=0.736842
+spindles   11      EEG     2834.640   2835.224   amp=19.1707|dur=0.584|frq=10.274|isa=0.839118|rp_mid=0.638889
+spindles   15      EEG     2868.120   2868.752   amp=12.5175|dur=0.632|frq=13.4494|isa=0.889038|rp_mid=0.410256
+spindles   11      EEG     2868.832   2869.656   amp=15.9973|dur=0.824|frq=10.3155|isa=0.993035|rp_mid=0.294118
+spindles   15      EEG     2870.896   2871.408   amp=13.3631|dur=0.512|frq=13.6719|isa=0.900901|rp_mid=0.730159
+spindles   15      EEG     2905.008   2905.696   amp=16.0575|dur=0.688|frq=13.0814|isa=1.64327|rp_mid=0.341176
+spindles   15      EEG     2949.696   2950.520   amp=19.6564|dur=0.824|frq=14.5631|isa=2.4089|rp_mid=0.578431
+spindles   11      EEG     2969.200   2969.768   amp=15.1515|dur=0.568|frq=9.6831|isa=0.823499|rp_mid=0.271429
+spindles   11      EEG     2978.264   2979.192   amp=14.4497|dur=0.928|frq=10.2371|isa=0.924797|rp_mid=0.365217
 ...
 ```
 

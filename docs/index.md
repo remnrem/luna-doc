@@ -6,8 +6,9 @@ Primarily oriented around command-line scripting
 ([_lunaC_](luna/args.md)), we are developing various _extensions_,
 including a package for the [R](https://www.r-project.org/)
 statistical package ([_lunaR_](ext/R/index.md)). We have also
-recently developed an interactive viewer and web-based frontend, [_Moonlight_](moonlight.md).
-The __current release is v0.28__ (10-Apr-2023): see [here](updates.md) for
+recently developed an interactive viewer and web-based frontend, [_Moonlight_](moonlight.md)
+that also conatains [_Moonbeam_](moonbeam.md), a connector to [NSRR](sleepdata.org) data.
+The __current release is v0.99__ (5-Dec-2023): see [here](updates.md) for
 a list of changes/additions.   
     
 ## Getting started

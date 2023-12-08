@@ -161,7 +161,6 @@ Most users will not need to alter these.
 | --- | --- | --- |
 |`cache` | `cache=w1` | Cache CWT coefficients per sample point (e.g. for `TLOCK`) |
 |`cache-peaks` | `cache-peaks=p1` | Cache spindle peaks (sample points) (e.g. for `TLOCK`) |
-|`cache-metrics` | `cache-metrics=c1`  | Cache (currently) `DENS`, `DUR`, `AMP` and `ISA_S` (e.g. for `PSC`) |
 
 <h6>Characterizing external spindles</h6>
 
@@ -1582,8 +1581,9 @@ Primary SO information per channel (strata: `CH`)
 |`SO_AMP` | Median amplitude (of negative peak) |
 |`SO_P2P` | Median peak-to-peak amplitude |
 |`SO_DUR` | Median SO duration |
+|`SO_SLOPE` | Median slope (by default, `SO_SLOPE_NEG2` | 
+| _additional metrics w/ `verbose`:_| |
 |`SO_SLOPE_NEG2` | Median slope (negative peak to negative-to-positive zero-crossing)  |
-| _additional metrics:_| |
 |`SO_NEG_DUR` | Median negative peak duration | 
 |`SO_POS_DUR` | Median positive peak duration |
 |`SO_SLOPE_NEG1` | Median slope (positive-to-negative zero-crossing to negative peak) |

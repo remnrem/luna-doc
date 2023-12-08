@@ -120,6 +120,15 @@ If you are not familiar with pipes and redirection, the following
 [tutorial](http://ryanstutorials.net/linuxtutorial/piping.php) (or any
 other web-search) will be helpful.
 
+As a more advanced motivating example, it is also possible to prepend or append additional commands: for example, say `command.txt` is expecting
+signals with linked-mastoid referencing but the EDF does not contain these.  Rather than edit
+`commands.txt` or use an intermediate file, you could perform this on-the-fly:
+```
+echo "REFERENCE sig=${eeg} ref=M1,M2" | cat - command.txt | luna s.lst > results.txt
+```
+i.e. as `cat - command.txt` will join first the new reference command (`-` meaning standard input, which is piped into `cat` from `echo`)
+and then the original file `command.txt`, and pass both to `luna` which will see it as a single stream of inputs. 
+
 <a name="output"></a>
 ## Output format
 

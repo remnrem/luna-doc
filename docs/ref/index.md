@@ -12,7 +12,6 @@ _parameters_ and output _variables_.  We give examples using a mixture
 of [_lunaC_](../luna/args.md) and [_lunaR_](../ext/R/index.md); also
 see _lunaC_'s [help function](../luna/args.md#help).
 
-
 ## Domains
 
 | Domain/Section | Description |
@@ -25,6 +24,7 @@ see _lunaC_'s [help function](../luna/args.md#help).
 |[Freezes](freezes.md)             | Working with dataset freezes (snaphots) | 
 |[Canonical signals](canonical.md) | Harmonizing EDFs through _canonical signal_ specification |
 |[Manipulations](manipulations.md) | Manipulating signal data |
+|[Alignment](alignment.md)         | Utilities to align data across EDFs | 
 |[Outputs](outputs.md)             | Commands to output signals in different formats |
 |[FIR filters](fir-filters.md)     | FIR filter design and application |
 |[Artifacts](artifacts.md)         | Artifacts detection/correction routines |
@@ -39,6 +39,7 @@ see _lunaC_'s [help function](../luna/args.md#help).
 |[MS](ms.md)                       | EEG microstate analysis |
 |[Clustering](clustering.md)       | Time-series clustering |
 |[Association](assoc.md)           | Association analysis (linear models) |
+|[Prediction](predict.md)       | Prediction models | 
 |[Simulation](simul.md)            | Simulation of time-series data |
 |[Helpers](helpers.md)             | Auxiliary helper commands |
 |[Experimental](exp.md)            | Experimental features, under heavy development / for internal use only |
@@ -63,6 +64,7 @@ __Annotations:__
 [`--xml` & `--xml2`](annotations.md#-xml): _view NSRR XMLs,_
 [`REMAP`](annotations.md#remap): _remap annotations,_
 [`ANNOTS`](annotations.md#annots): _tabulate annotations,_
+[`MAKE-ANNOTS`](annotations.md#make-annots): _make new annotations,_
 [`WRITE-ANNOTS`](annotations.md#write-annots): _write annotation files,_
 [`SPANNING`](annotations.md#spanning): _annotation coverage stats,_
 [`A2S`](annotations.md#a2s): _make signal from annotation,_
@@ -79,9 +81,10 @@ __Masks:__
 [`DUMP-MASK`](masks.md#dump-mask): _output epoch masks,_
 [`RESTRUCTURE`](masks.md#restructure): _remove masked epochs,_
 [`CHEP`](masks.md#chep): _channel/epoch masks._
-__Freezes:__
+__Freezes & caches:__
 [`FREEZE`](freezes.md#freeze): _freeze snapshot,_
-[`THAW`](freezes.md#thaw): _revive a prior freeze._
+[`THAW`](freezes.md#thaw): _revive a prior freeze,_
+[`CACHE`](outputs.md#cache): _cache operations._
 __Canonical signals:__
 [`CANONICAL`](manipulations.md#canonical): _make canonical signals._
 __Manipulations:__
@@ -91,6 +94,7 @@ __Manipulations:__
 [`RESAMPLE`](manipulations.md#resample): _resample signals,_
 [`ENFORCE-SR`](manipulations.md#enforce-sr): _check for sufficient sample rate,_ 
 [`REFERENCE`](manipulations.md#reference): _re-reference signals,_
+[`DEREFERENCE`](manipulations.md#deference): _de-reference signals,_
 [`MINMAX`](manipulations.md#minmax): _set channel min/max,_
 [`uV`](manipulations.md#uv): _force microvolts,_
 [`mV`](manipulations.md#mv): _force millivolts,_
@@ -108,6 +112,10 @@ __Manipulations:__
 [`RECTIFY`](manipulations.md#rectify): _rectify a signal,_
 [`REVERSE`](manipulations.md#reverse): _reverse a signal,_
 [`MOVING-AVERAGE`](manipulations.md#moving-average): _moving average filters._
+__Alignment:__
+[`ALIGN-EPOCHS`](alignment.md#align-epochs): _align two EDFs,_
+[`ALIGN-ANNOTS`](alignment.md#align-annots): _align annotations,_
+[`INSERT`](alignment.md#insert): _insert new channels._
 __Outputs:__ 
 [`WRITE`](outputs.md#write): _write EDF,_
 [`MATRIX`](outputs.md#matrix): _signals to text,_
@@ -115,7 +123,7 @@ __Outputs:__
 [`DUMP-RECORDS`](outputs.md#dump-records): _dump by record,_
 [`RECS`](outputs.md#recs): _info on EDF record structure,_
 [`SEGMENTS`](outputs.md#segments): _continuous intervals,_
-[`SEDF`](outputs.md#sedf): _write summary EDF._
+[`SEDF`](outputs.md#sedf): _write summary EDF,_
 __Filters:__
 [`FILTER`](fir-filters.md#filter): _apply FIR,_
 [`FILTER-DESIGN`](fir-filters.md#filter-design): _FIR properties._
@@ -124,7 +132,8 @@ __Artifacts:__
 [`ARTIFACTS`](artifacts.md#artifacts): _bad EEG epochs,_
 [`LINE-DENOISE`](artifacts.md#line-denoise): _line denoising,_
 [`SUPPRESS-ECG`](artifacts.md#suppress-ecg): _correct ECG artifact,_
-[`ALTER`](artifacts.md#alter): _correct artifacts._
+[`ALTER`](artifacts.md#alter): _correct artifacts,_
+[`EDGER`](artifacts.md#edger): _identify leading/trailing noise._
 __Hypnograms:__
 [`HYPNO`](hypnograms.md#hypno): _stage summaries,_
 [`STAGE`](hypnograms.md#stage): _dump stages._
@@ -160,6 +169,7 @@ __Coupling/connectivity:__
 [`CC`](cc.md#cc): _phase-amplitude coupling & phase lag,_
 [`PSI`](cc.md#): _phase slope index,_
 [`MI`](cc.md#mi): _mutual information,_
+[`XCORR`](cc.md#xcorr): _cross-correlation,_
 [`TSYNC`](cc.md): _cross-correlation & phase delay,_
 [`GP`](cc.md#gp): _Granger prediction._
 __Interval-based:__
@@ -191,6 +201,8 @@ __Clustering:__
 [`EXE`](clustering.md): _time-series clustering._
 __Association:__
 [`CPT`](assoc.md#cpt): _association models._ 
+__Prediction:__
+[`PREDICT`](predict.md#predict): _prediction models._
 __Simulation:__
 [`SIMUL`](simul.md#simul): _simulate signals,_
 [`SIGGEN`](simul.md#siggen): _basic signal simulation._

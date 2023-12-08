@@ -12,7 +12,7 @@ extension library for R ([_lunaR_](ext/R/index.md)).
 
 ## Which? 
 
-The current version is the _beta-release_ __v0.28 (10-Apr-2023)__.
+The current version is the _beta-release_ __v0.99 (5-Dec-2023)__.
 Use `luna -v` to display the specific build date/time.
 
 ## Where?

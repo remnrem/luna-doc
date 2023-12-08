@@ -44,13 +44,10 @@ cd moonlight
 ```
 Then open R, and run the following in the `moonlight` folder:
 ```
-source("ui.R")
-source("server.R")
-shinyApp( ui, server ) 
+library(shiny)
+runApp()
 ```
-This should open a browser window with Moonlight up and running.
-
-
+This should open a browser window with _Moonlight_ up and running.
 
 ## Local vs host filesystems
 
@@ -77,7 +74,9 @@ files - either on the local (user's) filesystem, or on the host
 
 ## Multiple Moonlights
 
-Please note that within a single R process, you can only run a single instance of _Moonlight_.   If you try to open multiple windows from the same instance, you will see the following error message: 
+Please note that within a single R process, you can only run a single
+instance of _Moonlight_.  If you try to open multiple windows from the
+same instance, you will see the following error message:
 
 ![img](img/mlwarn.png)
 
@@ -89,5 +88,7 @@ files in different windows and repeatedly switch between them
 i.e. as only a single dataset will be uploaded for that R process at
 any one moment in time.
 
-Therefore, if you want to run multiple _Moonlight_ instances on the same machine, please use separate R processes (or open separate Docker containers). 
+Therefore, if you want to run multiple _Moonlight_ instances on the
+same machine, please use separate R processes (or open separate Docker
+containers).
 

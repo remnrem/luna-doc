@@ -138,7 +138,7 @@ Spectral power by frequency bin (option: `spectrum`, strata: `F` x `CH`)
 | ---- |----- | 
 | `PSD` | Absolute spectral power |
 | `PSD_SD` | Standard deviation (within epoch) of absolute spectral power |
-
+| `PSD_CV` | (if `dB` and `sd` specified: coefficient of variation assuming log-normal data, CV=sqrt(exp(s^2)-1) where s^2 is the natural log-scaled variance | 
 
 Epoch-level spectral band power (option: `epoch`, strata: `E` x `B` x `CH`)
 
@@ -506,20 +506,57 @@ question at hand. [This manuscript](https://www.ncbi.nlm.nih.gov/pubmed/27927806
 provides a nice review of the use of multitaper spectral analysis in the sleep
 domain, along with considerations for specifying the time half
 bandwidth product (`nw`) and the number of tapers (`t`). (By default,
-`MTM` will always use `2nw-1` tapers.)
+`MTM` will use `2nw-1` tapers.)
 
-As currently specified, the `MTM` command does not use the standard epoch mechanism for output. Rather,
-it is based on the concept of _segments_, which define the window of spectral analysis.  These may be much smaller than a typical
-epoch (e.g. 1 second) and one may wish to have highly overlapping segments in a sliding-window style of analysis.   Because of this,
-it is more efficient (internally) to use a different mechanism.  By default, segments are defined to be 30 seconds, and to
-step in increments of 30 seconds, so for all intents and purposes, this will be identical to (default) epoch specification. 
+As per the `PSD` command, the `MTM` command uses a concept of
+_segments_ as well as (optionally) _epochs_.  That is, the fundamental
+unit of spectral analysis is always a _segment_ (e.g. which may be
+different durations, say 4 seconds), but whether or not metrics are
+summarized and output at the per-epoch (e.g. 30-second interval) level
+depends on how `MTM` is run. Segments may often be be much smaller
+than a typical epoch (e.g. 1 second) and one may wish to have highly
+overlapping segments in a sliding-window style of analysis.
+
+Running without `epoch`, the data is treated as a continuous signal and split into segment:
+
+```
+   whole recording -----------------------------|   overall stats                                                                      
+   |seg1|seg2|seg3|seg4|seg5|seg6|seg7|seg8|seg9|   segment-level stats (SEG)                 
+```
+
+Running with `epoch`, each epoch is split into segments; at least one epoch must fit in each segment: 
+```
+   whole recording -----------------------------|   overall stats                                                                      
+   | epoch1 ------| epoch2-------| epoch3 ------|   epoch-level stats (E)                                                                  
+   |seg1|seg2|seg3|seg1|seg2|seg3|seg1|seg2|seg3|   segment-level stats (SEG)                                                                 
+```
+
+Analyses can be performed epoch-wise, but without verbose epoch-level
+output being emitted: in this case, one just uses the `epoch` flag.
+To get epoch-level outputs, use `epoch-output`; to get full spectra
+(i.e. stratified by `F`) output, also add `epoch-spectra`.  Parallel
+options exist to control the level of segment-wise outputs
+(`segment-output` and `segment-strata`). Note that, depending on the
+dataset and other parameters, the outputs from `segment-strata` (or
+`epoch-strata`) could be __very large__: using text-table outputs is
+advisable in this scenario.
+
+As well as core spectral power metrics (either summed by frequency
+band, or per bin), this command calculates a number of other values
+based on the spectral analysis:
+
+ - ratios between different band powers
+
+ - so-called _spectral skew, kurtosis and CV_ (coefficient of
+   variation) based on the distribution of segments (within each
+   epoch)
 
 <h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | ----- | ------ | ------ |
 | `sig`   | `C3,C4` | Which signals to analyse |
-| `epoch` |  | Report epoch-level results (nb. actually _segments_, see above) |
+| `epoch` |         | Report epoch-level results |
 | `nw`    | `4` | Time half bandwidth product (default 3, typically: 2, 5/2, 3, 7/2, or 4) | 
 | `t`     | `7` | Number of tapers (default 2*`nw`-1, i.e. 5) |
 | `segment-sec` | 30 | Segment size (default 30 seconds) |
@@ -527,29 +564,131 @@ step in increments of 30 seconds, so for all intents and purposes, this will be 
 | `min`   | `0.5` | Maximum frequency for power spectra (default is 20Hz) |
 | `max`   | `25` | Maximum frequency for power spectra (default is 20Hz) |
 | `dB`    |   | Report power in dB units |
-| `dump-tapers` | | Report the taper coefficients in the output |
+
+Output control
+
+| Parameter | Description |
+| ----- | ------ |
+| `epoch-output` | Run in epoch mode and output epoch-wise statsistics (except the full spectra) |
+| `epoch-strata` | If running in epoch mode, output full per-epoch power spectra |
+| `segment-output` | Output per-segment statistics (except the full spectra) |
+| `segment-spectra` | Output per-segment full power spectra | 
+| `dump-tapers` | Report the taper coefficients in the output |
+| `add` | Add new channels with MTM power values, in format `mtm_CH_F` |
+
+Misc analysis parameters
+
+| Parameter | Example | Description |
+| ----- | ------ | ------ |
+| `speckurt` |  | Report epoch-level kurtosis per band |
+| `speckurt3` |  | Use unadjusted kurtosis vales, i.e. N(0,3) has expected kurtosis of 3.0, not 0 |
+| `ratio` | `DELTA/ALPHA,DELTA/BETA` | Output band power ratios, e.g. delta/alpha and delta/beta |
+| `ratio1` | | Compute raw power ratios as _a/(1+b)_ | 
 | `mean-center` | | Mean center segments prior to analysis | 
+
+
+Spectral slope parameters
+
+| Parameter | Example | Description |
+| ----- | ------ | ------ |
 | `slope` | | Output the spectral slope |
 | `epoch-slope` | | Output the spectral slope per epoch (or `slope-epoch`) |
 | `slope-th` | 4 | SD threshold at which to remove individual power estimates (default: 3 ) |
 | `slope-th2` | 4 | SD threshold at which to remove epochs (default: 3 ) |
-| `add` | `mtm` | Add new channels with MTM power values, in format `mtm_CH_F` | 
+
+
 
 <h3>Output</h3>
+
 
 Whole-signal power spectra (strata: `CH` x `F`)
 
 | Variable | Description |
 | ----- | ----- | 
 | `MTM` | Absolute spectral power via the multitaper method |
+| `MTM_MD` | With `epoch`, median power over epochs |
+| `MTM_SD` | With `epoch`, SD of power over epochs |
 
+Whole-signal band power (strata: `CH` x `B`)
 
-Epoch-level (_segment_) power spectra (option: `epoch`, strata: `SEG` x `CH` x `F`)
+| Variable | Description |
+| ----- | ----- | 
+| `MTM` | Absolute spectral band power via the multitaper method |
+| `MTM_MD` | With `epoch`, median power	over epochs |
+| `MTM_SD` | With `epoch`, SD of power over epochs |
+| `REL` | Relative spectral band power via the multitaper method (denom = total power) |
+| `REL_MD` | With `epoch`, median relative  power over epochs |
+| `REL_SD` | With `epoch`, SD of relative power over epochs |
+
+Ratios of band power (option: `ratio`; strata: `CH` x `B1` x `B1`)
+
+| Variable | Description |
+| ----- | ----- |
+| `RATIO` | Ratio (or mean ratio over epochs, if `epoch`) |
+| `RATIO_MD` | With `epoch`, median ratio over epochs |
+| `RATIO_SD` | With `epoch`, SD of ratios over epochs |
+
+Epoch-level power spectra (option: `epoch`, strata: `E` x `CH` x `F`)
 
 | Variable | Description |
 | ----- | ----- | 
 | `MTM` | Spectral power via the multitaper method |
 
+Epoch-level band power (option: `epoch`, strata: `E` x `CH` x `B`)
+
+| Variable | Description |
+| ----- | ----- | 
+| `MTM` | Spectral power via the multitaper method |
+| `REL` | Relative spectral power via the multitaper method |
+
+Epoch-wise segment-level band power (option: `epoch`, `segment-output`; strata: `CH` x `E` x `SEG` x `B`)
+
+| Variable | Description |
+| ----- | ----- |
+| `MTM` | Spectral power via the multitaper method |
+| `REL` | Relative spectral power via the multitaper method |
+
+Segment-level output (option: `segment-output`; strata: `CH` x `SEG`)
+
+| Variable | Description |
+| ----- | ----- |
+| `START` | Start of segment (seconds) |
+| `STOP` | End of segment (seconds) | 
+| `DISC` | Flag (0/1) indicating if a segment spans a discontinuity | 
+
+Epoch-wise segment-level output (option: `epoch`, `segment-output`; strata: `CH` x `E` x `SEG`)
+
+| Variable | Description |
+| ----- | ----- |
+| `START` | Start of segment (seconds) |
+| `STOP` | End of segment (seconds) | 
+| `DISC` | Flag (0/1) indicating if a segment spans a discontinuity |
+
+Epoch-level ratios of band power (options: `ratio`, `epoch-output`; strata: `CH` x `B1` x `B1`)
+
+| Variable | Description |
+| ----- | ----- |
+| `RATIO` | Ratio (or mean ratio over epochs, if `epoch`) |
+| `RATIO_MD` | With `epoch`, median ratio over epochs |
+| `RATIO_SD` | With `epoch`, SD of ratios over epochs |
+
+_Alternate statistcs (spectral skew, kurtosis and CV)_
+
+Band-wise statistics (option: `speckurt`; strata: `CH` x `B`)
+
+| Variable | Description |
+| ----- | ----- |
+| `SPECCV` | CV of spectral band power | 
+| `SPECSKEW` | Skewness of spectral band power |
+| `SPECKURT` | Kurtosis of spectral band power |
+
+The above three metrics are also defined:
+
+ - per epoch per channel per epoch (stata: `E` x `CH` x `B`)
+ - averaged over channels per epoch (strata: `E` x `B`)
+ - when using `speckurt3`
+ 
+_Adding channels_
 
 If the `add` option is specified, multiple new channels will be added
 with the computed power values (same sample rate as the original
@@ -564,8 +703,7 @@ To compare results for the N2 power spectra up to 20 Hz, from `PSD` and `MTM`
 for the three tutorial individuals:
 
 ```
-luna s.lst -o out.db -s ' MASK ifnot=NREM2
-                        & RE
+luna s.lst -o out.db -s ' MASK ifnot=N2 & RE
 			& PSD sig=EEG dB spectrum max=20
 			& MTM sig=EEG dB tw=15 max=20'
 ```
@@ -586,6 +724,7 @@ This gives some output describing the properties of the MT analysis in the conso
   processed channel(s): EEG
 ```
 
+Using `library(luna)` in R to view the resulting output:
 ```
 k <- ldb( "out.db" )
 ```

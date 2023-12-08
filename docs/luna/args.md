@@ -9,34 +9,55 @@ interface to Luna, we'll often refer it as _lunaC_, to distinguish it from the
 basic Unix/macOS console environment and shell scripting is recommended.
 
 Once [installed](../download/index.md) and in your command path,
-_lunaC_ is invoked via the `luna` command, often in the following
-form:
+_lunaC_ is invoked via the `luna` command, often in the form:
 
 ``` 
 luna sample.lst -o out.db < commands.txt
 ```
 
-Here, Luna expects a list of IDs, EDFs (and possibly [annotation files](#annotations)) in
-a [sample list](args.md#sample-lists) file (`sample.lst`), reads a
-series of [commands](../ref/index.md) (`commands.txt`) to be applied to
-each EDF, and writes the output to a
-[_lunout_](destrat.md) database file (`out.db`).  
+Here, Luna expects a list of IDs, EDFs (and possibly [annotation
+files](#annotations)) in a [sample list](args.md#sample-lists) file
+(`sample.lst`), reads a series of [commands](../ref/index.md)
+(`commands.txt`) to be applied to each EDF, and writes the output to a
+[_lunout_](destrat.md) database file (`out.db`).
 
-!!! note "Types of command line arguments" 
+!!!note "Types of command line arguments"
     _lunaC_ expects the first
     argument to be either 1) an EDF (or EDF+ or [EDFZ](#edfzs)) file,
-    2) a [_sample-list_](#sample-lists), 3) a plain-text ASCII file
-    or 4) a special command that does not require signal data,
-    e.g. such as [`--build`](#-build) or [`--xml`].  Subsequent arguments can
-    come in any order and are interpreted as follows
+    2) a [_sample-list_](#sample-lists), 3) a plain-text ASCII file or
+    4) a special command that does not require signal data, e.g. such
+    as [`--build`](#-build-option) or
+    [`--xml`](../../ref/helpers/#-xml).  With the exception of command scripts specified by `-s`, 
+    all subsequent arguments can come in any order and are interpreted as follows:
 
-    - terms containing `=` are interpreted as [_variables_](#variables), with the exception of certain special _reserved_ names that are options, e.g. `annot` or `alias`, as described below
-    - terms starting with `-` are interpreted as special options, e.g. primarily `-o` and `-s`
-    - once a `-s` option is encountered, _all_ subsequent terms are interpreted as Luna [_commands_](../ref/index.md) rather than command line options; thus, if given, then `-s` must be the final argument
-    - terms starting with `@` are interpreted as [_parameter files_](#parameter-files), the contents of which are loaded in to define new variables and options
-    - otherwise, terms that are numbers are interpreted as sample-list [_row numbers_](#ranges) (either a single row, or a range, depending if one or two numbers are specified)
-    - otherwise, that term is assumed to be the ID of a _single_ individual to be analysed from the sample-list
-    - if specifying an ID on the command line, it is best to use the special variable form `id` (which can handle purely numeric IDs, i.e. interpreting it as an ID rather than than a row number in a sample list )
+    - terms containing `=` are interpreted as
+      [_variables_](#variables), with the exception of certain
+      [special _reserved_ names](#special-variables) that change the behaviour of Luna, 
+      e.g. `annot` or `alias`, as described [below](#special-variables)
+    
+    - terms starting with `-` are interpreted as [options](#options),
+      e.g. primarily `-o` and `-s`
+
+    - once an `-s` option is encountered, _all_ subsequent terms are
+      interpreted as Luna [_commands_](../ref/index.md) rather than
+      command line options; thus, if given, `-s` (and any subsequent commands) must be the
+      final argument
+
+    - terms starting with `@` are interpreted as [_parameter
+      files_](#parameter-files), the contents of which are loaded in
+      to define/set new (special) variables
+
+    - otherwise, terms that are numbers are interpreted as sample-list
+      [_row numbers_](#ranges) (either a single row, or a range,
+      depending if one or two numbers are specified)
+
+    - otherwise, that term is assumed to be the ID of a _single_
+      individual to be analysed from the sample-list
+
+    - if specifying an ID on the command line, it is best to use the
+      special variable form `id` (which can handle purely numeric IDs,
+      i.e. interpreting it as an ID rather than than a row number in a
+      sample list )
 
 ## Help
 
@@ -123,7 +144,33 @@ Outputs:
 !!! note
     By convention, all Luna commands should be in _CAPITAL LETTERS_. 
 
+## Options
 
+As well as specifying the main input, setting any variables and
+supplying Luna commands to be processed, the following flags can also
+appear on the Luna command line.
+
+Primary options:
+
+| Option | Description |
+|--------|----------|
+| `-s`   | Directly specify Luna commands after `-s`, rather than reading them from a command file; if specified, this option must come last |
+| `-o`   | Write all output to a [lunout](#lunout-databases) database; if it already exists, it will be overwritten |
+| `-a`   | Similar to `-a` except appends to an existing output database rather than overwriting it |
+| `-t`   | Write all output as [text tables](#text-tables) rather than to a database |
+| `@<file>` | Read (special) variables from a parameter file, e.g. `@param.txt` |
+| _N_ | Read only observation _N_ (_nth_ row) from the sample list |
+| _N_ _M_ | Read only observations _N_ to _M_ from the sample list |
+| `id=<id>` | Read only observation with sample list ID matching `<id>` from the sample list, e.g. `id=night001` |
+
+Special-case, secondary options:
+
+| Option | Description |
+|--------|----------|
+| `--fs` | Specify a sample rate when reading an ASCII (non-EDF) file |
+| `--nr` | Specify the number of records when creating an [empty EDF](#empty-edfs) |
+| `--rs` | Specify the record duration (seconds) when creating an [empty EDF](#empty-edfs) |
+| `--opt` or `--options` | Only applcicable when using a special helper/utility function such as `--psc`; options to be passed to that command come after this |
 
 ## Input 
 
@@ -132,241 +179,80 @@ Outputs:
 Luna can read EDF and EDF+ files.  The latter allow for
 discontinuities (by having an explicit time-track) and provide some
 support for annotations.  After
-[restructuring](../ref/index.md#restructure) file (i.e. removing
+[restructuring](../ref/index.md#restructure) a file (e.g. removing
 certain epochs), it will be represented internally in a form that
-corresponds to EDF+.  
-
+corresponds to an EDF+ (i.e. with gaps/discontinuities).
 Luna can read a single EDF (rather than a [sample
 list](args.md#sample-lists)) by specifying a filename (with an `.edf`
-or `.EDF` extension):
+or `.EDF` extension - or alternatively, a compressed [`.edf.gz`](#edfzs)):
 
 ```
 luna test1.edf < commands.txt
 ```
 
-!!! note
-    In this _single EDF_ mode, it is not possible to attach
-    annotations, or include a parameter file.  Using sample lists is
-    the preferred way to work for most projects.
-
-<h4>In-memory representations</h4>
-
-A note on some of the terminology used in this documentation: we often
-make a distinction between the _on-disk_ EDF and its _in-memory_
-representation, or the _internal_ EDF.
-
-When Luna first "attaches" an EDF, it does not load anything other
-than the header.  Subsequently, Luna uses a _lazy-loading_ approach,
-whereby it only pulls records from disk when needed.  These
-are cached in memory, so that if they are needed again, they do not
-need to be read in afresh.
-
-All commands that manipulate EDFs and the signals therein operate on
-the internal EDF.  Although we may use language such as "drop a
-channel from the EDF" we typically do not imply that the actual
-_on-disk_ file has changed in any way.  
-
-Likewise, most commands refer to the _internal, in-memory_ version of
-the EDF both for their input and output. As noted, this may differ
-from the _on-disk_ version, for example, if channels and/or epochs
-have been dropped or added by `SIGNALS`, `MASK`, `RESTRUCTURE` and
-other commands. When describing a command such as
-[`DESC`](../ref/summaries.md#desc), if we say it reports
-"...information on the attached EDF", this implies it is the
-_in-memory_ form that is being queried.  That is, if the _on-file_ EDF
-contains 64 channels, `DESC` will report 64 all other things being
-equal.  However, if _within that run of Luna_ other commands have been
-previously been issued that alter the _internal_ EDF, then `DESC` may
-report something other than 64.
-
-Finally, there is no _memory_ or persistence of changes between
-different runs of _lunaC_: nothing is cached between sessions.
-For example, the following may report that 6 channels are present:
+To attach annotations to a single EDF, use `annot-file`:
 ```
-luna my.edf -s DESC 
-```
-You might subsequently run a command that drops channels and then calls `DESC`: 
-```
-luna my.edf -s 'SIGNALS drop=ECG,EMG & DESC'
-```
-in which case, only 4 channels will be reported. However, on 
-running the first command again:
-```
-luna my.edf -s DESC
-```
-Luna will report 6 channels again, 
-i.e. as nothing was changed in the original file `my.edf`. 
-
-### EDFZs
-
-As described in this [vignette](../vignettes/edfz.md), to save disk space
-(and sometimes speed up analysis), Luna can read and write compressed
-EDF files, using the [BGZF](https://samtools.github.io/hts-specs/SAMv1.pdf) library.
-
-EDFZ files must be created by Luna's
-[`WRITE`](../ref/outputs.md#write) command, with the `edfz` parameter
-option added.  
-
-
-For example, taking the first tutorial EDF, we can write it out as an EDFZ:
-```
-luna s.lst 1 -s WRITE edfz edf-dir=z/ edf-tag=compressed sample-list=z.lst 
+luna test1.edf annot-file=test1.annot < commands.txt
 ```
 
-That is, if the original EDF were called `file.edf`, this would create
-two files (along with a sample list `z.lst` that points to them):
-`z/file-compressed.edfz` and `z/file-compressed.edfz.idx`.
+<h4>In-memory vs on-disk representations</h4>
 
-In the above example, we can see the reduction in disk space:
-```
-ls -lh z
-```
-```
-    21M  z/learn-nsrr01-compressed.edfz
-   528K  z/learn-nsrr01-compressed.edfz.idx
-```
-In contrast, the original EDF is almost three times the size:
-```
-    59M  edfs/learn-nsrr01.edf
-```
+In this documentation, we often make a distinction between the
+_on-disk_ EDF and the _in-memory_ (_internal_) representation of the
+EDF.
 
-For a single PSG study that is not particularly large to start with,
-this saving doesn't really matter.  Across thousands of studies,
-naturally, savings can become more significant.
+ - When Luna first "attaches" an EDF, it does not load anything other
+   than the header.  Subsequently, Luna uses a _lazy-loading_
+   approach, whereby it only pulls records from disk when needed.
+   These are cached in memory: if they are needed again, they
+   do not need to be read in afresh.
 
-Although EDFZ files must be created by a special Luna command, they
-can be read (i.e. decompressed) as any other
-[gzip](https://en.wikipedia.org/wiki/Gzip) file.  That is, the
-following standard unix/Mac command will convert an EDFZ file to a
-standard EDF file:
+  - All commands that manipulate EDFs and the signals therein operate
+   only on the _internal_ EDF.  Although we may use language such as "drop a
+   channel from the EDF" we generally do not imply that the original
+   _on-disk_ file has been changed.
 
-```
-cat file.edfz | gunzip > file.edf
-```
+ - The _in-memory_ EDF may differ from the _on-disk_ version, for
+   example, if channels and/or epochs have been dropped or added by
+   `SIGNALS`, `MASK`, `RESTRUCTURE` and other commands.  As noted,
+   all Luna commands report on the current, _in-memory_ representation:
+   for example, the original EDF may have 64 channels, but 
+   [`DESC`](../ref/summaries.md#desc) may report fewer (or more) depending if
+   channels have been dropped/added _within that particular Luna run_.
 
-See information on the [`WRITE`](../ref/outputs.md#write) command's
-`edfz` option for more details.
+  - Changes made to the _in-memory_ EDF do not persist after that run. 
+    For example, the following may report that 6 channels are present:
 
-!!! hint 
-    Although compression as an EDFZ is _lossless_ (i.e. all
-    information is preserved), there may be very small differences
-    between the original EDF and an uncompressed EDFZ simply due to
-    floating point accuracy of the EDF format. This is not speicfic to
-    EDFZ files -- it also applies to standard EDFs generated by the
-    [`WRITE`](../ref/outputs.md#write) command.
-
-### Plain-text input
-
-Luna can read signals from ASCII-formatted, tab-delimited plain-text files as well as EDFs.
-Consider if we had a file `signals.txt` with 15,360 rows and three columns (i.e. three signals):
-
-```
-head signals.txt
-```
-```
- 4.18192918193	 9.73748473748	6.33394383394
- 3.93772893773	 6.74603174603	6.94444444444
- 3.44932844933	 4.12087912088	7.09706959707
- 2.41147741148	 2.28937728938	6.33394383394
- 0.21367521367	 1.12942612943	5.72344322344
--3.02197802198	-0.27472527472	4.96031746032
--6.74603174603	-2.53357753358	3.89194139194
--9.43223443223	-4.91452991453	3.12881562882
--9.92063492063	-6.86813186813	2.67094017094
--8.45543345543	-8.15018315018	1.75518925519
-```
-
-If Luna finds `--fs` on the command line, it will
-interpret the first argument to be a text file (rather than a sample
-list or an EDF).  In this instance, we know that the sample rate is
-256 Hz (and so, implies 15,360/256 = 60 seconds of signal).
-
-```
-luna signals.txt --fs=256 -s DESC
-```
-```
-Processing: signals.txt [ #1 ]
-  reading 3 signals, 60 seconds (15360 samples 256 Hz) from signals.txt
- ..................................................................
-```
-```
-EDF filename      : signals.txt
-ID                : signals.txt
-Clock time        : 00.00.00 - 00.01.00
-Duration          : 00.01.00
-# signals         : 3
-Signals           : S1[256] S2[256] S3[256]
-```
-
-Here, we see the recording is of the expected length (1 minute).  If
-combined with the [`WRITE`](../ref/outputs.md#write) command, one can
-use Luna to convert a text file into an EDF.
-
-The new signals are, by default, labelled `S1`, `S2`, etc.  If the `--chs` option is specified on the command-line, different channel labels can be assigned:
-```
-luna signals.txt --fs=256 --chs=Cz,Fz,Pz -s DESC
-```
-```
-Signals           : Cz[256] Fz[256] Pz[256]
-```
-
-Alternatively, if the first row of the text file starts with a `#`
-symbol, Luna assumes this is a comma-delimited list of channel labels:
-```
-#EEG1,EEG2,EEG3
-```
-```
-Signals           : EEG1[256] EEG2[256] EEG3[256]
-```
-
-!!! warning 
-    If both a header row and `--ch` are specified, the values
-    in `--chs` will be used.  If the number of channels specified by
-    either `--chs` or the header does not match the number of columns
-    in the file, Luna may give an error, as it expects the total
-    number of sample points read to be a multiple of the number of
-    channels and the sampling rate.  In other words, internally, Luna
-    will structure the data as an EDF with a 1-second record size, and
-    therefore any input must contain an integer number of seconds.
-
-Naturally, if a different/incorrect sampling rate is given, Luna will
-assume the recording is of a different length (subject to the
-constraint above about integer number of seconds being required): e.g.
-
-```
-luna signals.txt --fs=128 -s DESC
-```
-```
-Duration          : 00.02.00
-```
-
+    ```
+    luna my.edf -s DESC 
+    ```
+    One could subsequently run a command that drops two channels and then calls `DESC`: 
+    ```
+    luna my.edf -s 'SIGNALS drop=ECG,EMG & DESC'
+    ```
+    in which case, only 4 channels are reported. However, on 
+    running the first command again:
+    ```
+    luna my.edf -s DESC
+    ```
+    Luna will report 6 channels again,  i.e. as nothing was changed in the original file `my.edf`. 
 
 ### Sample lists
 
 The sample list (`sample.lst` in the example at the top of this page)
 file defines a _project_, i.e. a collection of EDFs and their
-associated IDs and [annotations](#annotations).
-
-!!! warning 
-    The sample list file must be ASCII plain text and
-    tab-delimited, i.e. not containing any special characters or
-    formatting as may occur if using a word processor to generate this
-    file. Additionally, be sure to [remove any Windows-style
-    line-ending characters](../faq.md#line-endings).
-
-Sample lists must contain at least two tab-delimited fields: the
-subject ID, followed by the EDF file location:
+associated IDs and [annotations](#annotations). Sample lists should
+contain at least two tab-delimited fields: the subject ID, followed by
+the EDF file location:
 
 ```
 id001	test1.edf
 id002	test2.edf
 ```
 
-In this next example we specify an [_annotation file_](#annotations)
-(e.g. containing stage information) for each EDF.  Note, in the
-first case we use an absolute file path, but a relative one in the
-second.
-
+An optional additional column(s) specifies any [_annotation files_](#annotations)
+(e.g. containing stage information) for that EDF.  As in the example below,
+you can use either absolute or relative file paths:
 ```
 id001	test1.edf	/data/annots/test1-staging.xml
 id002	test2.edf	staging2.xml	
@@ -375,35 +261,48 @@ id002	test2.edf	staging2.xml
 Relative paths are evaluated relative to the directory that Luna is
 run from.  On a single system, and if files won't be moved often, it
 is better to use absolute paths.  See [below](args.md#search-paths)
-for notes on using relative paths, which can be more convenient in
-some circumstances.  Also see the [`--repath`](../ref/helpers.md#-repath)
-function that can be used to quickly search/replace paths in a sample list.
+for notes on using relative paths, which can be convenient in
+some circumstances.  Also see the [`path`](#search-paths) special variable and
+the [`--repath`](../ref/helpers.md#-repath) helper function that can be used to
+quickly search/replace paths in a sample list.
 
-Instead of an annotation file, it is also possible to specify a
-_folder_, which will be searched (but not recursively) for annotation files
-(those with extensions `.annot`, `.txt`, `.tsv`, `.eannot` and `.xml`):
+In place of an annotation file, it is possible to specify a _folder_
+to be searched (but not recursively) for annotation files (those with
+extensions `.annot`, `.txt`, `.tsv`, `.eannot` and `.xml`):
 
 ```
 id001	test1.edf	/data/annots/indiv/id001/
 ```
 
-If there are multiple annotation files (or folders) they can be listed a separate tab-delimited fields (i.e. columns 3, 4, 5, etc).
-Alternatively, they can be given as a comma-delimited list in the third column. Also, if there are no annotation files for that EDF,
-you can put a period (`.`) character.  These two rules allow for a clean three tab-delimited column scheme, irrespective of the number of
-annotation files, which can make sample lists easier to work with (e.g. to load into R as a tab-delimited file):
+Multiple annotation files (or folders) can be listed as separate
+tab-delimited fields (i.e. columns 3, 4, 5, etc), or as a
+_comma-delimited_ list in the third column.  If there are no
+annotation files, you can put a period (`.`) character.  These last two
+rules allow for a clean three tab-delimited column scheme
+irrespective of the number of annotation files. This can make sample
+lists easier to work with (e.g. to load into R as a tab-delimited
+file with a regular, rectangular structure):
+
 ```
 id001	test1.edf	test1.tsv
 id002	test2.edf	.
 id003	test3.edf	test3.tsv,staging-id003.eannot
 ```
 
+!!! warning 
+    Sample lists must be tab-delimited plain-text/ASCII files,
+    i.e. not containing any special characters or
+    formatting.  Use a text-editor (not or word processor) or generate them programmatically (see [`--build`](#-build-opion)).
+    Also be aware of potential issues that [Windows-style
+    line-ending characters](../faq.md#line-endings) can cause.
+
 ### _--build_ option
 
 Luna's `--build` option can generate [_sample-lists_](#sample-lists)
 automatically, by recursively scanning one or more folders (and their
-subfolders) to find EDF files (ending `.edf` or `.EDF`) and
-_associated_ [annotation files](#annotations) (e.g. `.annot`, `.xml`, etc, or a
-user-specified alternative).  An annotation file is said to be
+subfolders) to find EDF files (ending `.edf`, `.EDF`, or `.edf.gz` etc) and
+_associated_ [annotation files](#annotations) (e.g. `.annot`, `.xml`, or a
+user-specified alternative).  By default, an annotation file is said to be
 associated with an EDF if it has the same file-name (except for the
 extension); it is not necessary for it to be in the same folder as the
 EDF.
@@ -426,7 +325,7 @@ The command
 ```
 luna --build edfs xmls > s.lst
 ```
-will scan these two folders (there can be any number, and each can contain EDFs and/or annotations), matching `f1.edf` with `f1.xml`, etc, to generate a sample-list (written to standard output) with three entries:
+will scan these two folders, matching `f1.edf` with `f1.xml`, etc, to generate a sample-list (written to standard output) with three entries:
 ```
 cat s.lst
 ```
@@ -435,20 +334,32 @@ f1   edfs/f1.edf   xmls/f1.xml
 f2   edfs/f2.edf   xmls/f2.xml
 f3   edfs/f3.edf   xmls/f3.xml
 ```
-By default, Luna will look at the header of each EDF file to determine the ID (i.e. the first column of the sample list).  If the ID is the same as the filename (or if the EDF headers do not contain unique IDs), you can add the option 
-```
- -usefilename
-```
-to use the root filename as the ID (in this example, they are the same, i.e. `f1`, `f2` and `f3`).
 
-If the EDFs and the XMLs were in the same folder (say `mydata`), this
-command would still work as intended: e.g.
+Note that you can specify any number of folders for `--build` to search, and each folder can contain EDFs, annotation files or both.
+
+By default, Luna looks at the _filename_ of the EDF to determine the
+ID (i.e. what will be placed in the first column of the sample list).
+Alternatively, you can instruct `--build` to use the identifier in the
+EDF header (i.e. which may or may not be the same as the filename of the EDF)
+to be the sample list ID, by adding the option:
+```
+ -edfid
+```
+
+In general, we advise equating the EDF filenames with IDs is better,
+as this tends to encourage better alignment between the other files
+associated with that individual/recording.
+
+<h5>Matching across folders</h5>
+
+If the EDFs and the XML annotations were in the same folder (say `mydata`), the following
+would still work as intended:
 ```
 luna --build mydata > s.lst
 ```
 
-Alternatively, different folders might contain different EDFs but that
-have similar file names. For example:
+Alternatively, different folders might contain distinct EDFs but that
+have similar file names. For example, we may have two subjects in two folders:
 
 ```
 ls subj1 subj2
@@ -461,11 +372,12 @@ subj2:
 night1.edf	night1.xml	night2.edf	night2.xml
 ```
 
-Here, we do not want to associate `subj1/night1.edf` with
-`subj2/night1.edf` or `sub2/night1.xml`.  Here, add the option
-`-nospan` to instruct Luna not to _span_ folders when associating files:
+In this scenario, we would not not want to associate `subj1/night1.edf` with
+`subj2/night1.edf` or `sub2/night1.xml` (which `--build` would do by default, based
+on the root of the filenames). Here, adding the option `-nospan` instructs Luna not to
+_span_ folders when associating files:
 ```
-luna --build subj1 subj2 -nospan > s.lst 
+luna --build subj1 subj2 -nospan -edfid > s.lst 
 ```
 ```
 s1night1	subj1/night1.edf	subj1/night1.xml
@@ -474,37 +386,42 @@ s2night1	subj2/night1.edf	subj2/night1.xml
 s2night2	subj2/night2.edf	subj2/night2.xml
 ```
 
-In this example, the IDs (`s1night1`, etc) come from the EDF headers:
-these should be unique, or else Luna will print a warning message
-about dulplicate IDs.  That is, every row of a sample-list should
-contain a unique ID.
+In this example, the IDs (`s1night1`, etc) come from the EDF headers
+as we used the `-edfid` option.  If the IDs weren't unique, Luna will
+print a warning message about dulplicates.  That is, every row of a
+sample-list should have a unique ID.
 
-To specfify special extensions for annotation files (i.e. third column
-onwards of sample lists), add the `-ext` option: e.g. to match
-`.txt` instead of `.xml` files:
+<h5>Annotation extensions</h5>
+
+To specify special extensions for annotation files (i.e. other than
+`.annot`, `.xml` etc), add the `-ext` option: e.g. to match on `.dat`
+files:
+
 ```
-luna --build mydata -ext=txt > s.lst
+luna --build mydata -ext=dat > s.lst
 ```
 
-If no `-ext` command is given, then `--build` will match on `.xml`,
-`.annot`, `.eannot`, `.txt` and `.tsv`.  You can specify a
-comma-delimited list of multiple extensions.
+By default, `--build` will match potential annotation files based on
+`.xml`, `.annot`, `.eannot`, `.txt` and `.tsv` extensions.  You can
+specify a comma-delimited list of multiple extensions with `-ext`.
 
 It can be convenient to specify extensions if annotation files have a
 regular naming scheme but do not match the EDF files identically.  For
-example, many NSRR files have EDF and annotation files as follows:
+example, many NSRR files have EDF and annotation files in the form:
 
 ```
 file1.edf     file1-nsrr.xml
 file2.edf     file2-nsrr.xml
 ```
-In this instance, add the full tag and extension: 
+To associate these files, add the full tag and extension: 
 ```
 luna --build mydata -ext=-nsrr.xml > s.lst
 ```
 i.e. this matches __file1__[.edf] with __file1__[-nsrr.xml].
 
-Finally, whether or not the resulting sample-list uses relative or
+<h5>Absolute and relative paths</h5>
+
+Whether or not the resulting sample-list uses relative or
 absolute paths depends on how you specify the search folders on the
 command line:
 
@@ -526,54 +443,37 @@ f2	/Users/mary/proj1/edfs/f2.edf	/Users/mary/proj1/xmls/f2.xml
 f3	/Users/mary/proj1/edfs/f3.edf	/Users/mary/proj1/xmls/f3.xml
 ```
 
-### Empty EDFs
-
-Rather than read in data, it is possible to specify an empty or "virtual" EDF.
-This will have a
-fixed durataion and sample rate, but initially no channels/signal
-data.  This can be convenient when using certain commands that do not
-require signal data, e.g. the [`SIMUL`](../ref/simul.md#simul) or [`OVERLAP`](../ref/intervals.md#overlap) commands.
-
-Here, you specify `.` (period character) as the sample-list/file-name
-along with `--nr` and `--rs` on the command line, to give the number of
-records (`nr`) and the EDF record size (`rs`) respectively.
-
-Luna will then create an EDF of this duration (i.e. with headers
-speciying the length of the recording) but with 0 signals, i.e. a
-collection of empty records.
-
-
 ### Command files
 
 Command files or _scripts_ (i.e. `commands.txt` in the example 
 at the top of this page), contain one or more [Luna commands](../ref/index.md).  This
-can be more flexible and convenient than placing all commands after
+can be more flexible, convenient (and reproducible) than placing all commands after
 the `-s` argument.
 
 Some conventions:
  
- - blank lines are skipped
- - all text after a `%` character on a line is treated as a _comment_ and skipped 
  - new commands should start on a new line
  - lines that begin with one or more spaces are assumed to be continuations of the same command, meaning that 
-commands can be spread over several lines
- - scripts can contain [_variables_](#variables)
+   commands can be spread over several lines
+ - blank lines are skipped
+ - all text after a `%` character on a line is treated as a _comment_ and skipped 
 
-For example, say we wished to set [`EPOCH`](../ref/epochs.md#epoch) an
+Say we wished to [`EPOCH`](../ref/epochs.md#epoch) an
 EDF and apply power spectral density estimation via the
-[`PSD`](../ref/power-spectra.md#psd) command to the channel named
+[`PSD`](../ref/power-spectra.md#psd) command for a channel named
 `EEG`, outputting spectra for each epoch.  For a sample-list `s.lst`
-and [output file](#lunout-databases) `out.db`, we could specify this on
-the command line as:
+and [output file](#lunout-databases) `out.db`, we might write:
 
 ```
-luna s.lst -o out.db -s 'EPOCH & PSD epoch sig=EEG'
+luna s.lst -o out.db -s ' EPOCH & PSD epoch sig=EEG '
 ```
 
 Note that we place the command string in single quotes, as otherwise
-the `&` character would be interpreted by the bash shell (to run the
-job in the background).  In general, putting any command-line script
-after `-s` in single quotes is advised. 
+the `&` character would be interpreted by most shells, to mean that
+the job should be run in the background.  In general, putting any
+command-line script after `-s` in single quotes is advised.  (Single
+versus double quotes has implications for how you want variables to be interpret,
+as shell variables versus Luna variables, as described [below](#variables).)
 
 Alternatively, we could place the following in a _plain-text_ file
 called `commands.txt` (or anything else, there are no limitations on
@@ -589,8 +489,8 @@ and run it as follows:
 luna s.lst -o out.db < commands.txt
 ```
 
-Alternatively, we could achieve the same outcome but with a more
-verbosely-expressed script, with ample comments and spreading commands
+Alternatively, we would achieve the same outcome using a more
+verbose script, with ample comments and spreading commands
 and options over multiple lines:
 
 ```
@@ -609,19 +509,16 @@ PSD
   sig=EEG   % only apply this command to channels named EEG
 ```
 
-
-
-
 ### Variables
 
-In a [command file](#command-files), a variable _`var`_ is denoted by
+In a [command file](#command-files), a Luna variable _`var`_ is denoted by
 the following syntax:
 
 ```
 ${var}
 ```
 
-For example, to take the example from the previous section, we could
+Building on the previous section's example script, we could
 modify it to allow different epoch durations and channel names:
 
 ```
@@ -637,9 +534,7 @@ luna s.lst l=20 s=EEG < commands.txt
 ```
 
 which will then perform the spectral analyses using 20-second epochs.
-If _l_ and _s_ were not specified, Luna would give an error.
-
-
+If _l_ or _s_ were not specified, Luna would give an error.
 
 Using variables can make command files more generic by reducing the
 need to make minor edits across different projects.  For example,
@@ -721,15 +616,57 @@ shell from expanding the variable will achieve the desired effect:
  luna s.lst -s 'EPOCH & STATS sig=${eeg}'
 ```
 
-<h4>Conditional blocks</h4>
+That is, in the second scenario, Luna "sees" `${eeg}` as the `sig`
+option for `STATS`, and so figures out what replacement is desired
+(e.g. that might be based on data from a [vars](#individual-variables)
+file, or from a default built-in definition, as is the case for
+`${eeg}`).  In contrast, in the first (double-quote) scenario, the
+shell (and not Luna) will attempt to figure out what the `${eeg}`
+variable means: unless otherwise specified, `${eeg}` will not be
+defined by the shell/prior script, and so Luna will simply see nothing
+instead of `${eeg}`, i.e. `sig=`.
 
-You can define blocks within a command file that are only executed if
-a [variable](#variables) is set to a non-null value, e.g. `1`.  If the variable is
-null (undefined or `0`) then those blocks are skipped, using the
-double-bracket syntax as follows:
-
+Inside a command/script, Luna variables have the form `${l}`, whereas
+when setting that variable on the command line, one just writes
+`l=20`, for example.  Instead of a fixed value (`20`), one can also
+set a Luna variable to equal a shell variable, which might even have
+the same name. Rather than setting `l` to a fixed value of `20`, it would also be
+possible to use a _shell_ variable to set the Luna variable `l` - and
+the shell variable might even have the same name (`l`):
+```
+luna s.lst l=${l} s=EEG -s ' EPOCH len=${l} '
 ```
 
+In the above, the first `${l}` is the shell variable `l`, whereas the
+second `${l}` is the Luna variable `l`.
+
+
+!!! info "Best practice"
+    At least when using bash as a shell, single quotes after `-s` is the most likely best practice.  If you
+    want to pass in shell variables to Luna, use the form:
+    ```
+    luna s.lst x=${x} -s ' COMMAND option=${x} '
+    ```
+    To make the distinction between shell and Luna variables clear, assuming shell variable `${x}`
+    the above is equivalent to:
+    ```
+    luna s.lst y=${x} -s ' COMMAND option=${y} '
+    ```
+    which is also equivalent to
+    ```
+    luna s.lst -s " COMMAND option=${x} "
+    ```
+    (although this latter form is not advised as it arguably blurs the distinction between shell and Luna variables)
+        
+
+<h4>Conditional blocks</h4>
+
+Within a command file, you can define blocks that are only executed if
+a [variable](#variables) is set to a non-null value, e.g. `1`.  If the variable is
+null (undefined or `0`) those blocks are skipped. This uses the following 
+double-bracket syntax:
+
+```
 EPOCH len=${l}
 
 [[var
@@ -739,13 +676,12 @@ EPOCH len=${l}
 ]]var
 
 PSD sig=${eeg}
-
 ```
 
-If the variable `${var}` is null, then _all text_ (i.e. including other
+If `${var}` is null, then _all text_ (i.e. including any other
 variable definitions and conditional statements as well as commands)
-will be skipped, up until the block closing (here `]]var`).  In this
-case, the `SIGSTATS` command will only be executed if `${var}` has
+will be skipped, up until the end of the block (here `]]var`).  In this
+example, the `SIGSTATS` command will only be executed if `${var}` has
 been set to a non-null value:
 
 ```
@@ -778,21 +714,6 @@ It is possible to set nested conditional blocks:
 % commands here always executed
 ```
 
-Note that the indentation of blocks as above is optional; in fact,
-conditional statements can occur all on the same line, e.g. as below,
-where `${setmask}` determines whether the `SIGSTATS` command also
-includes optional parameters to set a mask:
-
-```
-EPOCH len=${l}
-
-SIGSTATS sig=${eeg} [[setmask  mask th=${thresholds}  ]]setmask
-
-PSD sig=${eeg}
-```
-
-
-
 <h4>Expansions of numeric sequences</h4>
 
 It can sometimes be convenient to automatically specify a series of
@@ -807,7 +728,7 @@ is identical to typing:
 ```
 PSD sig=ICA1,ICA2,ICA3,ICA4,ICA5
 ```
-This can of course be combined with a variable to specify how many components are analysed:
+This can be combined with a variable to specify the number of components:
 ```
 PSD sig=[ICA][1:${k}]
 ```
@@ -816,19 +737,13 @@ PSD sig=[ICA][1:${k}]
 luna s.lst k=10 < cmd.txt
 ```
 
-!!! hint 
-    Numeric sequences are expanded after other variables have been swapped in.
-
-
-
 ### Individual variables
 
-As well as _run-level_ variables (i.e. specified on the command line
-or in a parameter file) that are common to all individuals/EDFs processed
-in a given run, you can also assign values to variables on an
-individual-by-individual basis, using values stored in a file.
+As well as _run-level_ variables that are common to all
+individuals/EDFs processed, you can assign values on an individual-by-individual basis,
+using values stored in a text file - here called _vars files_.
 
-For example, the following file defines three variables `${var1}`, `${var2}` and `${var3}`
+For example, the following _vars file_ defines three variables `${var1}`, `${var2}` and `${var3}`
 for the [tutorial](../tut/tut1.md) individuals:
 ```
 ID       var1    var2       var3
@@ -837,49 +752,59 @@ nsrr02   12      EEG1       F
 nsrr03   98      .          T
 ```
 
-This file should:
+A _vars file_ should:
 
-- be a ASCII, plain-text file (no special characters, etc)
-- have a header row that includes the column `ID` in the first field
-- be tab-delimited, with the same number of columns on each row
+  - be a ASCII, plain-text file (no special characters, etc)
 
-Variables can be given any name, does not need to be `var1` etc (but
-no special characters, and they are case-sensitive). You can then
-include these variables by setting the `vars` special variable.  If
-the above file is named `indiv.dat`, for example, then:
+  - have a header row that includes the column `ID` in the first field
+
+  - be tab-delimited, with the same number of columns on each row
+
+Variables can be given any valud name: i.e. they do not need to be `var1`, `var2`, etc,
+but they should not include special characters and they are case-sensitive. You then
+include these variables by setting the `vars` special variable to point to the file(s). If
+the above file is named `indiv.dat`:
 
 ```
 luna s.lst vars=indiv.dat < my-commands.txt
 ```
+You can have multiple `vars` statements, or pass `vars` a comma-delimited list of multiple files to include.
 
-The log information will give a summary of the attached variables for each individual: e.g. for the first individual:
+
+If the command script contained references to `${var1}`, etc, they
+would be substituted as appropriate for each individual. For example,
+all the EDFs had channels `EEG1` and `EEG2`, the following command would
+run the `PSD` command 1) for both, 2) only for `EEG`, or 3) neither, for
+the first, second and third individual respectively:
+```
+PSD sig=${var2}
+```
+
+The log summaizes any attached variables for each individual: e.g. for the first individual (`var1`, etc are
+listed at the end):
 ```
  variables:
   airflow=AIRFLOW | ecg=ECG | eeg=EEG(sec),EEG | effort=THOR_RES,A...
   emg=EMG | eog=EOG(L),EOG... | hr=PR | id=nsrr01 | light=LIGHT
   oxygen=SaO2,OX_STAT | position=POSITION | var1=22 | var2=EEG1,EEG2 | var3=T
 ```
-Note that the other _automatic_ variables listed here (`airflow`, etc) come from Luna's automatic assignment of [_channel types_](#channel-types).
-If the script (`my-commands.txt`) contained references to `${var1}`, etc, then these would be substituted
-as appropriate, for each individual: e.g. if the files had channels labelled (or aliased) to `EEG1` and `EEG2`,
-then this command would run the `PSD` command for both channels, only for `EEG1`, or for neither, in the first, second
-and third individual, respectively:
-```
-PSD sig=${var2}
-```
 
-The [`VARS`](../ref/summaries.md#vars) can be used to dump a list of which variables are defined for each individual.
+The other _automatic_ variables listed above (`airflow`, etc) derive
+from Luna's automatic assignment (aka guessing) of [_channel
+types_](#channel-types). The [`VARS`](../ref/summaries.md#vars)
+command dumps list of which variables are defined for each individual.
 
 
 <h4>Individual-ID substitution</h4>
 
-One special variable is the `^` symbol (or, equivalently, `${id}`), which denotes the
-individual/EDF ID for the file currently being processed. That is, it
-does not need to be specified directly, but will be automatically
-substituted for each EDF processed. This can be used to point to
-individual-specific files. For example, below we use a combination of a
-project-specific variable _p_ and the special individual-ID `^`
-variable with the [`EPOCH-ANNOT`](../ref/epochs.md#epoch-annot) command:
+One special variable is the `^` symbol (or, equivalently, `${id}`),
+which denotes the ID (from the sample-list) of the current
+observation, which is automatically set for each EDF processed.  This
+can be useful to point to individual-specific files as inputs or outputs.
+
+For example, below we use a combination of a project-specific variable _p_ and the
+special individual-ID `^` variable with the
+[`EPOCH-ANNOT`](../ref/epochs.md#epoch-annot) command:
 
 ``` 
 ...
@@ -887,7 +812,7 @@ EPOCH-ANNOT file=/path/to/${p}/data/^.eannot
 ...  
 ```
 
-One might then issue commands such as:
+With the above script, one might then issue commands such as:
 
 ```
 luna proj1.lst p=proj1 -o out1.db < commands.txt
@@ -897,8 +822,9 @@ luna proj1.lst p=proj1 -o out1.db < commands.txt
 luna proj2.lst p=proj2 -o out2.db < commands.txt
 ```
 
-and Luna would look to the correct places to attach the
-epoch-annotations, e.g. perhaps something like:
+and (assuming both projects had IDs `id0001`, `id0002`, etc)
+Luna would look to the correct places to attach the
+epoch-annotations, e.g.:
 
 ```
 /path/to/proj1/data/id0001.eannot
@@ -906,7 +832,7 @@ epoch-annotations, e.g. perhaps something like:
 /path/to/proj1/data/id0003.eannot
 ...
 ```
-and
+or
 ```
 /path/to/proj2/data/id0001.eannot
 /path/to/proj2/data/id0002.eannot
@@ -914,19 +840,31 @@ and
 ...
 ```
 
+When using a command such as as [`WRITE`](../ref/outputs.md#write) or
+[`WRITE-ANNOTS`](../ref/annotations.md#write-annots), you will almost
+always want to use `^`: e.g. 
+```
+ WRITE-ANNOTS file=annots/^-v2.annot
+```
+would generate a file `annots/id0001-v2.annot` for an individual with ID `id0001`.
 
 ### Parameter files
 
-As well as defining _variables_, there are a number of other
-command-line options that control aspects of Luna's behavior, as
-tabulated below.  For example, to set the search
-[`path`](#search-paths) one might use:
+As well as defining _variables_, other command-line options control
+aspects of Luna's behavior, as tabulated below.  These are called
+[_special variables_](#special-variables), which might be needed for
+any analysis of an entire project. For example, to set the search [`path`](#search-paths) for files from a
+sample list, one might use:
 
 ```
 luna s.lst path=/home/joe/data/edfs/ -o out1.db < commands.txt
 ```
 
-Rather than having to retype such things every time, it can be
+i.e. if the sample list just had the relative path `p1/id1.edf`,
+adding the above `path` would make Luna search for
+`/home/joe/data/edfs/p1/id1.edf` instead.
+
+Rather than having to retype such things on every Luna command line, it can be
 convenient to wrap them up in a _parameter file_, which is included
 with a special `@` syntax, as follows:
 
@@ -934,19 +872,18 @@ with a special `@` syntax, as follows:
 luna s.lst @param.txt -o out.db < commands.txt
 ```
 
-where the file `param.txt` (which can be called anything) is a
-plain-text file that includes (possibly among other options) the line:
+where `param.txt` (which can be called any legal filename) is a 
+plain-text file that includes (possibly among other things) the line:
 
 ```
 path	/home/joe/data/edfs
 ```
 
-That is, the options in the file `param.txt` are expanded out as
-though they were typed on the command line.  Whereas the command line
-expects key/value pairs to be connected with an equals (`=`)
-character, in a parameter file we use a tab instead.  Thus, a
-parameter file should contain exactly **two tab-delimited columns** on
-every row. As a larger example:
+Arguments in `param.txt` are inserted as though they were explicitly
+typed on the command line.  Note that whereas the command line expects
+`key=value` pairs, parameter files use a tab to delimit the key
+(variable name) and value.  Thus, parameter files should contain
+exactly two tab-delimited columns on every row. As a larger example:
 
 ```
 alias	EEG|C3-M2|C3|EEG1
@@ -964,7 +901,11 @@ wake    "Wake|0"
 excl    "Arousal resulting from respiratory effort|Arousal (ARO RES)","Arousal|Arousal ()","ASDA arousal|Arousal (ASDA)","Limb movement - left|Limb Movement (Left)","Periodic leg movement - left|PLM (Left)","Respiratory artifact|Respiratory artifact","Respiratory effort related arousal|RERA","Spontaneous arousal|Arousal (ARO SPONT)","Unscored|9","Unsure|Unsure"
 ```
 
-In this example, we define an [_alias_](#aliases) (`EEG`) which is
+Note that the use of quotes is necessary when the annotation
+(e.g. `Stage 2 sleep|2`) contains spaces (or commas or the special
+`|` character).
+
+In the above example, we define an [_alias_](#aliases) (`EEG`) which is
 specified to be the only channel loaded (via the [`sig`](#signal-lists)
 option).  As well as setting the [`annot-folder`](#annotations) and
 [`path`](#search-paths) folders, this parameter file also defines a
@@ -972,33 +913,12 @@ number of other [_variables_](#variables) that might be used in
 command scripts.  For example, `${sr}` might be the sampling rate;
 `${nrem1}`, `${nrem2}`, etc, specify the annotation labels used for
 sleep stages; the comma-delimited list in `${excl}` might define a
-list of exclusionary annotation, e.g. to be used with [`MASK`](../ref/masks.md#mask):
+list of exclusionary annotations, e.g. to be used with [`MASK`](../ref/masks.md#mask):
 
 ```
 MASK if=${excl}
 ```
 
-
-Specifying all relevant project-specific variables in a parameter file
-allows generic command files to be applied more easily across multiple
-projects.  For example (and as noted above), this is handy if
-different EDFs have different labels, e.g. `Stage 2 sleep|2` and `N2`
-
-
-```
-nrem2	"Stage 2 sleep|2"
-```
-
-whereas a second study may use the annotation `N2`
-
-```
-nrem2	N2
-```
-
-but a single command file can be used (that references the variable
-`${nrem2}`) for both studies, because project-specific parameter files
-are used.  (Note that the use of quotes above is necessary because the
-annotation `Stage 2 sleep|2` contains spaces.)
 
 ### Annotations 
 
@@ -1016,35 +936,17 @@ these are not the preferred mode.
     features of the sleep time series data, it is simpler to keep 
     the signal data and the annotation information separate.
 
-As well as EDF+ Annotations, Luna accepts various other types of explicit _annotation
-files_ that contain information about events in the EDF.  As noted
-above in the [_sample-list_](#sample-lists) section, any files and
-folders specified after the second tab-delimited column
-(i.e. following ID and EDF) are interpreted as annotations files or
-folders.  For an annotation folder, Luna will try to read _all_ files
-in that folder.  Typically, one might
-specify an individual-specific annotation folder, for example:
-
-```
-id0001    edf1.edf    /path/to/annotations/id0001/
-id0002    edf2.edf    /path/to/annotations/id0002/
-... (etc) ...
-```
-
-and place all annotations for that individual/EDF in that folder. 
-
-<h5>Annotation formats</h5>
-
-Luna accepts a number of formats of annotation file, which are
-described in more detail in the respective reference sections linked
-to below:
+As well as EDF+ Annotations, Luna accepts various other types of
+_annotation file_ that typically describe _events_ in the EDF, which
+are specified in the [_sample-list_](#sample-lists) and associated
+with the EDF. Luna accepts the following annotation formats:
 
 | Format | Description |
 | ---- | ---- | 
-| [.annot](../ref/annotations.md#annot-files) | Generic Luna annotation files (as well as `.annot`, `.txt` and `.tsv` extensions are valid) | 
-| [.eannot](../ref/annotations.md#eannot-files) | Simple epoch-level annotation files (can also be loaded with the [`EPOCH-ANNOT`](../ref/epochs.md#epoch-annot) command) | 
-| [EDF+](../ref/annotations.md#edf-annotations-channel) | EDF+ Annotations Channel | 
-| [NSRR XML](../ref/annotations.md#nsrr-xml-files) | Format used by the [National Sleep Research Resource](http://sleepdata.org) to distribute sleep staging, and information on manually-scored arousals, movements and artifacts |
+| [.annot](../ref/annotations.md#annot-files) | Generic Luna annotation format (`.txt` and `.tsv` extensions are also valid) | 
+| [.eannot](../ref/annotations.md#eannot-files) | Simple epoch-level annotation files (can also be loaded via the [`EPOCH-ANNOT`](../ref/epochs.md#epoch-annot) command) | 
+| [EDF+](../ref/annotations.md#edf-annotations-channel) | EDF+ Annotation channels | 
+| [XML](../ref/annotations.md#nsrr-xml-files) | XML format used by the [National Sleep Research Resource](http://sleepdata.org) to distribute sleep staging, and information on manually-scored arousals, movements and artifacts |
 
 ### Ranges
 
@@ -1069,6 +971,15 @@ or
 luna s.lst 2 < commands.txt
 ```
 
+To operate on a range of subjects within a sample list, just give two numbers: e.g. 
+```
+luna large.lst 50 100 < commands.txt
+```
+
+The above would analyze from the 50th to the 100th EDFs in the
+`large.lst` project sample list.  This can be useful if using Luna on
+a cluster, to parallelize processing via batch submission, for example.
+
 !!! Note
     If a number is given after the sample list, it is always
     interpreted as the position in the sample list, not an ID.  In
@@ -1081,148 +992,338 @@ luna s.lst 2 < commands.txt
     i.e. this will look for an EDF with the ID (first column in `s.lst`) that matches the ID `22` (nb. matching
     is for a string, so `022` != `22`) 
 
-To operate on a range of subjects within a sample list, just give two numbers: e.g. 
+
+
+
+### EDFZs
+
+As described in this [vignette](../vignettes/edfz.md), to save disk space
+(and sometimes speed up analysis), Luna can read and write compressed
+EDF files, using the [BGZF](https://samtools.github.io/hts-specs/SAMv1.pdf) library.  EDFZ files must be created by Luna's
+[`WRITE`](../ref/outputs.md#write) command, with the `edfz` parameter
+option added.  For example, taking the first [tutorial](../tut/tut1.md) EDF, we can write it out as an EDFZ:
 ```
-luna large.lst 50 100 < commands.txt
+luna s.lst 1 -s ' WRITE edfz edf-dir=z/ edf-tag=compressed sample-list=z.lst '
 ```
 
-The above would analyze from the 50th to the 100th EDFs in the
-`large.lst` project sample list.  This can be useful if using Luna on
-a cluster, to parallelize processing via batch submission, for example.
+If the original EDF was`file.edf`, this creates two files
+`z/file-compressed.edfz` and `z/file-compressed.edfz.idx` (along with
+a sample list `z.lst` that points to them).  As well as `.edfz`, the extension
+`.edf.gz` (paired with a `.edf.gz.idx` file) is supported - this latter form
+is preferrable as utilities such as `gunzip` may expect to see a final `.gz` extension.
 
+In the above example, we see a reduction in disk space:
+```
+ls -lh z
+```
+```
+    21M  z/learn-nsrr01-compressed.edfz
+   528K  z/learn-nsrr01-compressed.edfz.idx
+```
+In contrast, the original EDF is almost three times the size:
+```
+    59M  edfs/learn-nsrr01.edf
+```
+
+Although for a single PSG this saving is negligible, across thousands
+of studies, savings can become more significant.
+
+Although EDFZ files must be created by a special Luna command, they
+can be read (i.e. decompressed) as any other
+[gzip](https://en.wikipedia.org/wiki/Gzip) file.  The
+following standard Unix/Mac command decompressed an EDFZ to a standard EDF:
+
+```
+cat file.edfz | gunzip > file.edf
+```
+
+See information on the [`WRITE`](../ref/outputs.md#write) command's
+`edfz` option for more details.
+
+!!! hint 
+    Although compression as an EDFZ is _lossless_ (i.e. all
+    information is preserved), there may be small differences
+    between the original EDF and an uncompressed EDFZ simply due to
+    floating point accuracy of the EDF format. This is not specific to
+    EDFZ files _per se_ -- it also applies to standard EDFs generated by the
+    [`WRITE`](../ref/outputs.md#write) command.
+
+### Plain-text input
+
+Luna can read signals from ASCII-formatted, tab-delimited plain-text files as well as EDFs.
+Consider if we had a file `signals.txt` with 15,360 rows and three columns (i.e. three signals):
+
+```
+head signals.txt
+```
+```
+ 4.18192918193	 9.73748473748	6.33394383394
+ 3.93772893773	 6.74603174603	6.94444444444
+ 3.44932844933	 4.12087912088	7.09706959707
+ 2.41147741148	 2.28937728938	6.33394383394
+ 0.21367521367	 1.12942612943	5.72344322344
+-3.02197802198	-0.27472527472	4.96031746032
+-6.74603174603	-2.53357753358	3.89194139194
+-9.43223443223	-4.91452991453	3.12881562882
+-9.92063492063	-6.86813186813	2.67094017094
+-8.45543345543	-8.15018315018	1.75518925519
+```
+
+If Luna finds the option `--fs` (specifying a sample rate) on the command line, it will
+interpret the first argument to be a text file (rather than a sample
+list or an EDF).  In this instance, the sample rate is set to
+256 Hz (and so, implies 15,360/256 = 60 seconds of signal).
+
+```
+luna signals.txt --fs=256 -s DESC
+```
+```
+Processing: signals.txt [ #1 ]
+  reading 3 signals, 60 seconds (15360 samples 256 Hz) from signals.txt
+ ..................................................................
+```
+```
+EDF filename      : signals.txt
+ID                : signals.txt
+Clock time        : 00.00.00 - 00.01.00
+Duration          : 00.01.00
+# signals         : 3
+Signals           : S1[256] S2[256] S3[256]
+```
+
+Here, we see the recording is of the expected length (1 minute).  If
+combined with the [`WRITE`](../ref/outputs.md#write) command, one can
+use Luna to convert a text file into an EDF.
+
+The new signals are, by default, labelled `S1`, `S2`, etc.  If the
+`--chs` option is specified on the command-line, different channel
+labels can be assigned:
+
+```
+luna signals.txt --fs=256 --chs=Cz,Fz,Pz -s DESC
+```
+```
+Signals           : Cz[256] Fz[256] Pz[256]
+```
+
+Alternatively, if the first row of the text file starts with a `#`
+symbol, Luna assumes this is a comma-delimited list of channel labels:
+```
+#EEG1,EEG2,EEG3
+```
+```
+Signals           : EEG1[256] EEG2[256] EEG3[256]
+```
+
+!!! warning 
+    If both a header row and `--ch` are specified, the values
+    in `--chs` will be used.  If the number of channels specified by
+    either `--chs` or the header does not match the number of columns
+    in the file, Luna may give an error, as it expects the total
+    number of sample points read to be a multiple of the number of
+    channels and the sampling rate.  In other words, internally, Luna
+    will structure the data as an EDF with a 1-second record size, and
+    therefore any input must contain an integer number of seconds.
+
+Naturally, if a different/incorrect sampling rate is given, Luna will
+assume the recording is of a different length (subject to the
+constraint above about integer number of seconds being required): e.g.
+
+```
+luna signals.txt --fs=128 -s DESC
+```
+```
+Duration          : 00.02.00
+```
+
+Additionally, all channels must have the same sample rate when being
+input as ASCII.
+
+!!! hint "Raw data and EDF comparisons"
+    As a simple demonstration of converting between ASCII and EDF formats (and also to show the relative speed and filesize benefits of EDF),
+    here we'll generate random signals for 4 channels for a 10 hour recording at 256 Hz using `awk`:
+    ```
+    echo | awk '{for (i=0;i<256*60*60*10;i++) print rand(),rand(),rand(),rand()}' OFS="\t" > i.txt
+    ```
+    Whereas R takes about 25 seconds to read these data (using a vanilla call to `read.table()`), Luna takes about 8 seconds:
+    ```
+    luna i.txt --fs=256 -s DESC
+    ```
+    ```
+    reading 4 signals, 36000 seconds (9216000 samples 256 Hz) from i.txt
+
+    ID                : i.txt
+    Clock time        : 00.00.00 - 10.00.00
+    Duration          : 10:00:00  36000 sec
+    # signals         : 4
+    Signals           : S1[256] S2[256] S3[256] S4[256]
+    ```
+    We can convert to an EDF, `i.edf`:
+    ```
+    luna i.txt --fs=256 -s WRITE edf=i
+    ```
+    Luna now reads the EDF in under 1 second:
+    ```
+    luna i.edf -s SIGSTATS
+    ```
+    (we've added a simple command `SIGSTATS` to force Luna to load all the signal data from EDF)
+
+    In terms of file size, whereas `i.txt` is 316M, the corresponding `i.edf` is only 70M, i.e. one fifth the file size.   
+
+
+### Empty EDFs
+
+Rather than reading data from a file, it is possible to specify an
+empty or "virtual" EDF. This will have a fixed durataion and sample
+rate, but initially no channel/signal data. This can be convenient
+when using certain commands that do not require signal data, e.g. the
+[`SIMUL`](../ref/simul.md#simul) or
+[`OVERLAP`](../ref/intervals.md#overlap) commands.
+
+To create an empty EDF, specify `.` (period character) as the
+sample-list/filename along with `--nr` and `--rs` to give the number
+of records (`nr`) and the EDF record size (`rs`) respectively. Luna
+will create an EDF of this duration (i.e. with headers speciying the
+length of the recording) but with no signals, i.e. a collection of
+empty records.
 
 ### Time points
 
 In a few contexts (various outputs) Luna encodes time in _time-points_
-where 1 unit is 10<sup>-9</sup> seconds
-(stored internally as `uint64_t` types).  For a given EDF, time-points
-start at 0, corresponding to the start of the EDF. 
+where 1 unit is 10<sup>-9</sup> seconds (stored internally as
+`uint64_t` types).  For a given EDF, time-points start at 0,
+corresponding to the start of the EDF.  One consequence of this is
+that Luna cannot represent any event that occurs _before_ the EDF
+start.  (If this becomes an issue, it is always possible to work with
+EDF+D files that have a sufficiently early EDF start, but then the
+first signal records starting at some later point, i.e. which would be
+after initial annotations.)
 
 
 ### Channel location files
 
-Some commands that work with hdEEG data require a channel location map.  These should be in Cartesian X, Y, Z format. 
+Some commands that work with hdEEG data require a channel location map
+- a "_clocs_" file.  Locations should be in Cartesian X, Y, Z format.
 
 - Four tab-delimited columns
 - First column is channel name
 - Second to fourth columns are X, Y and Z coordinates
 
-Internally, all coordinates are converted to spherical coordinates on a unit sphere. 
+Internally, all coordinates are converted to spherical coordinates on
+a unit sphere.
 
+Here is an example file:
+[https://zzz.bwh.harvard.edu/dist/luna/clocs/clocs64](https://zzz.bwh.harvard.edu/dist/luna/clocs/clocs64).
+
+If a _clocs_ file is not specified but a particular command requires one,
+Luna will use a default map, applicable for typical 64-channel
+applications (matching the example file above).
 
 ## Special variables
 
-<!---
+Special variables (options that control Luna's behavior) are tabulated below.
 
-sec-dp
-spaces=_
-keep-spaces
-
-class-instance-delimiter split class/annot remappings (ABC/DEF|XYZ)
-combine-annots
-annot-whitelist
-annot-unmapped
-annot-keyval  (key=val char)
-align-annots  e.g. align-annots=W,N1,N2,N3,R
-
-inst-hms         make instance ID time, if blank
-force-inst-hms   force above
-
-epoch-check=5    for .eannot length
-
-
-force-edf
-
-
-fail-list
-
-
-
-
---->
-
-Currently, the _special variables_ used by Luna are as tabulated below.  These can be assigned values on the
-command line, or via an @included [_parameter file_](#parameter-files).  If used on the command line, special variables
-must always be paired with an equals (`=`) character and assigned a value (e.g. `silent=T` or `silent=F`) - otherwise, they will
-be interpreted as an ID to match in the sample list.
+_Controlling inputs_
 
 | Special Variable | Description |
 | ---- | ---- | 
-| `silent` | Runs Luna silently if set to `T`  |
-| `verbose` | Runs Luna in verbose mode if set to `T` |
-| `id` | Only analyse this ID from the sample list, e.g. `id=study-001` | 
+| [`id`](#ranges) | Only analyse this ID from the sample list, e.g. `id=study-001` | 
+| [`vars`](#individual-variables) | Specify a file with individual-level variables/values |
+| [`ids`](#swapping-ids) | Specify a file of remapped IDs |
 | [`exclude`](#exclude-lists) | Specify a file of IDs to exclude from analysis |
 | [`include`](#include-lists) | Specify a file of IDs to include from analysis |
-| [`ids`](#swapping-ids) | Specify a file of remapped IDs |
 | [`path`](#search-paths) | Set search path for files in sample lists |
-|  |
+| [`fix-edf`](#fix-truncated-edfs) |  Attempt to correct truncated/over-long EDFs if `T` |
+| [`force-edf`](#annotations)       | Skip EDF annotations _and_ time-track from any EDF+, and force as a continuous EDF if `T`|
+
+_Controlling outputs_
+
+| Special Variable | Description |
+| ---- | ---- | 
+| [`silent`](#output-verbosity) | Runs Luna silently if `T`  |
+| [`verbose`](#output-verbosity) | Runs Luna in verbose mode if `T` |
+| [`tt-prepend`](#text-tables) | Add value to start of text-table file names (equiv. `tt-prefix`) |
+| [`tt-append`](#text-tables) | Add value to end of text-table file names (equiv. `tt-suffix`) |
+| [`compressed`](#text-tables) | Y/N to force all `-t` text-table output to compressed (Y) or not (N) |
+
+
+_Signals and EDF headers_
+
+| Special Variable | Description |
+| ---- | ---- | 
+| [`sig`](#signal-lists)| Include this signal(s) in analysis | 
 | [`anon`](#anonymize-edf-headers) | Anonymize EDF headers | 
 | [`starttime`](#set-edf-start-time) | Set EDF start time |
 | [`startdate`](#set-edf-start-date) | Set EDF start date | 
-|  |
-| `wildcard` | Set individual ID wildcard for scripts (default is `^`) |
-| `sanitize` | Change special character labels to `_` if this is set to `T` |
-| `upper` | Set all channel labels to uppercase if set to `T` | 
-| |
-| `fix-edf` |  Attempt to correct truncated/over-long EDFs if `T` |
-| |
+| `wildcard` | Set individual ID wildcard character (default is `^`) |
 
-| |
-| [`sig`](#signal-lists)| Include this signal(s) in analysis | 
-| [`alias`](#aliases)| Specify a channel alias |
-| [`ch-exact`](#ch-exact)| Add an exact match for a channel type |
-| [`ch-match`](#ch-match)| Add a partial match for a channel type |
-| [`ch-clear`](#ch-clear)| Clear all channel type mappings |
-| [`spaces`](#spaces-in-channel-names ) | Alternate character for space substitution in channel/annotation names |
-| [`keep-spaces`](#spaces-in-channel-names) | Retain spaces in channel/annotation names if set to true |
-| [`keep-channel-spaces`](#spaces-in-channel-names) | Retain spaces in channel names if set to true|
-| [`keep-annot-spaces`](#spaces-in-channel-names) | Retain spaces in annotation names if set to true|
-| |
-| [`remap`](#remapping-annotations)| Specify an annotation remapping (cf. channel aliases) | 
+_Annotations_
+
+| Special Variable | Description |
+| ---- | ---- | 
 | [`annot-file`](#attaching-annotations) | Specify annotations to attach on the command line |
-| [`annots`](#annotations)| (Or `annot`). Load only this (comma-delimited) list of annotation classes (rather than all) |
+| [`annots`](#selecting-annotations)| (Or `annot`). Load only this (comma-delimited) list of annotation classes (rather than all) |
 | `tab-only` | Only allow tabs (vs tabs and spaces) as delimiters in `.annot` files |
-| [`annot-keyval`] | Set _key=value_ delimiter for annotation meta-date (default: `=`) |
-| [`align-annots`] | (Advanced) Align these annotations (comma-delimited list) to EDF record start, assuming 1 second records |
-| [`class-inst-delimiter`] | Specify character to delimit annotation classes and instances (default: `:`) |
-| [`combine-annots`] | Character to use when combining classes and instance IDs (default: '_' ) | 
-| [`annot-whitelist`] | Read only these annotations |
-| [`annot-unmapped`] | Read only these annotations |
-| [`annot-remap`] | Read only these annotations |
-
-| [`sec-dp`] | Set number of decimal places for annotation time outputs (default: 3) |
-| [`add-ellipsis`] | For `WRITE-ANNOTS` of `.annot`only, set zero-duration events to have `...` stop fields |
-| [`annot-segment`] | Label for segment annotation from `SEGMENTS annot` (default: `segment`) |
-| [`annot-gap`] | Label for gap annotation from `SEGMENTS annot` (default: `gap`) |
-| | 
-| [`force-edf`](#annotations)       | Skip EDF annotations _and_ time-track from any EDF+, and force as a continuous EDF |
+| `annot-keyval` | Set _key=value_ delimiter for annotation meta-date (default: `=`) |
+| `align-annots` | (Advanced) Align these annotations (comma-delimited list) to EDF record start, assuming 1 second records | 
+| `class-inst-delimiter` | Specify character to delimit annotation classes and instances (default: `:`) |
+| `combine-annots` | Character to use when combining classes and instance IDs (default: '_' ) | 
+| `annot-whitelist` | Read only these annotations |
+| `annot-unmapped` | Read only these annotations |
+| `annot-remap` | Read only these annotations |
+|
+| `sec-dp` | Set number of decimal places for annotation time outputs (default: 3) |
+| `add-ellipsis` | For `WRITE-ANNOTS` of `.annot`only, set zero-duration events to have `...` stop fields |
+| `annot-segment` | Label for segment annotation from `SEGMENTS annot` (default: `segment`) |
+| `annot-gap` | Label for gap annotation from `SEGMENTS annot` (default: `gap`) |
+|
 | [`skip-annots`](#annotations) | (Or `skip-all-annots`). Same as `skip-sl-annots=T` and `skip-edf-annots=T` combined (default: F)  |
 | [`skip-sl-annots`](#annotations)  | Skip annotation files specified in the sample list (default: F) |
-| [`skip-edf-annots`](#annotations) | Skip EDF Annotations tracks from any EDF+ (default: F) |
+| [`skip-edf-annots`](#edf+-annotations) | Skip EDF Annotations tracks from any EDF+ (default: F) |
 | [`inst-hms`](#inst-hms) | Assign missing annotation instance IDs based on time |
 | [`force-inst-hms`](#inst-hms) | Always assign annotation instance IDs based on time |
 | [`annot-remap`](#remapping-annotations) | Set automatic remapping of stages (default: `T`) |
 | [`nsrr-remap`](#remapping-annotations) | Set extra NSRR remapping of annotations (default: `F`) |
 | [`edf-annot-class`](#edf-annotations) | Read these EDF+ (comma-delimited) labels as _classes_ (default: `N1,N2,N3,R,W,?,arousal,LM,NR`)|
-| [`edf-annot-class-all`](#edf-annotations( Read all EDF+ labels as _classes_ (default: `F`) |
-| |
-| [`vars`](#individual-variables) | Specify file with individual-level variables/values |
-| [`ids`](#id-mapping) | Specify an ID-mapping file | 
-| [`tt-prepend`](#text-tables) | Add value to start of text-table file names (equiv. `tt-prefix`) |
-| [`tt-append`](#text-tables) | Add value to end of text-table file names (equiv. `tt-suffix`) |
-| [`compressed`](#text-tables) | Y/N to force all `-t` text-table output to compressed (Y) or not (N) |
-| |
+| [`edf-annot-class-all`](#edf-annotations) | Read all EDF+ labels as _classes_ (default: `F`) |
+
+
+_Remapping channel/annotation labels_
+
+| Special Variable | Description |
+| ---- | ---- | 
+| [`alias`](#aliases)| Specify a channel alias |
+| [`remap`](#remapping-annotations)| Specify an annotation remapping (cf. channel aliases) |
+| `sanitize` | Change special character labels to `_` if this is set to `T` |
+| `upper` | Set all channel labels to uppercase if set to `T` | 
+| [`spaces`](#spaces-in-channel-names ) | Alternate character for space substitution in channel/annotation names |
+| [`keep-spaces`](#spaces-in-channel-names) | Retain spaces in channel/annotation names if set to true |
+| [`keep-channel-spaces`](#spaces-in-channel-names) | Retain spaces in channel names if set to true|
+| [`keep-annot-spaces`](#spaces-in-channel-names) | Retain spaces in annotation names if set to true|
+
+_Epochs and sleep staging_
+
+| Special Variable | Description |
+| ---- | ---- |
 | [`epoch-len`](#epoch-len) | Specify the default epoch duration |
 | [`no-epoch-check`](#no-epoch-check) | Do not enforce epoch check for .eannot files |
-| [`epoch-check`] | Set tolerance value for epoch check (default: 5) |
+| `epoch-check` | Set tolerance value for epoch check (default: 5) |
 | [`assume-pm-start`](#force-evening-start-time)| Force morning times (after _X_ am) to be _X_ pm  |
-| |
-| [_power bands (various)_](#spectral-power-bands)| Change default power bands (delta, theta, etc.) | 
-| |
 | [`assume-stage-duration`](#stage-annotations) | Assume zero-duration stage labels are of epoch-length |
-| [`ss-prefix`](#stage-annotations) | Set stage annotation prefix |
+| [`ss-prefix`](#stage-annotations) | Set stage annotation prefix (for reading in stage data) |
 | [`ss-pops`](#stage-annotations) | Same as `ss-prefix=p` |
 | [`ss-soap`](#stage-annotations) | Same as `ss-prefix=s` |
+
+_Misc_
+
+| Special Variable | Description |
+| ---- | ---- | 
+| [_power bands (various)_](#spectral-power-bands)| Change default power bands (delta, theta, etc.) |
+| `srand` | Set the seed of the random number generator to this fixed value, e.g. `srand=123456` | 
+| [`ch-exact`](#ch-exact)| Add an exact match for a channel type |
+| [`ch-match`](#ch-match)| Add a partial match for a channel type |
+| [`ch-clear`](#ch-clear)| Clear all channel type mappings |
+
 
 Any other variables specified on the command line or a [_parameter
 file_](#parameter-files) are interpreted as typical variables, that
@@ -1232,14 +1333,13 @@ can be used in scripts: e.g.
 luna s.lst xyz=123 < cmd.txt 
 ```
 
-will set `${xyz}` to `123` if used in scripts.  Naturally, special
-variables (i.e. those tabulated above) are reserved names, and cannot
-be used in scripts.
+will set `${xyz}` to `123` if used in scripts.  Special variables
+(i.e. those tabulated above) are __reserved__ names and cannot be used in
+scripts.
 
 
 !!! note "Specifying special variable values"
-    They do not function as command-line
-    options _per se_, meaning that they always need to be assigned a particular value, e.g.
+    Variables (special or otherwise) always need to be explicitly assigned a value: e.g.    
     ```
     luna s.lst keep-spaces=T < cmd.txt
     ```
@@ -1247,11 +1347,17 @@ be used in scripts.
     ```
     luna s.lst keep-spaces < cmd.txt
     ```
+    as in the second case, `keep-spaces` would be interpreted as an ID to be matched in the sample list `s.lst`.  (In this sense,
+    the syntax varies from command line options, e.g. one can write `PSD dB` versus having to explicitly write `PSD dB=T`.)
+    
     For variables that expect true/false values:
 
     - matches are case-insenstive
     - values of `1` or starting with `T` (true) or `Y` (yes) are all interpreted as _true_
     - all other values are interpreted as _false_; for clarity, `0`, `F` or `N` should be used in practice
+
+    Special variables can be assigned values on the command line, or via an
+    `@`-included [_parameter file_](#parameter-files).
 
 
 
@@ -1278,11 +1384,14 @@ sig	EEG,ECG,EMG
     These options (when used on the command line, or via a parameter file) 
     mean that only these channels are loaded from
     the EDF, i.e. it is as though the other channels do not exist from
-    Luna's perspective.  This is different from the using the 
+    Luna's perspective. (One minor but virtuous side effect is that this can speed up
+    reading an EDF, if one knows that only a subset of channels is needed.)
+
+    This is different from the using the 
     `sig` option to modify the behavior of an individual Luna command: 
     in this latter case, it is only that particular command that is
     restricted to those signals/channels, and so other channels are
-    still part of the in-memory EDF for subsequent processing.  For
+    still part of the in-memory EDF and available for subsequent processing.  For
     example:
     ```
     ...
@@ -1295,27 +1404,34 @@ sig	EEG,ECG,EMG
     The terms _signals_ and _channels_ are used interchangeably throughout this documentation.
 
 
-The `sig` option works with the `alias` options also, i.e. 
+The `sig` option works with the `alias` options also.  For example, if the original EDF label is `CH_X001`
+but an [alias](#aliases) has been defined to convert it to `EEG`, we can use that aliased form
+in the `sig` statement:
 ```
-luna s.lst sig="my-new-label,EMG,ECG" alias="my-new-label|EEG" -s DESC
+luna s.lst sig="EEG,EMG,ECG" alias="EEG|CH_X001" -s DESC
 ```
-Here, we've relabeled `EEG` as `my-new-label` and used `sig` to select it; the output from `DESC` reads:
+That is, we've relabeled `CH_X001` as `EEG` and used `sig` to select it; the output from `DESC` reads:
 ```
-Signals           : ECG EMG my-new-label
+Signals           : EEG EMG ECG
 ```
 
   
 !!! danger "Restrictions for channel names" 
     Channel names should not have any of the following characters: comma, tab, new-line, pipe
-    (|).  Ideally, there are advantages to not using any special
-    characters (e.g. space, parentheses, asterisks, etc) or even
-    things such as minus, plus signs, etc, as it makes it easier to
-    specify channels on the command line and in scripts; it also can
-    make processing the output much easier, i.e. if you use [`destrat`](destrat.md)
-    to produce a data table where the channel labels are used to make
-    variable names, you will want to restrict channel labels to
+    (|).  Moreover, there are advantages in _not using any special
+    characters_ (e.g. space, parentheses, asterisks, etc) or characters that are common
+    logical or arithmetic operators, e.g. minus, plus signs, etc.   Avoiding such characters
+    makes it easier to specify channels on the command line and in scripts.
+
+    Avoding special characters in channel labels can
+    also make processing output easier, i.e. if you use [`destrat`](destrat.md)
+    to produce a table that uses channel labels as 
+    variable (column) names.
+
+    In general, it is desirable to restrict channel labels to
     alphanumeric characters and the underscore character as a
-    separator. See this [FAQ](../faq.md#advice-on-channel-names). You can use Luna [_aliases_](#aliases) to make better channel names. 
+    separator. See this [FAQ](../faq.md#advice-on-channel-names).
+    You can also use Luna [_aliases_](#aliases) to make better channel names. 
 
 ### Search paths
 
@@ -1380,35 +1496,33 @@ alias	C3|C3-M1|C3-A1
 ```
 
 where the format is a series of `|`-delimited labels, with the first
-being the _primary_ alias, or _canonical channel label_..  That is,
-all subsequent terms are remapped to the primary alias in output
-(i.e. `C3`).  When specifying channels, one can either use the
+being the _primary_ alias, or _canonical channel label_.  
+When specifying channels, one can either use the
 original EDF terms (e.g. `C3-M1`) _or_ the primary alias (`C3`). That
-is, even if an EDF in this project only has a channel `C3-M1`, it will
+is, even if the EDF only has a channel `C3-M1`, it will
 still be included in any analysis that requires `C3`.  Similarly, in
 all output (including new EDFs generated via the
 [`WRITE`](../ref/outputs.md#write) command), the canonical channel
-labels (_primary aliases_) will be swapped in whenever needed. (It is
+labels (_primary aliases_) will be swapped in whenever needed (i.e. to `C3` here). It is
 not necessary that the canonical form exists in _any_ of the project's
-EDFs: it could be an entirely new label you wish to apply to this
-group of differently-named but otherwise identical channels.)
+EDFs: it could be an new label you wish to apply to this
+group of differently-named but otherwise identical channels.
 
 !!! Note
     Because most shell scripts interpret `|` as a special control character (pipe), we
-    had to use quotes when specifying the `alias` on the command line above, i.e. `alias="C3|C3-M1|C3-A1"`. This 
-    also implies that channel names should not contain `|` characters in.
+    use quotes when specifying `alias` on the command line, i.e. `alias="C3|C3-M1|C3-A1"`. This 
+    also implies that channel names should not contain `|` characters.
 
 ### Remapping annotations
 
 The `remap` option operates in the same way as the `alias` option, except for annotation labels instead of channel names.
-
-For example, to change any annotation `REMS` to `REM`, add the following:
+For example, to change an annotation `REMS` to `REM`, add the following:
 ```
 luna s.lst remap="REM|REMS" < cmd.txt
 ```
 As with [aliases](#aliases), you can specify multiple, `|`-delimited remappings, i.e. in a many-to-one fashion.  Likewise, you
 can put these in a [parameter file](#parameter-files) rather than write these out on the command line.  This will also be easier if
-you annotations have spaces and special characters.  Note, you'll still need to use quotes if the labels have spaces: e.g.
+you annotations have spaces and special characters; you'll still need to use quotes if the labels have spaces: e.g.
 ```
 remap      REM|REMS|"REM Sleep"|"Rapid eye movement sleep"
 ```
@@ -1424,8 +1538,8 @@ This will remap any of the three forms listed to the primary label: `REM`.
 
 ### Spaces in channel and annotation names
 
-As of v0.24, Luna will by default swap all spaces in channel or
-annotation names with an underscore (`_`) character, and will also _trim_ any leading or trailing space/underscore characters.  You can change the character swapped in
+BY default, Luna swaps all spaces in channel or annotation names with an underscore (`_`) character,
+and will also _trim_ any leading or trailing space/underscore characters.  You can change the character swapped in
 by setting the special variable `spaces`
 ```
 luna s.lst spaces=/ < cmd.txt
@@ -1438,8 +1552,8 @@ spaces     *
 ```
 luna s.lst @param.txt < cmd.txt
 ```
-(In general, we do not recommend _swapping in_ special characters into channel and annotation labels though... the whole point of the
-`spaces` option is to make these labels easier to interact with in a command-line environment.)
+As an aside: we do not recommend _swapping in_ special characters into channel and annotation labels: the point of the
+`spaces` option is to make these labels _easier_ to interact with in a typical command-line environment.
 
 To turn off this functionality, set `keep-spaces=T`.  To turn it off
 for _only_ channel labels use `keep-channel-spaces=T`.  To turn it off
@@ -1533,19 +1647,20 @@ These individuals/EDFs will be skipped in all analyses.
 
 ### Include lists
 
-Similar to [exclude-lists](#exclude-lists) except this means that
+Using the `include` keyword, this is similar to [exclude-lists](#exclude-lists) except this means that
 only individuals in the specified file will be included, everybody
-else will be excluded.  You cannot specify an `include-list` and
-`exclude-list` together.
+else will be excluded.  You cannot specify an `include` list and
+`exclude` lists together.
 
 ### Swapping IDs
 
-The `ids` special variable takes a file (e.g. `ids=file.txt`), for which each row should have exactly two tab-delimited fields: e.g.
+The `ids` special variable takes a file (e.g. `ids=file.txt`), for which each row should have exactly two tab-delimited fields
+refleting the observed (original) ID in the first column, and the new ID in the second column: e.g.
 ```
 id1	newid1
 id2	newid2
 ```
-Luna will then swap the original ID (as supplied from the [sample list](#sample-lists) to the new value, if it is encountered. 
+Luna swaps the original ID (as supplied from the [sample list](#sample-lists)) to the new value, if it is encountered. 
 
 ### Anonymize EDF headers
 
@@ -1585,8 +1700,20 @@ you can use the `annot-file` (or equivalently `annot-files`,
 ```
 luna s.lst 1 annot-file=path/to/file.annot < cmd.txt
 ```
-This will be most useful when working with a single EDF.
-
+This will be most useful when working with a single EDF - especially
+as the `^` special character for individual ID is not translated on
+the shell command line.  To use `annot-file` (or any other special variable) in a programmatic manner,
+one can use shell variables, e.g. within a loop, where here `${id}` is a _shell_ variable, e.g.:
+```
+for id in `cut -f1 s.lst`
+do
+luna data/${id}.edf annot-file=data/${id}.annot -o out/${id}.db < cmd.txt
+done
+```
+Note that the above scenario would be better approached by first running `--build` to link EDFs and annotations:
+```
+luna --build data > s.lst
+```
 
 ### Selecting annotations
 
@@ -1608,11 +1735,11 @@ folder for that individual/EDF).
 
 ### EDF+ annotations
 
-Unless `skip-edf-annot=T` or `skip-annots=T`, Luna will read any `EDF
-Annotations` channels from an EDF+ file and treat them as standard
+Unless `skip-edf-annot=T` or `skip-annots=T` are set, Luna will read any `EDF
+Annotations` channels present in EDF+ files and treat them as standard
 annotations (i.e. as if they were read from an `.annot` or XML file).
 
-As EDF+ annotations can often contain notes, Luna will not assign a
+As EDF+ annotations can often contain notes, Luna does not assign a
 _class_ to each unique annotation: rather, all annotations are
 assigned to the `edf_annot` _class_, with the _instance_ ID set the
 the value in the EDF+.  This behavior can be changed by setting the
@@ -1625,15 +1752,6 @@ stage labels): `N1,N2,N3,R,W,?,arousal,LM,NR`
 
 
 ### Other annotation options
-
-
-| Option | Default | Description |
-| --- | --- | --- |
-|`force-edf` | F  | Skip EDF annotations _AND_ time-track from any EDF+ , and force a continuous EDF |
-|`skip-annots` | F  | Skip XML and other (external) annotations |
-|`skip-edf-annots` | F  | Skip `EDF Annotations` tracks from any EDF+  |
-|`skip-all-annots` | F | Same as `skip-annots=1` and `skip-edf-annots=1` combined |
-
 
 The `skip-all-annots` option (yes/no) indicates whether to skip
 loading _all_ annotations (default no):
@@ -1673,10 +1791,15 @@ If working with other sets of stage labels (e.g. from manual scoring as well as 
 ```
   pN1  pN2  pN3  pR  pW 
 ```
-Commands such as `HYPNO` that depend on these labels will then use those values if they exist, instead of the standard ones.
 
-Also, when reading stage labels from an annotation file, the `assume-stage-duration=T` will change zero-duration labels to be of epoch length.  (Sometimes
-an annotation file does not explicitly specify the duration/end of each stage, and so (if each annotation is indeed one epoch), this can be convenient.) 
+Commands such as `HYPNO` that depend on these labels will then use
+those values if they exist, instead of the standard ones.
+
+Also, when reading stage labels from an annotation file, the
+`assume-stage-duration=T` will change zero-duration labels to be of
+epoch length.  (Sometimes an annotation file does not explicitly
+specify the duration/end of each stage, and so (if each annotation is
+indeed one epoch), this can be convenient.)
 
 
 ### Fix truncated EDFs
@@ -1809,12 +1932,15 @@ attached annotations and the commands applied to that EDF.  Any error
 messages will be sent to the `stderr` also.
 
 ```
+luna s.lst 1 -o out.db -s HEADERS
+```
+```
 ===================================================================
-+++ luna | v0.28.0, 14-Mar-2023 | starting 10-Apr-2023 10:56:45 +++
++++ luna | v0.99, 04-Dec-2023 | starting 04-Dec-2023 12:24:49 +++
 ===================================================================
 input(s): s.lst
-output  : .
-commands: c1	DESC	
+output  : out.db
+commands: c1	HEADERS	
 
 ___________________________________________________________________
 Processing: nsrr01 [ #1 ]
@@ -1834,26 +1960,85 @@ Processing: nsrr01 [ #1 ]
   emg=EMG | eog=EOG_L,EOG_R | hr=PR | id=nsrr01 | light=LIGHT
   oxygen=SaO2,OX_STAT | position=POSITION
  ..................................................................
- CMD #1: DESC
+ CMD #1: HEADERS
    options: sig=*
-EDF filename      : edfs/learn-nsrr01.edf
-ID                : nsrr01
-Clock time        : 21.58.17 - 09.20.17
-Duration          : 11:22:00  40920 sec
-# signals         : 14
-Signals           : SaO2[1] PR[1] EEG_sec[125] ECG[250] EMG[125] EOG_L[50]
-                    EOG_R[50] EEG[125] AIRFLOW[10] THOR_RES[10] ABDO_RES[10] 
-                    POSITION[1] LIGHT[1] OX_STAT[1]
-
 
 ___________________________________________________________________
 ...processed 1 EDFs, done.
 ...processed 1 command set(s),  all of which passed
 -------------------------------------------------------------------
-+++ luna | finishing 10-Apr-2023 10:56:45                       +++
++++ luna | finishing 04-Dec-2023 12:24:49                       +++
 ===================================================================
 ```
 
+### Output verbosity
+
+The special variables `verbose` and `silent` control the level of console output.
+
+```
+luna s.lst 1 verbose=T -o out.db -s HEADERS
+```
+```
+===================================================================
++++ luna | v0.99, 04-Dec-2023 | starting 04-Dec-2023 12:25:41 +++
+===================================================================
+input(s): s.lst
+output  : out.db
+commands: c1	HEADERS	
+
+___________________________________________________________________
+Processing: nsrr01 [ #1 ]
+ duration 11.22.00, 40920s | time 21.58.17 - 09.20.17 | date 01.01.85
+  40920 records, each of 1 second(s)
+
+ signals: 14 (of 14) selected in a standard EDF file
+  SaO2 | PR | EEG_sec | ECG | EMG | EOG_L | EOG_R | EEG
+  AIRFLOW | THOR_RES | ABDO_RES | POSITION | LIGHT | OX_STAT
+
+ annotations:
+  [Arousal] 194 instance(s) (from edfs/learn-nsrr01-profusion.xml)
+  [Hypopnea] 361 instance(s) (from edfs/learn-nsrr01-profusion.xml)
+  [N1] 109 instance(s) (from edfs/learn-nsrr01-profusion.xml)
+  [N2] 523 instance(s) (from edfs/learn-nsrr01-profusion.xml)
+  [N3] 17 instance(s) (from edfs/learn-nsrr01-profusion.xml)
+  [Obstructive_Apnea] 37 instance(s) (from edfs/learn-nsrr01-profusion.xml)
+  [R] 238 instance(s) (from edfs/learn-nsrr01-profusion.xml)
+  [SpO2_artifact] 59 instance(s) (from edfs/learn-nsrr01-profusion.xml)
+  [SpO2_desaturation] 254 instance(s) (from edfs/learn-nsrr01-profusion.xml)
+  [W] 477 instance(s) (from edfs/learn-nsrr01-profusion.xml)
+
+ variables:
+  airflow=AIRFLOW
+  ecg=ECG
+  eeg=EEG_sec,EEG
+  effort=THOR_RES,ABDO_RES
+  emg=EMG
+  eog=EOG_L,EOG_R
+  hr=PR
+  id=nsrr01
+  light=LIGHT
+  oxygen=SaO2,OX_STAT
+  position=POSITION
+
+ ..................................................................
+ CMD #1: HEADERS
+   options: sig=*
+
+___________________________________________________________________
+...processed 1 EDFs, done.
+...processed 1 command set(s),  all of which passed
+-------------------------------------------------------------------
++++ luna | finishing 04-Dec-2023 12:25:41                       +++
+===================================================================
+```
+
+As expected, when running with `silent=T`, Luna doesn't generate any output to the (standard error) console:
+```
+luna s.lst 1 silent=T -o out.db -s HEADERS
+```
+```
+
+```
 
 ### Default text output
 
@@ -1985,7 +2170,7 @@ Alternatively, to set _all_ output files to not be compressed, set
 `compressed` to false (`N` or `0`).
 
 !!! warning "Known issues"
-    Text-tables are provisionally introduced in Luna v0.23; please see [this link](destrat.md#text-tables) for some known issues with the initial implementation of the `-t` flag.
+    Please see [this page](destrat.md#text-tables) for some current known issues with the initial implementation of the `-t` flag.
 
 ### _lunout_ databases
 
@@ -2037,6 +2222,12 @@ of `-o` to _append_ to an existing database.
     individuals in any case).  See the [tutorials](../tut/tut1.md) 
     for examples of using both formats.
  
+### Caches
+
+[Caches](../ref/outputs.md#cache) are an advanced, internal feature, to be used to share
+information between different Luna commands within the same single
+dataset, in particular the [`PREDICT`](../ref/predict.md#predict) command.
+
 
 ### New EDFs
 
@@ -2046,14 +2237,18 @@ after manipulating signals, masking epochs, etc, via the
 
 ### Annotations
 
-Some commands, such as [`WRITE-ANNOTS`](../ref/annotations.md#write-annots),
-can produce [.annot files](../ref/annotations.md#annot) containing interval-based annotations.
+Some commands, such as
+[`WRITE-ANNOTS`](../ref/annotations.md#write-annots), can produce
+[.annot files](../ref/annotations.md#annot) containing interval-based
+annotations.  Other commands
+(e.g. [`SPINDLES`](../ref/spindles-so.md#spindles)) may generate
+annotations internally, which can be used by subsequent commands; to
+output those annotations, use
+[`WRITE-ANNOTS`](../ref/annotations.md#write-annots).
 
 ### Misc text-file dumps
 
 Some commands produce flat-file text output distinct from the usual
 output mechanism (via the database or text-tables, as described
-above), for example `MATRIX` or `ICA`.  These outputs can often be quite large files.
-
-
-
+above), for example [`MATRIX`](../ref/outputs.md#matrix) or [`ICA`](../ref/ica.md#ica).
+These outputs can often be quite large files.

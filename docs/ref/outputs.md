@@ -541,3 +541,4 @@ This creates an EDF in which contains epoch-level summary statistics of the orig
 
 The idea is that this SEDF file is an effective _thumbnail_ for the EDF, which can be quickly loaded and rendered, e.g. by a viewer application.   
 
+

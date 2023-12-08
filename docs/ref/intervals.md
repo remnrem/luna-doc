@@ -191,7 +191,7 @@ versions of seed annotations, based on whether they overlap
 outputs seed events that are _not_ overlapped). 
 
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 _Key options_
 
@@ -200,6 +200,8 @@ _Key options_
 | `seed` | `SP` | Seed annotation classes (required) |
 | `other` | `SO,ART` | Other annotations |
 | `nreps`| 1000 | Number of randomisations |
+
+`seed` and `other` parameters can take annotation labels with wildcards at the end: e.g. `seed=sp*,so` matches `sp_11`, `sp_15`, etc
 
 _Constraining shuffling_
 
@@ -243,7 +245,7 @@ _Generation of new annotations_
 | `m-count` | `2` | Requires _M_ or more overlaps to count as a match for `matched`/`unmatched` |
 
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 Seed-seed pile-up (strata: `SEEDS`)
 
@@ -294,7 +296,7 @@ Seed - _any other_ overlap (strata: `SEED`)
 
 
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 
 Note, the `OVERLAP` command does not look at, or require, any signal data present in the EDF.
@@ -312,6 +314,20 @@ the above example) should be sufficiently large to contain all
 annotataions specified; with `bg`, this implicitly defines the _background_.
 
 
+<h4>Other notes</h4>
+
+Recent changes in v0.99:
+
+ - the OVERLAP command now has contrasts, event-perm, offsets
+   options. Now one should add seed-seed=T to get seed-seed pairs;
+   adding seed-seed pileup is now turned off by default, unless
+   pileup=T is added
+
+ - the OVERLAP command now accepts rp=<annot>|<tag>,... to get
+   rp_tag=xxx from meta data for that annotation, in which case it
+   will set a 0-duration time-point at that position
+
+
 ## --overlap
 
 _Multi-sample wrapper for `OVELAP`_
@@ -323,7 +339,7 @@ and performs an enrichment analysis, as described [above](#overlap).
 All annotation files must be in `.annot` format; they can be reduced
 and must contain an `duration_sec` spectial value.
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Option | Example | Description |
 | ---- | ---- | ---- |
@@ -344,7 +360,7 @@ just after those annotations.
 
 This command requires the signals to have similar sampling rates.
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | --- | --- | --- |
@@ -367,7 +383,7 @@ This command requires the signals to have similar sampling rates.
      A     i5       60    70
     ```
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 Means by channel and annotation (strata: `CH` x `ANNOT`)
 
@@ -386,7 +402,7 @@ Means by channel and annotation class/instance (option: `by-instance`, strata: `
 | `R` | Mean of all right-flanking regions |
 
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 This command will typically be performed for a channel in which the mean value is interpretable, i.e. not raw EEG channels.
 
@@ -404,7 +420,7 @@ _Find peaks in signals_
 The command identitifies peaks (local minima and maxima) in signals, and caches those sample-points for use in
 subsequent commands, primarily [`TLOCK`](#tlock).
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | --- | --- | --- |
@@ -416,12 +432,12 @@ subsequent commands, primarily [`TLOCK`](#tlock).
 |`clipped` | `clipped=3` | Do not count clipped regions as peaks, defined as 3 or more equal values |
 |`percentile` | `percentile=10` | Only take top P percentile of peaks |
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 No output; this command only stores peaks in a subject-specific cache object internally (i.e. they are available for this individual
 in subsequent Luna commands.
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 See the example with [`TLOCK`](#tlock) below.
 
@@ -461,7 +477,7 @@ and for flanking regions.  Also, it allows detected peaks to be saved
 as [annotations](annotations.md).
 
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 _Main parameters_
 
@@ -490,13 +506,13 @@ _Creating annotations based on detected peaks_
 | `add-flanking` | 1 | Add e.g. 1 second to each peak when creating the new annotation |
 
 
-<h5>Outputs</h5>
+<h3>Outputs</h3>
 
 No formal output, other than some notes to the console. The primary output of this command is to create an [annotation](annotations.md)
 based on detected peaks currently.
 
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 _to be added_
 
@@ -510,7 +526,7 @@ Given a set of points in a _cache_ (e.g. as constructed by the
 [`PEAKS` command](#peaks) or similar, calculate signal means that are
 synced to those points, plus/minus a fixed number of seconds.
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | --- | --- | --- |
@@ -524,7 +540,7 @@ synced to those points, plus/minus a fixed number of seconds.
 |`same-channel` | | Constrain output to cases where the `sig` channel equals the source channel (`CH == sCH`) |
 
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 
 By channel (strata: `CH` plus any cache factors)
@@ -550,7 +566,7 @@ Channel values by interval and time-point (option: `verbose`, strata: `CH` x `N`
 | `V` | Signal value at this time-point |
 
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 Here we detect N2 spindles, using the `cache-peaks` option to save the spindle _peak_ (largest central negative peak) under a cache called `p1`.  We
 then use those defined positions in `TLOCK` (i.e. via the `cache=p1` option) and request an average window of +/- 0.5 seconds, to plot the raw EEG signals:

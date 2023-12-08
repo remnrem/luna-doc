@@ -13,10 +13,12 @@ to EDFs, and how to view and summarize their contents._
 | [`--xml`](#-xml) & [`--xml2`](#-xml2) | View NSRR XML annotation files |
 | [`REMAP`](#remap) | Apply annotation remappings after loading | 
 | [`ANNOTS`](#annots)       | Tabulate all annotations |
+| [`MAKE-ANNOTS`](#make-annots) | Make new annotations |
 | [`WRITE-ANNOTS`](#write-annots) | Write annotations as `.annot` or `.xml` |
 | [`SPANNING`](#spanning)   | Report on _coverage_ of annotations |
 | [`A2S`](#a2s)  | Add a 0/1 signal based on an annotation |
 | [`S2A`](#s2a)  | Add an annotation based on ranged values of a signal |
+| [`ALIGN-ANNOTS`](#align-annots) | Align epochs (paired with `ALIGN-EPOCHS`) | 
 
 
 ## Luna annotations
@@ -865,6 +867,254 @@ Per-epoch _instance-level_ annotation tabulation (strata: `E` x `INTERVAL` x `IN
 
 _to be added_
 
+## MAKE-ANNOTS
+
+_Create new annotations on-the-fly_
+
+This command makes new annotations, typically based on pairwise
+comparisons of existing annotations, that are:
+
+ - union of two annotations
+
+ - intersection of two annotations
+
+ - only annotations _A_ that overlap annotation _B_
+
+ - only annotations _A_ that do not overlap annotation _B_
+
+Also, there are special cases to
+
+ - add annotations corresponding to epochs (and optionally, delimiting the boundaries of those epochs) (`epoch`)
+
+ - simply add a numbered annotation corresponding to each epoch (`epoch-num`)
+
+ - merge contiguous or overlapping annotations of a single class (`flatten`)
+
+ - cut up longer annotations along the lines of epoch boundaries (`split`)
+
+
+<h3>Parameters</h3>
+
+Primary parameters
+
+|  Parameter | Example | Description |
+| --- | --- | --- |
+| `annot` | `annot=N` | Name of the new annotation |
+| `expr` | `expr=A+B` | A pairwise expression of two existing annotations `A` and `B` in form `A*B`, `A|B`, `A+B`, `A-B` |
+| `epoch` | `epoch=E` | Add a flattened annotation for all epochs | 
+| `epoch-num` | `epoch-num=E` | Add annotations of numbered epochs |
+| `flatten` | `flatten=A` | Merge contiguous or overlapping epochs ( i.e. `A|A`)
+| `split` | `split=A` | Split longer annotations into parts no longer than the underlying epochs | 
+
+_Specify_ `annot` _and either_ `expr`, `flatten`, `split`; _alternatively, specify either_ `epoch` _or_ `epoch-num`
+
+Pairwise expressions (arguments for `expr`)
+
+| Expression | Description|
+|---------|--------|
+| `A*B`   | New annotation is the intersection of `A` and `B` (AND) |
+| `A|B`   | New annotation is the union of `A` and `B` (OR) |
+| `A+B`   | New annotation is events in `A` that are overlapped by `B` |
+| `A-B`   | New annotation is events in `A` that are not overlapped by `B` |
+
+Misc. options for `epoch`
+
+| Expression | Description|
+|---------|--------|
+| `w` | One or more edge window sizes (seconds) |
+| `collapse-edges` | Do not distinguish left and right edges |
+| `edge` | Optional replacement for `edge` string for edge annotation label |
+
+
+<h4>Examples</h4>
+
+
+_Pairwise operations_
+
+Staring with the four-column (headerless) annotation file `a.annot`:
+```
+A	.	10	20
+A	.	30	40
+B	.	32	38
+A	.	50	60
+B	.	45	65
+```
+The following commands would produce annotation `C` as follows: the intersection of `A` and `B`:
+```
+MAKE-ANNOTS annot=C expr=A*B 
+```
+```
+class  start   stop
+C      32.000  38.000
+C      50.000  60.000
+```
+The union of `A` or `B`:
+```
+MAKE-ANNOTS annot=C expr=A|B
+```
+```
+class  start    stop
+C      10.000   20.000
+C      30.000   40.000
+C      45.000   65.000
+```
+Events from `A` that are overlapped by at least one `B`:
+```
+MAKE-ANNOTS annot=C expr=A+B
+```
+```
+class  start    stop
+C      30.000   40.000
+C      50.000   60.000
+```
+Events from `A` that are not overlapped by any `B`:
+```
+MAKE-ANNOTS annot=C expr=A-B
+```
+```
+class  start    stop
+C      10.000   20.000
+```
+
+_Flattening and splitting epochs_
+
+If `a.annot` is the following:
+```
+A	.	10	20
+A	.	20	30
+A	.	30	40
+A	.	35	45
+A	.	60	180
+```
+then
+```
+MAKE-ANNOTS annot=C flatten=A
+```
+yields
+```
+class   start   stop
+C       10.000  45.000
+C       60.000  180.000
+```
+
+Conversely, if attaching annotation `C` (as above) and running `split` to generate `S`:
+```
+MAKE-ANNOTS annot=S flatten=C
+```
+```
+class start    stop
+S     10.000   30.000
+S     30.000   45.000
+S     60.000   90.000
+S     90.000   120.000
+S     120.000  150.000
+S     150.000  180.000
+```
+
+That is, given (default) 30-second epochs, the annotations `C` are
+split at epoch boundaries to make separate events.  Note that the
+second epoch only spans half an epoch (30 - 45 seconds).
+
+
+_Epoch numbering_
+
+To add a new annotation for each epoch starting `EP_`: 
+```
+luna s.lst -s ' MAKE-ANNOTS epoch-num=EP & WRITE-ANNOTS file=a.annot ' 
+```
+
+```
+class           instance  channel  start    stop       meta
+EP_0001         .         .        0.000    30.000     .
+W               .         .        0.000    10020.000  .
+SpO2_artifact   .         SpO2     17.300   56.400     .
+EP_0002         .         .        30.000   60.000     .
+EP_0003         .         .        60.000   90.000     .
+EP_0004         .         .        90.000   120.000    .
+EP_0005         .         .        120.000  150.000    .
+...
+```
+
+_Epoch annotations_
+
+To demonstrate using `epoch`:  for this EDF, when run on a standard (gapless) EDF it will
+give a single annotation that encompasses all epochs:
+
+```
+MAKE-ANNOTS epoch=E
+```
+```
+class  start   stop   
+E      0.000   41220.000
+```
+Here, the EDF duration happens to be exactly 41220 seconds (i.e. a multiple of 30 seconds) but if
+the EDF duration was (e.g. 5 seconds longer), then that additional 5 seconds would not be spanned by
+an epoch (assuming standard, non-overlapping 30-second epochs): in that case, the `E` annotation would
+still reflect the same as above (i.e. 41220, not 41225 seconds duration).
+
+If the EDF had gaps, this would be reflected in multiple `E` annotations:
+```
+MASK epoch=1-10,100-200 & RE & MAKE-ANNOTS epoch=E
+```
+```
+class  start     stop
+E      0.000     300.000
+E      2970.000  6000.000
+```
+
+Considering a second scenario with more complex epoch structure:
+as a demonstation, we select the first 30 seconds of an EDF and then
+set 7-second epochs with 2-second increment, followed by `MAKE-ANNOTS epoch`: 
+```
+MASK epoch=1 & RE & EPOCH len=7 inc=2 & RE & MAKE-ANNOTS epoch=E
+```
+```
+class   start   stop
+E       0.000   29.000
+```
+This spans 0 to 29 seconds, reflecting the epoch structure.  To confirm, we
+could add `verbose` to the `EPOCH` command as described [here](epochs.md#epoch);
+alternatively, here we can use `MAKE-ANNOTS epoch-num` to make new annotations corresponding
+to each epoch:
+```
+class   start   stop
+E_0001  0.000	7.000
+E_0002  2.000	9.000
+E_0003  4.000	11.000
+E_0004  6.000	13.000
+E_0005  8.000	15.000
+E_0006  10.000	17.000
+E_0007  12.000	19.000
+E_0008  14.000	21.000
+E_0009  16.000	23.000
+E_0010  18.000	25.000
+E_0011  20.000	27.000
+E_0012  22.000	29.000
+```
+i.e. this shows the total epoch span to 0 to 29 seconds.
+
+_Other options for `epoch`_
+
+As secondary options (designed for some niche use cases, but presented here for completeness)
+
+```
+MASK epoch=1-10,20-30 & RE & MAKE-ANNOTS epoch=E w=5 
+```
+(columns removed and rows separated for clarity):
+```
+class       start   stop
+edge_left   0.000   5.000
+E           0.000   300.000
+edge_right  295.000 300.000
+
+edge_left   570.000 575.000
+E           570.000 900.000
+edge_right  895.000 900.000
+```
+i.e. additional `edge` annotations are added to demarcate the edges of each
+`epoch` annotation - i.e. regions near the bounadaries of the currently included
+analytic interval.   The label `edge` can be changed with the `edge` option; left
+and right edges can be collapsed to one class with `collapse-edges`.
 
 ## WRITE-ANNOTS
 
@@ -899,7 +1149,7 @@ When writing `.annot` files, Luna adheres to a standard, full specification:
 | `headers` | | Include verbose header rows in `.annot` |
 | `minimal` | | Do not include main `class...` header row ( or `min`) |
 | `specials` | | Add _special_ internal annotatons: e.g. `epoch_len`, etc | 
-| `annot` | `N1,N2,N3,R,W` | Only output these options (versus all) |
+| `annot` | `N1,N2,N3,R,W` | Only output these options (versus all), this accepts wildcard `*` |
 | `hms` | | Write in _hh:mm:ss_ output rather than elapsed seconds |
 | `dhms` | | Write in _dd-mm-yyyy-hh:mm:ss_ output rather than elapsed seconds |
 | `collapse` | | For a discontinuous EDF, collapse annotation times (see below) |
@@ -943,8 +1193,17 @@ A1   100 - 110
 A2   200 - 250 
 A3   1100 - 1200  (i.e. skips the 4000-second gap)
 ```
+If there are other annotations (e.g. `B1`, `B2`, etc) but you only want `WRITE-ANNOTS` to output a subset,
+you can write
+```
+WRITE-ANNOTS file=a.annot annot=A1,A2,A3
+```
+or equivalently in this case, using a wildcard to match all annotations starting with `A`:
+```
+WRITE-ANNOTS file=a.annot annot=A*
+```
+Note: wildcards can only come at the _end_ of annotation names: e.g. `annot=A_*_X` would not be parsed as a wildcard, whereas `annot=A_X_*` would be.
 
-  
 ## SPANNING
 
 _Summarize the coverage of an EDF by one or more annotations_
@@ -1319,4 +1578,7 @@ However, with `span-gaps` addded, then we would see:
  NS     1       2
  R      3       9
 ```
+
+
+## ALIGN-ANNOTS
 

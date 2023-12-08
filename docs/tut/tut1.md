@@ -738,3 +738,114 @@ activity due to large amplitude slow waves during N3 sleep.  We
 return to this theme when considering spectral analyses of the EEG,
 below.
 
+## Using data freezes
+
+The above procedure can be further streamlined with the use of [data
+freezes](../ref/freezes.md).  Rather than run a separate script for
+each stage (N1, N2, N3 and R), we can make a _freeze_ (i.e. a
+snapshot) of the original dataset, and use the same
+[`MASK`](../ref/masks.md)/[`RE`](../ref/restructure.md) process to
+focus on a given stage, but then use [`THAW`](../ref/freezes.md#thaw)
+to return to the original (full) EDF.  Note that if running that same
+[`STATS`](../ref/summaries.md#stats) (or indeed, any command) multiple
+times in the same script, we need to use the [`TAG`](../ref/summaries.md#tag)
+command to distinguish the four sets of outputs: 
+
+```
+% note: comments from the original cmd/first.txt removed here
+EPOCH len=30
+
+FREEZE F1
+TAG tag=STAGE/N1
+MASK ifnot=N1
+RE
+STATS sig=EEG
+
+THAW F1
+TAG tag=STAGE/N2
+MASK ifnot=N2
+RE
+STATS sig=EEG
+
+THAW F1
+TAG tag=STAGE/N3
+MASK ifnot=N3
+RE
+STATS sig=EEG
+
+THAW F1
+TAG tag=STAGE/R
+MASK ifnot=R
+RE
+STATS sig=EEG
+```
+
+!!! hint "Using data freezes"
+    Using the freeze/thaw mechanism is
+    particularly useful when one needs to perform various
+    pre-processing at the start of the script that is applied to the
+    whole night's recording, e.g. filtering, resampling, etc, which
+    can be done before the first freeze is made. In this way, we avoid
+    repeating the same steps. (An alternative is to save intermediate
+    files also.)
+
+As an exercise, make a new version of `cmd/first.txt` with the above
+changes, and call it `cmd/first-freezes.txt`.  This is then run with a
+single command:
+
+```
+luna s.lst -o out2.db < cmd/first-freezes.txt
+```
+
+It is worth inspecting the console output to see the various freeze/thaw steps in action. For the first individual, we
+first make a freeze of the whole dataset:
+```
+ CMD #2: FREEZE
+   options: F1 sig=*
+  freezing state, with tag F1
+  copied 40920 records
+  currently 1 freeze(s): F1
+```
+After restricting the dataset to N1, we return to the original freeze:
+```
+ CMD #7: THAW
+   options: F1 sig=*
+  thawing previous freeze F1
+  old dataset   : 3270 records, 15 signals, 10 annotations
+  thawed freeze : 40920 records, 14 signals, 10 annotations
+  copied 40920 records
+```
+This indicates we went from 3270 records back to the full 40920 records, which matches the earlier output from `RE` for N1:
+```
+ CMD #5: RE
+   options: sig=*
+  restructuring as an EDF+:  retaining 3270 of 40920 records
+  of 682 minutes, dropping 627.5, retaining 54.5
+  resetting mask
+  clearing any cached values and recording options
+  retaining 109 epochs
+```
+That is, 3270 records (with each record having 1 second duration) equals 54.5 minutes or 109 30-second N1 epochs.
+What about the above `THAW` output noting 15 versus 14 signals, given
+the original EDF had only 14 signals and we did not explicitly add any
+new channels?  This reflects that fact that after the `RE` command,
+the internal representation of the data is now implicitly as an EDF+D,
+i.e. with gaps, and so Luna automatically adds an `EDF Annotations`
+channel to hold the time-track for each record.  This is dropped when
+returning to the original, which is a standard, continuous EDF and so
+does not contain a time-track.
+
+The steps for the other stages and individuals follow a similar pattern.  Most importantly, 
+this new output database should contain the same information as from the original set of four runs: i.e.
+pulling the stage-specific RMS for each individual, as obtain the same table as above:
+```
+destrat out2.db +STATS -r CH -c STAGE -v RMS -p 3
+```
+```
+ID      CH RMS.STAGE_N1  RMS.STAGE_N2  RMS.STAGE_N3  RMS.STAGE_R
+nsrr01 EEG        7.355        10.646        13.015        7.564
+nsrr02 EEG       10.362        14.742        20.055       14.146
+nsrr03 EEG       12.302        14.497        18.980           NA
+```
+
+We can now move on to the [next part](tut2.md) of the tutorial.

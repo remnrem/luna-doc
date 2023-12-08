@@ -6,8 +6,9 @@
 | [`CORREL`](#correl) | Pairwise channel correlation | 
 | [`CC`](#cc) | Coupling (dPAC) and connectivity (wPLI) | 
 | [`PSI`](#psi) | Phase slope index (PSI) connectivity metric |
+| [`XCORR`](#xcorr) | Cross-correlation | 
 | [`MI`](#mi) | Mutual information |
-| [`TSYNC`](#tsync) | Cross-correlation and phase delay |
+| [`TSYNC`](#tsync) | Cross-correlation and phase delay (alternate implementation) |
 | [`GP`](#gp) | Granger prediction |
 
 ## COH
@@ -671,6 +672,50 @@ Channel pair output (olption: `epoch`, strata: `E` x `CH1` x `CH2`)
 
 _to be added_
 
+## XCORR
+
+_Efficient cross-correlation analysis_
+
+This command computes pairwise cross-correlations between signals
+using the FFT.  All channels must have similar sample rates.  This can
+be performed either epoch-wise, or on the whole signal.  It computes
+correlations for a window of a fixed number of seconds _w_, optionally
+with an offset _c_ (i.e. to find the maximum correlation of alignments
+from _c-w_ to _c+w_ seconds.
+
+<h3>Parameters</h3>
+
+| Parameter | Description |
+| --- | --- |
+| `sig` | Restrict analysis to these channels (at least two required) |
+| `epoch` | Epoch-wise analysis |
+| `w` | Optionally, maximum shift/window size to consider (seconds) |
+| `c` | Optionally, offset to add (see above) (seconds) | 
+| `verbose` | Give verbose output |
+
+<h3>Output</h3>
+
+Pairwise channel measures for whole recording (option: `epoch`; strata: `CH1` x `CH2`):
+
+| Variable | Description |
+| --- | --- |
+| `D_MN` | Mean delay over epochs (seconds) |
+| `D_MD` | Median delay over epochs (seconds) |
+| `S_MN` | Mean delay over epochs (samples) |
+| `S_MD` | Median delay over epochs (samples) |
+| `D` | Delay based on average of lagged XCs (seconds) |
+| `S` | Delay based on average of lagged XCs (samples) |
+
+Pairwise cross-correlations for a given sample delay `D` (option:
+`verbose`; strata: `D` x `CH1` x `CH2`):
+
+| Variable | Description |
+| --- | --- |
+| `T` | Lag in seconds |
+| `XC` | Cross-correlation |
+
+<h3>Examples</h3>
+
 
 ## MI
 
@@ -715,7 +760,7 @@ Output for the whole signal (strata: `CH1` x `CH2`)
 | `JINF` | Joint entropy |
 | `INFA` | Marginal entropy of first signal |
 | `INFB` | Marginal entropy of second signal |
-| `NBINS` | Number of bins | 
+| `NBINS` | Number of bins |
 
 Output per-epoch, with `epoch` (option: `epoch`, strata: `CH1` x `CH2`)
 
@@ -741,6 +786,8 @@ Output for permutation test (option: `permute`)
 
 _Cross-correlation and phase delay_
 
+__This function is now redundant - use `XCORR` instead__
+
 Estimate the cross-correlation between two signals, within a window of _W_ seconds, and
 report the estimated phase delay (in seconds) based on the maximal cross-correlation in
 that time window.
@@ -753,7 +800,6 @@ that time window.
 | `w` | `w=0.5` | Required time window (seconds) |
 | `verbose` | | Verbose output |
 | `epoch` | | Epoch-level output |
-
 
 <h5>Output</h5>
 
