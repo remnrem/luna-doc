@@ -13,7 +13,7 @@ Latest stable Luna command-line tool (binaries and source):
 | ----- | ----- |
 | __Source code (all platforms)__ | [https://github.com/remnrem/luna-base/archive/refs/tags/v1.0.0.tar.gz](https://github.com/remnrem/luna-base/archive/refs/tags/v1.0.0.tar.gz)
 | macOS (Intel/x86_64) binary executable | [https://github.com/remnrem/luna-base/releases/download/v1.0.0/mac_luna.tar.gz](https://github.com/remnrem/luna-base/releases/download/v1.0.0/mac_luna.tar.gz) |
-| macOS (Silicon/ARM64) binary executable | [https://github.com/remnrem/luna-base/releases/download/v1.0.0/macos_arm64_luna.tar.gz])https://github.com/remnrem/luna-base/releases/download/v1.0.0/macos_arm64_luna.tar.gz) |
+| macOS (Silicon/ARM64) binary executable | [https://github.com/remnrem/luna-base/releases/download/v1.0.0/macos_arm64_luna.tar.gz](https://github.com/remnrem/luna-base/releases/download/v1.0.0/macos_arm64_luna.tar.gz) |
 | Windows binary executable | [https://github.com/remnrem/luna-base/releases/download/v1.0.0/win_luna.zip](https://github.com/remnrem/luna-base/releases/download/v1.0.0/win_luna.zip) |
 
 
