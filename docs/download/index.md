@@ -6,9 +6,6 @@
 
 Latest stable Luna command-line tool (binaries and source):
 
-!!! note
-    The latest release (v1.0) is only available via the [Github repo](http://github.com/remnrem/luna-base) and [Docker images](https://hub.docker.com/r/remnrem/lunapi);  binaries for v1.0 will be posted in due course.
-
 | Platform | Link |
 | ----- | ----- |
 | __Source code (all platforms)__ | [https://github.com/remnrem/luna-base/archive/refs/tags/v1.0.0.tar.gz](https://github.com/remnrem/luna-base/archive/refs/tags/v1.0.0.tar.gz)
