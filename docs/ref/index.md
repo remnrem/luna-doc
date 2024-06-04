@@ -35,7 +35,8 @@ see _lunaC_'s [help function](../luna/args.md#help).
 |[Coupling/connectivity](cc.md)    | Phase/amplitude coupling, coherence and other multi-signal analyses |
 |[Interval-based](intervals.md)    | Time/event-locked signal averaging, peak detection, enrichment |
 |[Spatial/topographical](spatial.md) | Channel locations, spatial filtering and interpolation |
-|[ICA](ica.md)                     | Independent components analysis |
+|[PSC](psc.md)                     | Principal spectral components |
+|[ICA/PCA](ica.md)                 | Independent components and principal components analyses |
 |[MS](ms.md)                       | EEG microstate analysis |
 |[Clustering](clustering.md)       | Time-series clustering |
 |[Association](assoc.md)           | Association analysis (linear models) |
@@ -189,7 +190,8 @@ __Spatial/topographical:__
 __ICA:__
 [](ica.md)
 [`ICA`](ica.md#ica): _fit ICA,_
-[`ADJUST`](ica.md#adjust): _adjust given ICs._
+[`ADJUST`](ica.md#adjust): _adjust given ICs,_
+[`SVD`](ica.md#svd): _fit SVD/PCA._
 __Microstates:__
 [](ms.md)
 [`MS`](ms.md#ms): _EEG microstates,_
@@ -216,3 +218,58 @@ __Helpers:__
 [`OTSU`](helpers.md#otsu): _Otsu thresholding (EDF)._
 __Experimental:__
 [Various](exp.md): _misc. experimental commands._
+
+
+
+<!---
+
+IF / FI|ENDIF
+EXIT / STOP / QUIT
+
+# redundant
+ALIGN  (--> EDF-MINUS)
+SLICE
+C2A
+A2C?
+EXTEND (not implemented)
+DUMP-EPOCHS
+
+
+# to add
+DUMP(?)
+READ
+CLEAN-FREEZER#
+PCOUPL
+EDF-MINUS
+
+#
+POL polarity
+
+# simul
+SPIKE(?)
+SHIFT
+SCRAMBLE
+
+
+# to add/remove?
+FILE-MASK
+ANNOT-MASK?
+HB?
+SYNC?
+COVAR?
+ASYMM
+PREP-MASSOC
+PERI
+SEDF
+PAC
+CFC
+GED
+ZOH 
+DFA
+L1OUT
+FIP
+
+
+--->
+
+

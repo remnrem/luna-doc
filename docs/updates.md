@@ -1,24 +1,166 @@
 
 # Updates, additions and fixes
 
-Current stable version: __v0.99__ (main [downloads](download/index.md) page)
+Current stable version: __v1.00__ (main [downloads](download/index.md) page)
 
-<!--
+## v1.00 (31-May-2024)
 
-v1.00
+This major release contains a number of new analysis features as
+well as support for a Python interface to Luna,
+[_lunapi_](lunapi/index.md).  It also contains a number fixes and
+smaller additions.
+
+_New interfaces_
+
+ - a new [_lunapi_](lunapi/index.md) Python package provides bindings
+ to the Luna library; it also contains a number of convenience
+ functions and an interactive viewer for signal and annotation data
+
+_New commands_
+
+ - new [EDF-MINUS](ref/manipulations.md#edf-minus) command to
+   collapse gapped EDF+D whilst aligning records, stage annotations
+   and epochs
+
+ - new [PCOUPL](ref/xxx.md) command for generic phase-event coupling
+
+ - new [SVD](ref/ica.md) commad for time-series PCA via SVD
+ 
+
+_Annotations_
+
+ - the `ANNOTS` command now takes `annot` classes to output only a
+   subset (w/ wildcard character `*` allowed to subset, in form
+   `root*` only)
+
+ - date formats: two new options `read-mdy-annot-dates` and
+   `read-mdy-edf-dates` allow for non-European (_month-day-year_)
+   format dates, instead of the default _day-month-year_ (adopted as
+   _European Data Format_ files specify this convention).  The first
+   form relates to annotation files (`.annot); the second form relates
+   to values in the EDF header (i.e. if they have been incorrectly
+   specified).
+
+ - `OVERLAP` now has option to output a shuffled set of annotations
+   (given the full shuffling scheme - shuffle, event-based,
+   constrained, background-filtered, etc): e.g. `add-shuffled-annots=A1,A2`
+   adds `s_A1`, `s_A2` as new, shuffled versions of `A1` and `A2`; the default tag `s_`
+   can also be altered with `add-shuffled-annots-tag=s_`
+
+
+_Epoch definitions_
+
+ - EPOCH now takes `fixed` and `trunc` ; output gives `FIXED_DUR` from
+   `EPOCH`
+
+ - generic epochs can now be shifted left/right (backwards/forwards)
+   using `shift` (-ve/+ve values)
+
+ - new `EPOCH` outputs: `TOT_DUR`, `TOT_PCT`, `TOT_REC`, `TOT_SPANNED`
+   and `TOT_UNSPANNED`
+
+ - added `SEGMENTS` largest annotation (`largest1`), (`largest2`) etc;
+   the 1,2,3,... index is in the _instance_ ID of the annotation (class
+   = `largest`); also, adding e.g.  `requires-min=120` enforces that
+   largest segments must be at least 2 hours -- 1,2,3 is in INST ID
+
+
+_Spectral analysis_
+
+ - fixed `MTM` options; added `speckurt` for fbins (`MTM`)
+
+ - `PSD` and `MTM` now have `band` (=`T`/`F`) to drop band output altogether
+
+ - allow `skip-bands` (e.g. `skip-bands=SIGMA,GAMMA,TOTAL`) for `PSD` to omit certain bands from the output
+
+ - to support ISO analyses: PSD now has an `add` option to emit
+   (currently 1Hz) values (requries `EPOCH dur=4 inc=1` and `PSD
+   segment-size=4`).  This creates a new 1 Hz time-series in the EDF.
+
+ - `COH` now allows generic epochs - _as long as they are of fixed
+    size_ (which requires adding `fixed` along with `annot` when applying
+    the `EPOCH` command)
+
+
+_Spindle/SO analyses_
+
+ - now `so-annots` (instead of `annots`) is needed to emit slow
+  oscillation annotations (as is called by SPINDLES)
+
+ - `SPINDLES`/`SO` coupling issue fixed if a record is above epoch span
+
+
+_Data manipulation_
+
+ - `COPY` allows `new` to specify a full name (when used with a single
+   channel); `pretag` adds the tag to the front (better for `[xx][1:8]`);
+   also, `tag` no longer adds `"_"` in between, this must be explicitly
+   specified, e.g. `tag=_TAG`
+
+
+_Scripting: filters and sequence expansions_
+
+
+ - all `sig` options allow `[inc]` and `[-exc]` matching:
+   ```
+   sig=C3,C4,F3,F4[F]
+   ```
+   implies
+   ```
+   sig=C3,C4
+   ```
+   i.e. must match a `C` character. This can be 
+   useful when working with larger sets and you want to select a subset
+   of `sig=${s}` where `${s}` may be a very large but structured list 
+
+ - we now allow for more generic `[][]` expansion syntax,
+   i.e. `[seq1][seq2]` where the terms or sequences are either in the
+   form `n:m` (where `n` and `m` are integers, with `n` <= `m`) or as
+   a commad-delimited list.
+ 
+ - no nesting of terms if allowed, but they can be applied sequentially:
+   ```
+      ${s=[x][a,b,c]} & PSD [${s}][1:5]
+   ```
+   implies
+   ```
+   xa1,xa2,xa3,xa4,xa5,xb1,xb2,xb3,xb4,xb5,xc1,xc2,xc3,xc4,xc5
+   ```
+   Note: conditions are evaluated first, based on prior set variables;
+   then line-by-line we evaluate a) swap in variables,
+   wildcards,replace variables, b) expand sequences
+
+ - fixed a bug that occurred when using `[n:n]` 
+
+
+
+_Misc. fixes and changes_
+
+ - added  `output-both` option to `CORREL`
+ 
+ - fixed `TOT_DUR_HMS` when >24 hrs in `HEADERS`
+
+ - `WRITE` now resets EDF start date if needed (i.e. when changing start time if collapsing to standard EDF)
+
+ - fixed the `ids=<list>` option (to swap in alternate IDs on reading a sample list), as it was previosly not working
+
+ - `POPS` `ignore-obs-staging` option is now fixed
+
+ - `SIMUL` can zero-out frequencies above or below a certain value
+   (i.e. after interpolation) with `zero=lwr,upr`
+
+    
+
+<!---
+
+IN FLIGHT / TODO
 
 _Predictive modelling_ 
+
  - adding [LightGBM]() library support and compilation flag
  - new [`ASSOC`] command
  - added new `MASSOC` set of functions
    - new command PREP-MASSOC 
-
-Also
-  - finish docs
-  - new vignnetes
-  - new models
-
-IN FLIGHT / TODO
  
 - TODO - `PERI` command ; 
   - `RIPPLES`
@@ -27,8 +169,6 @@ IN FLIGHT / TODO
   - `ORDER` command (or that command-line 'sig' sets order)
   - loops in scripts [todo]
   - channel range selector [C3][C4] .. use same syntax as [C3][1..4] .. will have to wait and expand on a per-EDF basis ... 
-  - add EDF+ to EDF converter  (zero-pad and add MASK for discontinuities)
-  - explicit COUPL command that uses caches
    - __Global coherence statistics__ via the [`SYNC` command](ref/cc.md#sync)  
    - prototype [`TCLST`] command for time-series clustering
 _LunaR_
@@ -36,7 +176,9 @@ _LunaR_
  - documention (e.g. `?leval`) added to the lunaR package 
  - new `lload()`, `lhead()` and `lcols()` convenience functions 
  - additional `lheatmap()` options added
+
 -->
+
 
 
 ## v0.99 (5-Dec-2023)

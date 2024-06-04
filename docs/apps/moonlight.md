@@ -1,6 +1,6 @@
 # Moonlight 
 
-![img](img/mlref/ml-ref0.png)
+![img](../img/mlref/ml-ref0.png)
 
 ## Overview
 
@@ -96,7 +96,7 @@ button/dialog box may look slightly different (either left or right
 boxes):
 
 
-![img](img/mlref/ml-ref1.png){ width="200" }  ![img](img/mlref/ml-ref2.png){ width="200" }
+![img](../img/mlref/ml-ref1.png){ width="200" }  ![img](../img/mlref/ml-ref2.png){ width="200" }
 
 With either dialog box, you can upload:
 
@@ -121,7 +121,7 @@ Instead of uploading your own data, to try out _Moonlight_ you can
 alternatively click _Example data_ to attach the NSRR tutorial
 (`learn-nsrr02`) file along with the associated XML annotation file:
 
-![img](img/mlref/ml-ref1.png){ width="200" } 
+![img](../img/mlref/ml-ref1.png){ width="200" } 
 
 ### Channels
 
@@ -135,7 +135,7 @@ added to (or removed from) the dataset, this list will be updated.
 
 The image below shows the _Channels_ list box, along with other widgets described below.
 
-![img](img/mlref/ml-ref3.png){ width="250" }
+![img](../img/mlref/ml-ref3.png){ width="250" }
 
 
 ### Annotations
@@ -170,7 +170,7 @@ around the selected event.
 
 ### Re-epoch
 
-![img](img/mlref/ml-ref4.png){ width="200" }
+![img](../img/mlref/ml-ref4.png){ width="200" }
 
 After _masking_ epochs (e.g. via the _Manips/Mask_ panel, or directly
 running `MASK` via the _Luna_ panel), this button will effectively run
@@ -193,7 +193,7 @@ y-axis is 0.5 to 25 Hz; the z-axis (color) is the log-scaled spectral
 power.  Note that only signals with a sample rate of 50 Hz or more are
 included in the _Spectrogram_ list.
 
-![img](img/mlref/ml-ref5.png)
+![img](../img/mlref/ml-ref5.png)
 
 Below the spectrogram, if sleep stage are available, Luna will output
 a hypnogram (red=REM, green=wake, yellow=Lights, gray=unknown,
@@ -213,7 +213,7 @@ currently _masked_ (gray) or not (orange).  Running _Re-epoch_ (or
 i.e. gaps) in this plot.  If a dataset has been _masked_ and _re-epoched_ in this way, the
 spectrogram will only show included epochs:
 
-![img](img/mlref/ml-ref6.png)
+![img](../img/mlref/ml-ref6.png)
 
 In contrast, (unless different Lights Off/on markers are set) the
 hypnogram is only calculated once, when first uploading the data and
@@ -222,12 +222,12 @@ based on all epochs.
 
 ## Headers
 
-![img](img/mlref/ml-ref7.png)
+![img](../img/mlref/ml-ref7.png)
 
 The first panel in the main window gives a simple tabulation of the
 main EDF header values: overall (left) and per channel (right).
 
-![img](img/mlref/ml-ref15.png)
+![img](../img/mlref/ml-ref15.png)
 
 Note that the tables are scrollable (e.g. if the number of rows is too
 great to display) and can be copied to the Clipboard by clicking the
@@ -236,7 +236,7 @@ _Copy_ button.
 
 ## Structure
 
-![img](img/mlref/ml-ref8.png)
+![img](../img/mlref/ml-ref8.png)
 
 This panel shows the epoch-level structure of a dataset.
 
@@ -250,7 +250,7 @@ figures show these selected epochs - i.e. what constitutes the current
 in-memory dataset, which may contain gaps, e.g. after selecting only
 _N2_ epochs.
 
-![img](img/mlref/ml-ref16.png)
+![img](../img/mlref/ml-ref16.png)
 
 The table below the plot shows actual times of segments/gaps in the data.
 
@@ -265,7 +265,7 @@ in-memory dataset, aligned to staging annotations.  See the
 
 ## Hypnogram
 
-![img](img/mlref/ml-ref9.png)
+![img](../img/mlref/ml-ref9.png)
 
 As well as generating the hypnogram in the top of the display,
 _Moonlight_ derives numerous statistics based on the hypnogram, shown
@@ -302,7 +302,7 @@ of bouts and the median bout length (minutes).  Stages are defined as
 `N1`, `N2`, `N3`, `R` and `W`. In addition, `S` is any sleep, `WASO`
 is wake afetr sleep onset, and `?` denotes unknown epochs.
 
-![img](img/mlref/ml-ref17.png)
+![img](../img/mlref/ml-ref17.png)
 
 ### Cycles
 
@@ -331,7 +331,7 @@ sample rate and be expected to vary with sleep stage) and then click
 _Run SOAP_.  After a few seconds, a plot like the following will
 appear:
 
-![img](img/mlref/ml-ref18.png)
+![img](../img/mlref/ml-ref18.png)
 
 In all these plots, the x-axis corresponds to epochs - and will align
 with the top spectrogram, hypnogram and mask plots.  The upper plot
@@ -378,7 +378,7 @@ After clicking _Run POPS_, it can take around 5 to 10 seconds
 typically (depending on recording duration and original sample rate)
 to generate the predictions, which will appear as below:
 
-![img](img/mlref/ml-ref19.png)
+![img](../img/mlref/ml-ref19.png)
 
 Above, the _Summaries_ sub-panel shows a plot that is similar in
 structure to the SOAP plot described above (i.e. top two rows show
@@ -390,7 +390,7 @@ The _Epochs_ sub-panel lists the predicted stages along with the
 posterior probabilties and the original stages (if present).  This can
 be copied to the Clipboard and saved.
 
-![img](img/mlref/ml-ref20.png)
+![img](../img/mlref/ml-ref20.png)
 
 The POPS panel also contains buttons to:
 
@@ -402,7 +402,7 @@ The POPS panel also contains buttons to:
 
 ## Annots
 
-![img](img/mlref/ml-ref10.png)
+![img](../img/mlref/ml-ref10.png)
 
 This panel shows any annotations selected in the left panel _Annotations_ list, in a
 whole-night plot (x-axis elapsed hours from EDF start), as below.
@@ -411,19 +411,19 @@ whole-night plot (x-axis elapsed hours from EDF start), as below.
 
 Benath the plot, the _Summary_ sub-panel shows metrics for _all_ annotations (not just those selected).
 
-![img](img/mlref/ml-ref21.png)
+![img](../img/mlref/ml-ref21.png)
 
 ### Instances
 
 The _Instances_ sub-panel shows the actual events for _selected annotations only_.  This table can be sorted by different columns by clicking on the header; as with other _Moonlight_ tables, it can be copied to the Clipboard.  
 
-![img](img/mlref/ml-ref22.png)
+![img](../img/mlref/ml-ref22.png)
 
 ## Signals
 
 For selected signals and annotations (from the left panel), this panel shows the raw data, e.g. here for several channels and annotations for a 30-second epoch (the default window size):
 
-![img](img/mlref/ml-ref23.png)
+![img](../img/mlref/ml-ref23.png)
 
 One can zoom out with the _Out_ button (i.e. 1->3->5 epochs, etc) and back in with the _In_ button.   If the range is too large, raw signals will not be displayed.
 
@@ -433,12 +433,12 @@ _Filter_  toggles on/off a bandpass filter to all displayed signals (in the view
 
 You can also select a region (holding down left mouse button) of the main window to zoom in - e.g. to look at only a few seconds of recording, as below:
 
-![img](img/mlref/ml-ref24.png)
+![img](../img/mlref/ml-ref24.png)
 
 
 ## Stats
 
-![img](img/mlref/ml-ref11.png)
+![img](../img/mlref/ml-ref11.png)
 
 The _Stats_ window takes the channels as selected in the left _Channels_ tab, and for the current set of unmasked epochs calculates basic statistics (e.g. mean, min, max, etc).  
 
@@ -446,18 +446,18 @@ The _Stats_ window takes the channels as selected in the left _Channels_ tab, an
 
 Channel-level statistics are based on the _median_ of epoch-level statistics, and are shown under the _Stats/Channels_ sub-panel.
 
-![img](img/mlref/ml-ref25.png)
+![img](../img/mlref/ml-ref25.png)
 
 ### Epoch
 
 Epoch-level statistics are also available under the _Stats/Epochs_ sub-panel.
 
-![img](img/mlref/ml-ref26.png)
+![img](../img/mlref/ml-ref26.png)
 
 
 ## Time/frequency analyses
 
-![img](img/mlref/ml-ref12.png)
+![img](../img/mlref/ml-ref12.png)
 
 
 This tab contains a number of more advanced summaries and metrics. 
@@ -467,18 +467,18 @@ This tab contains a number of more advanced summaries and metrics.
 The _Spectrogram_ sub-panel applies the `MTM` multi-taper spectrogram command.  This is quite instence for a long/high-sample rate signal, i.e. it may take 5-10 seconds to complete.  It is based _not_ on the channel(s) in the left _Channels_ box, but rather has its own _Channel_ tab.   You must hit _Run MTM_ to generate the top level spectrogram.
 
 
-![img](img/mlref/ml-ref27.png)
+![img](../img/mlref/ml-ref27.png)
 
 Note that the min/max frequency controls, as well as the winsorization (i.e. of the heatmap) can be altered _after_ running the MTM - these modify the plot _on-the-fly_ which can be useful for visualization. Here are the same data but with these parameters changed:   
  
-![img](img/mlref/ml-ref28.png)
+![img](../img/mlref/ml-ref28.png)
 
 If you click anywhere within the top (whole-night) spectrogram, then (after a few seconds) two lower spectrograms will appear.  The middle is a window of 1 minute, using a segment size of 6 seconds (with 0.25s increments) and `tw` parameter of 3.  In contrast, the top spectrogram has a segment size of 30, no overlap, and `tw` of 15.
 
 Clicking on the middle window re-centers the lower spectrogram, which is a 10-second window, using a segment size of 2.5s (increment 0.05 seconds) and `tw` of 5.  The raw signal is also shown beneath for this interval:
 
 The plot below shows the four windows:
-![img](img/mlref/ml-ref29.png)
+![img](../img/mlref/ml-ref29.png)
 
 
 ### Hjorth
@@ -496,7 +496,7 @@ not change markedly (in terms of their typical frequency of
 oscillation), whereas reds indicates more changeable/complex signals. A bottom panel will show the raw signal (30s epoch)
 for which channel/epoch the mouse is currently hovering over:
 
-![img](img/mlref/ml-ref30.png)
+![img](../img/mlref/ml-ref30.png)
 
 The plot below gives a three example epochs of raw signal (A, B and C) corresponding to various parts of the night for a single EEG. 
 
@@ -507,7 +507,7 @@ The plot below gives a three example epochs of raw signal (A, B and C) correspon
  - C : a highly corrupt, clipped large-amplitude signal
 
 
-![img](img/mlref/ml-ref31.png)
+![img](../img/mlref/ml-ref31.png)
 
 These types of plots can provide convenient summaries to show broad patterns of structure/gross artifacts in signls - in particular for signals where
 the typical time/frequency spectrograms may not be as convenient or readily interpretable (as they are for the EEG).
@@ -524,12 +524,12 @@ exemplar epochs, along with an indication of the other epochs that are similar t
 If you hover with the mouse over the heatmap, the corresponding raw signals will be shown at the top (left/right = row/column).  Overall, this can provide a
 quick way to see the overall structure of a signal, and to zoom in on aberrant epochs, etc.
 
-![img](img/mlref/ml-ref32.png)
+![img](../img/mlref/ml-ref32.png)
 
 
 ## Manips
 
-![img](img/mlref/ml-ref13.png)
+![img](../img/mlref/ml-ref13.png)
 
 This panel provies a series of sub-panels to perform basic
 manipulations of signals, most of which are self-explantory wrappers
@@ -582,7 +582,7 @@ example of a mask used to include on N2 epochs - after running, note how the tra
 at the top changes (just under the hypnogram) to reflect masked (gray) versus unmasked (orange)
 epochs:
 
-![img](img/mlref/ml-mask.png)
+![img](../img/mlref/ml-mask.png)
 
 Alternative options (that do not use use the _Mask_ or _Annotations_
 boxes are a) the _Flip_ button, which simply flips the current mask,
@@ -603,7 +603,7 @@ annotation mapping file can be read in automatically via _Insert NSRR defaults_ 
 
 ## Models
 
-![img](img/mlref/ml-models-hdr.png)
+![img](../img/mlref/ml-models-hdr.png)
 
 This tab is designed to host an hopefully growing set of predictive
 models and other resources, including population norm data for common
@@ -629,7 +629,7 @@ age based on the sleep EEG.  The difference between this and observed
 age can be interpreted as a _brain age index_, see the above
 manuscript for rationale and applications.
 
-![img](img/mlref/ml-models-sun2019.png)
+![img](../img/mlref/ml-models-sun2019.png)
 
 !!! hint "Processing many samples"
     If working with multiple recordings, this analysis can be automated by running directly on the command line
@@ -647,13 +647,13 @@ it calculates several metrics in the same manner as the original
 paper, and then plots the results against the normative dataset as
 used in the above study.
   
-![img](img/mlref/ml-ref33.png)
+![img](../img/mlref/ml-ref33.png)
 
 _We thank Drs. Sun, Westover and colleagues for sharing their work to support this implementation of their ._
 
 ## Luna
 
-![img](img/mlref/ml-ref14.png)
+![img](../img/mlref/ml-ref14.png)
 
 This panel allows arbitrary [Luna commands](ref.md) to be executed on
 the currently attached EDF/annotation dataset, as well as providing a
@@ -680,7 +680,7 @@ the console output appers in the gray window, and any output tables (i.e. what w
 contents of `out.db`) are listed in the _Tables_ tab. Selecting one of those will display it
 in the table in the lower half of the panel:
 
-![img](img/mlref/ml-ref34.png)
+![img](../img/mlref/ml-ref34.png)
 
 
 As a second example, here we run a spectral analysis using the [`PSD`](ref/power-spectra.md#psd) command, running a multi-part command,
@@ -693,11 +693,11 @@ PSD sig=EEG,EEG_sec spectrum dB max=65
 
 which gives the output in the console:
 
-![img](img/mlref/ml-ref35.png)
+![img](../img/mlref/ml-ref35.png)
 
 Looking at the first table: band power (i.e. outputs stratified by band (`B`) and channel (`CH`), we see this table:
 
-![img](img/mlref/ml-ref36.png)
+![img](../img/mlref/ml-ref36.png)
 
 If outputs are better digested visually, one can either copy the table (at the bottom, each table with have a _Copy_ button that copies it to the clipboard),
 or select the adjacent _Plots_ subpanel after running a Luna command. 
@@ -712,18 +712,21 @@ This tab provides a limited but potentially still convenient way to visualize so
 see a power spectra emitted from the previous command, select `F` for the _X-axis_, and `PSD` for the _Y-axis_.  You should then see the following
 plots:
 
-![img](img/mlref/ml-ref37.png)
+![img](../img/mlref/ml-ref37.png)
 
 Here it is plotting values for both channels in the same plot, which is not what is desired (especially as it draws the line back between channels).
 That is, remember that this _Plot_ function is completely generic, and so does not understand what a particular plot should look like.   We can however
 select a _Stratifier_ as channel (`CH`) which means that separate scatter plots will be made for each level (unique value) of the stratifier.  This gives
 two plots, one per channel, that show clearer results:
 
-![img](img/mlref/ml-ref38.png)
+![img](../img/mlref/ml-ref38.png)
 
 
-In this case, if you wanted to restrict the range of frequencies, you'd need to re-run the Luna command changing `max` to something higher or lower.  Obviously for
-more advanced/fine-grained manipulation, one should use a proper statistical/graphics package, however: this is designed for situations where a quick view of some
+In this case, if you wanted to restrict the range of frequencies,
+you'd need to re-run the Luna command changing `max` to something
+higher or lower.  Obviously for more advanced/fine-grained
+manipulation, one should use a proper statistical/graphics package,
+however: this is designed for situations where a quick view of some
 results can be of use.
 
 

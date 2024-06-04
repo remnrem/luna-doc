@@ -1,4 +1,4 @@
-# Independent components analysis
+# Independent components and principal component analyses
 
 _An implementation of the fastICA algorithm_
 
@@ -6,6 +6,7 @@ _An implementation of the fastICA algorithm_
 | ---- | ------ | 
 | [`ICA`](#ica)      | Fit ICA model to signal data |
 | [`ADJUST`](#adjust)  | Adjust original signals given one or more ICs |
+| [`SVD`](#svd) | Apply time-series PCA to multiple channels | 
 
 ## `ICA`
 
@@ -205,4 +206,45 @@ ADJUST sig=${eeg} adj=${ic} corr-sig=LOC,ROC corr-th=0.5,0.5
     Luna defines channel _types_ as `IC` components automatically
     if they start with `IC_`, and sets an automatic variable `${ic}`
     that corresponds to these.
+
+
+## `SVD`
+
+_Singular value decomposition of time-series data (PCA)_
+
+This command performs PCA via SVD of multiple channels, and
+(optionally) adds new channels to the current in-memory EDF. All input
+channels must have the same sample rate.  A specified number of new channels (with
+the same sample rate) will be added to the in-memory EDF.
+
+<h5>Parameters</h5>
+
+| Parameter | Example | Description |
+| ---- | ---- | ---- |
+| `sig` | `C3,C4,F3,F4` | Signals to be included in the SVD |
+| `nc` | 4 | Number of components to extract |
+| `tag` | `C_` | Tag to add to new channels (e.g. `C_1`, `C_2`, etc) |
+| `norm` |  | Normalize channels (to unit variance) prior to SVD |
+| `winsor` | `0.02` | Winsorize time series prior to SVD at this percentile (e.g. 2nd, 98th) |
+| `no-new-channels` | | Do not add new channels to the EDF |
+
+<h5>Outputs</h5>
+
+The primary output (unless `no-new-channels` is set) are the `nc` new
+channels added to the EDF.
+
+Primary per-component output (strata: `C`)
+
+| Variable | Description |
+| --- | --- |
+| `W` | Singular value |
+| `INC` | Is this componenent included (e.g. given `nc`) |
+| `VE` | Variance explainend | 
+| `CVE` | Cumulative variance explained |
+
+Component weights (right singular vectors) (strata: `C` x `FTR`)
+
+| Variable | Description |
+| --- | --- |
+| `V` | Weight/right singular vector value |
 

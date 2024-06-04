@@ -4,7 +4,7 @@
 %   M-:  (setq make-backup-files nil)
 --->
 
-![img](img/hypnoscope0.png)
+![img](../img/hypnoscope0.png)
 
 ## Overview
 
@@ -39,7 +39,7 @@ follows sleep stage conventions as described
 [here](ref/hypnograms.md).  Alternatively, click _Example hypnogram_
 to load single example dataset.
 
-![img](img/hypnoscope-n1-load.png){:width="25%"}
+![img](../img/hypnoscope-n1-load.png){:width="25%"}
 
 Alternatively, you can cut-and-paste whitespace-delimited plaintext
 into the _Stage epochs_ window, and then click _Import/update_ below.
@@ -48,17 +48,17 @@ This assumes the following stage labels: `W`, `N1`, `N2`, `N3`, `R`,
 start time (i.e clock-time for when the first epoch is, in 24-hour
 format prepending a `@` character: e.g. `@22:30:00`).
 
-![img](img/hypnoscope-n1-text.png){:width="25%"}
+![img](../img/hypnoscope-n1-text.png){:width="25%"}
 
 After loading a valid hypnogram via either means, you should see
 something like the following:
 
-![img](img/hypnoscope-n1a.png)
+![img](../img/hypnoscope-n1a.png)
 
 After uploading the data, the _Stage epochs_ box will be populated with the extracted stages.  You
 can make edits here and click _Import/update_ to recalculate statistics:
 
-![img](img/hypnoscope-n1b.png){:width="25%"}
+![img](../img/hypnoscope-n1b.png){:width="25%"}
 
 The metrics and summaries are described on this
 [Luna](ref/hypnograms.md) and [Moonlight](moonlight.md) pages.
@@ -68,7 +68,7 @@ The metrics and summaries are described on this
 Either upload a file directly, or select _Load example hypnograms_
 to see _Hypnoscope_ with examples from the NSRR:
 
-![img](img/hypnoscope-load.png){ width="200px" }
+![img](../img/hypnoscope-load.png){ width="200px" }
 
 After clicking to load the example data, it will take a little while
 to load and pre-process the data, especially for large studies.
@@ -87,7 +87,7 @@ midnight for all individuals (even if studies start after midnight).
 If you hover the mouse over the image, a standard hypnogram will be
 plotted at the top of the screen for that individual.
 
-![img](img/hypnoscopeA.png)
+![img](../img/hypnoscopeA.png)
 
 A _banding_ of studies is evident is the above plot, as individuals
 are ordered by the six cohorts (N=50 from each), e.g. the cohort at
@@ -109,7 +109,7 @@ analysis of hypnogram statistics.
 To change the x-axis alignment, select the _Align by_ control and pick
 _Elapsed-time_.  Now all studies are aligned such that sleep onset occurs at the same point (0 hours):
 
-![img](img/hypnoscopeB.png)
+![img](../img/hypnoscopeB.png)
 
 __Ordering rows/individuals:__
 
@@ -128,33 +128,33 @@ In this example (which uses clock-time alignment), the rows are sorted
 by sleep onset (i.e.  individuals with later sleep onsets are plotted
 below those with earlier sleep onset times:
  
-![img](img/hypnoscopeC.png)
+![img](../img/hypnoscopeC.png)
 
 <h4>Restricting stage/color palettes</h4>
 
 Selecting options from the _Color scheme_ list (left panel), here we restrict to viewing the same data/view, but only `N3` epochs highlighted:
 
-![img](img/hypnoscopeD.png)
+![img](../img/hypnoscopeD.png)
 
 <h4>Sorting individuals</h4>
 
 By default, the _Sort By_ list can select to order individuals by either _sleep onset clock-time_ or _recording start clock-time_.  If
 other covariates are attached, these will additionally populate the _Sort By_ tool:
 
-![img](img/hypnoscope-sort.png){:width="30%"}
+![img](../img/hypnoscope-sort.png){:width="30%"}
 
 This view sorts the individuals (rows) by REM latency, aligning recordings by elapsed-time (rather than clock-time)
 and
 
-![img](img/hypnoscope-remlat1.png)
+![img](../img/hypnoscope-remlat1.png)
 
 The same plot, but now selecting only REM epochs to be shown:
 
-![img](img/hypnoscope-remlat2.png)
+![img](../img/hypnoscope-remlat2.png)
 
 After sorting the individuals, this changes the corresponding table in the _Covariates_ panel too:
 
-![img](img/hypnoscopeE.png)
+![img](../img/hypnoscopeE.png)
 
 
 <h4>Generating individual hypnogram metrics</h4>
@@ -166,7 +166,7 @@ rows are sorted, they should be representative of hypnograms in/near that region
 
 To look at one individual in more detail, go to the lower-left panel and select that person: 
 
-![img](img/hypnoscope-many-sel1.png){:width="25%"}
+![img](../img/hypnoscope-many-sel1.png){:width="25%"}
 
 Clicking _Generate hypnogram stats_ will pass the hypnogram for that person to the _N=1_ panel,
 in which the hypnogram statistics are then calculated.
@@ -299,7 +299,7 @@ covariates previously calculated for those individuals.
 
 To attach a new set, click on the _Optional covariates_ form:
 
-![img](img/hypnoscope-load-covar.png){ width="200" }
+![img](../img/hypnoscope-load-covar.png){ width="200" }
 
 Covariate files should be plaintext
 
@@ -313,7 +313,7 @@ Covariate files should be plaintext
  
 The _Covariates_ panel will show a table after a covariate file has been attached: 
 
-![img](img/hypnoscope-covar.png)
+![img](../img/hypnoscope-covar.png)
 
 In the example dataset, as well as some basic demographics (age, sex)
 the covariate file contains a set of metrics calculated _based on the

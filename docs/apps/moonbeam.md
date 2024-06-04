@@ -1,6 +1,6 @@
 # Moonbeam
 
-![img](img/mb0.png)
+![img](../img/mb0.png)
 
 _Moonbeam provides a conduit to connect [NSRR](https://sleepdata.org) data with Luna
 tools._
@@ -13,7 +13,7 @@ the [National Sleep Research Resource
 _Moonbeam_ button (on the left panel of the main _Moonlight_ page) and
 it will bring up this type of dialog box:
 
-![img](img/mb1.png){:width="25%"}
+![img](../img/mb1.png){:width="25%"}
 
 As an NSRR user, you can obtain your personalized token by visiting
 [http://sleepdata.org/token]() (This is the same token you’d use for the
@@ -21,7 +21,7 @@ NSRR Ruby download gem, which is fixed but specific to each NSRR
 user.) After pasting in your token and clicking Authenticate, you will
 see a list of available cohorts. The exact list will depend on which
 NSRR cohorts you have permission to access.
-![img](img/mb2.png)
+![img](../img/mb2.png)
 
 After selecting the cohort, the rightmost menu will be populated with
 the IDs of all recordings. Select one and click Import and after a
@@ -30,18 +30,18 @@ Moonlight. As below, a new Moonbeam panel shows any covariate data for
 that individual, taken from the associated .csv files, in a searchable
 table that also lists the definitions of each variable:
 
-![img](img/mb3.png)
+![img](../img/mb3.png)
 
 By selecting the Signals tab, you can view the raw signals, aligned to any annotations:
 
-![img](img/mb4.png)
+![img](../img/mb4.png)
 
 Moonlight supports numerous other visualization and data manipulation
 options. For example, here is a whole-night visualization of some
 signals based on epoch-level Hjorth parameters, which shows drop-out
 of the ECG for the middle part of the night:
 
-![img](img/mb5.png)
+![img](../img/mb5.png)
 
 See the main [Moonlight](moonlight.md) and [Luna](ref/index.md) pages for more
 detailed descriptions of the various functions.
@@ -58,7 +58,7 @@ As well as viewing NSRR data, _Moonlight_ can also be used to view your own EDF/
     annotation file (NSRR XML format, or Luna .annot/.eannot
     format, as described [here](ref/annotations.md)).
 
-![img](img/mb6.png){:width="80%"}
+![img](../img/mb6.png){:width="80%"}
 
 The ability for _Moonbeam_ to transmit datasets from generic public
 URLs can be convenient, for example, if you have files stored on

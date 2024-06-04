@@ -21,7 +21,7 @@ _Commands to alter basic properties of the EDF and the signals therein_
 |[`EDF`](#edf) | Force EDF (versus EDF+) state |
 |[`TIME-TRACK`](#time-track) | Add a time-track to an EDF |
 |[`RECORD-SIZE`](#record-size) | Change EDF record size |
-|[`ALIGN`](#align) | Realign EDF records, annotations and epochs |
+|[`EDF-MINUS`](#edf-minus) | Realign EDF records, annotations and epochs |
 |[`ANON`](#anon)    | Strip ID information from EDF header |
 |[`SET-HEADERS`](#set-headers) | Directly specify certain EDF headers |
 |[`SET-VAR`](#set-var) | Directly specify Luna variables |
@@ -29,6 +29,9 @@ _Commands to alter basic properties of the EDF and the signals therein_
 |[`RECTIFY`](#rectify) | Rectify a signal |
 |[`REVERSE`](#reverse) | Reverse a signal |
 |[`MOVING-AVERAGE`](#moving-average) | Moving average (or median) of a signal | 
+
+<!--- remove this old command now we have EDF-MINUS --->
+<!--- |[`ALIGN`](#align) | Realign EDF records, annotations and epochs | --->
 
 
 ## SIGNALS
@@ -856,6 +859,8 @@ is obviously the same as before).
     seconds has been truncated (i.e. the log will indicate a total
     duration of `11:21:40` instead of the original `11:22:00`).
 
+
+<!---
 ## ALIGN
 
 _Alters the EDF record structure to perfectly align records with annotations and epochs_
@@ -1063,6 +1068,444 @@ annotations correctly altered to specify onset relative to the new EDF start.
 <h3>Example</h3>
 
 _to be added_
+
+--->
+
+
+
+## EDF-MINUS
+
+_Collapsed gapped EDF+D records to standard, aligned EDFs_
+
+(note: documentation for this function is currently a place holder -
+it will be completed within a week or so)
+
+EDF+D files are convenient for recording data that has gaps, although
+it can sometimes be inconvenient to analyse recordings with gaps;
+further, some other tools do not accept EDF+D files.  However, when
+the goal is to output a new EDF, the record-based structure of EDF can
+be a problem - i.e. although gaps can be fractions of an EDF record
+size (e.g. often but not always 1 second), an EDF file must contain
+only whole records.
+
+
+A standard EDF with an "ideal" structure might be as follows:
+
+ - data in a single segment
+
+ - one-to-one correspondence between stage annotations and epochs (units of analysis)
+
+ - a clean mapping of EDF records to annotations: stages are a fixed
+   integer number of seconds and annotations and epochs align to EDF
+   record boundaries
+
+In practice, many records (especially from clinical studies) are EDF+D with less-than-ideal properties
+from the perspective of a clean, convenient analysis:
+
+ - discontinuous segments (gaps); often only a single (largest) segment of interest, but not always 
+
+ - stage annotations not regularly aligned across the night and/or with standard epochs
+
+ - stage annotations not aligned with EDF record boundaries
+
+ - potentially, EDF records are of nonstandard duration (e.g. 3.92 seconds) or very long (e.g. 30 seconds)
+ 
+![img](../img/edf-minus-1.png)
+
+
+In terms of _analysis_:
+
+ - Luna naturally represents gapped EDF+ -- in fact, internally, after
+   any type of markings (e.g. restriction to NREM) the data structure
+   is implicitly identical to an EDF+D file
+ 
+ - epochs (unit of analysis) can be defined to align with stage
+   annotations within each segment (`EPOCH align`), even ones of
+   variable duration via _generic_ epochs (`EPOCH annot`)
+
+ - however, some analyses (e.g. summarizing hypnogram
+   structures/timings) can be challenging with gapped recordings &
+   incomplete annotations, or presence of variably-sized or incomplete
+   epochs, however
+
+
+
+
+_File generation_
+
+When writing a new EDF, the atomic EDF record structure comes into
+play: we can only read or write _whole records_:
+
+ - some EDFs have awkward record sizes (e.g. 4 seconds, or 3.92 seconds)
+
+ - in PSGs containing signals of variable sampling rate, we cannot
+   arbitrarily change record size (i.e. each record must contain a
+   fixed, positive integer number of samples for every signal)
+
+ - if stage annotations & record boundaries do not align, we cannot
+   easily output a new EDF that excludes/includes only a given stage
+
+ - when trying to align signals & annotations, timing difficulties arise due to EDF+ varying its specification of time:
+
+    1) EDF start time constrained to whole seconds (hh:mm:ss), 
+
+    2) signal segments constrained to whole record units, 
+
+    3) no constraints on annotation start/stops, 
+
+    4) no constrains on gap durations
+
+
+_...documentation to be completed..._
+
+<!--- 
+
+ - further, when Luna _masks_ a recording (by flagging _epochs_ as masked or not),
+   the actual transformation is at the level of EDF _records_.  If records do not align with epochs,
+   then 
+
+```
+    Record            1--|2--|3--|4--|5--|6--|7--|8--|
+    Epoch             1-------2-------3-------4-------
+    Masked epochs             XXXXXXXX
+    Retained records  1--|2--|        5--|6--|7--|8--|
+```
+
+```
+    Record            1--|2--|3--|4--|5--|6--|7--|8--|
+    Epoch               1------|2------|3------|4------|
+    Masked epochs               XXXXXXXX
+    Retained records  1--|2--|3--|    5--|6--|7--|8--|
+```
+
+
+
+i.e. here,, masking epoch 2 will retain whole records 3 and 5, only dropped record 4.  
+
+
+ - new Luna command to make standard EDFs with more convenient record/annotation/epoch structure
+    - set EDF record size to 1 sec always
+    - align segments to stage annotation boundaries
+    - select and/or combine gapped segments (e.g. all, largest, only those w/ staging info, etc)
+    - shifts all annotation start/stops as needed (i.e. if splicing out gaps) to keep annot/signal alignment
+    - add annotations to show original (gapped) structure
+    - save new EDF and annotation files
+
+ - when handling gaps, two main choices:
+
+    1) keep timeline as is: fill the gaps (zero-padding) and leave annotations as is
+    2) splice segments: i.e. “ignore” gaps, but then need to alter annotation timelines
+
+
+![img](../img/edf-minus-2.png)
+
+
+
+ - pad versus splice?
+
+
+
+![img](../img/edf-minus-3.png)
+
+
+luna s.lst –s EDF-MINUS out=harmonized/^ policy=splice require=N1,N2,N3,R,W 
+
+   policy :  zero-pad          how to join/select segments
+             splice
+             largest
+             2,3,5
+
+     require  : <annots>    only select segments with at least one of these annotations (complete)
+
+          align  : <annots>    align & truncate segments to these annotations (i.e. stages)
+
+
+Details
+ - zero-hold filter on signals < 1 Hz (must be 1/N Hz where N is an integer) to fit in 1s EDF record
+
+ - gaps expanded to nearest EDF record boundary (e.g. 1.8 s becomes 2s) and subsequent aligned annotations (only) slightly shifted on the timeline :
+       - staging – okay to shift by <1s if makes subsequent analyses easier (i.e. not the level of temporal resolution)
+      - transient <1s events, e.g. spindles: better to keep exact alignment w/ local EEG signal  
+
+ - an alternative: 1) resample all signals to some high, uniform rate (e.g. 1000Hz), 2) select/splice/align at 10-3s temporal resolution, 3) downsample to original rates, 4) distribute EDF  
+
+
+
+
+<h3>Parameters</h3>
+
+
+
+Main arguments
+
+| Parameter | Example | Description |
+| ---- | ---- | ---- |
+| `policy` | `policy=splice` | Treatment of segments | 
+| `require` | | | 
+| `align` | | | 
+| `hms` | | |
+| `dhms` | | |
+
+
+<h3>Output</h3>
+
+--->
+
+
+<h3>Example</h3>
+
+
+```
+luna m.lst -s DESC
+```
+
+```
+___________________________________________________________________
+Processing: id01 [ #1 ]
+ duration 06.30.59, 23459s | time 23.19.59 - 05.51.25 | date 07.04.16
+
+ signals: 23 (of 23) selected in an EDF+D file
+  F3_M2 | F4_M1 | C3_M2 | C4_M1 | O1_M2 | O2_M1 | EOG_L | EOG_R
+  CHIN_1 | EKG | R_R | LEG_L | LEG_R | Snore | Airflow | PTAF
+  Chest | Abdomen | SUM | SAO2 | PLETH | ETCO2 | EDF Annotations
+  extracting 'EDF Annotations' track from EDF+
+
+ annotations:
+  ? (x41) | N1 (x72) | N2 (x74) | W (x593)
+  edf_annot (x0) | note (x138)
+
+ variables:
+  airflow=Airflow | ecg=EKG | eeg=F3_M2,F4_M... | effort=Chest,Abdo...
+  emg=CHIN_1 | eog=EOG_L,EOG_R | generic=R_R,PTAF,P... | id=id01 | leg=LEG_L,LEG_R
+  oxygen=SAO2 | snore=Snore
+ ..................................................................
+ CMD #1: DESC
+   options: sig=*
+
+EDF filename      : merged/id01.edf
+ID                : id01
+Header start time : 23.19.59
+Last observed time: 05.51.25
+Duration          : 06:30:59  23459 sec
+Duration (w/ gaps): 06.31.26  23486 sec
+# signals         : 22
+# EDF annotations : 1
+Signals           : F3_M2[200] F4_M1[200] C3_M2[200] C4_M1[200] O1_M2[200] O2_M1[200]
+                    EOG_L[200] EOG_R[200] CHIN_1[200] EKG[200] R_R[200] LEG_L[200]
+                    LEG_R[200] Snore[200] Airflow[200] PTAF[200] Chest[200] Abdomen[200]
+                    SUM[200] SAO2[25] PLETH[200] ETCO2[25]
+```
+
+```
+luna m.lst -o out.db -s STAGE 
+```
+
+```
+destrat out.db +STAGE -r E 
+```
+
+```
+ID	E	CLOCK_TIME	MINS	OSTAGE	STAGE	STAGE_N	START_SEC
+id01	1	23:19:59	0	?	L	3	0
+id01	2	23:20:29	0.5	?	L	3	30.0
+id01	3	23:20:59	1	?	L	3	60.0
+id01	4	23:21:29	1.5	?	L	3	90
+id01	5	23:21:59	2	?	L	3	120.0
+...
+id01	194	00:56:49	96.8333333333333	W	W	1	5810
+id01	195	00:57:19	97.3333333333333	W	W	1	5840
+id01	196	00:57:49	97.8333333333333	W	W	1	5870
+id01	197	00:58:19	98.3333333333333	W	W	1	5900
+id01	198	00:58:49	98.8333333333333	W	W	1	5930
+id01	199	00:59:19	99.3333333333333	W	W	1	5960
+id01	200	00:59:49	99.8333333333333	W	W	1	5990
+```
+
+To go from EDF+D to a standard EDF (i.e. the initial problem considered w.r.t. other NSRR studies)
+
+Two routes/policies:
+
+    - assume staging is fixed and correct (w.r.t. clock time) -
+      zero-pad signal –> this changes signals (fills gaps, to nearest
+      EDF record unit), keeps annotations 'as is' (largely)
+
+    - assume staging is not aligned uniformly w.r.t. clock time -
+      splice signal –> keeps signals as is (i.e. just ignores gaps,
+      implicitly sets to 0s dur) but rather change annotations to
+      align
+
+In this example, the annotations are not cleanly and consistently
+aligned w.r.t. clock-time (e.g. always 0 and 30secs past the minute);
+thus, we do not want to zero-pad (which keeps annotations largely as
+is)
+
+So, select 'splice' mode: by default, this uses the staging
+annotations to align segments to (N1, N2, N3, R, W and ?), editting
+segments such that the resulting output is cleanly/consistently
+aligned
+
+Of course, this has ignore the fact that gaps exist (vs zero-pad) but
+for many downstream analyses this gives a much cleaner EDF/annot set,
+and the differences are immaterial.
+
+```
+mkdir fin
+
+luna m.lst -o out.db -s EDF-MINUS out=fin/splice policy=splice
+```
+
+```
+___________________________________________________________________
+Processing: id01 [ #1 ]
+ duration 06.30.59, 23459s | time 23.19.59 - 05.51.25 | date 07.04.16
+
+ signals: 23 (of 23) selected in an EDF+D file
+  F3_M2 | F4_M1 | C3_M2 | C4_M1 | O1_M2 | O2_M1 | EOG_L | EOG_R
+  CHIN_1 | EKG | R_R | LEG_L | LEG_R | Snore | Airflow | PTAF
+  Chest | Abdomen | SUM | SAO2 | PLETH | ETCO2 | EDF Annotations
+  extracting 'EDF Annotations' track from EDF+
+
+ annotations:
+  ? (x41) | N1 (x72) | N2 (x74) | W (x593)
+  edf_annot (x0) | note (x138)
+
+ variables:
+  airflow=Airflow | ecg=EKG | eeg=F3_M2,F4_M... | effort=Chest,Abdo...
+  emg=CHIN_1 | eog=EOG_L,EOG_R | generic=R_R,PTAF,P... | id=id01 | leg=LEG_L,LEG_R
+  oxygen=SAO2 | snore=Snore
+ ..................................................................
+ CMD #1: EDF-MINUS
+   options: out=fin/splice policy=splice sig=*
+
+  settings:
+     join-policy (policy)                   = splice
+     retained segments (segments)           = all
+     maximum sample rate allowed (max-sr)   = 1024 Hz
+     segment alignment annotations (align)  = ?,N1,N2,N3,R,W
+       alignment duration unit (dur)        = 30s
+     required annotations (require)         = 
+       require whole annots (require-whole) = F
+       require at least (require-dur)       = 0s
+     annotation prefix (prefix)             = 
+     output file-root (out)                 = fin/splice
+
+  dataset contains 22 signals and 6 annotation classes (918 instances)
+  specified 6 annotation classes (?,N1,N2,N3,R,W) for alignment (780 instances found)
+  aligned segment 1 : 0.00-5803.00 --> 0.00-5790.00
+  aligned segment 2 : 5810.00-10116.00 --> 5810.00-10100.00
+  aligned segment 3 : 10123.00-15082.00 --> 10123.00-15073.00
+  aligned segment 4 : 15088.00-21314.00 --> 15088.00-21298.00
+  aligned segment 5 : 21321.00-23486.00 --> 21321.00-23481.00
+
+  found 5 segment(s)
+    [ original segments ] -> [ aligned, editted ] --> [ final segments ]
+   ++ seg #1 : 0.00-5803.00 (5803s) [included] --> 0.00-5790.00 --> 0.00-5790.00 (13s shorter)
+    - gap #2 : 5803.00-5810.00 (7s) [spliced]
+   ++ seg #2 : 5810.00-10116.00 (4306s) [included] --> 5810.00-10100.00 --> 5790.00-10080.00 (16s shorter)
+    - gap #3 : 10116.00-10123.00 (7s) [spliced]
+   ++ seg #3 : 10123.00-15082.00 (4959s) [included] --> 10123.00-15073.00 --> 10080.00-15030.00 (9s shorter)
+    - gap #4 : 15082.00-15088.00 (6s) [spliced]
+   ++ seg #4 : 15088.00-21314.00 (6226s) [included] --> 15088.00-21298.00 --> 15030.00-21240.00 (16s shorter)
+    - gap #5 : 21314.00-21321.00 (7s) [spliced]
+   ++ seg #5 : 21321.00-23486.00 (2165s) [included] --> 21321.00-23481.00 --> 21240.00-23400.00 (5s shorter)
+  original total duration = 23459s
+  retained total duration = 23400s (59s shorter)
+
+  creating a new EDF fin/splice.edf with 22 channels
+  retaining original EDF start-time of 23.19.59
+  retaining original EDF start-date of 7.4.2016
+  created an empty EDF of duration 23400 seconds
+  creating annotation file fin/splice.annot with 914 annotations from 5 classes
+  data are not truly discontinuous
+  writing as a standard EDF
+  writing 22 channels
+  saved new EDF, fin/splice.edf
+  writing annotations (.annot format) to fin/splice.annot
+
+___________________________________________________________________
+...processed 1 EDFs, done.
+...processed 1 command set(s),  all of which passed
+-------------------------------------------------------------------
+```
+
+```
+luna --build fin > f.lst
+
+cat f.lst 
+
+splice	fin/splice.edf	fin/splice.annot
+```
+
+```
+luna f.lst -o out.db -s SPANNING annot=N1,N2,N3,R,W,?
+```
+```
+destrat out.db +SPANNING | behead
+                       ID   splice              
+                ANNOT_HMS   06:30:00.000        
+                  ANNOT_N   780                 
+            ANNOT_OVERLAP   NO                  
+                ANNOT_SEC   23400               
+                INVALID_N   0                   
+              INVALID_SEC   0                   
+                    NSEGS   1                   
+                  REC_HMS   06:30:00.000        
+                  REC_SEC   23400               
+              SPANNED_HMS   06:30:00.000        
+              SPANNED_PCT   100                 
+              SPANNED_SEC   23400               
+            UNSPANNED_HMS   00:00:00.000        
+            UNSPANNED_PCT   0                   
+            UNSPANNED_SEC   0                   
+                  VALID_N   780
+```
+
+Good, everything is spanned by a single staging annotation, w/ no overlaps
+
+
+To zero pad: 
+
+```
+luna m.lst -o out.db -s EDF-MINUS out=fin/zero policy=zero-pad
+```
+
+Note - in this instance, we will still trim segments to align w/
+starts & duration of staging; in this instance, zero-padding doesn't
+really make sense as annotations are not cleanly consistent anyway.
+
+
+```
+dataset contains 22 signals and 6 annotation classes (918 instances)
+specified 6 annotation classes (?,N1,N2,N3,R,W) for alignment (780 instances found)
+aligned segment 1 : 0.00-5803.00 --> 0.00-5790.00
+aligned segment 2 : 5810.00-10116.00 --> 5810.00-10100.00
+aligned segment 3 : 10123.00-15082.00 --> 10123.00-15073.00
+aligned segment 4 : 15088.00-21314.00 --> 15088.00-21298.00
+aligned segment 5 : 21321.00-23486.00 --> 21321.00-23481.00
+
+found 5 segment(s)
+  [ original segments ] --> [ aligned, editted final segments ]
+ ++ seg #1 : 0.00-5803.00 (5803s) [included] --> 0.00-5790.00 (13s shorter)
+  - gap #2 : 5803.00-5810.00 (7s) [zero-padded] --> 5790.00-5810.00 (13s longer)
+ ++ seg #2 : 5810.00-10116.00 (4306s) [included] --> 5810.00-10100.00 (16s shorter)
+  - gap #3 : 10116.00-10123.00 (7s) [zero-padded] --> 10100.00-10123.00 (16s longer)
+ ++ seg #3 : 10123.00-15082.00 (4959s) [included] --> 10123.00-15073.00 (9s shorter)
+  - gap #4 : 15082.00-15088.00 (6s) [zero-padded] --> 15073.00-15088.00 (9s longer)
+ ++ seg #4 : 15088.00-21314.00 (6226s) [included] --> 15088.00-21298.00 (16s shorter)
+  - gap #5 : 21314.00-21321.00 (7s) [zero-padded] --> 21298.00-21321.00 (16s longer)
+ ++ seg #5 : 21321.00-23486.00 (2165s) [included] --> 21321.00-23481.00 (5s shorter)
+original total duration = 23459s
+retained total duration = 23427s (32s shorter)
+
+creating a new EDF fin/zero.edf with 22 channels
+retaining original EDF start-time of 23.19.59
+retaining original EDF start-date of 7.4.2016
+created an empty EDF of duration 23481 seconds
+creating annotation file fin/zero.annot with 918 annotations from 5 classes
+```
+
+If one wants clock times, add `hms` or `dhms` to make the generated
+`.annot` file have those versus elapsed seconds.
 
 
 ## ANON

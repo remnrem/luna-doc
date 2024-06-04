@@ -1,12 +1,17 @@
-# Luna command-line tool documentation
+# Key concepts
 
 ## Overview
 
-Luna is fundamentally a console/command-line package, i.e. there is no
-_point-and-click_. When talking specifically about the command-line
-interface to Luna, we'll often refer it as _lunaC_, to distinguish it from the
-[_lunaR_](../ext/R/index.md) package for R.  Familiarity with the
-basic Unix/macOS console environment and shell scripting is recommended.
+This page introduces some key concepts for using Luna.  Although
+introduced in terms of the _lunaC_ command-line version of Luna, all
+concepts are equally applicable in the Python and R versions too.
+
+!!!hint "Prerequisites"
+    Luna is fundamentally a console/command-line package,
+    i.e. there is no _point-and-click_. Familiarity with the basic
+    Unix/macOS console environment and shell scripting is recommended.
+
+## Luna syntax
 
 Once [installed](../download/index.md) and in your command path,
 _lunaC_ is invoked via the `luna` command, often in the form:
@@ -58,6 +63,7 @@ files](#annotations)) in a [sample list](args.md#sample-lists) file
       special variable form `id` (which can handle purely numeric IDs,
       i.e. interpreting it as an ID rather than than a row number in a
       sample list )
+
 
 ## Help
 
@@ -948,6 +954,19 @@ with the EDF. Luna accepts the following annotation formats:
 | [EDF+](../ref/annotations.md#edf-annotations-channel) | EDF+ Annotation channels | 
 | [XML](../ref/annotations.md#nsrr-xml-files) | XML format used by the [National Sleep Research Resource](http://sleepdata.org) to distribute sleep staging, and information on manually-scored arousals, movements and artifacts |
 
+### Dates
+
+By default, all dates are assumed to be in _European_ (day-month-year)
+format (following from the use of EDF as the primary input format).
+This extends to annotation (e.g. `.annot`) files.  The special
+variables `read-mdy-annot-dates` and `read-mdy-edf-dates` allow for
+non-European (_month-day-year_) format dates to be read from files --
+either in annotations or EDF headers -- if set to true (`T`).
+Currently, all outputs are in European format, and any other commands
+(e.g. to specify the EDF header via `SET-HEADERS`) still assumes
+European date format.
+
+
 ### Ranges
 
 Given a sample list, by default Luna will iterate through all EDFs in
@@ -1235,6 +1254,8 @@ _Controlling inputs_
 | [`path`](#search-paths) | Set search path for files in sample lists |
 | [`fix-edf`](#fix-truncated-edfs) |  Attempt to correct truncated/over-long EDFs if `T` |
 | [`force-edf`](#annotations)       | Skip EDF annotations _and_ time-track from any EDF+, and force as a continuous EDF if `T`|
+| [`read-mdy-annot-dates`](#dates) | Assume US-style month-day-year dates when reading all annotation files |
+| [`read-mdy-edf-dates`](#dates) | Assume US-style month-day-year dates when reading the EDF start date |
 
 _Controlling outputs_
 

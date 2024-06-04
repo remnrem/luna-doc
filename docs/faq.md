@@ -12,7 +12,7 @@ extension library for R ([_lunaR_](ext/R/index.md)).
 
 ## Which? 
 
-The current version is the _beta-release_ __v0.99 (5-Dec-2023)__.
+The current version is the _beta-release_ __v1.00 (31-May-2024)__.
 Use `luna -v` to display the specific build date/time.
 
 ## Where?
@@ -120,6 +120,8 @@ Luna uses a number of excellent open-source components, in particular:
 - [SQLite](https://www.sqlite.org/index.html) embedded database
 
 - [R Project for Statistical Computing](http://www.r-project.org)
+
+- [Python](http://python.org) and the [JupyterLab](http://jupyter.org) framework
 
 - [Eigen](https://eigen.tuxfamily.org/index.php?title=Main_Page) C/C++ matrix/linear algebra library
 

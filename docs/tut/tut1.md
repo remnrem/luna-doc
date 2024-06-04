@@ -10,13 +10,13 @@ detail.  The [third section](tut3.md) extends the range of commands
 towards some more genuinely useful analyses of the sleep EEG.  The
 [fourth section](tut4.md) performs the same steps but using
 [_lunaR_](../ext/R/index.md) instead of [_lunaC_](../luna/args.md).
-The final section then retraces many of these steps using the interactive
-[_Moonlight_](../moonlight.md) tool. 
+The fifth section then retraces many of these steps using the interactive
+[_Moonlight_](../moonlight.md) tool. The [final section](https://github.com/remnrem/luna-api-notebooks/blob/main/tutorial.ipynb)
+traces the same steps but using the newer Python-based interace to Luna.
 
 !!! note "Data used in this tutorial"
-    This tutorial, based on
-    [tutorials](https://sleepdata.org/tools/ruby-script-tutorial-01)
-    at the National Sleep Research Resource
+    This tutorial, based on data from 
+    the National Sleep Research Resource
     [http://sleepdata.org](http://sleepdata.org), involves looking at
     three polysomnograms.  Each individual has an EDF (containing
     signal data, including EEG, ECG and EMG) and also an 
@@ -24,7 +24,7 @@ The final section then retraces many of these steps using the interactive
     recorded apneas, hypopnea, movements and other events.  
 
 
-Across these three tutorials, we will:
+Across these tutorials, we will:
 
  - summarize the contents of the EDFs and annotation files
  - calculate signal statistics
@@ -41,7 +41,7 @@ As mentioned, we'll follow the
 the [National Sleep Research Resource](http://sleepdata.org), which
 are based on three EDFs. 
 
-If you are using the [Docker](../download/docker.md) version of Luna,
+If you are using the [Docker](../download/docker.md) version of Luna
 you'll already have the tutorial EDFs pre-installed.  If not, you'll
 need to grab them from the web, from the link below:
 

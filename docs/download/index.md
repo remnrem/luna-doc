@@ -1,10 +1,13 @@
 # Downloads
 
-<p align="right"><em>Current Luna release: <b>v0.99</b> (5-Dec-2023)</em></p>
+<p align="right"><em>Current Luna release: <b>v1.00</b> (31-May-2024)</em></p>
 
 ## Quick links
 
 Latest stable Luna command-line tool (binaries and source):
+
+!!! note
+    The latest release (v1.0) is only available via the [Github repo](http://github.com/remnrem/luna-base) and [Docker images](https://hub.docker.com/r/remnrem/lunapi);  binaries for v1.0 will be posted in due course.
 
 | Platform | Link |
 | ----- | ----- |
@@ -40,16 +43,19 @@ Latest development source (Luna and _lunaR_):
 Luna is released under the
 [GPLv3](https://www.gnu.org/licenses/gpl-3.0.en.html) license,
 allowing free sharing and modification of the source code.  There are
-three basic ways to obtain Luna:
+multiple ways to obtain Luna:
 
-- ultimately, the best route is to compile from source: see [here](source.md) for _lunaC_ and _lunaR_, along with
-  instructions for compilation
+- compile from source: see [here](source.md) for _lunaC_ and _lunaR_,
+  along with instructions for compilation
 
-- [binary executables](exec.md) for _lunaC_ for Mac OS and Windows
+- download [binary executables](exec.md) for _lunaC_ for Mac OS and Windows
 
-- or as a [Docker container](docker.md), which allows any machine with
-  [Docker](http://www.docker.com) installed on it to run Luna (both
-  _lunaC_ and _lunaR_) and comes with R (and RStudio) and the tutorial data pre-installed.
+- install the Python package with `pip install lunapi` (on macOS and Linux) 
+
+- or pull a [Docker container](docker.md), which allows any machine
+  with [Docker](http://www.docker.com) installed on it to run Luna
+  (both _lunaC_ and either _lunapi_ or _lunaR_) and comes with JupyerLab (or R and
+  RStudio) and with the tutorial data pre-installed.
 
 
 !!! hint "Advice for Linux & macOS users"
