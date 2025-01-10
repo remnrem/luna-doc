@@ -8,7 +8,7 @@ _Simulation of new data_
 | [`SIMUL`](#simul) | Simple approach to simulate time-series given a power spectrum |
 | [`SIGGEN`](#siggen) | Generate/spike in artificial test signals |
 
-## `SIMUL`
+## SIMUL
 
 _Simulation of time-series data given a power spectrum_
 
@@ -86,7 +86,7 @@ into subsequent commands such as `PSD`.
     the desired duration (and sample rate given by the `sr` option).
     
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 Primary parameters to specify the data and any outlier actions for the dependent variables:
 
@@ -105,7 +105,7 @@ Primary parameters to specify the data and any outlier actions for the dependent
 | `verbose` | | Output the specified power spectrum |
 
 
-<h5>Outputs</h5>
+<h3>Outputs</h3>
 
 Optional expected power spectra output (option: `verbose`, strata: `F`):
 
@@ -116,7 +116,7 @@ Optional expected power spectra output (option: `verbose`, strata: `F`):
 | `P` | Expected power |
 | `LP` | Log-scaled expected power |
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 Here we generate a time series from scratch:
 
@@ -394,7 +394,7 @@ _This command is largely redundant (given `SIMUL`), but is decribed here for com
 This is a simple command to generate test signal data (on top of an existing EDF).  Currently, it
 only generates sine wave signals, or pulses of a given duration.
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | ---- | ----- | ----- |
@@ -405,11 +405,11 @@ only generates sine wave signals, or pulses of a given duration.
 | `impulse` | `impulse=0.5,1,100` | Set impulse of amplitude `1` for 100 samples, starting at 0.5 way through the recording; multiple values are possible `impulse=T,A,D,T,A,D,...` , i.e. time/amplitude/duration | 
 
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 No new output, this command just modifies the internal signal data.
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 
 To generate a sine wave in the signal `C3` (first clearing that signal):

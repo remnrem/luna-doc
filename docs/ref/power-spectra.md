@@ -12,6 +12,7 @@ power spectral density estimation_
 | [`HILBERT`](#hilbert) | Hilbert transform |
 | [`CWT`](#cwt)         | Continuous wavelet transform |
 | [`CWT-DESIGN`](#cwt-design) | Complex Morlet wavelet properties |
+| [`PCOUPL`](#pcoupl) | Generic phase coupling | 
 | [`EMD`](#emd)        | Empirical mode decomposition |
 | [`MSE`](#mse)         | Multi-scale entropy statistics | 
 | [`LZW`](#lzw)         | LZW compression (information content) index |
@@ -1252,6 +1253,191 @@ ID      PARAM    FWHM_F  FWHM_LWR  FWHM_UPR
 .   11_12_200  2.197802   9.89011  12.08791
 .   15_12_200  3.003003  13.51351  16.51652
 ```
+
+## PCOUPL
+
+_Generic phase/event coupling analysis_
+
+This command implements that same functions used by
+[`SPINDLES`](spindles-so.md#spindles) when evaluating spindle/SO phase
+coupling and overlap.  Here, the functionality has been extracted out of the
+context of the `SPINDLES` command, to make it generically useful.  That is, given a set of [annotations](annotations.md)
+and one or more signals, this will:
+
+ - apply the filter-Hilbert method to determine instantaneous phase of the signal
+
+ - given a defined _anchor_ for annotation events (e.g. start, middle or end) it assess whether or not the events occur randomly
+   with respect to the phase of the signal, using randomization to generate surrogate time series
+
+For the purpose of calculating overlap statistics, phase bins are fixed in 18 20-degree bins.
+
+<h3>Parameters</h3>
+
+| Option | Example | Description |
+| ---- | ---- | --- |
+| `sig` | `C3` | One or more signals (for determining phase) |
+| `events` | `arousal` | One or more annotation classes |
+| `lwr` | 3 | Lower frequency for filter-Hilbert |
+| `upr` | 8 | Upper frequency for filter-Hilbert |
+| `anchor` | `start` | Anchor for events (`start`, `middle`/`mid` or `stop`/`end`) |
+| `nreps` | 1000 | Number of permutations |
+
+Secondary parameters
+
+| Option | Example | Description |
+| ---- | ---- | --- |
+| `tw` | 0.5 | Transition width for Kaiser window FIR |
+| `ripple` | 0.01 | Ripple parameter for Kaiser window FIR |
+| `perm-whole-trace` | | Permute signals across whole recording (not within epoch) |
+| `fixed-epoch-dur` | 20 | If using _generic_ epochs, set a fixed epoch size for permutation |
+
+Note: cannot run within-epoch permutation with generic epochs: add `fixed-epoch-dur` or `perm-whole-trace`
+
+<h3>Outputs</h3>
+
+Phase coupling statistics (strata: `ANNOT` x `CH`)
+
+| Variable | Description |
+| ----- | ----- |
+| `ANGLE` | Mean phase angle (degrees) |
+| `MAG` | Coupling magnitude (observed statistic) |
+| `MAG_Z` | Permutation-basewd Z-score for coupling magnitude |
+| `MAG_NULL` | Mean coupling statistic under the null |
+| `MAG_EMP` | Empirical p-value |
+| `PV` | Asymptotic p-value |
+| `SIGPV_NULL` | Proportion of asymptotic p<0.05 under the null |
+| `N` | Number of events |
+
+Phase-bin overlap statistics (strata: `ANNOT` x `CH` x `PHASE`)
+
+| Variable | Description |
+| ----- | ----- |
+| `OVERLAP` | Observed count of event anchors per signal phase bin |
+| `OVERLAP_EXP` | Expected count based on permutations |
+| `OVERLAP_EMP` | Empirical p-value based on permutations |
+| `OVERLAP_Z` | Z-score based on permutations |
+
+
+<h3>Example</h3>
+
+Here we use `SPINDLES` to assess spindle/SO coupling:
+
+```
+luna s.lst 2 -o out.db \
+  -s ' MASK ifnot=N2 & RE
+       SPINDLES sig=EEG annot=SP nreps=1000 so mag=2
+       WRITE-ANNOTS annot=SP file=sp.annot '
+```
+
+Looking at some of the relevant outputs: here we see a mean phase angle of 260 degrees (i.e. rising slope of the SO, just
+before the peak at 270 degrees), and an indication that there is significantly non-random coupling (i.e. high Z score, etc):
+
+```
+destrat out.db +SPINDLES -r F CH -v COUPL_ALL_MAG COUPL_ALL_MAG_Z COUPL_ALL_PV COUPL_ALL_ANGLE N | behead
+```
+```
+    COUPL_ALL_ANGLE   260.205
+      COUPL_ALL_MAG   0.24571
+    COUPL_ALL_MAG_Z   5.94923
+       COUPL_ALL_PV   1.82e-14
+                  N   524                 
+```
+
+(Note the `COUPL_ALL` statistics are based on _all_ spindles, not just
+those that overlap a detected SO; we focus on this, as this will be
+more comparable with the application of `PCOUPL` below.)
+
+Now, imagine instead that we'd used another method to determine
+spindles, outside of Luna.  Or, indeed, that "spindles" here may
+instead reflect _any_ type of event, e.g. arousals, apnea, etc (and
+instead of the EEG, the `sig` here could be _any_ type of rhythmic
+signal, e.g. airflow, etc).  Here we can use `PCOUPL` to
+(_approximately_ - see below) recapitulate the internals of `SPINDLES` (again, noting
+that `PCOUPL` can be used generically).  We attach the previous spindle calls with `annot-file`,
+and then specify these with `events`:
+
+```
+luna s.lst -o out.db \
+     annot-file=sp.annot \
+   -s ' MASK ifnot=N2 & RE
+        PCOUPL sig=EEG lwr=0.5 upr=4 nreps=1000 events=SP anchor=mid '
+```
+
+Here we use the mid-point of the spindle (`anchor=mid`) to assign phases to events. The console log
+tells us that (as above) the 524 spindle events have been mapped to a non-masked (i.e. N2) portion of
+the recording:
+
+```
+ CMD #3: PCOUPL
+   options: anchor=mid events=SP lwr=0.5 nreps=1000 ripple=0.01 sig=EEG tw=0.5 upr=4
+  using epoch duration of 30s for within-epoch shuffling
+  processing EEG
+  done filter-Hilbert...
+   - processing SP
+  mapped 524 of 524 events
+```
+
+Looking at the primary outputs we see (broadly) similar results as above:
+```
+destrat out.db +PCOUPL -r ANNOT CH | behead
+```
+```
+        ANNOT   SP                  
+           CH   EEG                 
+        ANGLE   277.451    
+          MAG   0.1665
+      MAG_EMP   0.0159
+     MAG_NULL   0.0495
+        MAG_Z   3.8659
+            N   524                 
+           PV   4.8e-07
+   SIGPV_NULL   0.162
+```
+
+That is, both asymptotic (`PV`) and empirical (`MAG_EMP`) p-values are significant, and the mean angle is near 270 degrees.
+
+Why aren't these _identical_ to the above (given that `SPINDLES` also uses
+a filter-Hilbert band of 0.5 - 4 Hz by default)?  This primarily
+relates to the _anchor_ used.  Internally, `SPINDLES` actually uses the
+point of maximal wavelet coefficient as the "anchor".  In this (more
+generic) function, there may not be an equivalent, and so `PCOUPL`
+will use either the start, mid-point or end (i.e. based only on the start/stop times of the spindle).
+This slightly changes the mean angle and also reduces the magnitude of phase coupling a
+small amount.  So, for spindle/SO analysis it would still be
+preferrable to use `SPINDLES`, but for other types of (more generic)
+phase-coupling analysis, `PCOUPL` would be appropriate.
+
+Finally, we can also pull out the count of events per 20-degree bin of the slow phase (excluding some columns
+from the output for clarity):
+```
+destrat out.db +PCOUPL -r ANNOT CH PHASE
+```
+```
+PHASE   OVERLAP OVERLAP_EXP OVERLAP_EMP   OVERLAP_Z
+10      20      28.537      0.95304      -1.5539
+30      28      28.7        0.57742      -0.1249
+50      16      28.432      0.99800      -2.2381
+70      25      27.921      0.75124      -0.5687
+90      22      27.395      0.86013      -1.0074
+110     20      27.798      0.93706      -1.3992
+130     21      27.981      0.94005      -1.3821
+150     25      28.403      0.76323      -0.6399
+170     29      29.087      0.52047      -0.0157
+190     32      29.782      0.35164       0.4230
+210     29      30.542      0.62137      -0.2728
+230     24      30.152      0.88111      -1.0892
+250     39      30.688      0.08191       1.5959
+270     37      30.257      0.12987       1.2361
+290     47      29.859      0.00099       3.2154
+310     46      29.721      0.00599       2.9167
+330     33      29.42       0.26473       0.6731
+350     31      29.325      0.39560       0.3096
+```
+
+That is, for bins 290 (280-300) and 310 (300-320) we see more events
+than (`OVERLAP`) than we'd expect by chance (`OVELAP_EXP`), leading to positive
+Z scores and significant (1-sided) empirical p-values.
+
 
 ## EMD
 

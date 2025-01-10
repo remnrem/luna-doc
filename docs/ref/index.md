@@ -33,6 +33,7 @@ see _lunaC_'s [help function](../luna/args.md#help).
 |[Time/frequency analyses](power-spectra.md) | Power spectral density estimation and other T/F decompositions |
 |[Spindles and SO](spindles-so.md) | Spindles and slow oscillations |
 |[Coupling/connectivity](cc.md)    | Phase/amplitude coupling, coherence and other multi-signal analyses |
+|[Ultradian dynamics](dynamics.md) | Quantifying ultradian dynamics in epoch-level metrics | 
 |[Interval-based](intervals.md)    | Time/event-locked signal averaging, peak detection, enrichment |
 |[Spatial/topographical](spatial.md) | Channel locations, spatial filtering and interpolation |
 |[PSC](psc.md)                     | Principal spectral components |
@@ -68,12 +69,15 @@ __Annotations:__
 [`MAKE-ANNOTS`](annotations.md#make-annots): _make new annotations,_
 [`WRITE-ANNOTS`](annotations.md#write-annots): _write annotation files,_
 [`SPANNING`](annotations.md#spanning): _annotation coverage stats,_
+[`ESPAN`](annotations.md#espan): _epoch-based annotation coverage,_
+[`META`](annotations.md#meta): _add meta-data to annotatons,_
 [`A2S`](annotations.md#a2s): _make signal from annotation,_
 [`S2A`](annotations.md#s2a): _make annotation from signal._ 
 __Expressions:__
 [Expressions](epochs.md#eval-expressions): _overview of expressions,_
-[`EVAL`](epochs.md#eval): _annotation-based expressions,_
-[`TRANS`](epochs.md#trans): _channel-based expressions._
+[`EVAL`](evalss.md#eval): _annotation-based expressions,_
+[`TRANS`](evals.md#trans): _channel-based expressions,_
+[`DERIVE`](evals.md#derive): _derive summary summaries from annotation meta-data._
 __Epochs:__
 [`EPOCH`](epochs.md#epoch): _specify epochs,_
 [`EPOCH-ANNOT`](epochs.md#epoch-annot): _attach epoch annotations._
@@ -85,6 +89,7 @@ __Masks:__
 __Freezes & caches:__
 [`FREEZE`](freezes.md#freeze): _freeze snapshot,_
 [`THAW`](freezes.md#thaw): _revive a prior freeze,_
+[`CLEAN-FREEZER`](freezes.md#clean-freezer): _empty freezer,_
 [`CACHE`](outputs.md#cache): _cache operations._
 __Canonical signals:__
 [`CANONICAL`](manipulations.md#canonical): _make canonical signals._
@@ -101,11 +106,15 @@ __Manipulations:__
 [`mV`](manipulations.md#mv): _force millivolts,_
 [`TIME-TRACK`](manipulations.md#time-track): _add time-track,_
 [`FLIP`](manipulations.md#flip): _flip signal,_
+[`SCALE`](manipulations.md#scale): _scale a signal,_
+[`SHIFT`](manipulations.md#shift): _shift a signal,_
+[`SCRAMBLE`](manipulations.md#scramble): _scramble a signal,_
+[`COMBINE`](manipulations.md#combine): _combine multiple signals,_
 [`ZC`](manipulations.md#zc): _zero-center signal,_
 [`ROBUST-NORM`](manipulations.md#robust-norm): _robust normalization,_
 [`EDF`](manipulations.md#edf): _force basic EDF,_
 [`RECORD-SIZE`](manipulations.md#record-size): _change record size,_
-[`ALIGN`](manipulations.md#align): _realign records,_
+[`EDF-MINUS`](manipulations.md#edf-minus): _convert EDF+ to EDF,_
 [`ANON`](manipulations.md#anon): _anonymize EDF,_
 [`SET-HEADERS`](manipulations.md#set-headers): _set EDF headers,_
 [`SET-VAR`](manipulations.md#set-var): _set Luna variables,_
@@ -143,10 +152,11 @@ __SOAP:__
 [`REBASE`](soap.md#rebase): _change epoch length,_
 [`PLACE`](soap.md#place): _align stages,_
 __POPS:__
-[`POPS`](pops.md#pops): _predict sleep stages,_
+[`RUN-POPS`](pops.md#run-pops): _predict sleep stages,_
+[`POPS`](pops.md#pops): _lower-level POPS command,_
 [`EVAL-STAGES`](pops.md#eval-stages): _evaluate external stages,_
 [`--eval-stages`](pops.md#eval-stages): _evaluate external stages,_
-[`--pops`](pops.md#-pops): _train model._
+[`--pops`](pops.md#-pops): _train models._
 __Time/frequency analysis:__
 [`PSD`](power-spectra.md#psd): _Welch PSD,_
 [`MTM`](power-spectra.md#mtm): _Multi-taper PSD,_
@@ -155,6 +165,7 @@ __Time/frequency analysis:__
 [`HILBERT`](power-spectra.md#hilbert): _Hilbert transform,_
 [`CWT`](power-spectra.md#cwt): _wavelet transform,_
 [`CWT-DESIGN`](power-spectra.md#cwt-design): _CWT properties,_
+[`PCOUPL`](power-spectra.md#pcoupl): _generic phase coupling,_
 [`EMD`](power-spectra.md#emd): _Empirical mode decompositon,_
 [`MSE`](power-spectra.md#mse): _Multi-scale entropy,_
 [`LZW`](power-spectra.md#lzw): _LZW compression,_
@@ -173,6 +184,8 @@ __Coupling/connectivity:__
 [`XCORR`](cc.md#xcorr): _cross-correlation,_
 [`TSYNC`](cc.md): _cross-correlation & phase delay,_
 [`GP`](cc.md#gp): _Granger prediction._
+__Ultradian dynamics:__
+[`dynam`](dynamics.md#dynam): _option to summarize ultradian dynamics_.
 __Interval-based:__
 [`OVERLAP`](intervals.md#overlap): _single-sample overlap analysis,_
 [`--overlap`](intervals.md#-overlap): _multi-sample overlap analysis,_ 
@@ -202,6 +215,8 @@ __Microstates:__
 __Clustering:__
 [`EXE`](clustering.md): _time-series clustering._
 __Association:__
+[`--gpa-prep`](assoc.md#gpa): _general permutation-based association model prep,_
+[`--gpa`](assoc.md#gpa): _general permutation-based association models,_
 [`CPT`](assoc.md#cpt): _association models._ 
 __Prediction:__
 [`PREDICT`](predict.md#predict): _prediction models._
@@ -210,46 +225,24 @@ __Simulation:__
 [`SIGGEN`](simul.md#siggen): _basic signal simulation._
 __Helpers:__
 [`--build`](helpers.md#-build): _build sample-lists,_
+[`--validate`](helpers.md#-validate): _validate files,_
 [`--repath`](helpers.md#-repath): _alter sample-lists,_
 [`--merge`](helpers.md#-merge): _merge EDFs,_
 [`--xml`](helpers.md#-xml): _view XMLs,_
 [`--xml2`](helpers.md#-xml2): _dump EDFs (raw),_
+[`EXIT`](helpers.md#exit): _exit a Luna script,_
+[`READ`](helpers.md#read): _read whole EDF,_
 [`--otsu`](helpers.md#-otsu): _Otsu thresholding (file),_
 [`OTSU`](helpers.md#otsu): _Otsu thresholding (EDF)._
 __Experimental:__
 [Various](exp.md): _misc. experimental commands._
 
 
+<!--
 
-<!---
+__Notes/to add: __
 
-IF / FI|ENDIF
-EXIT / STOP / QUIT
-
-# redundant
-ALIGN  (--> EDF-MINUS)
-SLICE
-C2A
-A2C?
-EXTEND (not implemented)
-DUMP-EPOCHS
-
-
-# to add
-DUMP(?)
-READ
-CLEAN-FREEZER#
-PCOUPL
-EDF-MINUS
-
-#
-POL polarity
-
-# simul
-SPIKE(?)
-SHIFT
-SCRAMBLE
-
+`POL`
 
 # to add/remove?
 FILE-MASK
@@ -269,7 +262,4 @@ DFA
 L1OUT
 FIP
 
-
 --->
-
-

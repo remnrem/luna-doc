@@ -1,19 +1,22 @@
 # Expressions
 
-_Here we describe_ eval _expressions: what they are and how they can be used_
+Here we describe _eval_ expressions: what they are and how they can be used by several Luna commands. 
+
 
 | Command  | Description |
 |---|---|
 | [_Eval_ expressions](#eval-expressions) | Overview of _eval_ expressions |
 | [`EVAL`](#eval) | Evaluate annotation-based general expressions |
-|[`TRANS`](#trans)  | Arbitrary transformations of signal data |
+| [`TRANS`](#trans)  | Arbitrary transformations of signal data |
+| [`DERIVE`](#derive) | Derive summary statistics based on annotation meta-data | 
 
-!!! warning "Advanced material" 
+
+!!! warning "Advanced material"
     This page can likely be skipped on the
     first pass through of this documentation.  The material provided
-    here provides some flexible ways to work with annotations and signals. For annotations, most
-    simple tasks can be accomplished using the simpler
-    [mask](masks.md) syntax.
+    here provides some flexible ways to work with annotations and
+    signals. For `EVAL` at least, most simple tasks can be
+    accomplished using the simpler [mask](masks.md) syntax.
 
 ## Eval expressions
 
@@ -22,14 +25,16 @@ signal-based and annotation-based expressions: _eval_ expressions.  These expres
 can either be used to specify [_masks_](masks.md) via the
 [`MASK`](masks.md#mask) command, or (as described here) with the
 [`EVAL`](#eval) command, which can be used to generate new epoch-wise
-annotations.  Alternatively, with the [`TRANS`](#trans) command, you can create
+annotations.  With the [`TRANS`](#trans) command, you can create
 or modify existing channels (and/or create arbitrary interval-based annotations
-from these).  These expressions allow for:
+from these).  Alternatively, with [`DERIVE`](#derive) you can create summary metrics based on
+annotation meta-data.  Collectively, these expressions allow for:
 
  - a flexible way to mask epochs based on annotation data
  - evaluation of logical and arithmetic expressions
  - creation of new meta-data variables on-the-fly
- - creation of new channels, or modofying channels on-the-fly
+ - creation of new channels, or modifying channels on-the-fly
+ - creation of new (individual-level) summary metrics based on annotation meta-data
 
 In short, these expressions allow [_variables_](#variables) based on
 attached signal and annotation data to be manipulated via a range of [_functions
@@ -1208,5 +1213,39 @@ To state the same thing schematically, consider a toy-example:
       - 2 (scalar) is returned but does not match length of original EDF X 
 ```
 
-        
-                     
+## DERIVE
+
+_Generate individual-level statistics based on evaluating annotation meta-data_
+
+The `DERIVE` command is designed to calculate _on-the-fly_ summary
+metrics per recording, based on flexible manipulations of annotation
+events and meta-data.
+
+
+<h3>Parameters</h3>
+
+|  Parameter | Example | Description |
+| --- | --- | --- |
+| `var` | `J,K` | One or more variables to track and output from the expression |
+| `expr` | `"J = mean( apnea.DUR )"` | Arbitrary eval-expression based on annotation (meta-data), either quoted or `#` delimited |
+| `req` | `DUR,A1` | Require these meta-data fields to be non-missing |
+| `any` | | If a mask is set, retain annotations with _any_ overlap of an unmasked epoch (default) |
+| `start` | | If a mask is set, only retain annotation events that _start_ in unmasked epochs | 
+| `all` | | If a mask is set, only retain annotation events that are completely within unmasked regions | 
+
+
+<h3>Output</h3>
+
+Primary output (strata: _none_ )
+
+| Variable | Description |
+| --- | --- |
+| `REQN` | If `req` was set, the number of events meeting those requirements |
+| _arbitrary variables_ | Outputs as defined by the `vars` option and calculated in the `expr` | 
+
+<h3>Example</h3>
+
+See [this page on the META command](annotations.md#meta) for an
+example using `DERIVE`.  More examples will be added here in the
+future.
+

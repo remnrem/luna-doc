@@ -33,12 +33,12 @@ the structure of individual differences across related sleep measures
 (although interpreting components can be challenging). More directly,
 it has the potential to provide a powerful set of independent measures
 for subsequent statistical analyses (or, in the context of the
-[`SUDS`](../suds/) model, sleep staging), as well as a means to
+[`POPS`](../pops/) model, sleep staging), as well as a means to
 handle multiple-testing problems.
 
 Two commands provide support to 1) fit a PSC decomposition to existing
 spectral output data (either between individual, or within-individual)
-via [`--psc`](#psc1), and 2) to project new data into a previously
+via [`--psc`](#-psc), and 2) to project new data into a previously
 defined lower dimensional space.  Although the computation behind
 these commands is very standard (e.g. the same output would be
 obtained via standard commands from any statistics package given the
@@ -48,8 +48,8 @@ from a practical standpoint with Luna output and EDFs.
 
 | Command | Description | 
 | ---- | ------ | 
-| [`--psc`](#psc1)  | Estimate PSCs from samples of spectral/connectivity metrics |
-| [`PSC`](#psc2)    | Project new samples into an existing PSC space |
+| [`--psc`](#-psc)  | Estimate PSCs from samples of spectral/connectivity metrics |
+| [`PSC`](#psc)    | Project new samples into an existing PSC space |
 
 
 ## --psc
@@ -125,7 +125,7 @@ inputs are the results files from previous spectral analyses.
     a historical accident in Luna development, reflecting the first
     application of what is really a more generic command.
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 Core parameters are:
 
@@ -168,7 +168,7 @@ signed-pairwise flag
 --->
 
 
-<h5>Outputs</h5>
+<h3>Outputs</h3>
 
 
 Individual-level output: (strata: `PSC`)
@@ -202,7 +202,7 @@ Model-level output, per component/feature: (strata: `I` x `J`)
 | `V` | _V_ matrix element |
 
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 Obtain power spectra from 50 individuals in a sample-list, for two channels:
 
@@ -303,7 +303,7 @@ ID   J             CH   F      VAR
 
 _Project new samples into an existing PSC space_
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | ---- | ---- | ---- |
@@ -311,7 +311,7 @@ _Project new samples into an existing PSC space_
 |`cache` |`cache=c1`  | Cache name (from prior `cache-metrics` _performed this run_) |
 |`norm`  | | Standardize inputs given the mean/SD from the original (`--psc` sample) data |
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 Individual-level output: (strata: `PSC`)
 
@@ -320,7 +320,7 @@ Individual-level output: (strata: `PSC`)
 | `U` | Component scores (left singular vectors _U_) |
 
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 Continuing from the example above: based on N2 power spectra from 50 individuals,
 we repeat the above command but saving the projection (basically the V and W matrices from

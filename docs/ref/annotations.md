@@ -15,7 +15,9 @@ to EDFs, and how to view and summarize their contents._
 | [`ANNOTS`](#annots)       | Tabulate all annotations |
 | [`MAKE-ANNOTS`](#make-annots) | Make new annotations |
 | [`WRITE-ANNOTS`](#write-annots) | Write annotations as `.annot` or `.xml` |
+| [`META`](#meta) | Add meta-data to annotations |
 | [`SPANNING`](#spanning)   | Report on _coverage_ of annotations |
+| [`ESPAN`](#espan) | Epoch-based annotation coverage | 			    
 | [`A2S`](#a2s)  | Add a 0/1 signal based on an annotation |
 | [`S2A`](#s2a)  | Add an annotation based on ranged values of a signal |
 | [`ALIGN-ANNOTS`](#align-annots) | Align epochs (paired with `ALIGN-EPOCHS`) | 
@@ -63,7 +65,7 @@ Annotations can be represented in a number of different file formats, all descri
     data, not _meta-data_. That is, annotation _meta-data_ is currently
     not used by Luna.
     Also, including or excluding certain annotations with the
-    [`annot`](../luna/args.md#annot) option works at the _class_ level
+    [`annot`](../luna/args.md#selecting-annotations) option works at the _class_ level
     only.  That is, either all _instances_ of a given _class_ are
     loaded in, or none are.
 
@@ -86,16 +88,10 @@ class can have one or more _instances_, where each _instance_
 corresponds to an interval of time and a single row of the `.annot`
 file.
 
-The full `.annot` specification involves six fields, given as tab (or whitespace) delimited
-columns. At its minimal specification, the `.annot` format is a simple three-column
-file, which by default, specifies an annotation class and start/stop times, e.g.:
-```
-annot1   10.20    12.50
-```
-In this example, this _data-rows_ specifies an annotation of class `annot1` that starts at 10.2 seconds (elapsed time
-from EDF start) and lasts 2.3 seconds, ending at 12.5 seconds.
-
-There are numerous options and alternatives the supplement this basic format, as outlined below:
+The standard `.annot` specification involves at least six
+tab-delimited fields (optionally allowing whitespace delimiters
+instead). There are numerous options and alternatives the supplement
+this basic format, as outlined below:
 
  - [Column formats](#columnformats) : full (six-column) versus reduced (3 or 4 column) formats
  - [Headers](#headers) : optional rows prior to data rows
@@ -103,29 +99,34 @@ There are numerous options and alternatives the supplement this basic format, as
 
 ### Columns
 
-The full (internal) representation of annotation as is follows:
+The standard definition specifies at least six fields, as described below.
+
+The full (internal) representation of annotation data as is follows:
 
 | Column | Description | Default |
 |---- | ---- | ---- | 
 | `class` | Annotation class | Required |
 | `instance` | Instance ID | If not used, specify `.` |
 | `channel` | Channel(s) | If not applicable, specify `.` |
-| `start` | Start time | Required: see [time-encoding specifications](#timeencoding) below |
-| `stop` | Stop time |  See [time-encoding specifications](#timeencoding) below |
-| `meta` | Meta-data | If not present, specfiy `.` |
+| `start` | [Start time](#time-encoding) | Required: see [time-encoding specifications](#time-encoding) below |
+| `stop` | [Stop time](#time-encoding) |  See [time-encoding specifications](#time-encoding) below |
+| `meta` | [Meta-data](#meta-data) | Values or key-value pairs; if not present, specfiy `.` |
 
-This six-column format is the recommended format, and is what is written by the `WRITE-ANNOTS` command.
+This six-column format is the recommended format, and is what is
+written (by default) by `WRITE-ANNOTS`.
 
-For convenience, Luna also allows reduced 3-column and 4-column formats which skip certain columns
-(implicitly, it sets the value to `.` for the corresponding 6-column version).
+__Extra fields:__  any additional fields (seven onwards) are interpreted as additional
+_meta-data_ values, i.e. conceptually the same as the _key=value_ pairs in the sixth
+`meta` column, but allowing for a different format, as described below.
 
-If only four columns are present, they must be as follows:
+__Reduced forms:__  For convenience, Luna also allows reduced __3-column__ and __4-column variant formats__
+that skip certain columns. If only four columns are present, they must be as follows:
 
 | Column | Description | Default |
 |---- | ---- | ---- | 
 | `class` | Annotation class | Required |
 | `instance` | Instance ID | If not used, specify `.` |
-| `start` | Start time | Required: see [time-encoding specifications](#timeencoding) below |
+| `start` | Start time | Required: see [time-encoding specifications](#time-encoding) below |
 | `stop` | Stop time |  See [time-encoding specifications](#timeencoding) below |
 
 If only three columns are present, they must be as follows:
@@ -136,7 +137,25 @@ If only three columns are present, they must be as follows:
 | `start` | Start time | Required: see [time-encoding specifications](#timeencoding) below |
 | `stop` | Stop time |  See [time-encoding specifications](#timeencoding) below |
 
-Rows with diferent numbers of columns from 6, 4 or 3 will be reported as errors.
+At its 3-column minimal, the `.annot` format is simply an annotation class and start/stop times: e.g.
+```
+annot1   10.20    12.50
+```
+
+In this example, this _data-rows_ specifies an annotation of class
+`annot1` that starts at 10.2 seconds (elapsed time from EDF start) and
+lasts 2.3 seconds, ending at 12.5 seconds.
+
+Technically, a single annotation file can contain different rows with
+different variants of these 6/4/3 column formats: we do not advise
+this, however, as it means that the file will not be easily readable
+by tools such as R that expect regular formats (although a regular
+version can be easily generated with `WRITE-ANNOTS`).
+
+Rows with 1, 2 or 5 columns will be reported as errors.  Further, if
+there is a header field that specifies additional _tabular meta-data_
+columns (i.e. columns 7 onwards), then all rows must have the same
+number of fields as specified in the header.
 
 ### Headers
 
@@ -159,7 +178,7 @@ must be first defined in a header row.
 
 Optionally, `.annot` files can also contain a second type of header row, 
 prior to any _data-row_, which specifies and labels the subsequent columns.
-_If_ this row exists, it must exactly conform to one of the following
+_If_ this row exists, it must __exactly__ conform to one of the following
 (which also acts as an internal check on the ordering of columns and
 general correctness of the file):
 
@@ -176,7 +195,14 @@ For the three-column format:
 class  start  stop
 ```
 
-It is expected that subsequent data rows adopt the same column format.
+If including optional tabular meta-data fields (columns 7 onwards), those labels can be
+any unique valid key labels (e.g. no special characters or spaces, etc): for example,
+here we add three extra meta-data tags with keys `AMP`, `dur_sec` and `F1`:
+```
+class  instance  channel  start  stop  meta   AMP   dur_sec   F1
+```
+
+As noted above, It is advised that subsequent data rows adopt the same column format.
 This then allows R (or other packages) to read the `.annot` file as a
 tab/whitespace-delimited table, with the columns given these variable
 names, e.g. using the `read.table()` function.  As, by default,
@@ -193,26 +219,33 @@ The `.annot` file recognizes various ways to specify start and stop
 times for each annotation. These formats can be mixed-and-matched
 within a single `.annot` file.
 
- - __Elapsed seconds:__ this is the default - any numerical value is interpreted as seconds elapsed relative from the EDF start time (i.e. as specified in the EDF header)
+ - __Elapsed seconds:__ this is the default - any numerical value is
+   interpreted as seconds elapsed relative from the EDF start time
+   (i.e. as specified in the EDF header)
 
  - __Clock-time:__ any times with the format _hh:mm:ss_ or _hh.mm.ss_
    are assumed to be 24-hour clock-times. These can include fractions
    of a second, e.g. `23:03:01.524` (which is also the same as
    `23.03.01.524`, i.e. if the EDF `.` character is used to delimit
-   hours, minutes and seconds insted of the colon (`:`) character).
-   It is also possible to include dates explicitly in the form
-   _dd-mm-yy-hh:mm:ss_, i.e. `31-12-99-23:59:59`.
+   hours, minutes and seconds insted of the colon (`:`) character). It is also possible to
+   specify dates as well as clock-times, i.e. as is necessary for long recordings, [see below](#date-encoding)
 
  - __Elapsed hh:mm:ss:__ any time starting `0+` is assumed to be an
    elapsed time specified in _hh:mm:ss_ format rather than a
    clock-time, e.g. `0+00:00:30`, `0+00:01:00` corresponds to 30 and
    60 seconds past the EDF start
 
- - __Epoch-encoding:__ instead of elapsed or clock times, it is also possible to specify start and stop times in terms of epochs by starting entries with the `e` character: see below for more details
+ - __Epoch-encoding:__ instead of elapsed or clock times, it is also
+   possible to specify start and stop times in terms of epochs by
+   starting entries with the `e` character: see below for more details
  
-Furrther, __stop times__ can take one of two additonal encodings: 
+Further, __stop times__ can take one of two additonal encodings: 
 
- - __Durations:__ if the stop time starts with `+` it is interpreted as the duration of the interval, rather than the end.  This can be used for any type of start time (elapsed seconds or clock-time). i.e.
+ - __Durations:__ if the stop time starts with `+` it is interpreted
+   as the duration of the interval, rather than the end.  This can be
+   used for any type of start time (elapsed seconds or
+   clock-time). i.e.
+
  ```
  annot1   10.00   +5
  ```
@@ -233,7 +266,7 @@ Furrther, __stop times__ can take one of two additonal encodings:
  annot1   15.00   22.00
  annot2   22.00   30.00
  ```
- 
+
 
 <h5>Order of annotations</h5>
 
@@ -337,6 +370,38 @@ up to 4 decimal places accuracy: i.e. `15240000000` rather than
 robust.
 
 
+### Date-encoding 
+
+When using _clock-time_ encoding, it is also possible to specify dates. The default
+form uses _European_ date format (following EDF specifications) and so expects
+something in the form _dd-mm-yy-hh:mm:ss_, i.e. `31-12-99-23:59:59`.
+
+__Delimiters:__ Alternatively, one can use `/` for the date, and/or a space instead of
+`-` to separate the date and time, e.g. `31/12/99 23:59:59`.
+
+__Month labels:__ it also also allowed to use the following
+three-character codes (case-insensitive) instead of the numbers 1
+through 12: `Jan`, `Feb`, `Mar`, `Apr`, `May`, `Jun`, `Jul`, `Aug`,
+`Sep`, `Oct`, `Nov` and `Dec`.
+
+__M/D/Y and Y/M/D formats:__ By setting the [special
+variable](../luna/args.md#special-variables) `date-format` to either
+`MDY` or `YMD` (versus the default value of `DMY`) you can instruct
+Luna to assume these alternate date formats.  Note, this implies that _all_ annotation
+files will have the same date format.   All outputs (e.g. from `WRITE-ANNOTS` or `HEADERS` etc, will
+always use European formats for dates, however.    Although the EDF specification requires European dates
+in the EDF header, if this is wrongly specified, you can use `edf-date-format` with the same convention.
+
+__Day offsets:__ Alternatively, you can use the special codes `d1`,
+`d2` etc in place of a full date to mean the first day, second day,
+where day one is specified by the start date in the EDF header.
+
+If a date is too far from the EDF start date (e.g. 100 days), the Luna
+will give an error.  Annotations that start _before_ the EDF start
+date will be ignored.
+
+
+
 ### Data rows
 
 Subsequent _data_ rows of the `.annot` file specify instances of one
@@ -354,12 +419,13 @@ a1     i3        .         108.5    123.11   .
 a2     .         .         e:2      .        .
 a2     .         .         e:7      .        .
 a2     .         .         e:10     e:12     .
-a3     A         C3        0        +30      W|0.88|Y
-a3     A         C3,C4     30       +30      W|0.98|Y
-a3     B         C4        60       +30      N1|0.23|N
+a3     A         C3        0        +30      W;0.88;Y
+a3     A         C3,C4     30       +30      W;0.98;Y
+a3     B         C4        60       +30      N1;0.23;N
 ```
 
-That is, each _data_ row specifies one annotation of the previously defined classes `a1`, `a2`, and `a3`.  
+That is, each _data_ row specifies one annotation of the previously
+defined classes `a1`, `a2`, and `a3`.
 
 - first column: _class name_ matches one of the header rows (i.e. `a1`, `a2` or `a3` in this example); if a new class is encountered, it is added on-the-fly
 - second column: _instance ID_ that can be unique or not with respect to its annotation class (or even missing, as for `a2`)
@@ -387,8 +453,50 @@ a3   60       +30
 
 ### Meta-data
 
-As illustrated abiove, in the original example the `a3` class also expects some _meta-data_ for
+Meta-data are _typed_ user-defined attributes of individual annotation
+instances.  For example, annotations for spindle events may have an
+_amplitude_ or _frequency_ meta-data attribute. The `.annot` format
+provides a few ways to specify annotation meta-data, in column six (or
+beyond):
+
+ - __key-value pairs:__ this is the default used by `WRITE-ANNOTS`, to specify meta-data as `key=value` pairs in the sixth `meta` field.
+
+ - __values:__ if a full [header](#headers) has been specified with meta-data fields, then values in the sxith `meta` field are assumed to correspond to those tags, as shown below
+
+ - __tabular meta-data:__ given a header row that specifies columns beyond the sixth, values in those columns are treated as meta-data
+
+That is, here are the three ways of specifying the same information: _key-value pairs_, which don't require any prior specification of the types:
+
+```
+a   .   .   10    20   v1=abc;v2=22
+a   .   .   20    30   . 
+b   .   .   40    80   . 
+```
+
+Stating the meta-fields in the extended header that describes annotation class `a`:
+```
+# a | annotation 'a' | v1[txt] v2[num]
+...
+a   .   .   10    20   abc;22
+a   .   .   20    30   .    (?? check) 
+b   .   .   40    80   . 
+```
+
+Third, as _tabular meta-data_ where the standard header row specifies the fields (which must be defined explicitly as missing for all annotation classes):
+```
+class instance channel start stop meta  v1    v2
+...
+a     .        .       10    20   .     abc   22
+a     .        .       20    30   .     .     .
+b     .        .       40    80   .     .     . 
+```
+
+
+
+As illustrated above, in the original example the `a3` class also expects some _meta-data_ for
 each _instance_: three variables named `var1`, `var2` and `var3`, each with a specified _type_.
+
+<h5>Meta-data types</h5>
 
 The following types are currently available in Luna:
 
@@ -399,9 +507,56 @@ The following types are currently available in Luna:
 | `bool` | Boolean yes/no, true/false (with values `y`, `yes`, `Y` or `1` versus `n`, `N`, `no` or `0`) |
 | `txt` | Any text string |
 
+Types can be defined on a file-by-file basis in the header rows, as
+described above.
+
+You can also explicitly set meta-data keys to a given with the options
+`num-atype`, `int-atype`, `txt-atype` and `bool-atype`, all of which
+take a comma-delimited list of key labels.  These apply to all files. 
+
+If no type if specified, all annotations are assumed to be
+numeric. This behavior can be changed by setting the special variable
+`annot-meta-default-num` to `F`.
+
+Meta-data types primarily matter only for the [DERIVE](evals.md#derive) command currently.
+
+
+<h5>Formats</h5>
+
+Key-value meta-data should be delimited by either `;` or `|` characters.   e.g.
+
+```
+a   .   .   10    20   v1=abc;v2=22
+a   .   .   20    30   v1=ced|v2=33
+```
+
+These defaults can be changed with the `annot-meta-delim1` and `annot-meta-delim2` special options. 
+
+The assignment symbol (which is `=` by default) can also be changed
+(but has to be a single character): e.g. `annot-keyval=:` to allow
+
+```
+a   .   .   10    20   v1:abc;v2:22
+a   .   .   20    30   v1:ced|v2:33
+```
+
+Note that these options apply to _all_ annotations files read: if you
+have a mixture of formats, you should use `WRITE-ANNOTS` first to make
+a uniform set.
+
 
 !!! Note
-    Currently, no Luna commands use annotation meta-data. 
+    Annotation meta-data are currently used only by the Luna [`META`]() and [`DERIVE`]() commands.
+
+
+### Standard format
+
+The `.annot` file is designed to support a range of input formats, for
+flexibility.  As described below, no matter what the form of inputs,
+any valid .annot file will be output in a more limited, standardized
+manner by the `WRITE-ANNOTS` command, [as described
+below](#write-annots).
+
 
 
 ## .eannot files 
@@ -429,7 +584,7 @@ duration and do not overlap when using `.eannot` files.
     the `.eannot` file in the sample-list)
 
     2. Set the special variable
-    [`epoch-len`](../luna/args.md#epoch-len) variable if the `.eannot`
+    [`epoch-len`](../luna/args.md#epochs-and-sleep-staging) variable if the `.eannot`
     is specified in the sample list (i.e. and so loaded when the EDF
     is first attached, prior to running any `EPOCH` command)
     
@@ -560,7 +715,12 @@ luna --xml my-annotations.xml
 ... (etc) ...
 ```
 
-Alternatively, use `--xml2` to report _all_ entries in any XML, along with the full, original XML document tree structure:
+## `--xml2`
+
+Alternatively, use `--xml2` to report _all_ entries in any XML, along
+with the full, original XML document tree structure:
+
+
 
 ## EDF+ Annotations
 
@@ -863,10 +1023,6 @@ Per-epoch _instance-level_ annotation tabulation (strata: `E` x `INTERVAL` x `IN
 | `EPOCH_MASK` | `epoch` | Flag whether this epoch is included or excluded (`1` means _masked_ or excluded) 
 
 
-<h3>Example</h3>
-
-_to be added_
-
 ## MAKE-ANNOTS
 
 _Create new annotations on-the-fly_
@@ -1128,81 +1284,437 @@ this, by making it easier to convert to .annot, for example:
  - ellipses to indicate that start continues until the next point
  - the _class_ versus _instance_ ID distinction
  - optional headers and columns (e.g. for channels or meta-data)
- - ability to include dates for longer recordingsd
+ - ability to include dates in various formats for longer recordings
+ - meta-data for events allowed in various formats
 
-When writing `.annot` files, Luna adheres to a standard, full specification:
+When writing `.annot` files, Luna adheres to a standard, full default: 
  
- - full six-columns
- - headers present
- - explicit start and stop times for annotations (although these can either be in elapsed seconds or clocktime)
+ - standard six-column format
+ - extended eaders absent 
+ - explicit start and stop times for annotations in elapsed seconds
  - ordered by time of occurrence 
- - all annotations (or a specified subset therefore) are written to a single file
- - multiple annotation files will be combined into a single `.annot` file
+ - multiple annotation combined into a single `.annot` file
  - can output only a subset of annotations (via the `annot` option)
- - can be (Luna) `.xml` format instead of `.annot`, although we suggest you use `.annot` format as the most flexible default
+
+Optionally, one can instead write variations on the standard .annot form:
+
+ - use clock-times instead of elapsed seconds (with `hms`)
+
+ - dates and clock-times (with `dhms`)
+
+ - tabular meta-data (with `tab-meta`) 
+
+Alternatively, one can write XML files (with `xml`) instead of .annot,
+although we suggest you use `.annot` format as the most practical
+default.
 
 <h3>Parameters</h3>
 
 |  Parameter | Example | Description |
 | --- | --- | --- |
 | `file` | `a.annot` | File name - should end if `.annot` (unless XML) | 
-| `headers` | | Include verbose header rows in `.annot` |
-| `minimal` | | Do not include main `class...` header row ( or `min`) |
-| `specials` | | Add _special_ internal annotatons: e.g. `epoch_len`, etc | 
 | `annot` | `N1,N2,N3,R,W` | Only output these options (versus all), this accepts wildcard `*` |
 | `hms` | | Write in _hh:mm:ss_ output rather than elapsed seconds |
 | `dhms` | | Write in _dd-mm-yyyy-hh:mm:ss_ output rather than elapsed seconds |
-| `collapse` | | For a discontinuous EDF, collapse annotation times (see below) |
+| `tab-meta` | `T` | Write meta-data in _tabular_ format |
+| `meta` | `F` | Do or don't write `meta` column 6 (writes `.` if `F`) |
 | `xml` | | Write to XML annotation format instead of `.annot` |
+
+Secondary parameters
+
+|  Parameter | Example | Description |
+| --- | --- | --- |
+| `headers` | | Include verbose header rows in `.annot` |
+| `minimal` | | Do not include main `class...` header row ( or `min`) |
+| `specials` | | Add _special_ internal annotatons: e.g. `epoch_len`, etc | |
+| `collapse` | | For a discontinuous EDF, collapse annotation times |
 | `add-ellipsis` | | For zero-duration annotations, add `...` as the second field, i.e. extend to the next annotation |
 | `min-dur` | 1 | Set a minimum duration of events (in seconds) for them to be output |  
 | `offset` | -0.22 | Apply an offset of, e.g. -0.22 seconds, to all annotations when writing out |
 
 <h3>Output</h3>
 
-A new annotation file, saved to disk, as either [`.annot`](#-annot-files) or [XML](#luna-xml-files) formats.
+A new annotation file, saved to disk, as either [`.annot`](#annot-files) or [XML](#luna-xml-files) formats.
 
 <h3>Example</h3>
 
-Using `collapse` implies a discontinuous EDF (i.e. with gaps, either
-if it is an EDF+D from the outset, or if epochs have been spliced out
-(e.g. via masking and `RE` as described [here](masks.md)).  This will
-write the EDF ignoring gaps, i.e. so that the annotations will
-properly align with the corresponding EDF that would be output from
-the `WRITE` command that also specifies `force-edf` (i.e. also
-ignoring gaps).   In short, if saving as a simple EDF, this may 
-be the form used:
-```
-  WRITE-ANNOTS file=a.annot collapse
-  WRITE force-edf=T edf-dir=edfs/
-```
-
-If this wasn't done, then annotations from the original would no
-longer align with the new EDF. As a concrete example: if an original
-EDF+D had two segments: from 0 to 1000 seconds, and 5000 to 6000
-seconds, and these annotations:
+Importantly, in the context of multi-sample processing, the `^`
+wildcard character (which substitutes the individual's ID) will
+typically be necessary:
 
 ```
-A1   100 -- 110 seconds  (i.e. 10 seconds long)
-A2   200 -- 250 seconds  (i.e. 50 seconds long)
-A3   5100 - 5200 seconds  (i.e. 100 seconds long)
+WRITE-ANNOTS file=annots/^.annot 
 ```
-When using `WRITE-ANNOTS` with `collapse`, these times would become
-```
-A1   100 - 110
-A2   200 - 250 
-A3   1100 - 1200  (i.e. skips the 4000-second gap)
-```
-If there are other annotations (e.g. `B1`, `B2`, etc) but you only want `WRITE-ANNOTS` to output a subset,
-you can write
+
+will write `annots/p01.annot`, `annots/p02.annot`, etc, for samples
+with IDs `p01`, `p02`, etc.
+
+---
+
+If there are other annotations (e.g. `B1`, `B2`, etc) but you only
+want `WRITE-ANNOTS` to output a subset, you can write
+
 ```
 WRITE-ANNOTS file=a.annot annot=A1,A2,A3
 ```
+
 or equivalently in this case, using a wildcard to match all annotations starting with `A`:
+
 ```
 WRITE-ANNOTS file=a.annot annot=A*
 ```
-Note: wildcards can only come at the _end_ of annotation names: e.g. `annot=A_*_X` would not be parsed as a wildcard, whereas `annot=A_X_*` would be.
+
+Note: wildcards can only come at the _end_ of annotation names:
+e.g. `annot=A_*_X` would not be parsed as a wildcard, whereas
+`annot=A_X_*` would be.
+
+
+---
+
+_Collapsing EDF+D annotations_: If the current data are in EDF+D
+*(with gaps), adding the `collapse` option will splice out those gaps,
+as shown in this
+[vignette](../vignettes/merge/#edfd-to-edf-conversion).  Note that if
+combined in the same Luna run as a `WRITE` command, you should place
+`WRITE-ANNOTS collapse` first, as if the EDF+D isn't truly
+discontinuous (i.e. it may skip initial epochs, but is still a single
+contiguous interval), then `WRITE` will convert the record to a
+standard EDF in memory (without changing the annotation times).   
+
+
+## META
+
+_Add meta-data to annotations based on other annotations or signals_
+
+This flexible command can add [meta-data](#meta-data) tags to existing
+(in-memory) annotations based on either the properties of signals or
+other annotations.
+
+It operates in one of two primary modes: appending new values based on 1)
+other annotations (e.g. overlap or distinance to other annotation
+classes) or 2) the EDF signals that span those annotations (e.g. the
+mean value of a window around each annotation).  A further special mode
+can add meta-data based on the _duration_ of annotations.
+
+Added annotation meta-data can be exported (with
+[WRITE-ANNOTS](#write-annots)) or used to [derive](evals.md#derive)
+other summary metrics.
+
+<h3>Parameters</h3>
+
+Annotation mode options (`other`, i.e. meta-data reflect overlaps with other annotations):
+
+|  Parameter | Example | Description |
+| --- | --- | --- |
+| `annot` | `X`	| add meta-data to annotation X | 
+| `other` | `A,B,C` | one or more other annotations |
+| `md` | `D` | key name for metadata (i.e. the main _output_ of `META`)| 
+| `w` | 10 | optional window size around X | 
+| `w-left` | 10 | optional window size before X | 
+| `w-right` | 10 | optional window size after X | 
+| `flatten` | | make union (& join contiguous) `other` annotations | 
+
+Annotation mode functions: _one_ of these to be selected, determines values of meta-data:
+
+| Parameter | Description |
+| --- | --- |
+|`overlap` | any overlap with 1+ other annotation  (0/1) | 
+|`complete-overlap` | is `X` completely spanned by 1+ other annotation (0/1)
+|`whole-other` | completely other completely spanned by `X` (0/1) 
+|`count` | count number of instances of other (N) | 
+|`nearest` | distance (time in sec) to nearest other (0 if overlap) | 
+|`nearest-midpoint` | as above, but based on annotation mid-points | 
+|`nearest-start` | as above, but based on annotation starts | 
+|`nearest-stop` | as above, but based on annotation stops | 
+
+Signal mode options: (`sig`, i.e. meta-data reflect summaries of spanned signals):
+
+| Parameter | Example | Description |
+|---|---|---|
+|`annot` | `X` | add meta-data to annotation `X` | 
+|`sig` | `S1` | a single signal | 
+|`md` | `D` | key name for metadata | 
+|`w` | 10 | optional window size around `X` | 
+|`w-left` | 10 | optional window size before `X` |
+|`w-right` | 10 | optional window size after `X` |
+
+
+Signal mode functions (_one_ of these to be selected, determines values of meta-data):
+
+| Parameter | Description |
+| --- | --- |
+|`mean` | mean of signal interval spanned by annotation `X` |
+|`min` | min of signal interval spanned by annotation `X` | 
+|`max` | max of signal interval spanned by annotation `X` |
+|`range` | range of signal interval spanned by annotation `X` |
+
+Special duration mode (`dur`, i.e. meta reflects event duration)
+
+|  Parameter | Example | Description |
+| --- | --- | --- |
+| `annot` | `X` | Add meta-data to annotation `X` | 
+| `dur` | | Sets special mode, to add _event duration_ as the meta-data value |
+| `md` | `D` | Use key name `D` for meta-data |
+
+
+<h3>Output</h3>
+
+No output is generated (other than appending meta-data tags to existing in-memory annotations).
+
+
+<h3>Example</h3>
+
+Consider these partial example annotation files (all belonging to the same recording):
+
+```
+head *annot
+```
+
+Some respiratory events in `a.annot` __with meta-data__: 
+```
+==> a.annot <==
+H. Obstructive  4    .    85171.386     85186.474    SpO2DeltaE=4;ArE=0
+H. Obstructive  4    .    85338.220     85356.166    SpO2DeltaE=2;ArE=0
+A. Obstructive  2    .    85393.791     85406.958    SpO2DeltaE=6;ArE=1
+H. Obstructive  4    .    85621.544     85632.661    SpO2DeltaE=4;ArE=0
+H. Obstructive  4    .    85803.149     85814.584    SpO2DeltaE=3;ArE=0
+H. Obstructive  4    .    85934.409     85975.542    SpO2DeltaE=3;ArE=0
+A. Obstructive  2    .    85981.168     85995.404    SpO2DeltaE=4;ArE=0
+A. Obstructive  2    .    86138.694     86152.374    SpO2DeltaE=6;ArE=1
+A. Obstructive  2    .    86668.490     86682.708    SpO2DeltaE=7;ArE=0
+H. Obstructive  4    .    86761.592     86772.709    SpO2DeltaE=3;ArE=1
+```
+
+Some staging in `stages.annot` (note, using a different date/time format):
+```
+==> stages.annot <==
+Wake    .       .       20-Jun-2023 23:00:30    20-Jun-2023 23:01:00    .
+Wake    .       .       20-Jun-2023 23:01:00    20-Jun-2023 23:01:30    .
+Wake    .       .       20-Jun-2023 23:01:30    20-Jun-2023 23:02:00    .
+Wake    .       .       20-Jun-2023 23:02:00    20-Jun-2023 23:02:30    .
+Wake    .       .       20-Jun-2023 23:02:30    20-Jun-2023 23:03:00    .
+Wake    .       .       20-Jun-2023 23:03:00    20-Jun-2023 23:03:30    .
+Wake    .       .       20-Jun-2023 23:03:30    20-Jun-2023 23:04:00    .
+Wake    .       .       20-Jun-2023 23:04:00    20-Jun-2023 23:04:30    .
+Wake    .       .       20-Jun-2023 23:04:30    20-Jun-2023 23:05:00    .
+Wake    .       .       20-Jun-2023 23:05:00    20-Jun-2023 23:05:30    .
+```
+
+And some position information in `pos.annot`:
+```
+==> pos.annot <==
+Supine  .       .       20-Jun-2023 23:00:05    20-Jun-2023 23:35:45    .
+Left    .       .       20-Jun-2023 23:35:45    20-Jun-2023 23:35:50    .
+Prone   .       .       20-Jun-2023 23:35:50    20-Jun-2023 23:35:55    .
+Supine  .       .       20-Jun-2023 23:35:55    21-Jun-2023 00:06:35    .
+Right   .       .       21-Jun-2023 00:06:35    21-Jun-2023 00:06:40    .
+Upright .       .       21-Jun-2023 00:06:40    21-Jun-2023 00:06:50    .
+Supine  .       .       21-Jun-2023 00:06:50    21-Jun-2023 00:06:55    .
+Left    .       .       21-Jun-2023 00:06:55    21-Jun-2023 00:07:00    .
+Supine  .       .       21-Jun-2023 00:07:00    21-Jun-2023 00:07:30    .
+Left    .       .       21-Jun-2023 00:07:30    21-Jun-2023 00:07:35    .
+```
+
+The respiratory event annotations include two _meta-data_ tags:
+`SpO2DeltaE` and `ArE`.  At this point, it doesn't matter what these
+are: the `META` command is generic.  Consider we have a sample list
+`s.lst` linking these annotation files:
+
+```
+id1   .      a.annot,pos.annot,stages.annot
+```
+
+Note that in this particular example the EDF field happens to be blank
+(`.`), meaning that Luna will create an _empty_ EDF; although this
+won't have any signal data, it allows working with annotation files,
+although we'll need to specify some start-times and dates below.  This
+is just to illustrate that is is possible to apply Luna to
+annotation-only style datasets.
+
+Also consider we have a _remapping_ file `param` to give new annotation labels, which is necessary
+to work with them programmatically, as below.
+```
+remap   apnea|A. Obstructive
+remap   hypopnea|H. Obstructive
+```
+That is, the two annotations will be remapped to `apnea` and `hypopnea` (i.e. omitting spaces).
+
+Here we attach and merge the annotations (in this example case,
+fixing a dummy EDF start time and length, etc);  we then add the _duration_ (tag `DUR`) of each event
+as a meta-data tag, for `apnea`, `hypopnea` and `N2` and export those to the file `f.annot`. We
+also use `DERIVE` (described [elsewhere](evals.md#derive)) to calculate the sum of all newly added
+apnea event durations, and save this in the individual-level variable `ADUR`, which can then be output
+by `DERIVE`:
+
+```
+luna s.lst @param -o out.db \
+     --date=20-Jun-2023 --time=00:00:00 --nr=500000 --rs=100 \
+ -s ' META annot=apnea,hypopnea,N2 dur md=DUR
+      WRITE-ANNOTS file=f.annot
+      DERIVE var=ADUR expr=" ADUR = sum( apnea.DUR ) " '
+```
+
+Here are some rows of `f.annot`, that now have all events merged into a single file
+and with the `DUR` tag added to the requested annotations: 
+```
+N1       .    .    85020.000    85050.000   .
+N1       .    .    85050.000    85080.000   .
+N2       .    .    85080.000    85110.000   DUR=30
+N2       .    .    85110.000    85140.000   DUR=30
+N2       .    .    85140.000    85170.000   DUR=30
+N2       .    .    85170.000    85200.000   DUR=30
+hypopnea 4    .    85171.386    85186.474   ArE=0;DUR=15.088;SpO2DeltaE=4
+N2       .    .    85200.000    85230.000   DUR=30
+N2       .    .    85230.000    85260.000   DUR=30
+N2       .    .    85260.000    85290.000   DUR=30
+N2       .    .    85290.000    85320.000   DUR=30
+N2       .    .    85320.000    85350.000   DUR=30
+hypopnea 4    .    85338.220    85356.166   ArE=0;DUR=17.946;SpO2DeltaE=2
+N2       .    .    85350.000    85380.000   DUR=30
+N2       .    .    85380.000    85410.000   DUR=30
+apnea    2    .    85393.792    85406.959   ArE=1;DUR=13.167;SpO2DeltaE=6
+N2       .    .    85410.000    85440.000   DUR=30
+```
+
+The final `ADUR` value is just over 3600 seconds (i.e. ~one hour).
+
+```
+destrat out.db +DERIVE
+```
+```
+ID      ADUR
+id1     3628.389
+```
+
+Note that if we added `meta=F` the meta-data would not be written as key=value pairs to the sixth field;
+also, adding `tab-meta` adds .annot fields after the sixth, for these meta-data values, which can be
+easier to parse in some circumstances:
+```
+class    instance  channel  start       stop        meta  ArE   DUR     SpO2DeltaE
+   ...
+N1       .         .        84990.000   85020.000   .     .     .       .
+N1       .         .        85020.000   85050.000   .     .     .       .
+N1       .         .        85050.000   85080.000   .     .     .       .
+N2       .         .        85080.000   85110.000   .     .     30      .
+N2       .         .        85110.000   85140.000   .     .     30      .
+N2       .         .        85140.000   85170.000   .     .     30      .
+N2       .         .        85170.000   85200.000   .     .     30      .
+hypopnea 4         .        85171.386   85186.474   .     0     15.088  4
+N2       .         .        85200.000   85230.000   .     .     30      .
+N2       .         .        85230.000   85260.000   .     .     30      .
+N2       .         .        85260.000   85290.000   .     .     30      .
+N2       .         .        85290.000   85320.000   .     .     30      .
+N2       .         .        85320.000   85350.000   .     .     30      .
+hypopnea 4         .        85338.220   85356.166   .     0     17.946  2
+N2       .         .        85350.000   85380.000   .     .     30      .
+N2       .         .        85380.000   85410.000   .     .     30      .
+apnea    2         .        85393.792   85406.959   .     1     13.167  6
+N2       .         .        85410.000   85440.000   .     .     30      .
+...
+```
+
+---
+
+As a second example, we'll add meta-data to indicate whether respiratory
+events are NREM/REM, and supine or not, using `META` in annotation-overlap mode:
+
+```
+luna s.lst @param \
+     --date=20-Jun-2023 --time=00:00:00 --nr=500000 --rs=100 \
+  -s ' META annot=apnea,hypopnea flatten complete-overlap other=N1,N2,N3 md=NR
+       META annot=apnea,hypopnea         complete-overlap other=Supine   md=Supine
+       WRITE-ANNOTS file=f.annot '
+```
+
+The first `META` statement specifies all NREM epochs and "flattens" them, i.e. makes
+a single event for all contiguous (or overlapping) instances of the listed `other` annotations.
+This means that when we ask for `complete-overlap` (i.e. that the respiratory event is completely
+spanned by NREM, this will include cases that span, e.g. N2 and N3 epochs, as otherwise
+the respiratory event would not be defined as being _completely_ spanned by a single _other_ event).
+This sets the tag to `NR` which will have a 0 or 1 value for each respiratory event, depending on
+whether it is NREM or not, based on this definition.
+
+The second `META` statement does the same for supine events; here we
+don't need to flatten annotations, as there is only a single class
+(`Supine`) and these position annotations aren't epoched (i.e. split
+into smaller periods, as the staging data are, i.e. as separate
+30-second events).
+
+Now if we look at rows of `f.annot` we see the new `NR` and `Supine` tags: e.g. 
+
+```
+R        .   .   107310.000  107340.000   .
+hypopnea 4   .   107320.156  107355.889   ArE=0;NR=0;SpO2DeltaE=9;Supine=1
+R        .   .   107340.000  107370.000   .
+hypopnea 4   .   107362.718  107394.640   ArE=0;NR=0;SpO2DeltaE=8;Supine=1
+R        .   .   107370.000  107400.000   .
+W        .   .   107400.000  107430.000   .
+W        .   .   107430.000  107460.000   .
+N1       .   .   107460.000  107490.000   .
+apnea    2   .   107462.050  107488.069   ArE=0;NR=1;SpO2DeltaE=11;Supine=1
+N1       .   .   107490.000  107520.000   .
+apnea    2   .   107508.588  107537.016   ArE=1;NR=1;SpO2DeltaE=13;Supine=1
+N1       .   .   107520.000  107550.000   .
+```
+
+---
+
+As a final more complex example of `DERIVE`: here we calculate the AHI
+(count of apnea events per hour) for events that are a) in N2, b)
+associated with an arousal (as in this particular case, an `ArE` of 1
+indicates this, and c) are associated with a desaturation of at least
+4% (here, the precalculated `SpO2DeltaE` of 4 or more):
+
+```
+luna s.lst @param -o out.db \
+    --date=20-Jun-2023 --time=00:00:00 --nr=500000 --rs=100 \
+ -s ' META annot=apnea,hypopnea,N2 dur md=DUR
+      META annot=apnea,hypopnea flatten complete-overlap other=N2 md=N2
+      META annot=apnea,hypopnea         complete-overlap other=Supine   md=Supine
+      DERIVE var=my_ahi expr=" D = sum(N2.DUR) / 3600.0 ;
+                               N = length(apnea[apnea.N2==1 && apnea.ArE==1 && apnea.SpO2DeltaE>=4 ] ) ;
+                               my_ahi = N / D  " '
+```
+
+The `META` commands add the tags as above, that can be used in the subsequent `DERIVE` expression:
+
+ - `DUR` - duration of each annotation
+
+ - `NR`  - a flag (0/1) for whether the respiratory event was NREM
+
+ - `Supine` - a flag (0/1) for whether the event was during a supine position
+
+
+The `DERIVE` expression has three parts:
+
+ - `D = sum(N2.DUR)/3600 ;` creates a new variable `D` which is the total N2 duration in hours; note how these expressions can access the meta-data values of
+ annotations uses the `class.meta` syntax
+
+ - `N = length(apnea[apnea.NR == 1 && apnea.ArE == 1 && apnea.SpO2DeltaE >= 4 ] ) ;` counts the number of apnea events that are flagged as N2 (here `NR`),
+  have an arousal (here `ArE` meta-tag of 1) and `SpO2DeltaE` tag of at least 4
+
+ - `my_ahi = N / D` create a final (scalar) variable which is the count per hour (i.e. AHI under this definition). 
+
+The final output `my_ahi` as requested by the option `var=my_ahi` to `DERIVE` can be accessed in the output:
+```
+destrat out.db +DERIVE
+```
+```
+ID    my_ahi
+id1   2.70198675496689
+```
+
+Although this particular example uses an empty EDF with fixed start
+times, etc, the `META` and `DERIVE` commands can be used in the usual
+multi-sample project-based manner, i.e. these derived metrics could be
+calculated across large numbers of studies with a single command.
+
+One thing to watch out for when working with expressions and
+annotation meta-data is the treatment of missing values - `DERIVE` in
+principle detects and handles missing values, but the logic of the
+expression may not be as expected under some conditions.  See the page
+on [eval expressions](eval.md) for more details.
+
 
 ## SPANNING
 
@@ -1357,6 +1869,220 @@ nsrr01  hypopnea  1       15.3
 ```
 
 
+
+## ESPAN
+
+_Epoch-based annotation coverage summaries_
+
+Produces information about the epoch-by-epoch coverage one or more
+annotations.  This gives output for both individual annotation
+classes, as well as the group of annotations as a whole.  It can output the following:
+
+  - number of seconds spanned by an annotation (per epoch)
+  - an indicator for whether any annotation spans that epoch
+  - the proportion of the epoch spanned by annotations
+  - the count of unqiue events spanning that epoch
+
+Outputs are generated both per annotation class, and as a single, combined set (pooling all annotation classes).
+
+Annotations are "flattened" (i.e. overlapping events merged) when
+calculating these statistics.
+
+
+<h3>Parameters</h3>
+
+|  Parameter | Example | Description |
+| --- | --- | --- |
+| `annot` | `annot=N1,N2,N3,R,W` | Annotation(s) to report on |
+| `sec` | `F` | Report seconds of coverage (default: `T`) |
+| `pct` | `F` | Report percent of coverage (default: `F`) |
+| `cnt` | `F` | Report number of spanning annotations(default: `F`) |
+| `has` | `F` | Report presence/absence (0/1) (default: `F`) |
+
+
+<h3>Output</h3>
+
+_Epoch-level_ summary (strata: `E`)
+
+| Variable | Description |
+| --- | --- |
+| `SEC` | Total duration (seconds) (default, unless `sec=F`) |
+| `PCT` | Proportion of epoch spanned by any of the listed annotations (if `pct` set) |
+| `HAS` | Absence/presence (0/1) for any event spanning this epoch (if `has` set) |
+| `CNT` | Count of any events spanning this epoch (if `cnt` set) |
+
+_Class-level_ annotation summary (strata: `E` x `ANNOT` )
+
+
+| Variable | Description |
+| --- | --- |
+| `SEC` | Total duration (seconds) (default, unless `sec=F`) |
+| `PCT` | Proportion of epoch spanned by this annotation class (if `pct` set) |
+| `HAS` | Absence/presence (0/1) for any event spanning this epoch (if `has` set) |
+| `CNT` | Count of events spanning this epoch (if `cnt` set) |
+
+
+_Event-level_ annotation output (option: `verbose`; strata: `E` x `ANNOT` x `INST` )
+
+| Variable | Description |
+| --- | --- |
+| `DUR` | Event duration |
+| `START` | Event start (seconds) |
+| `STOP` | Event stop (seconds) |
+| `XDUR` | Duration of event _within this epoch_ |
+| `XSTART` | Start of event _within this epoch_ |
+| `XTOP` | Stop of event _within this epoch_ |
+
+
+<h3>Example</h3>
+
+```
+luna s.lst -o out.db -s ESPAN annot=hypopnea,arousal,desat
+```
+
+```
+destrat out.db +ESPAN -r E -c ANNOT
+```
+```
+ID   E    SEC.ANNOT_arousal  SEC.ANNOT_desat  SEC.ANNOT_hypopnea
+...
+id0  650  0                  0                0      
+id0  651  0                  0                0     
+id0  652  0                  0                0     
+id0  653  0                  0                0.2  
+id0  654  0                  28               12.5 
+id0  655  6.4                22               14.5 
+id0  656  0                  30.0             2.5  
+id0  657  0                  2                0     
+id0  658  0                  0                0     
+id0  659  0                  0                0     
+id0  660  0                  0                0     
+id0  661  0                  0                0    
+...
+```
+
+Re-running with additional options to a) give the three other outputs, and b) output event-instance information:
+
+```
+luna s.lst -o out.db \
+  -s ESPAN annot=hypopnea,arousal,desat pct sec cnt has verbose 
+```
+
+Here showing epoch/annotation level output (just for a few epochs, and
+here only for `hypopnea`):
+
+```
+destrat out.db +ESPAN -r E ANNOT
+```
+
+```
+ID    ANNOT     E    INST DUR   START    STOP     XDUR  XSTART   XSTOP
+ ...
+id0   hypopnea  653  1    12.7  19589.8  19602.5  0.2   19589.8  19590
+id0   hypopnea  654  1    12.7  19589.8  19602.5  12.5  19590    19602.5
+id0   hypopnea  655  1    17    19635.5  19652.5  14.5  19635.5  19650
+id0   hypopnea  656  1    17    19635.5  19652.5  2.5   19650    19652.5
+ ...
+ 
+```
+
+Here is some epoch-level output, combined across all three annotation classes:
+
+```
+destrat out.db +ESPAN -r E 
+```
+```
+ID     E      CNT  HAS  PCT    SEC
+ ...
+id0    650    0    0    0      0
+id0    651    0    0    0      0
+id0    652    0    0    0      0
+id0    653    1    1    0.0066 0.2
+id0    654    2    1    1      30.0
+id0    655    4    1    0.96   28.8
+id0    656    2    1    1      30.0
+id0    657    1    1    0.0666 2
+id0    658    0    0    0      0
+id0    659    0    0    0      0
+id0    660    0    0    0      0
+id0    661    0    0    0      0
+ ...
+```
+
+The four events that span epoch 655 (`CNT` above) can be obtained from
+the `E` x `ANNOT` x `INST` event-level output: e.g.
+
+```
+ID   ANNOT     E     INST   DUR  START    STOP     XDUR   XSTART    XSTOP
+id0  arousal   655   1      6.4  19627.9  19634.3  6.4    19627.9   19634.3
+id0  hypopnea  655   1      17   19635.5  19652.5  14.5   19635.5   19650
+id0  desat     655   1      38   19592    19630    10     19620     19630
+id0  desat     655   2      44   19638    19682    12     19638     19650
+```
+
+!!!hint "Combining EPOCH and ESPAN"
+    It can often be helpful to also
+    run `EPOCH verbose` (or, if epochs are already defined and you
+    just want to list them, not change/set them, `EPOCH table`) prior
+    to `ESPAN`: this will dump the start/stop times of the epochs,
+    that can be linked to the output of `ESPAN` via the shared `E`
+    field per individual.
+
+
+Looking at the outputs of this will often correspond to how
+annotation-based [mask](masks.md#mask) commands would work. As a
+contrived example, if we wanted to select only epochs with all three
+annotations:
+
+```
+luna s.lst -o out.db \
+  -s 'ESPAN annot=hypopnea,arousal,desat has=T sec=F'
+```
+```
+ID  E    HAS.ANNOT_arousal  HAS.ANNOT_desat  HAS.ANNOT_hypopnea
+... 
+id0 650  0                  0                 0
+id0 651  0                  0                 0
+id0 652  0                  0                 0
+id0 653  0                  0                 1
+id0 654  0                  1                 1
+id0 655  1                  1                 1
+id0 656  0                  1                 1
+id0 657  0                  1                 0
+id0 658  0                  0                 0
+id0 659  0                  0                 0
+id0 660  0                  0                 0
+...
+```
+
+
+Separately running the implied mask command and looking at the epoch information afterwards:
+```
+luna s.lst -o out.db \
+  -s ' MASK ifnot-all=hypopnea,arousal,desat & RE & EPOCH table ' 
+```
+```
+ CMD #1: MASK
+   options: ifnot-all=hypopnea,arousal,desat sig=*
+  set epochs, to default length 30, 1346 epochs
+  set masking mode to 'force'
+  annots: arousal desat hypopnea
+  applied annotation mask for 3 annotation(s) (using and-matching across multiple annotations)
+  1 epochs match; 1345 newly masked, 0 unmasked, 1 unchanged
+  total of 1 of 1346 retained
+```
+
+Pulling the epoch information (not showing all columns below) we see that only
+epoch 655 is retained, consistent with it being the only epoch from `ESPAN` to have (`HAS`==1)
+for all three annotation classes:
+```
+destrat out.db +EPOCH -r E
+```
+```
+ID   E     DUR   E1   HMS            START   STOP  
+id0  655   30    1    02:13:03.000   19620   19650   
+```
+
 ## A2S
 
 _Add a signal based on an annotation_
@@ -1387,7 +2113,7 @@ sometimes body position is encoded as a signal with values `0`,
 command can make an annotation that represents the same information
 (e.g. and be saved with `WRITE-ANNOTS` or used in a `MASK`, etc.)
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Option | Example | Description |
 | ---- | ---- | ---- |
@@ -1397,14 +2123,14 @@ command can make an annotation that represents the same information
 | `class` | `position` | Make one annotation class (e.g. `position`) w/ labels as instance IDs |
 | `span-gaps` | | How to handle signal discontinuities |
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 A new annotation is added to the internal store for this individual;
 otherwise, no explicit output is generated except for some notes to
 the log/console.
 
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 In the NSRR [CFS](http://sleepdata.org/datasets/cfs/) dataset, body
 position is encoded as an EDF channel called `POSITION`.  In

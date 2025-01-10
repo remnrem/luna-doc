@@ -653,14 +653,14 @@ nsrr02 EEG 10.362          14.742          20.055          14.146
 nsrr03 EEG 12.302          14.497          18.980          NA
 ```
 
-The options for `destrat` are described [below](tut2.md#using_destrat)
+The options for `destrat` are described [below](tut2.md#using-destrat)
 more fully.  Briefly, here we select the variable RMS (`-v`) from the
 `[STATS]` command, optionally formats numeric output to 3 decimal
 places (`-p`), sets row strata to correspond to channels (`-r`) and
 column strata to correspond to stages (`-c`).  
 
 
-To view small output files, the [`behead`](../luna/args.md#behead)
+To view small output files, the [`behead`](../luna/destrat.md#behead)
 utility is often useful: pipe the output of `destrat` into `behead` as
 follows:
 

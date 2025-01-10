@@ -62,34 +62,34 @@ We have built web-based applications on top of Luna, primarily:
 The _L_-functions (i.e. all starting with the letter `l` for Luna) can
 be roughly grouped as follows:
 
-- __attaching an EDF:__ [`lsl()`](#lsl), [`lattach()`](#lattach),
-  [`ledf()`](#ledf), [`lstat()`](#lstat), [`ldrop()`](#ldrop),
-  [`lrefresh()`](#lrefresh)
+- __attaching an EDF:__ [`lsl()`](ref.md#lsl), [`lattach()`](ref.md#lattach),
+  [`ledf()`](ref.md#ledf), [`lstat()`](ref.md#lstat), [`ldrop()`](ref.md#ldrop),
+  [`lrefresh()`](ref.md#lrefresh)
 
-- __extracting data:__ [`lchs()`](#lchs), [`ldata()`](#ldata),
-  [`ldata.intervals()`](#ldataintervals)  
+- __extracting data:__ [`lchs()`](ref.md#lchs), [`ldata()`](ref.md#ldata),
+  [`ldata.intervals()`](ref.md#ldataintervals)  
 
-- __working with annotations:__ [`lannots()`](#lannots),
-  [`lepoch()`](#lepoch), [`letable()`](#letable),
-  [`lstages()`](#lstages), [`ladd.annot()`](#laddannot),
-  [`ladd.annot.file()`](#laddannotfile)
+- __working with annotations:__ [`lannots()`](ref.md#lannots),
+  [`lepoch()`](ref.md#lepoch), [`letable()`](ref.md#letable),
+  [`lstages()`](ref.md#lstages), [`ladd.annot()`](ref.md#laddannot),
+  [`ladd.annot.file()`](ref.md#laddannotfile)
 
-- __running commands:__ [`leval()`](#leval), [`lcmd()`](#lcmd),
-  [`leval.project()`](#levalproject), 
-  [`literate()`](#literate)
+- __running commands:__ [`leval()`](ref.md#leval), [`lcmd()`](ref.md#lcmd),
+  [`leval.project()`](ref.md#levalproject), 
+  [`literate()`](ref.md#literate)
 
-- __working with output:__ [`ldb()`](#ldb), [`lx()`](#lx),
-  [`lx2()`](#lx2), [`lid()`](#lid), [`ltxttab()`](#ltxttab)
+- __working with output:__ [`ldb()`](ref.md#ldb), [`lx()`](ref.md#lx),
+  [`lx2()`](ref.md#lx2), [`lid()`](ref.md#lid), [`ltxttab()`](ref.md#ltxttab)
 
-- __setting variables:__ [`lset()`](#lset), [`lvar()`](#lvar),
-  [`lreset()`](#lreset)
+- __setting variables:__ [`lset()`](ref.md#lset), [`lvar()`](ref.md#lvar),
+  [`lreset()`](ref.md#lreset)
 
-- __convenience/misc:__ [`lstgcols()`](#lstgcols), [`lbands()`](#lbands), [`llog()`](#llog),
-  [`le2i`](#le2i), [`lsanitize()`](#lsanitize), [`ldenoise()`](#ldenoise), 
+- __convenience/misc:__ [`lstgcols()`](ref.md#lstgcols), [`lbands()`](ref.md#lbands), [`llog()`](ref.md#llog),
+  [`le2i`](ref.md#le2i), [`lsanitize()`](ref.md#lsanitize), [`ldenoise()`](ref.md#ldenoise), 
 
-- __plotting functions__: [`lheatmap()`](#lheatmap), [`ltopo.heat()`](#ltopo.heat), [`ltopo.rb()`](#ltopo.rb) ,
-  [`ltopo.xy()`](#ltopo.xy) ,  [`ltopo.heat2()`](#ltopo.heat2) , [`ltopo.topo()`](#ltopo.topo) ,
-   [`ltopo.conn()`](#ltopo.conn) , [`ltopo.dconn()`](#ltopo.dconn) 
+- __plotting functions__: [`lheatmap()`](ref.md#lheatmap), [`ltopo.heat()`](ref.md#ltopo.heat), [`ltopo.rb()`](ref.md#ltopo.rb) ,
+  [`ltopo.xy()`](ref.md#ltopo.xy) ,  [`ltopo.heat2()`](ref.md#ltopo.heat2) , [`ltopo.topo()`](ref.md#ltopo.topo) ,
+   [`ltopo.conn()`](ref.md#ltopo.conn) , [`ltopo.dconn()`](ref.md#ltopo.dconn) 
 
 
 The index below gives a listing of all major _lunaR_ functions:

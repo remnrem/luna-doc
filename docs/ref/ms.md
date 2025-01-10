@@ -29,7 +29,7 @@ Briefly, the `MS` workflow follows these steps:
  - calculate various statistics per individual
  - finally, per individual or at the group level, search for enriched sequences of states as well as group differences (__kmer__ analysis)
 
-<h5>Individual versus group level analyses</h5>
+<h3>Individual versus group level analyses</h3>
 
 Luna operates one EDF at a time, although often one wants to apply EEG
 microstate clustering across multiple individuals.  To achieve this,
@@ -48,7 +48,7 @@ group-level analysis.
     of these differences.
 
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 Single-subject clustering
 
@@ -107,7 +107,7 @@ Sequence analysis parameters:
 | `kmers` | `3,6,1000` | Ssequence enrichment analysis (per individual) <br>3 args = 1) min, 2) max kmer length, 3) number of permututations |
 
 
-<h5>Outputs</h5>
+<h3>Outputs</h3>
 
 Individual-level outputs for the best-fit solution (strats: _none_)
 
@@ -184,7 +184,7 @@ Sequence enrichment (within individual) equivalence groups ( strata: `L` x `SG` 
 | `Z` | Empirical enrichment Z score |
 
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 For a single individual/EDF, apply microstate analysis. 
 
@@ -257,7 +257,7 @@ ID0001 D 0.291 119.325
 ```
 
 
-<h5>Multi-subject clusterig</h5>
+<h3>Multi-subject clusterig</h3>
 
 The first step is to extract all GFP peaks, by creating an aggregated EDF which contains only a fixed number of peaks per individual:
 
@@ -357,7 +357,7 @@ calculated separately for _CASES_ (phenotype == 1) and _CONTROLS_
 control statistics is evaluated for each metric and the empirical
 significance of all these terms is calculated.
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Option | Example | Description |
 | --- | --- | --- |
@@ -369,7 +369,7 @@ significance of all these terms is calculated.
 | `k2` | `k2=4` | Consider k-mers from `k1` to `k2 |
 | `nreps` | `nreps=100` | Number of replicates |
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 Sequence enrichment (group-level) ( strata: `L` x `S` )
 
@@ -425,7 +425,7 @@ Sequence enrichment (by phenotype) equivalence groups ( strata: `PHE` x `L` x `S
 | `Z` | Empirical enrichment Z score |
 
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 Continuing from the example above, we can test for enrichment of
 sequences by concatenating all state sequences across individuals: we

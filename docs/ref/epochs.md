@@ -7,32 +7,37 @@ _Commands to define epochs for an EDF, and to attach annotations after loading a
 | [Epoch definitions](#epoch-types) | Overview of epochs |
 | [`EPOCH`](#epoch) | Specify epochs |
 | [`EPOCH-ANNOT`](#epoch-annot) | Load epoch-wise annotations from a [`.eannot`](annotations.md#eannot-files)-format file | 
-| [Command table](#command-table) | Behavior of commands w.r.t. epochs & masks |
+| [Command table](#command-epoch-types) | Behavior of commands w.r.t. epochs & masks |
 
-## EPOCH
+## Epoch types
 
-_Divides the time series into epochs_
+_Epochs_ are contiguous time intervals that span the recording.  Many
+Luna commands either explicitly or implicitly rely on epochs being
+defined. Epoching an EDF is often a first a step that is required for
+many other Luna functions that work with epoched data.
 
-Epoching an EDF is often a first a step that is required for many
-other Luna functions that work with epoched data.  Some commands that
-require epoched data will automatically set epochs (by default, to
-non-overlapping 30-second epochs), although alternative epoch rules
-can be explicitly defined beforehand via the `EPOCH` command.
+In most instances, if epochs have not been specifically defined (by
+the [EPOCH command](#epoch)), they will _default_ to non-overlapping
+30-second intervals, i.e. mirroring traditional (AASM) sleep staging.
 
-_Fixed versus generic epochs_
-
-The most basic type of epoch is of fixed length (e.g. 30 seconds).
+___Fixed versus generic epochs:___ The most basic type of epoch is of fixed length (e.g. 30 seconds).
 Epochs can be overlapping, e.g. shifting in 15 second increments
 however, but by default, epochs are contiguous but not overlapping.
 In contrast, _generic_ epochs are those of potentially variable
-duration, defined by existing [annotations](annotations.md). This is
+duration, defined by existing [annotations](annotations.md); this is
 the most flexible form of epoch.
 
 Some commands (in particular `HYPNO`) require standard,
 non-overlapping epochs (otherwise, the resulting hypnogram metrics would
 not be appropriately defined). Most but not all commands can work with generic
-epochs, as detailed below.  Luna will give an error message if trying
+epochs, [as detailed below](#command-epoch-types).  Luna will give an error message if trying
 to use generic epochs with a command that does not accept them.
+
+## EPOCH 
+
+_Divides the time series into epochs_
+
+This command can define either standard or generic epochs. 
 
 <h3>Parameters</h3>
 
@@ -254,7 +259,7 @@ happen if the `.eannot` file were directly specified in the
 [_sample-list_](../luna/args.md#sample-lists) (i.e. as any other XML,
 `.annot` annotation file).  As this command can be performed
 after the EDF has been loaded and manipulated (e.g. via
-[`RESTRUCTURE`](manipulations.md#restructure)), the number of epochs
+[`RESTRUCTURE`](masks.md#restructure)), the number of epochs
 (i.e. rows in the file) should _match exactly_ the number of epochs
 given the _current state_ of the in-memory EDF (i.e. after any
 restructuring, and with the current epoch definitions).  

@@ -125,7 +125,11 @@ console.
 
 <h3>Parameters</h3>
 
-There are no options for `HEADERS`.
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `sig` | `sig=${eeg}` | Only report HEADERS outputs for these channels |
+| `signals`  | | Add a `SIGNALS` variable to the output, that lists all signals as a comma-delimited string |
+
 
 <h3>Outputs</h3>
 
@@ -144,6 +148,7 @@ Basic EDF header information (strata: _none_)
 | `REC_DUR` | Duration of each record (seconds) |
 | `TOT_DUR_SEC` | Total duration of EDF (seconds) |
 | `TOT_DUR_HMS` | Total duration of EDF (hh:mm:ss string) |
+| `SIGNALS` | (Optionally, if `signals`) A comma-delimited string of all channel labels |
 
 Per-channel header information  (strata: `CH`)
 
@@ -158,7 +163,7 @@ Per-channel header information  (strata: `CH`)
 |`SR`   | Sample rate (Hz) |
 |`TRANS` | Transducer type field |
 |`SENS`   | Sensitivity (unit/bit) |
-|`TYPE`   | Inferred channel [_type_](../luna/args.md#types) |
+|`TYPE`   | Inferred channel [_type_](../luna/args.md#channel-types) |
 
 
 <h3>Example</h3>
@@ -251,6 +256,12 @@ nsrr01  ECG  127   -128  mV    1.25  -1.25  4    0.00980  250  .      ECG
 nsrr01  EMG  127   -128  uV    31.5  -31.5  5    0.24705  125  .      EMG
 ```
 
+Note, when adding `signals` it can be useful to also set the special
+variable `order-signals=T` on the Luna command line, so that
+e.g. `B,C,A` is listed the same as `A,B,C` (e.g. when enumerating the
+number of unique channel combinations that exist across different
+EDFs).
+
 ## CONTAINS
 
 _Use the return code mechanism to indicate whether particular signals are present_
@@ -283,7 +294,7 @@ For stages,
     variations.
 
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 This command can be run with _either_ the `sig` or `stages` options:
 
@@ -292,7 +303,7 @@ This command can be run with _either_ the `sig` or `stages` options:
 | `sig` | `sig=${eeg}` | Channels to be checked for presence/absence |
 | `stages`  | | Instead of signals, indicate whether sleep stage annotations are present |
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 The primary output of `CONTAINS` is via the return code, as described
 above (and see example below). In addition, when checking whether the
@@ -314,7 +325,7 @@ Channel-level output (option: `sig`, strata: `CH`)
 | `PRESENT` | 0/1 variable to indicate whether the requested signal is present |
 
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 
 First checking which signals are present via the `DESC` command:
@@ -460,7 +471,7 @@ i.e. the original XML contained terms such as `SpO2 artifact` but these were (au
 
 ## TYPES
 
-Displays curret channel [_type_](../luna/args.md#types) definitions, either based
+Displays curret channel [_type_](../luna/args.md#channel-types) definitions, either based
 on the default set (internal to Luna) or user-specified (via
 `ch-match`, `ch-exact` and/or `ch-clear`).
 
@@ -858,7 +869,7 @@ plot( d$E , d$RMS , col = d$ID , pch=20 , xlab = "Epoch" , ylab = "RMG(ECG)" )
 
 
 
-## `SIGSTATS`
+## SIGSTATS
 
 _Epoch-wise Hjorth parameters and other statistics_
 
@@ -869,7 +880,7 @@ clipping (the proportion of points that equal the minimum or maximum
 for that epoch), absolute maximum absolute values and flatness
 (proportion of points of a similar value to the preceding value).
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 Core parameters:
 
@@ -893,7 +904,7 @@ Additional statistics
 | `max`     | `100` | Report proportion of time with `|X|>MAX` (no default) |
 
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 Per-channel whole-signal statistics (strata: `CH`)
 
@@ -929,14 +940,14 @@ Most signals in EDFs are continuously-valued; for _discrete_ signals
 (e.g. body position encoded as an integer value, or a binary 0/1
 status signal), the `TABULATE` command can provide useful summaries.
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | --- | --- | --- |
 | `sig` | `sig=position,status` | Restrict analysis to these channels |
 | `req` | `req=1000,5000` | Count # of distinct values w/ at least this many (e.g. 1000 or 5000) observations |
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 Per-channel tabulation statistics (strata: `CH`)
 
@@ -957,7 +968,7 @@ Per-channel/value tabulation statistics (strata: `CH` x `VALUE`)
 | `N`  | Number of _sample points_ for this value/channel |
 
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 Here we have an EDF with a `POSITION` channel that encodes body position
 via integer values in the EDF.  We can use `TABULATE` to give a breakdown of the observed values:
@@ -1092,6 +1103,50 @@ prone   .       POSITION        22:00:49        22:00:50        .
 
 _Finds digital/physical signal duplicates (and flat signals)_
 
-This function is designed to spot obviously redundant or empty channels in an EDF.
+This function is designed to spot obviously redundant or empty
+channels in an EDF.  It compares all pairs of channels (either on the
+digital or physical values in the EDF) and flags duplicates (as well
+as flat channels).
 
---TODO--
+Comparisons are made with some epsilon value to define "different"
+(i.e.  this could allow for small numerical differences in otherwise
+identical signals). As soon as the command detects as difference it
+stops evaluating that pair of channels.
+
+<h3>Parameters</h3>
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `sig` | `sig=position,status` | Restrict analysis to these channels |
+| `physical` | | Use physical instead of digital values |
+| `eps` | 0.001 | Set epsilon value (default 0.01) |
+| `prop` | 0.2 | Percentage of epoch that have to differ for something to be called "different" (default 0.1) |
+
+<h3>Output</h3>
+
+Per-individual statistics (strata: _none_)
+
+| Variable | Description |
+| --- | --- |
+| `INVALID`  | Number of invalid channels (no non-zero physical range) |
+| `DUPES`  | Number of duplicate channel pairs |
+| `FLAT`  | Number of flat channels |
+
+Per-channel statistics (strata: `CH`)
+
+| Variable | Description |
+| --- | --- |
+| `DUPE` | Indicator (0/1) of whether this channel is a duplicate with some other |
+| `FLAT` | Indicator (0/1) of whether this channel is flat |
+
+
+Per-channel-pair statistics (strata: `CHS`)
+
+| Variable | Description |
+| --- | --- |
+| `DUPE` | Value (1) set if this pair of channels (`A,B`) is a duplicate |
+
+
+<h3>Example</h3>
+
+See the [Luna walk-through](https://zzz.bwh.harvard.edu/luna-walkthrough/p2/dupes) for an example. 

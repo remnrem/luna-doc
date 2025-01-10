@@ -37,19 +37,10 @@ following the set of rules. Rules are followed sequentially, and once
 a particular canonical signal has been generated, Luna will skip all
 subsequent definitions.
 
-It is also possible to allow for cohort/study-specific _exceptions_ to
-a generic set of rules, by specifying a _group_ variable: e.g. if it
-is known that a particular study uses an unusual naming convention,
-this can be incorporated into the generic body of rules for that
-particular study/cohort.
-
-As part of the NSRR harmonization, we are generating a generic set of
-harmonized rules, intended to work for most typical PSG studies.  Note
-that the purpose of the CANONICAL command is not necessarily to map
-every signal in an EDF: rather, it is to guarantee that any newly
+Note that the purpose of the CANONICAL command is not necessarily to
+map every signal in an EDF: rather, it is to guarantee that any newly
 generated canonical signals will follow a known set of conventions,
-and thus can be more easily combined in cohort-level analyses.  These
-will be distributed alongside Luna in future releases.
+and thus can be more easily combined in cohort-level analyses.  
 
 <h3>Basic file format</h3>
 
@@ -66,59 +57,12 @@ main elements (a few exceptions to this are noted below):
    transducer type)
 
 
-### Variables
-
-Variables are shortcuts to make writing rules simpler. Any line that
-starts with the `let` statement in this form is a variable definition:
-e.g.
-
-```
-let left_mastoid=M1,A1,M1-Ref,A1-Ref
-```
-
-This means that if `left_mastoid` is used in any subsequent rule, it will be expanded into `M1,A1,M1-Ref,A2-Ref`, i.e.
-as if that text had been typed in full instead of `left_mastoid`. 
-
-Importantly, note that if we repeat the `let` assignment with the same
-variable name, new values are __appended__ (i.e. they do not overwrite
-the values). For example:
-
-```
-let left_mastoid=M1,M1-Ref
-let left_mastoid=A1,A1-Ref
-```
-implies `left_mastoid` equals `M1,M1-Ref,A1,A1-Ref`. This can make it easier
-to format and edit canonical definition files.
-
-Some common variables may be used to list typically encountered unit types, e.g:
-
-```
-let volt  = V,volt
-let mvolt = mV,millivolt,milli-volt,mvolt,m-volt
-let uvolt = uV,microvolt,micro-volt,uvolt,u-volt
-```
-
-Then, when specifying rules, one can just write `uvolt` instead of
-`uV,microvolt,micro-volt,uvolt,u-volt`
-
-!!! hint "Canonical signal file versus standard variables"
-    Note that
-    _variables_ in the context of a canonical signal definition file
-    are distinct from Luna's normal usage of
-    [variables](../luna/args.md#variables). Standard variables
-    (e.g. defined on the Luna command line) cannot be used in
-    canonical definition files.  Also, unlike standard Luna variables,
-    which are invoked with the `${var}` format, variables in canonical
-    files are simply written without extra syntax, i.e. `var`.
-
-
 ### Rules
 
 Rules are the meat of canonical signal definitions.  A rule follows a
 specific syntax that defines certain _requirements_ for a canonical
 signal, and optionally, may also _set_ some values for the newly
 generated signal (primarily unit and or sample rate).
-
 
 Rules follow a strict _space-indentation_ format.  Lines that start with:
 
@@ -155,7 +99,7 @@ This rule creates a new signal called `canonical_label`, _if the following condi
  or it is `unknown` or an empty field (the `.`) (second line)
  - the EDF physical unit is one of `uV`, `micro-volts`, etc, or (on the second line) `mV`, etc
  
-If these conditions are not met for each term (`sig`, `ref`, `unit`
+If these conditions are not met for any term (`sig`, `ref`, `unit`
 and `trans`), the rule will not be enacted.  If these conditions are
 met, then when running the `CANONICAL` command, Luna will generate a
 new channel with the following properties:
@@ -221,21 +165,20 @@ actually change/rescale the data themselves, unlike the `set:` sub-section, whic
 case of converting between volts, milli-volts and micro-volts - i.e. actually changing the signal, not just
 the text label in the EDF header.)
 
-In the case of voltage units, using the _variables_ we defined above:
+In the case of voltage units, using [_variables_ as descibed below](#variables) we can write:
 ```
-let volt  = V,volt
-let mvolt = mV,millivolt,milli-volt,mvolt,m-volt
-let uvolt = uV,microvolt,micro-volt,uvolt,u-volt
+${volt,V,volt}
+${mvolt,mV,millivolt,milli-volt,mvolt,m-volt}
+${uvolt,uV,microvolt,micro-volt,uvolt,u-volt}
 ```
 one would just write
 ```
-  unit = uvolt
-  unit = mvolt
-  unit = volt
+  unit = ${uvolt}
+  unit = ${mvolt}
+  unit = ${volt}
 ```
 as part of a _requirement_.  Because each line is a different unit (i.e. not just different labels for the same thing), they
 need to be on different lines.  Note that this still leads to the same _preferred_ units (`uV`, `mV`, `V`).  
-
 
 Here is an example rule for an EEG target channel: `C4_M1`, i.e. a
 right central electrode with contralateral mastoid reference.  Using the unit
@@ -245,9 +188,9 @@ variables defined above, we might write:
 C4_M1
  req:
   sig = C4_M1,C4_A1,EEG_C4_M1,EEG_C4_A1
-  unit = uvolt
-  unit = mvolt
-  unit = volt
+  unit = ${uvolt}
+  unit = ${mvolt}
+  unit = ${volt}
  set:
   unit = uV
   sr = 128
@@ -257,9 +200,9 @@ C4_M1
   sig = C4,EEG_C4,C4_REF,EEG_C4_REF
   ref = A1,M1,EEG_A1,EEG_M1,
   ref = A1_REF,M1_REF,EEG_A1_REF,EEG_M1_REF
-  unit = uvolt
-  unit = mvolt
-  unit = volt
+  unit = ${uvolt}
+  unit = ${mvolt}
+  unit = ${volt}
  set:
   unit = uV
   sr = 128
@@ -270,9 +213,11 @@ would first try to make the top one, which assumes a suitable
 referenced channel already exists (but allowing for some variations on
 the naming, e.g. `A1` instead of `M1` etc).   Thus there is no `ref` requirement.
 
-If the EDF did not contain such a channel, but did contain _two_ channels matching one of the `sig` and `ref`
-lists (e.g. `C4_REF` and `M1_REF`) then it would try to make the `C4_M1` channel, explicitly re-referencing `C4_REF`
-against `M1_REF`).  In this example, the `sig` channel would also be required to be of some flavor of voltage units.
+If the EDF did not contain such a channel, but did contain _two_
+channels matching one of the `sig` and `ref` lists (e.g. `C4_REF` and
+`M1_REF`) then it would try to make the `C4_M1` channel, explicitly
+re-referencing `C4_REF` against `M1_REF`).  In this example, the `sig`
+channel would also be required to be of some flavor of voltage units.
 
 The `set:` sub-section in the last command would then change the
 sample rate of 128 Hz if it was not already that; also, if the channel
@@ -280,6 +225,256 @@ sample rate of 128 Hz if it was not already that; also, if the channel
 to be in `uV` units (and update the EDF header field appropriately for
 the new channel).
 
+### Templates
+
+Rather than writing essentially the same rule for every EEG channel (e.g. C3, C4, F3, F4, O1, O2, etc) it can be convenient to use _templates_.  This involves two special keywords, that must appear on the start of a line: `define:` and `apply:` and a special character `^`:
+
+ - `define:` is followed by a template label, then a standard rule definition, except that it contains the character `^` where normally one would want to write a label or rule name
+
+ - `apply:` is followed by a previously defined template label, and a value to be substituted for `^`. 
+
+For example, this defines a template called `EEG_linked_mastoid`
+```
+define: EEG_linked_mastoid
+  sig = ^,EEG-^,"^ REF"
+  ref = "M1,M2"
+  unit = uV
+  unit = mV
+  unit = V
+ set:
+  unit = uV
+  sr = 128
+```
+
+This is stored but no actual rule is generated based on this.  Rather, rules are only generated when subsequently using `apply:` with that
+template label, followed by one or more labels, for example:
+```
+apply: EEG_linked_mastoid C3 C4 F3 F4 O1 O2
+```
+which is equivalent to writing out six rules all in the form:
+```
+C3
+  sig = C3,EEG-C3,"C3 REF"
+  ref = "M1,M2"
+  unit = uV
+  unit = mV
+  unit = V
+ set:
+  unit = uV
+  sr = 128
+```
+and
+```
+C4
+  sig = C4,EEG-C4,"C4 REF"
+  ref = "M1,M2"
+  unit = uV
+  unit = mV
+  unit = V
+ set:
+  unit = uV
+  sr = 128
+```
+etc.
+
+The values listed after `apply:` can be either space or comma-delimited, with the same effect.
+
+---
+
+In the above example, the reference is fixed to the linked mastoid in
+every case (i.e. `"M1,M2"`).  You could have separate rules for
+defining contra-lateral mastoid channels:
+
+
+```
+define: EEG_left_mastoid
+  sig = ^,EEG-^,"^ REF"
+  ref = M1,A1
+  unit = uV
+  unit = mV
+  unit = V
+ set:
+  unit = uV
+  sr = 128
+```
+
+```
+define: EEG_right_mastoid
+  sig = ^,EEG-^,"^ REF"
+  ref = M2,A2
+  unit = uV
+  unit = mV
+  unit = V
+ set:
+  unit = uV
+  sr = 128
+```
+
+and then apply both rules, e.g. 
+
+template label, followed by one or more labels, for example:
+
+```
+apply: EEG_left_mastoid C4 F4 O2
+```
+
+```
+apply: EEG_right_mastoid C3 F3 O1
+```
+
+If you add the `dump` option, the `CANONICAL` command will just print
+the expanded form of the script (i.e. after variables and templates
+have been substituted), and then stop; this can be useful for checking
+that the syntax works as expected.
+
+See the section on template variables below for tips on how to use
+variables with templates.
+
+
+
+### Variables
+
+You can use Luna-script style [variables](../luna/args.md#variables)
+to make writing rules simpler.  Variables can be assigned (or reassigned)
+with the `${var=value}` syntax, and subsequently recalled by writing `${var}`.
+Luna variables work on straight string substitution when pre-processing the file. For example:
+
+```
+${left_mastoid=M1,A1,M1-Ref,A1-Ref}
+```
+
+This means that if `${left_mastoid}` is used in any subsequent rules,
+it will be expanded into `M1,A1,M1-Ref,A2-Ref`, i.e.  as if that text
+had been typed in full instead of `${left_mastoid}`.
+
+<h5>Appending values</h5>
+
+You can append values to a variable with the `+=` operator, which can sometimes
+make it easier to format and edit canonical definition files.
+This appends in the form of a _comma-delimited list_.
+For example:
+
+```
+${left_mastoid=M1,M1-Ref}
+${left_mastoid+=A1,A1-Ref}
+```
+implies `${left_mastoid}` equals `M1,M1-Ref,A1,A1-Ref`. 
+
+Some common variables may be used to list typically encountered unit types, e.g:
+
+```
+${volt=V,volt}
+${mvolt=mV,millivolt,milli-volt,mvolt,m-volt}
+${uvolt=uV,microvolt,micro-volt,uvolt,u-volt}
+```
+
+Then, when specifying rules, one can just write `${uvolt}` instead of
+`uV,microvolt,micro-volt,uvolt,u-volt`, for example.
+
+<h5>Template variables</h5>
+
+You can combine variables and templates to make scripts simpler.  In a
+straightforward manner, you can use variables when you `apply:`
+templates:
+
+```
+apply: EEG_linked_mastoid ${eeg}
+```
+if, for example, `${eeg}` had previously been defined
+```
+${eeg=C3,C4,F3,F4,O1,O2}
+```
+
+which would generate six rules.  (Note that, unlike in Luna scripts,
+variables such as `${eeg}` are not pre-populated when using
+`CANONICAL`.)
+
+You can also use variables within the definition of the template: e.g.
+if we've defined variables to voltage units, as above, and `${lm_ref}`
+to define linked mastoid reference channels allowing for both `A` and
+`M` notation:
+
+```
+${volt=V,volt}
+${mvolt=mV,millivolt,milli-volt,mvolt,m-volt}
+${uvolt=uV,microvolt,micro-volt,uvolt,u-volt}
+
+${lm_ref="A1,A2","M1,M2"}
+
+define: EEG_template1
+  sig = ^,EEG-^,"^ REF"
+  ref = ${lm_ref}
+  unit = ${uvolts}
+  unit = ${mvolts}
+  unit = ${volts}
+ set:
+  unit = uV
+  sr = 128
+
+apply: EEG_template1 C3 C4 F3 F4 O1 O2
+```
+
+Note that the value of `${lm_ref}` used when defining the template is fixed and cannot be changed, i.e. `${lm_ref}` is expanded as
+text (`"A1,A2","M1,M2"`) _prior_ to creating/storing the template.   This means that adding these statements after the
+above, which involve changing the `${lm_ref}` variable are re-applying the template, _will not work as hoped for_ in that
+the references will still involve `"A1,A2","M1,M2"` (linked mastoid form) and _not_ the new value (for left mastoids only).
+
+```
+... (if following the above)...
+
+${lm_ref=A1,M1}
+
+apply: EEG_template1 C4_M1 F4_M1 O2_M1
+```
+
+
+If using [templates](#templates), you can however specify that a variable is
+evaluated not when _defining_ the template (i.e.  on the first pass)
+but instead only the second pass, when applying/expanding the templates,
+by writing `$${var}` instead of `${var}`.  That is, the following would work:
+
+```
+${volt=V,volt}
+${mvolt=mV,millivolt,milli-volt,mvolt,m-volt}
+${uvolt=uV,microvolt,micro-volt,uvolt,u-volt}
+
+define: EEG_template2 
+  sig = ^,EEG-^,"^ REF"
+  ref = $${ref}
+  unit = ${uvolts}
+  unit = ${mvolts}
+  unit = ${volts}
+ set:
+  unit = uV
+  sr = 128
+
+
+apply: EEG_template2 C4 F4 O2 ${ref=A1,M1}
+
+apply: EEG_template2 C3 F3 O1 ${ref=A2,M2}
+
+```
+
+This will generate six rules, for C4-M1, F4-M1, O2-M1 and C3-M2, F4-M2 and O2-M2.
+
+__TODO__: give C3 C4 etc but target labels are different, e.g. C3_M2 F4_M1 etc...  e.g. pass a target label when `define:` ?
+
+That is, `$${ref}` (note the double-`$`) is not defined before use in
+defining the template.  Effectively, the first `$` is stripped off,
+and the string `${ref}` is then given when an `apply:` statement is
+made: it is at this second stage (`apply:`) that `${ref}` must be
+defined -- you'd get an error if not.  It can either be defined
+before:
+
+```
+${ref=A1,M1}
+
+apply: EEG_template2 C4 F4 O2 
+```
+
+or (as in the first example) on the same line as `apply:` (but _after_
+the template name (`EEG_template2`) and any targets (here, C4, F4 and
+O2).
 
 ### Special behaviours
 
@@ -410,7 +605,14 @@ C4_LM
 
 ### Group sections
 
-As noted below, the `CANONICAL` command can optionally called with one or more `group` options set:
+It is possible to allow for cohort/study-specific _exceptions_ to
+a generic set of rules, by specifying a _group_ variable: e.g. if it
+is known that a particular study uses an unusual naming convention,
+this can be incorporated into the generic body of rules for that
+particular study/cohort.
+
+As noted below, the `CANONICAL` command can optionally called with one
+or more `group` options set:
 
 ```
 luna s.lst -s CANONICAL file=defs.txt group=study1,study2
@@ -496,7 +698,7 @@ want a generic rule to be attempted.    For example, we'd want to avoid generic 
 involving `F3` from being run for this particular study (i.e. if we knew this was a mislablled channel).
 
 This can be achieved with the special keyword `closed:` at the start of a line, followed by one or more
-canoical labels, i.e. placed in a leading group-specific definition file:
+canonical labels, i.e. placed in a leading group-specific definition file:
 
 ```
 closed: F3_M2 F3_LM
@@ -552,7 +754,7 @@ unique (i.e. adding `.1`, `.2` etc):  i.e. `canon`, `canon.1` and `canon.2`.
 !!! hint "Canonical signals and channel _types_"
     _Canonical signals_
     are not to be confused with [channel
-    types](#../luna/args.md#channel-types).  A canonical signal
+    types](../luna/args.md#channel-types).  A canonical signal
     represents a _new_ signal that is generated from existing signals
     according to a set of rules.  A _channel type_ is simply a label
     or annotation that is given to all channels, based on their

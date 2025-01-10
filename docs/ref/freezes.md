@@ -7,6 +7,7 @@ _Saving/reverting to snapshots of the dataset and derived metrics_
 | ---- | ------ | 
 | [`FREEZE`](#freeze) | Make a named freeze of the current datatset |
 | [`THAW`](#thaw) | Revert to a previous data freeze |
+| [`CLEAN-FREEZER`](#clean-freezer) | Empty the freezer | 
 | [`CACHE`](#cache) | Cache operations |
 
 
@@ -337,6 +338,24 @@ None (other than changing the state of the current in-memory EDF).
 
 See the example above given for the `FREEZE` command.
 
+## CLEAN FREEZER
+
+_Empty the freezer_
+
+The `CLEAN-FREEZER` command clears all data freezes from the freezer.
+Typically, you should not need to call this (as it is called
+implicitly when one is finished processing a given file).  If you are
+working with _extremely_ large files and memory becomes an issue, then
+this command might be useful, i.e. to manage intermediate memory storage.
+
+<h3>Parameters</h3>
+
+None.
+
+<h3>Output</h3>
+
+None (other than changing the state of the current in-memory EDF).
+
 
 ## CACHE
 
@@ -354,7 +373,7 @@ _features_ to be derived from one or more Luna commands (e.g. spectral
 power) which are then combined with a _model_ (read by the `PREDICT`
 command) to make a prediction.
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Option | Description |
 | ----- | ----- |
@@ -373,11 +392,11 @@ Cache types are either _numeric_ (`num`), _integer_ (`int`), _textual_
 (`text`) or true/false (`bool`).  Caches from `record` are always
 _numeric_, but caches set by other commands may use different types.
 
-<h5>Outputs</h5>
+<h3>Outputs</h3>
 
 No formal outputs, except from `dump` which prints to the console.
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 To illustrate how the cache can capture (`record`) specific outputs and store them in the cache, consider this script:
 ```

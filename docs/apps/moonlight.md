@@ -9,7 +9,7 @@ annotation data, specifically designed for polysomnographic data.  As
 well as visualization, _Moonlight_ supports basic analyses and
 manipulation of sleep data, a range of summary statistics, and
 hypnogram-based analyses including automated staging using
-[POPS](ref/pops.md).  Below we give a brief tour of the current main
+[POPS](../ref/pops.md).  Below we give a brief tour of the current main
 components.
 
 !!! info "Moonbeam & National Sleep Research Resource Data"
@@ -28,7 +28,7 @@ components.
      (including hypnogram statistics and automated staging) as well as
      tight coupling of Luna analyses, i.e. the ability to actively
      manipulate PSG data in this context.  It also provides tools for
-     viewing [annotation data](ref/annotations.md) alongside signal
+     viewing [annotation data](../ref/annotations.md) alongside signal
      data.
      
 ## Access
@@ -52,7 +52,7 @@ See [these notes](moonlight-install.md) on how to access _Moonlight_.  Briefly, 
 ## Basic principles
 
 _Moonlight_ is designed to upload a _single EDF (or EDF+)_ at a time, optionally
-along with one or more [annotation files](ref/annotations.md).  You
+along with one or more [annotation files](../ref/annotations.md).  You
 can then view basic properties of the data, including viewing raw
 signals.  The window contains a number of _panels_, all
 of which show some aspect of the uploaded EDF:
@@ -82,7 +82,7 @@ of which show some aspect of the uploaded EDF:
 The easiest way to learn is to open an instance at
 [http://remnrem.net/](http://remnrem.net/) and load the _Example
 data_ (one of the NSRR _tutorial_ individuals from the SHHS) and/or
-follow [this tutorial](tut/tut5.md) which uses _Moonlight_ to step through
+follow [this tutorial](../tut/tut5.md) which uses _Moonlight_ to step through
 the the _Luna_ and _lunaR_ tutorial pages.
 
 ## Left panel
@@ -104,9 +104,9 @@ With either dialog box, you can upload:
    `.edf`).  If multiple EDFs are selected, only the first will be
    uploaded.
 
- - annotation files in Luna [.annot](ref/annotations.md#annot-files)
-   format, Luna [.eannot](ref/annotations.md#eannot-files) or
-   NSRR-style [XML](ref/annotations.md#nsrr-xml-files) formats (ending
+ - annotation files in Luna [.annot](../ref/annotations.md#annot-files)
+   format, Luna [.eannot](../ref/annotations.md#eannot-files) or
+   NSRR-style [XML](../ref/annotations.md#nsrr-xml-files) formats (ending
    either `.annot`, `.eannot` or `.xml`).  If multiple files are
    selected, all will be uploaded (and assumed to match the uploaded
    EDF).
@@ -260,7 +260,7 @@ This panel shows three tables of the epochs in the dataset
 (30-seconds): 1) for the initial dataset, aligned to the EDF start, 2)
 for the initial dataset, aligned to sleep staging, 3) for the current
 in-memory dataset, aligned to staging annotations.  See the
-[tutorial](tut/tut5.md) for an example.
+[tutorial](../tut/tut5.md) for an example.
 
 
 ## Hypnogram
@@ -325,7 +325,7 @@ internally.
 ### SOAP
 
 This sub-panel implements a simple single-channel instance of the SOAP
-model, described [here](ref/soap.md). Select a channel (typically EEG,
+model, described [here](../ref/soap.md). Select a channel (typically EEG,
 but it does not need to be - although it should have a minimal 50 Hz
 sample rate and be expected to vary with sleep stage) and then click
 _Run SOAP_.  After a few seconds, a plot like the following will
@@ -515,7 +515,7 @@ the typical time/frequency spectrograms may not be as convenient or readily inte
 
 ### EXE
 
-The _EXE_ panel provides an implementation of the [`EXE representative`](ref/clustering.md#representative-epochs) command.
+The _EXE_ panel provides an implementation of the [`EXE representative`](../ref/clustering.md#representative-epochs) command.
 
 Select a single channel using the box in this panel (i.e. not the left _Channels_ tab).  The `m`, `t` and _Splits_ parameters control
 aspects of the clustering heuristic.  After clicking _Run ExE_, you will see a) a heatmap of the epoch-by-epoch distance matrix on the left, b) five (by default)
@@ -570,11 +570,11 @@ Copies a single channel and assigns a new label.
 
 ### Transform
 
-An advanced feature, this applies an arbitrary [_Eval_ transform](ref/evals.md#trans) expression to a single channel.
+An advanced feature, this applies an arbitrary [_Eval_ transform](../ref/evals.md#trans) expression to a single channel.
 
 ### Mask
 
-Applies a [mask](ref/masks.md#mask) to the current data, by selecting
+Applies a [mask](../ref/masks.md#mask) to the current data, by selecting
 one or more annotations, indicating whether epochs with those
 annotations should be included (i.e. `MASK mask-ifnot`) or excluded
 (i.e. `MASK mask-if`) and then pressing the _Set_ button.   Here is an
@@ -586,18 +586,18 @@ epochs:
 
 Alternative options (that do not use use the _Mask_ or _Annotations_
 boxes are a) the _Flip_ button, which simply flips the current mask,
-and b) the ability to write a generic [mask](ref/masks.md#mask)
+and b) the ability to write a generic [mask](../ref/masks.md#mask)
 argument (and then click _Set_ to apply it).
 
 ### Map channels
 
-This is a wrapper around the [`CANONICAL`](ref/canonical.md) command,
+This is a wrapper around the [`CANONICAL`](../ref/canonical.md) command,
 to map channel labels to a common standard.  The current NSRR
 canonical mapping file can be read in automatically  via _Insert NSRR defaults_ button.
 
 ### Map annots
 
-This is a wrapper around the [`REMAP`](ref/annotations.md#remap) command,
+This is a wrapper around the [`REMAP`](../ref/annotations.md#remap) command,
 to map annotationns to a common standard.  The current NSRR
 annotation mapping file can be read in automatically via _Insert NSRR defaults_ button.
 
@@ -608,11 +608,11 @@ annotation mapping file can be read in automatically via _Insert NSRR defaults_ 
 This tab is designed to host an hopefully growing set of predictive
 models and other resources, including population norm data for common
 sleep metrics.  The _models_ are initially based around Luna's
-[`PREDICT`](ref/predict.md) command and the models therein.
+[`PREDICT`](../ref/predict.md) command and the models therein.
 
 ### SUN2019: Adult age prediction
 
-This is a wrapper around the [`PREDICT`](ref/predict.md) command for
+This is a wrapper around the [`PREDICT`](../ref/predict.md) command for
 the [SUN2019](https://pubmed.ncbi.nlm.nih.gov/30448611/) model to
 predict adult "brain age" from the sleep EEG.  It requires sleep
 staging to be present (either from attached annotations, or previously
@@ -633,7 +633,7 @@ manuscript for rationale and applications.
 
 !!! hint "Processing many samples"
     If working with multiple recordings, this analysis can be automated by running directly on the command line
-    as shown [here](ref/predict.md#sun2019).
+    as shown [here](../ref/predict.md#sun2019).
 
 _We thank Drs. Sun, Westover and colleagues for sharing their work to support this implementation of their model._
 
@@ -669,7 +669,7 @@ simple graphical viewer.
 
 ### Commands
 
-As one simple example, given an attached dataset (the _Example_ dataset) here we run the [`TABULATE`](ref/summaries.md#tabulate) command, i.e.
+As one simple example, given an attached dataset (the _Example_ dataset) here we run the [`TABULATE`](../ref/summaries.md#tabulate) command, i.e.
 equivalent to running
 ```
 luna s.lst -o out.db -s ' TABULATE sig=POSITION ' 
@@ -683,7 +683,7 @@ in the table in the lower half of the panel:
 ![img](../img/mlref/ml-ref34.png)
 
 
-As a second example, here we run a spectral analysis using the [`PSD`](ref/power-spectra.md#psd) command, running a multi-part command,
+As a second example, here we run a spectral analysis using the [`PSD`](../ref/power-spectra.md#psd) command, running a multi-part command,
 with commands separated either by new-lines, or by `&` symbols (i.e. the same as when using the standard command-line version of Luna):
 ```
 MASK ifnot=N2
@@ -706,7 +706,7 @@ or select the adjacent _Plots_ subpanel after running a Luna command.
 
 The _Plots_ subpanel is designed to view any previously executed command from the _Commands_ subpanel of _Luna_.  Assuming the
 above example has just been performed, we could select the power spectra which is the table stratified by both frequency bin (`F`)
-and channel (`F`).    See the main [Luna documentation](ref/index.md) for a description of the outputs of each command.
+and channel (`F`).    See the main [Luna documentation](../ref/index.md) for a description of the outputs of each command.
 
 This tab provides a limited but potentially still convenient way to visualize some of the Luna outputs, in the form of scatter plots.  To
 see a power spectra emitted from the previous command, select `F` for the _X-axis_, and `PSD` for the _Y-axis_.  You should then see the following
@@ -720,7 +720,6 @@ select a _Stratifier_ as channel (`CH`) which means that separate scatter plots 
 two plots, one per channel, that show clearer results:
 
 ![img](../img/mlref/ml-ref38.png)
-
 
 In this case, if you wanted to restrict the range of frequencies,
 you'd need to re-run the Luna command changing `max` to something

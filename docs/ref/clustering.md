@@ -26,7 +26,7 @@ file for subsequent processing outside of Luna.  Additionally, the
 `EXE` command can run hierarchical complete linkage clustering on this
 distance matrix.
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 Other than specifying the type of distance matrix to be constructed (via `cat`, `unit` and the presence of a prior `EPOCH` command), you
 can change the default embedding dimension (`m`) and whether to skip samples (`t`).  
@@ -55,7 +55,7 @@ Extracting representative epochs heuristic:
 | `representative` | `representative=5` | Select 5 representative epochs |
 
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 The primary output of `EXE` is the `.mat` text file, which is a
 tab-delimited distance matrix, containing the symmetric
@@ -102,7 +102,7 @@ Class-level details (strata: `K`)
 See [below](#representative-epochs) for an example of using the `representative` option.
 
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 Here we estimate the epoch-by-epoch distance matrix for a single EEG channel in one individual:
 
@@ -225,7 +225,6 @@ epochs, etc).
     by itself, epoch-level time series clustering is probably not the most obvious way to QC sleep signal data.
 
 <h5>Potential applications</h5>
-
 
 The `EXE` command by itself is not particularly useful, but it can form the basis of
 other ways of looking at the data, i.e. any subsequent analysis that takes a distance

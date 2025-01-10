@@ -1,41 +1,30 @@
 # Downloads
 
-<p align="right"><em>Current Luna release: <b>v1.00</b> (31-May-2024)</em></p>
+<p align="right"><em>Current Luna release: <b>v1.2.0</b> (03-Jan-2025)</em></p>
+
+
 
 ## Quick links
 
 Latest stable Luna command-line tool (binaries and source):
 
-| Platform | Link |
+| Platform | Link/command |
 | ----- | ----- |
-| __Source code (all platforms)__ | [https://github.com/remnrem/luna-base/archive/refs/tags/v1.0.0.tar.gz](https://github.com/remnrem/luna-base/archive/refs/tags/v1.0.0.tar.gz)
-| macOS (Intel/x86_64) binary executable | [https://github.com/remnrem/luna-base/releases/download/v1.0.0/mac_luna.tar.gz](https://github.com/remnrem/luna-base/releases/download/v1.0.0/mac_luna.tar.gz) |
-| macOS (Silicon/ARM64) binary executable | [https://github.com/remnrem/luna-base/releases/download/v1.0.0/macos_arm64_luna.tar.gz](https://github.com/remnrem/luna-base/releases/download/v1.0.0/macos_arm64_luna.tar.gz) |
-| Windows binary executable | [https://github.com/remnrem/luna-base/releases/download/v1.0.0/win_luna.zip](https://github.com/remnrem/luna-base/releases/download/v1.0.0/win_luna.zip) |
-
-
-The binary distributions each contain a folder with the main executables
-(`luna`, `destrat`, etc) and some necessary libraries).  All files
-must be kept in the same folder. Add this folder to your system's path environment variable,
-e.g. on macOS:
-```
-export PATH=$PATH:/Users/john/downloads/luna-v1.00/
-```
-so that you can just type `luna` in any location and it will run the executable here. 
-For macOS, see [these notes](exec.md##macos-installation-notes) about how to get rid of
-harmless security warnings that will be shown the first time you try
-to run the code.  Also note that these are _command-line tools_ -
-i.e. use the terminal/command prompt on your machine rather than
-clicking on the icons.  
-
-Latest development source (Luna and _lunaR_):
-
-| Platform | Link |
-| ----- | ----- |
-| Luna source code (all platforms) | [https://github.com/remnrem/luna-base/](https://github.com/remnrem/luna-base/) |
-| _lunaR_ source code (all platforms) | [https://github.com/remnrem/luna/](https://github.com/remnrem/luna/) |
-
-
+| __Executables__ | |
+| macOS (Intel/x86_64) binaries | [https://github.com/remnrem/luna-base/releases/download/v1.2.0/mac_luna.tar.gz](https://github.com/remnrem/luna-base/releases/download/v1.2.0/mac_luna.tar.gz) |
+| macOS (Silicon/ARM64) binaries | [https://github.com/remnrem/luna-base/releases/download/v1.2.0/macos_arm64_luna.tar.gz](https://github.com/remnrem/luna-base/releases/download/v1.2.0/macos_arm64_luna.tar.gz) |
+| Windows binaries | [https://github.com/remnrem/luna-base/releases/download/v1.2.0/win_luna.zip](https://github.com/remnrem/luna-base/releases/download/v1.2.0/win_luna.zip) |
+| __Python__ | |
+| _lunapi_ Python package only | `pip install lunapi` |
+| __Source__| |
+| Stable Luna (all platforms)| [https://github.com/remnrem/luna-base/archive/refs/tags/v1.2.0.tar.gz](https://github.com/remnrem/luna-base/archive/refs/tags/v1.2.0.tar.gz)
+| Latest (unstable) Luna| [https://github.com/remnrem/luna-base/](https://github.com/remnrem/luna-base/) |
+| Latest (unstable) _lunaR_ | [https://github.com/remnrem/luna/](https://github.com/remnrem/luna/) |
+| __Docker__ | | 
+| Core Luna | `docker pull remnrem/luna` |
+| + JupyterLab & _lunapi_ | `docker pull remnrem/lunapi` |
+| lightweight Luna | `docker pull remnrem/lunalite` |
+ 
 ## Installation options 
 
 Luna is released under the
@@ -48,7 +37,7 @@ multiple ways to obtain Luna:
 
 - download [binary executables](exec.md) for _lunaC_ for Mac OS and Windows
 
-- install the Python package with `pip install lunapi` (on macOS and Linux) 
+- install the Python package with `pip install lunapi`
 
 - or pull a [Docker container](docker.md), which allows any machine
   with [Docker](http://www.docker.com) installed on it to run Luna
@@ -65,11 +54,16 @@ multiple ways to obtain Luna:
     [Dockerized](docker.md) version of Luna to provide a complete
     environment in which Luna can operate best.  Currently, it is the only way that you can use _lunaR_ on Windows too.
 
+!!! hint "Quick start w/ Docker"
+    If you have trouble installing Luna via the above methods, using a Docker container may instead prove to be a relatively easy
+    way to get a full Luna environment up and running.
+    
 
 ## Data resources
 
 The [data](data.md) page contains a number of resources that can be
-used with Luna on any platform, including the [tutorial data](../tut/tut1.md).
+used with Luna on any platform, including the [tutorial](../tut/tut1.md) and [walk-through](https://zzz.bwh.harvard.edu/luna-walkthrough)
+data.
 
 
 ## Changelog and known issues

@@ -8,8 +8,8 @@ Originally oriented around command-line scripting
 including the [Python](http://python.org) module
 [_lunapi_](lunapi/index.md) and the [_lunaR_](ext/R/index.md) library
 for the [R](https://www.r-project.org/) statistical package. The
-__current release is v1.00__ (31-May-2024): see [here](updates.md) for
-a list of changes/additions. For any queries, please contact `luna.remnrem@gmail.com`
+__current release is v1.2.0__ (3-Jan-2025): see [here](updates.md) for
+a list of changes/additions. Please direct any questions to `luna.remnrem@gmail.com`.
     
 ## A family of Luna tools
 
@@ -31,8 +31,7 @@ provide fundamentally the same basic functionality:
    Python
 
  - via the [_lunaR_](ext/R/index.md) R library: users more familiar
-   with R may prefer this option (_although note that in the future,
-   more effort will be put into developing the Python interface_)
+   with R may prefer this option (_although note that although we plan to maintain this as is, in the future more effort will be put into developing the Python interface_)
    
 !!! Note
     In this documentation, we often refer to _lunaC_ simply as
@@ -56,20 +55,28 @@ or they can be accessed via prebuilt [Docker containers](download/docker.md)
 
 ## Getting started
 
-After [downloading](download/index.md) one or more of the Luna
+__1.__ After [__downloading__](download/index.md) one or more of the Luna
 interfaces, the best place to start is the
-[tutorial](tut/tut1.md). The tutorial is initially couched in terms of
-the command line tool, but versions are available for both R and
-Python interfaces. Then work your way through the pages listed in the
-left-hand side menu.  (On devices with smaller screens this may be
-minimized: if so, click the top left three horizontal bars icon.) In
-particular, the [Concepts page](luna/args.md) describes many key ideas
-and conventions, that are relevant for all implementations of Luna.
+[__tutorial__](tut/tut1.md). The tutorial is initially couched in terms of
+the command-line tool, but versions are available for both R and
+Python interfaces.
+
+__2.__ You might then want to step through the
+[__walk-through__](https://zzz.bwh.harvard.edu/luna-walkthrough/),
+referencing this main documentation throughout (although note that completing
+the multi-part walk-through may take several sessions).
+
+__3.__ Then work your way through the pages listed in the left-hand side
+menu.  (On devices with smaller screens this may be minimized: if so,
+click the top left three horizontal bars icon.) In particular, the
+[__Concepts__](luna/args.md) page describes many key ideas and
+conventions, that are relevant for all implementations of Luna.  The
+[__Commands__](ref/index.md) page tabulates all primary Luna commands
+(these are common across command-line, R and Python implementations).
     
 ## Things Luna aims to do
 
-The [reference](ref/index.md) pages list all currently supported
-commands. Main areas are summarized below.
+The [Commands](ref/index.md) pages list all supported functionality; main areas are summarized below.
  
 !!! success "Primary use cases"    
     * Read, manipulate and write large sets of EDF and EDF+ signals 
@@ -83,6 +90,9 @@ commands. Main areas are summarized below.
     * Spindle and slow oscillation detection
     * Coherence and cross-frequency coupling 
     * Multi-channnel, topographical analyses
+    * Interval-based analyses of event timing
+    * Sample-level linear association models
+    * Manipulating annotation data and meta-data
     * Visual data exploration via _Moonlight_ or _scope_
 
 ## Things Luna _doesn't_ aim to do

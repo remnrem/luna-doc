@@ -416,7 +416,7 @@ Internally, the steps are:
     See below for an example of this approach.
     
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 Primary parameters
 
@@ -435,7 +435,7 @@ Secondary parameters
 | `dump-model` | | Dump the model to standard output | 
 
 
-<h5>Outputs</h5>
+<h3>Outputs</h3>
 
 Individual-level output (strata: _none_):
 
@@ -464,7 +464,7 @@ Feature-level output (strata: `FTR`)
 
 _(*) Calling this 're-imputed' doesn't really make much sense, but the output is stuck with this nomenclature for now._
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 As a full working example, we will consider the model described in
 [Sun et al (2019)](https://pubmed.ncbi.nlm.nih.gov/30448611/). This
@@ -759,7 +759,7 @@ Currently, in its initial release, only a single model is supported - __more wil
 
 | Label | Model | Link |
 |------|-----|-----|
-| [SUN2019](#SUN2019) | "Brain-age" prediction for adults | [repo]( https://github.com/remnrem/moonlight/tree/main/models) | 
+| [SUN2019](#sun2019) | "Brain-age" prediction for adults | [repo]( https://github.com/remnrem/moonlight/tree/main/models) | 
 
 
 ### SUN2019

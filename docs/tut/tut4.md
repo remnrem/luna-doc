@@ -461,7 +461,7 @@ a <- letable( annots = lannots() )
     One other convenience
     function is [`lstages()`](^lstages), which is just a wrapper
     around the evaluation of the Luna
-    [`STAGES`](../ref/hypnograms.md#stages) command and returns a
+    [`STAGES`](../ref/hypnograms.md#stage) command and returns a
     vector of sleep stage labels (e..g NREM1, NREM2, etc) per
     epoch. Stage labels must exist as annotations (i.e. this command
     does not automatically infer sleep stage on-the-fly from the raw
@@ -1995,7 +1995,7 @@ points( d15$START/3600 , rep( 15, length(d15$START) ) ,
 ![img](../img/rt19.png){width="100%"}
 
 The `annot` option we used for the `SPINDLES` command means that
-Luna will have written an [.annot file](../ref/annotations.md#annot) to the
+Luna will have written an [.annot file](../ref/annotations.md#annots) to the
 `edfs/` folder.  We can load those annotation files in as new annotations
 to be attached to the current EDF.  
 ```

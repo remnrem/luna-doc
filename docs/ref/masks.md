@@ -58,7 +58,7 @@ restructure the data after setting a mask (even though Luna will emit
 a warning if you try applying such a command to masked data). Commands
 that internally operate on an epoch-by-epoch basis could be applied to
 either state B or C, and would give identical results.  This
-[table](epochs.md#command-table) details which commands can be used
+[table](epochs.md#command-epoch-types) details which commands can be used
 in which contexts.
 
 
@@ -72,7 +72,7 @@ There are three general types of mask:
 
  - those based on [_annotations_](annotations.md), using either the default syntax
   or (for more involved, niche scenarios) Luna's
-   [_eval_](annotations.md#evalannotations.md#eval),   
+   [_eval_](expressions.md#eval),   
  - those based on _time intervals_, specified in terms of
    clock-time, elapsed-time or epoch number
  - other miscellaneous masks
@@ -140,7 +140,7 @@ will only mask epochs that are completely spanned by an arousal; in contrast,
 will also match epochs that have any extent of overlapping `arousal`.
 
 
-[_Eval_ expression](annotations.md#eval)-based masks:
+[_Eval_ expression](expressions.md#eval)-based masks:
 
 | Option | Example | Description | 
 | ---- | ----- | ----- | 
@@ -428,7 +428,7 @@ As indicated in the parameter tables above, the `MASK` command has a
 number of other convenience functions, including some that do not
 operate on annotations _per se_.
 
-<h5>Selecting epochs by number</h5>
+<h3>Selecting epochs by number</h3>
 
 To include only the first epoch in analysis:
 ```
@@ -463,7 +463,7 @@ will overwrite any previously specified mask.
     _currently defined_ set of epochs".
 
 
-<h5>Randomly selecting a subset of epochs</h5>
+<h3>Randomly selecting a subset of epochs</h3>
 
 To randomly select a up to a particular number of epochs _from the set of 
 currently unmasked epochs_, use the `random` mask.  For example, to
@@ -485,7 +485,7 @@ example), it will just result in all available epochs being selected
 (11 in this example).
  
 
-<h5>Specifying time intervals directly</h5>
+<h3>Specifying time intervals directly</h3>
 
 To include only epochs that span a particular time range, use either the `sec` or `hms` options:
 ```
@@ -555,7 +555,7 @@ MASK hms=8:00-9:00
     (i.e. the first epoch starts at `11:00:00` exactly).  See the [`WRITE`](outputs.md#write) command for more details.
 
 
-<h5>Miscellaneous</h5>
+<h3>Miscellaneous</h3>
 
 The `none` option (or `clear` or `include-all`, take your pick) will set all epochs to be included (i.e. unmasked). 
 ```
@@ -705,7 +705,7 @@ represent a _continuous_ EDF.
 
 
 
-## `DUMP-MASK`
+## DUMP-MASK
 
 _Produces an epoch-by-epoch tabulation of the current mask_
 
@@ -755,7 +755,7 @@ id00001   9   1
 That is, epochs 5 through 8 are unmasked (set to be included, e.g. if
 a `RESTRUCTURE` command were subsequently to be run).
 
-## `RESTRUCTURE`
+## RESTRUCTURE
 
 _Restructures the in-memory dataset after a mask has been set_ 
 

@@ -2,51 +2,27 @@
 
 _Prediction of sleep stages_
 
-!!! info "POPS & Moonlight"
-    As noted below, the interactive [_Moonlight_](../moonlight.md) viewer provides a simple point-and-click interface to POPS (in prediction mode only),
-    which is appropriate for applying our pre-made single-EEG POPS model to small numbers of EDFs.
-
 This page describes Luna's automated sleep stager (POPS). This
 [vignette](../vignettes/soap-pops.md) also gives some details on POPS
 and its companion command, [SOAP](soap.md). POPS is generic in the
 sense that it can be trained on multiple different types of signals.
-Currently, we only distribute a _single-EEG_ model however,
-although more will be added in the near future.
 
+The interactive [_Moonlight_](../moonlight.md) viewer provides a simple
+point-and-click interface to POPS (in prediction mode only), which is
+appropriate for applying our pre-made single-EEG POPS model to small
+numbers of EDFs.  If using command-line Luna, the easiest place to start is with
+the [RUN-POPS](#run-pops) command.
 
 | Command | Description | 
 | ---- | ------ | 
 | [_Models_](#models) | An overview of the current POPS models and expected signals | 
+| [`RUN-POPS`](#run-pops) | __A high-level convenience wrapper around `POPS`__ |
+| [Moonlight](#moonlight) | Instantiation of POPS base model in web-application | 
 | [`POPS`](#pops-prediction) _prediction mode_ | Apply automated sleep stage _prediction_ |
 | [`EVAL-STAGES`](#eval-stages) | Apply POPS evaluation metrics to external predictions |
 | [`--eval-stages`](#eval-stages) | Similar to above, but without an attached EDF |
 | [`POPS train`](#pops-training) _training mode (1)_| Create level 1 feature matrices for training |
 | [`--pops`](#pops-training) _training mode (2)_ | Combine trainers for level 2 features and train POPS models |
-
-
-## The easy route
-
-The easiest route to use POPS (at least for small numbers of EDFs) is
-the point-and-click [_Moonlight_](../moonlight.md) tool.  Opening the
-_Hypnogram/POPS_ panel, we can select the _M1_ model, specify the single channel
-to use (`EEG`, which is C4-M1), and check that we need to bandpass the signal prior to staging).  Click _Run POPS_
-and then 5-10 seconds later, you'll have this output;
-
-![img](../img/mlref/ml-ref19.png)
-
-The epoch-level predictions are available in a table from the second sub-panel too:
-
-![img](../img/mlref/ml-ref20.png)
-
-(It is also possible to set lights-off/on times (approximately
-anyway) by selecting and dragging the mouse on the top hypnogram - see
-the main Moonlight tutorial).
-
-__However, if you are wishing to a) use different models, b) alter
-parameters, and/or c) stage more than a handful of studies in a
-reproducible manner, then it is highly advised (and ultimately, much
-easier) to use the standard command line _Luna_ tool, as described
-below.__
 
 
 ## Models
@@ -55,6 +31,9 @@ An initial single EEG POPS model (`s2`) is hosted here:
 
 URL = [http://zzz.bwh.harvard.edu/dist/luna/pops.zip](http://zzz.bwh.harvard.edu/dist/luna/pops.zip)
 
+Currently, we only distribute a _single-EEG_ model however, although
+more will be added in the near future.
+
 Download this ZIP file, and extract it to give a `pops/` folder.
 
 The model was trained on ~3500 individuals from the
@@ -62,48 +41,36 @@ The model was trained on ~3500 individuals from the
 model, both `C3-M2` and `C4-M1` channels were used, i.e. with the
 assumption that they are effectively interchangeable in this context.
 The models were trained using the workflow as described below.  The
-[next section](#pops-prediction) shows how to use these models for
+next sections using either [RUN-POPS](#run-pops) or the lower-level
+[POPS](#pops-prediction) interface shows how to use these models for
 prediction.
 
 The core `s2` (aka Moonlight's _M1_, see below) model requires the following:
 
- - a single central EEG, based on a contralateral mastoid reference, i.e. C3-M2 or C4-M1.  In practice, similar
- EEGs channels can be swapped in and should still perform similarly, e.g. F3-M2.
+ - a single central EEG, based on a contralateral mastoid reference,
+   i.e. C3-M2 or C4-M1.  In practice, similar EEGs channels can be
+   swapped in and should still perform similarly, e.g. F3-M2
 
- - channels must be band-pass filtered 0.3 - 35 Hz
+ - channels must be band-pass filtered 0.3 - 35 Hz and sampled at 128 Hz
 
- - as well as this primary channel (given the placehold label _CEN_ below), the _M1_ model expects a parallel, standardized version (called _ZEN_ below),
- which can be obtained via the `ROBUST-NORM` Luna command. 
+ - as well as this primary channel (which is given the placehold label _CEN_
+   below), the `s2` model expects a parallel, standardized version
+   (called _ZEN_ below), which can be obtained via the `ROBUST-NORM`
+   Luna command
 
-In all, using Luna commands to prepare to run `POPS` with this model, say starting with the single EEG, say `C3_M2`:
-
-```
-luna s.lst -s ' FILTER sig=C3_M2 bandpass=0.3,35 tw=0.5 ripple=0.02
-                COPY sig=C3_M2 tag=NORM
-                ROBUST-NORM sig=C3_M2_NORM epoch winsor=0.005 second-norm=T
-                POPS alias=CEN,ZEN|C3_M2,C3_M2_NORM path=pops lib=s2 '
-```
-
-i.e. this performs all the steps of a) filtering, b) creating a copy of the signal, and c) normalizing that
-second copy; finally, the last command calls `POPS`, indicates
-via `alias` that the expected slots `CEN` and `ZEN` correspond to `C3_M2` and
-`C3_M2_NORM` as created above, then specifies the folder containing the
-POPS models/files, and indicates which library to use (`s2`).  This
-of course assumes that the `pops/` folder has been downloaded and, in this
-instance, is in the current directory.  POPS will rescale (to uV) and resample (to 128 Hz)
-the EEGs, if needed (as these properties are specified in the `.ftr` file).
-
-This model can be used in two different ways, which correspond to the
+The `s2` model can be used in two different ways (which correspond to the
 _M1_ and _M2_ labels in the [_Moonlight_](../moonlight.md)
 instantiation of POPS - both are based on the same underyling `s2`
-model, however.
+model, however).
 
- - The _M1_ instantation takes a single EEG channel from the test subject and makes predictions, as above. 
+ - The default use takes a single EEG channel from the test subject and makes predictions
 
- - The _M2_ instantiation differs at the prediction stage: rather than selecting, say, _either_ `C3-M2`
-   or `C4-M1` from the test subject, this uses the `equiv` POPS option to take _both_ EEG channels, predict from
-   each separately, and automatically select (epoch-by-epoch) the most "confident" prediction for each epoch.
-   The requirements are the same except that two _CEN_ and _ZEN_ channels are required, as shown below.
+ - Alternatively, one can pass multiple comparable EEG channels to the
+   prediction modules (e.g. `C3-M2` and `C4-M1`); this uses the
+   `equiv` POPS option to take _both_ EEG channels, predict from each
+   separately, and automatically select (epoch-by-epoch) the most
+   "confident" prediction for each epoch
+
 
 ### POPS files
 
@@ -117,16 +84,24 @@ When unzipping `pops.zip` (or creating new models from scratch), you'll see the 
 | `s2.ranges` | _Ranges file_, represents the distribution of the training data |
 | `s2.*.svd` | _SVD files_, specified by `s2.ftr` (used to project new data into the SVD component space ) |
 
-Most users will only use POPS in _prediction_ mode, which is far simpler. Given a pre-trained model (as can be downloaded above)
-the core POPS command is in its most basic form just:
-```
-POPS path=pops lib=s2 
-```
-As noted above, prior steps will likely be needed to get the EEG channels to the required format, and to indicate which EDF channels
-correspond to which channel labels used in the `.ftr` file.
 
-However, if you want to train your own models (e.g. based on other populations, etc), you can use POPS in _training mode_ without too much effort.
-The basic workflow for _training_ POPS models is two-step:
+Most users will only use POPS in _prediction_ mode, which is
+simpler. Given a pre-trained model (as can be downloaded above) the
+core [RUN-POPS](#run-pops) command is in its most basic form just, e.g.:
+
+```
+RUN-POPS path=pops sig=C3_M2
+```
+
+See [below](#run-pops) for more details.
+
+### Training new models
+
+However, if you want to train your own models (e.g. based on other
+populations, etc), you can use POPS in _training mode_ without too
+much effort.  The basic workflow for _training_ POPS models is
+two-step:
+
 ```
   POPS train   
     - inputs: signals (EDFs) plus a feature definition file (.ftr)
@@ -138,8 +113,9 @@ The basic workflow for _training_ POPS models is two-step:
 ```
 
 The basic workflow for _prediction_ using a previously created POPS model is a single step:
+
 ```
-   POPS
+   POPS (or RUN-POPS)
     - inputs: signals (EDFs), feature, model files (.ftr,  .mod) & auxiliaries 
     - output: posterior probabilties & most likely stages per epoch
 ```
@@ -150,21 +126,229 @@ the raw signals. We use this `s2.ftr` feature file to both train
 models, and then also to predict in new individuals.  That is, the
 _feature files_ are the key link between the raw signal data, and the
 epoch-level feature matrix that is the fundamental data used in sleep
-staging by Luna.
-
-It is used both in training and in prediction. See
+staging by Luna. It is used both in training and in prediction. See
 [below](#feature-files) for a detailed overview.  The `.mod` file is
 generated by LightGBM (the engine used to power POPS) and need not be
-inspected manually. The `.conf` file is not necessary when using POPS
-to predict sleep stages; otherwise, if the above files reside in the
-folder `pops/` then
+inspected manually. The `.conf` file is not necessary when using
+`RUN-POPS`/`POPS` to predict sleep stages; otherwise, if the above
+files reside in the folder `pops/` then
 
+## RUN-POPS
+
+_Wrapper around POPS for prediction_
+
+If using the standard [POPS](#pops-prediction) for prediction, it is
+necesary to perform a few steps to align signals with the channels
+that the `s2` model is expecting, to mirror what was done during
+training:
+
+ - create copies of the signals
+ 
+ - to filter channels to the correct sample rate (128 Hz EEGs by default) (called `CEN`)
+
+ - normalize a second copy of the signal using `ROBUST-NORM` (called `ZEN`)
+
+ - to use the POPS model to make predictions
+
+The `RUN-POPS` wrapper (the preferred way to use POPS) simplifies
+this, such that staging (for the `s2` model) requires only a) one or
+more EEG signals and b) the location of the downloaded POPS models to
+be specified (e.g. assuming the base `s2` model exists in the folder `pops/`):
+
+```
+luna s.lst -s ' RUN-POPS path=pops sig=C3_M2 '
+```
+
+In contrast, if using the lower-level `POPS` command, one might need
+to run something like this:
+
+```
+luna s.lst -s ' FILTER sig=C3_M2 bandpass=0.3,35 tw=0.5 ripple=0.02
+                COPY sig=C3_M2 tag=NORM
+                ROBUST-NORM sig=C3_M2_NORM epoch winsor=0.005 second-norm=T
+                POPS alias=CEN,ZEN|C3_M2,C3_M2_NORM path=pops lib=s2 '
+```
+and this would become more involved if apply multiple _equivalance_ channels.
+
+<h3>Parameters</h3>
+
+Epoch-level confusion matrix (strata: `OBS` x `PRED`)
+
+| Parameter | Example | Description |
+| ---- | ---- | ----  |
+| `path` | `/home/user/data/pops/` | Path to POPS model folder (downloaded) |
+| `lib` | `m2` | Optionall, a POPS model (default `s2`) | 
+| `sig` | `C3` | One or more EEG signals |
+| `ref` | `M2` | Optionally, one of more references (matching `sig`) |
+| `args` |  `args="op1=val1 op2=val2"` | Pass other arguments to POPS |
+| `ignore-obs` | `T` | Ignore any observed staging (default: `F`) | 
+| `filter` | `F` | Filter signals 0.3 - 35 Hz (default: `T` ) |
+| `edger` | `F` | Whether to perform [EDGER](artifacts.md#EDGER) trimming prior to prediction (default: `T`) | 
+
+<h3>Outputs</h3>
+
+See the [POPS](#pops) command outputs below.
+
+<h3>Example</h3>
+
+If we need to reference the channel on-the-fly:
+
+```
+luna s.lst -s ' RUN-POPS path=pops sig=C3 ref=M2 '
+```
+
+For multiple equivalence channels:
+
+```
+luna s.lst -s ' RUN-POPS path=pops sig=C3_M2,C4_M1 '
+```
+
+For multiple equivalence channels and also perform re-referencing (the i-th entry in `sig` is referenced against the i-th entry in `ref`):
+
+```
+luna s.lst -s ' RUN-POPS path=pops sig=C3,C4 ref=M2,M1 '
+```
+
+---
+
+For a specific example, applied to a tutorial dataset EDF:
+
+```
+luna s.lst 2 -o out.db -s RUN-POPS sig=EEG path=~/dropbox/pops 
+```
+
+This shows the steps `RUN-POPS` performs in the log:
+
+```
+ CMD #1: RUN-POPS
+   options: path=/Users/smp37/dropbox/pops sig=EEG
+  ------------------------------------------------------------
+  making copies of original signals (appending _F)
+  copying EEG to EEG_F
+  ------------------------------------------------------------
+  resampling EEG_F to 128 Hz if needed
+  resampling channel EEG_F from sample rate 125 to 128
+  ------------------------------------------------------------
+  bandpass filtering signals
+  filtering channel(s): EEG_F
+  ------------------------------------------------------------
+  making time-domain normalized signals
+  copying EEG_F to EEG_F_N
+  set epochs to default 30 seconds, 1195 epochs
+  iterating over epochs
+  robust standardization of 1 signals, winsorizing at 0.002
+  ------------------------------------------------------------
+  scanning to trim excess leading/trailing wake/artifact
+  skipping... cache ec1 not found for this individual...
+  set 0 leading/trailing sleep epochs to '?' (given end-wake=120 and end-sleep=5)
+  anchoring on sleep epochs only for normative ranges, using 715 of 1195 epochs
+  for EEG_F, flagged 340 epochs (H1=270, H3=96)
+  H(1) bounds: 3.58812 .. 6.97429
+  H(3) bounds: 0.299615 .. 0.928851
+  setting cache ec1 to store times
+  lights-on=05.13.06 (skipping 244 epochs from end)
+  ------------------------------------------------------------
+```
+
+It then applies the `POPS` command:
+```
+  running POPS
+  reading feature specification from /Users/smp37/dropbox/pops/s2.ftr
+   396 level-1 features, 109 level-2 features
+   113 of 505 features selected in the final feature set
+  read 65 valid feature mean/SD ranges from /Users/smp37/dropbox/pops/s2.ranges
+  from TRIM cache, setting lights_on = 28500 secs, 475 mins from start
+  set 245 final epochs to L based on a lights_on time of 28500 seconds from EDF start
+  set 0 leading/trailing sleep epochs to '?' (given end-wake=120 and end-sleep=5)
+  existing staging found: will calculate predicted/observed agreement metrics
+  expecting 396 level-1 features (for 1195 epochs) and 2 signals
+  applying Welch with 4s segments (2s overlap), using median over segments
+  pruning rows from 1195 to 950 epochs
+  feature matrix: 950 rows (epochs) and 113 columns (features)
+  set 20 ( prop = 0.000186306) data points to missing
+  read model from /Users/smp37/dropbox/pops/s2.mod (1000 iterations)
+  adding POPS annotations (pN1, pN2, pN3, pR, pW, p?)
+
+  kappa = 0.830578; 3-class kappa = 0.860016 (n = 950 epochs)
+
+  Confusion matrix: 
+       Pred:    W      R     N1     N2     N3     Tot
+  Obs:   W    224      1      8      3      0    0.25
+         R      1     99      4     16      0    0.13
+        N1      4      0      5      2      0    0.01
+        N2     14     18      8    329     29    0.42
+        N3      2      0      0      6    177    0.19
+      Tot:   0.26   0.12   0.03   0.37   0.22    1.00
+```
+
+The output database will now have the same output as described for
+`POPS` below, except the command name is `RUN-POPS` here and not
+`POPS`:
+
+```
+destrat out.db +RUN-POPS -v K K3
+```
+```
+ID        K           K3
+nsrr02    0.830578    0.860016
+```
+
+The epoch-level predictions are obtained as follows:
+
+```
+destrat out.db +RUN-POPS -r E -v PP_N1 PP_N2 PP_N3 PP_R PP_W PRED PRIOR 
+```
+```
+ID      E     PP_N1   PP_N2   PP_N3    PP_R    PP_W  PRED PRIOR
+   ...
+nsrr02  553   0.004   0.673   0.318   0.002   0.003    N2    N2
+nsrr02  554   0.002   0.511   0.482   0.001   0.003    N2    N2
+nsrr02  555   0.002   0.369   0.627   0.001   0.002    N3    N2
+nsrr02  556   0.003   0.591   0.402   0.001   0.003    N2    N2
+nsrr02  557   0.002   0.525   0.470   0.001   0.002    N2    N3
+nsrr02  558   0.002   0.548   0.445   0.001   0.003    N2    N2
+nsrr02  559   0.001   0.327   0.669   0.001   0.002    N3    N2
+nsrr02  560   0.002   0.351   0.644   0.001   0.002    N3    N3
+nsrr02  561   0.004   0.341   0.651   0.002   0.003    N3    N2
+nsrr02  562   0.002   0.270   0.725   0.001   0.002    N3    N2
+nsrr02  563   0.002   0.250   0.745   0.001   0.002    N3    N2
+nsrr02  564   0.002   0.251   0.744   0.001   0.002    N3    N2
+nsrr02  565   0.002   0.345   0.649   0.001   0.002    N3    N2
+nsrr02  566   0.002   0.279   0.715   0.001   0.003    N3    N3
+nsrr02  567   0.002   0.337   0.657   0.001   0.002    N3    N2
+nsrr02  568   0.001   0.194   0.802   0.001   0.002    N3    N2
+nsrr02  569   0.001   0.164   0.833   0.001   0.002    N3    N3
+nsrr02  570   0.003   0.300   0.693   0.002   0.003    N3    N2
+nsrr02  571   0.001   0.282   0.713   0.001   0.002    N3    N3
+nsrr02  572   0.002   0.307   0.687   0.002   0.002    N3    N3
+nsrr02  573   0.001   0.284   0.711   0.002   0.002    N3    N3
+nsrr02  574   0.003   0.322   0.670   0.002   0.002    N3    N2
+nsrr02  575   0.005   0.317   0.672   0.003   0.003    N3    N2
+nsrr02  576   0.010   0.711   0.269   0.005   0.005    N2    N2
+nsrr02  577   0.002   0.311   0.683   0.002   0.003    N3    N3
+nsrr02  578   0.001   0.232   0.764   0.002   0.002    N3    N2
+nsrr02  579   0.003   0.294   0.698   0.002   0.004    N3    N3
+nsrr02  580   0.005   0.520   0.469   0.003   0.003    N2    N2
+nsrr02  581   0.004   0.647   0.344   0.002   0.003    N2    N2
+nsrr02  582   0.002   0.329   0.663   0.002   0.003    N3    N3
+nsrr02  583   0.004   0.455   0.532   0.005   0.004    N3    N2
+nsrr02  584   0.003   0.147   0.838   0.007   0.005    N3    N3
+nsrr02  585   0.008   0.202   0.765   0.017   0.009    N3    N3
+nsrr02  586   0.026   0.236   0.692   0.032   0.014    N3    N3
+nsrr02  587   0.021   0.037   0.005   0.009   0.926     W     W
+nsrr02  588   0.021   0.017   0.002   0.005   0.955     W     W
+...
+```
 
 ## POPS (prediction)
 
 _Single observation stage accuracies and probabilities_
 
-<h5>Parameters</h5>
+Note that the [`RUN-POPS` wrapper](#run-pops) provides a simpler way
+to call the POPS stager in prediction mode, and should generally be
+the preferred route.
+
+<h3>Parameters</h3>
 
 Primary options:
 
@@ -180,7 +364,7 @@ Primary options:
 | `SHAP` | | Estimate SHAP information scores (takes longer to run) |
 | `SHAP-epoch` | | Estimate epoch-level SHAP information scores (takes longer to run & verbose output) |
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 The primary output of running POPS in prediction mode is a set of posterior probabilities for each epoch, along with the most likely stage.
 
@@ -302,7 +486,7 @@ Epoch-level confusion matrix (strata: `OBS` x `PRED`)
 | `P_COND_PRED` | Probability of observed stage, conditional on predicted stage | 
 
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 Taking the second individual from the tutorial dataset:
 
@@ -373,13 +557,13 @@ This also prints the 5-class confusion matrix:
 
 ```
   Confusion matrix: 
-	 Pred:	W	R	N1	N2	N3	Tot
-  Obs:	W	465	1	13	1	0	0.4
-	R	0	117	2	1	0	0.1
-	N1	5	1	4	1	0	0.01
-	N2	14	53	11	312	9	0.33
-	N3	1	0	0	37	147	0.15
-	Tot:	0.41	0.14	0.03	0.29	0.13	1.0
+       Pred:      W      R    N1      N2     N3    Tot
+  Obs:  W       465      1    13       1      0    0.4
+        R         0    117     2       1      0    0.1
+       N1         5      1     4       1      0   0.01
+       N2        14     53    11     312      9   0.33
+       N3         1      0     0      37    147   0.15
+     Tot:      0.41   0.14   0.03   0.29   0.13    1.0
 ```
 
 ```
@@ -410,6 +594,34 @@ be adding some vignettes in the future to consider best practice for
 applying POPS, adding new models (e.g. including EOGs, EMGs, etc).
 
 
+## Moonlight
+
+One easy route to use POPS (at least for small numbers of EDFs) is the
+point-and-click [_Moonlight_](../moonlight.md) tool.  Opening the
+_Hypnogram/POPS_ panel, we can select the _M1_ model (which actually
+maps to the `s2` model described above), specify the single channel to
+use (`EEG`, which is C4-M1), and check that we need to bandpass the
+signal prior to staging).  Click _Run POPS_ and then 5-10 seconds
+later, you'll have this output;
+
+![img](../img/mlref/ml-ref19.png)
+
+The epoch-level predictions are available in a table from the second sub-panel too:
+
+![img](../img/mlref/ml-ref20.png)
+
+(It is also possible to set lights-off/on times (approximately
+anyway) by selecting and dragging the mouse on the top hypnogram - see
+the main Moonlight tutorial).
+
+__However, if you are wishing to a) use different models, b) alter
+parameters, and/or c) stage more than a handful of studies in a
+reproducible manner, then it is highly advised (and ultimately, much
+easier) to use the standard command line _Luna_ tool, as described
+above.__
+
+
+
 ## EVAL-STAGES
 
 _Evaluates an external set of stages against the internal set_
@@ -419,18 +631,18 @@ command will read those, and compare them to the observed stages
 (i.e. from the original annotations) and generate the same table of
 statistics as POPS outputs.
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Option | Example | Description |
 | ---- | ---- | ---- |
 | `file` | `stage.txt` | File with staging |
 
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 The key outputs are also for POPS (kappas, accuracies and confusion matrices). See above.
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 If we had extracted the annotations from the previous POPS predictions into the file `stage.txt` as an `.eannot`, the following command would
 give the same metrics as the original POPS command:
@@ -466,18 +678,18 @@ It simply takes two [`.eannot`](annotations.md#eannot-files)
 style files of stages (one row per epoch) of the same length, and
 generates agreement statistics.
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Option | Example | Description |
 | ---- | ---- | ---- |
 | `file` | `stage.txt` | File with staging |
 | `file2` | `stage2.txt` | Second file with staging |
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 As above.
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 ```
 luna --eval-stages --opt file=stages1.txt file2=stages2.txt
@@ -684,16 +896,16 @@ SELECT time1
 ```
 
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 _to be completed_
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 _to be completed_
 
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 Here we generate a __toy__ POPS model based on just 3 individuals
 (e.g. from the tutorial dataset).  Of course, in practice, models

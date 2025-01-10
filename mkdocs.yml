@@ -44,9 +44,11 @@ nav:
      - Overview: 'index.md'
      - Updates: 'updates.md'
      - Tutorial: 'tut/tut1.md'
-     - lunaC: 'luna/args.md'
-     - lunAPI: 'lunapi/index.md'     
+     - Concepts: 'luna/args.md'
+     - Python: 'lunapi/index.md'
+     - lunaR: 'ext/R/index.md'     
      - Vignettes: 'vignettes/index.md'
+     - Walkthrough: 'https://zzz.bwh.harvard.edu/luna-walkthrough'
      - Installation: 'download/index.md'
      - FAQ: 'faq.md'
      - Contact: 'contact.md'
@@ -57,9 +59,9 @@ nav:
      - 'Quick start': 'tut/tut1.md'
      - 'Take two': 'tut/tut2.md'
      - 'Deeper dive': 'tut/tut3.md'
+     - 'Lunapi': 'https://github.com/remnrem/luna-api-notebooks/blob/main/tutorial.ipynb'
      - '/R/epeat': 'tut/tut4.md'
      - 'Moonlight': 'tut/tut5.md'
-     - 'Lunapi': 'https://github.com/remnrem/luna-api-notebooks/blob/main/tutorial.ipynb'
 
  - Concepts:
     - 'Overview' : 'luna/args.md'
@@ -101,9 +103,9 @@ nav:
  
  - Python:
     - 'Overview' : 'lunapi/index.md'
-    - 'Tutorial' : 'https://github.com/remnrem/luna-api-notebooks/blob/main/tutorial.ipynb'
     - 'Reference' : 'lunapi/ref.md'
-    - 'Scope' : 'lunapi/scope.md'
+    - 'Scope viewer'     : 'lunapi/scope.md'
+    - 'Notebooks' : 'https://github.com/remnrem/luna-api-notebooks/'
 
  - lunaR:
     - Overview: 'ext/R/index.md'
@@ -127,6 +129,8 @@ nav:
     - 'Compressed EDFs' : 'vignettes/edfz.md'
     - 'EEG polarity' : 'vignettes/nsrr-polarity.md'
     - 'UMAP clustering' : 'vignettes/nsrr-umap.md'
+
+ - Walkthrough: 'https://zzz.bwh.harvard.edu/luna-walkthrough'
 
  - Installation:
     - 'Overview': 'download/index.md'

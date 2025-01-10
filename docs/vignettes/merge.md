@@ -1,7 +1,8 @@
 # Merging and converting EDFs
 
 In this vignette, we illustrate how to use Luna to merge multiple EDFs
-into a single EDF including any associated annotations, using the [`--merge`](../ref/helpers.md#-merge) command.
+into a single EDF including any associated annotations, using the [`--merge`](../ref/helpers.md#-merge)
+and [`--bind`](../ref/helpers.md#-bind) commands.
 This procedure allows for gaps between component EDFs, in which case a
 _discontinuous_ EDF+D file will be emitted.  The second part of this vignette shows
 how to convert an EDF+D (whether from `--merge` or any other source) to a standard EDF,
@@ -349,7 +350,7 @@ have identical spectrograms, as expected in this contrived example.
 
 The `--merge` command only concatenates EDF signal data.  Typically,
 we'll have associated annotation files (e.g. manual sleep staging)
-that also require combining.  Particularly if using Luna [`.annot`](../ref/annotations.md#-annot) format,
+that also require combining.  Particularly if using Luna [`.annot`](../ref/annotations.md#annot-files) format,
 this is a trivial process, although some practical considerations still apply, as described here.
 
 Although `.annot` files can be simply combined (e.g. via the command

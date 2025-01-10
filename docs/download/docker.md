@@ -23,6 +23,20 @@ Web Services EC2](https://aws.amazon.com/ec2/).
     learning more about Docker, [this
     tutorial](https://docker-curriculum.com) is a good place to start.
 
+## Available images
+
+We currently support three main Docker images:
+
+ - `remnrem/lunalite` : just the command-line executables (`luna`,
+   `destrat` and `behead`) in a lightweight container
+
+ - `remnrem/luna` : Luna, _lunaR_ and RStudio along with the tutorial
+   data
+
+ - `remnrem/lunapi` : Luna, _lunaR_ as well as the Python-based
+   _lunapi_ wrapper for Luna, including a JupyterLab notebook
+   environment, [as described here](https://github.com/remnrem/luna-api-notebooks?tab=readme-ov-file#lunapi-a-python-interface-for-luna)
+
 
 ## Getting Docker
 
@@ -63,6 +77,8 @@ Luna:
 ```
 docker run --rm -it remnrem/luna /bin/bash
 ``` 
+
+(Alternatively, swap in `remnrem/lunalite` for the lightweight version.)
 
 The `remnrem/luna` Docker image contains luna pre-installed within a
 Linux environment.  It also includes R with [lunaR](../ext/R/index.md)
@@ -492,6 +508,89 @@ __Hints__
   amounts of data there are numerous reasons to consider alternatives
   to Windows that may work better...
 
+
+## remnrem/lunalite
+
+To obtain the lightweight version:
+```
+docker pull remnrem/lunalite
+```
+
+To run Luna from the host:
+```
+docker run --rm -it remnrem/lunalite luna -v
+```
+```
+luna-base version v1.1.0  (release date 11-Oct-2024)
+luna-base build date/time Oct 13 2024 22:06:18
+Eigen library v3.4.0
+sqlite v3.41.2
+```
+
+To run interactively:
+```
+docker run --rm -it remnrem/lunalite
+```
+which will give a prompt within the container (note: `/data #` is part of the shell prompt here, not part of the
+command to be entered)::
+```
+/data #  luna -v
+```
+```
+luna-base version v1.1.0  (release date 11-Oct-2024)
+luna-base build date/time Oct 13 2024 22:06:18
+Eigen library v3.4.0
+sqlite v3.41.2
+```
+
+To be practically useful, one would also bind a local folder to a contain volume: e.g. if the tutorial `s.lst`
+data exist in the current local folder.  Locally:
+
+```
+cd ~/tutorial
+cat s.lst 
+```
+```
+nsrr01	edfs/learn-nsrr01.edf	edfs/learn-nsrr01-profusion.xml
+nsrr02	edfs/learn-nsrr02.edf	edfs/learn-nsrr02-profusion.xml
+nsrr03	edfs/learn-nsrr03.edf	edfs/learn-nsrr03-profusion.xml
+```
+We can start a Luna session, binding the current directory (`${PWD}` on Posix systems) to `/data/` inside the container:
+```
+docker run --rm -it -v ${PWD}:/data remnrem/lunalite
+```
+where we can now run commands:
+```
+/data #  cat s.lst 
+```
+```
+nsrr01	edfs/learn-nsrr01.edf	edfs/learn-nsrr01-profusion.xml
+nsrr02	edfs/learn-nsrr02.edf	edfs/learn-nsrr02-profusion.xml
+nsrr03	edfs/learn-nsrr03.edf	edfs/learn-nsrr03-profusion.xml
+```
+and Luna will be automatically available:
+```
+/data #  luna s.lst 1 -s DESC
+```
+```
+ CMD #1: DESC
+    options: sig=*
+    EDF filename      : edfs/learn-nsrr01.edf
+    ID                : nsrr01
+    Clock time        : 21.58.17 - 09.20.17
+    Duration          : 11:22:00  40920 sec
+    # signals         : 14
+    Signals           : SaO2[1] PR[1] EEG_sec[125] ECG[250] EMG[125] EOG_L[50]
+                        EOG_R[50] EEG[125] AIRFLOW[10] THOR_RES[10] ABDO_RES[10] POSITION[1]
+                        LIGHT[1] OX_STAT[1]
+```
+
+Any files written to `/data/` will be available on the host machine
+after quitting the container.  You can mount multiple volumes to
+different points in the container (some of which can be readonly,
+e.g. for the EDF data).  See Docker documentation for details.  Use
+Ctrl-D to quit the Docker container (which will then be removed, as we
+specified `--rm`).
 
 ## Reference: Dockerfile
 

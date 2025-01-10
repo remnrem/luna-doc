@@ -6,7 +6,7 @@
 | `PAC` | Phase-amplitude coupling |
 
 
-## `CFC`
+## CFC
 
 _Estimates cross-frequency coupling via the GLM method_
 
@@ -19,7 +19,7 @@ amplitude-amplitude coupling.
 _Documentation to be added_
 
 
-## `PAC`
+## PAC
 
 _Documentation to be added_
 

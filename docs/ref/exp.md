@@ -5,7 +5,7 @@
     own internal notes and reminders on some features that are being
     prototyped or are under very heavy development__, etc.  That is,
     these are a) highly likely to change, b) will not necessarily use
-    Luna's standard [output mechanims](#../luna/outputs.md), c) may be
+    Luna's standard [output mechanisms](../luna/outputs.md), c) may be
     removed in future versions, and d) may be buggy, incomplete or
     both.  Stay well clear! You've been warned!  Whereas some commands listed here will
     (hopefully!) be elevated to be part of the main release, and more fully documented,
@@ -24,7 +24,7 @@
 | [`SPIKE`](#spike)           | Create a synthetic signal by combining part of one signal with another |
 | [`ZR`](#zr)   |  Calculate per-epoch Z-ratio |
 
-## `DFA`
+## DFA
 
 _Implements the detrended fluctuation analysis (DFA)_
 
@@ -39,7 +39,7 @@ for different length L.  Under a power law, one expects a linear
 relationship between the log-scaled flucuations and the log of L; the
 slope of that line estimates the so-called Hurst exponent, which is a
 rescaled version of the spectral slope as estimated using other
-frequency-domain approaches (e.g. [`IRASA`](#irasa)).   See the above paper
+frequency-domain approaches (e.g. [`IRASA`](power-spectra.md#irasa)).   See the above paper
 for a clear description of the full method.   That paper also describes
 a frequency-domain approach to DFA, which is directly implemented here
 (currently w/ the boxcar rather than Gaussian window, however).
@@ -119,21 +119,21 @@ Heuristics to see if signals have been fliped, based on the aysmmetrical shape o
 To be completed.
 
 
-## `FIP`
+## FIP
 
 _Frequency-interval plots_
 
 Experimental method, to be completed.
 
 
-## `HR`
+## HR
 
 _A modified Pan-Tompkins algorithm for detect R peaks in the ECG_
 
 _to be completed_
 
 
-## `SPIKE`
+## SPIKE
 
 _Merges two signals_
 
@@ -146,7 +146,7 @@ _Merges two signals_
 
 _to be completed_
 
-## `ZR`
+## ZR
 
 _Calculates per-epoch Z-ratio_
 

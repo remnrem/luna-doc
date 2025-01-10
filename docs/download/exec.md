@@ -1,10 +1,8 @@
 # Executables
 
 This page describes how to obtain precompiled executable files
-(command-line `luna` and the `destrat` utility) for macOS, Windows and
-Linux.
-
-Please first read the [overview](index.md) describing installation options
+(i.e. command-line `luna` and the `destrat` utility) for macOS, Windows and
+Linux.  Please first read the [overview](index.md) describing installation options
 to find the best option for your platform.
 
 As decribed below, the latest stable binary release is available from
@@ -23,32 +21,30 @@ that you figure out how to do the following:
 - get a __text editor__: ensure you have a text editor that works with
   plain-text files (i.e. __not__ a word processor), either old-school
   (e.g. `emacs`, `nano`, both of which are in the standard luna Docker container)
-  or new-school (e.g. [Atom](https://atom.io/), which is free, or
-  [Sublime Text](https://www.sublimetext.com/), which is not)
+  or new-school (e.g. [micro](https://micro-editor.github.io/), which is free, or
+  [Sublime Text](https://www.sublimetext.com/), which is not).  
 
 - get __R__ : the [R project for statistical
   computing](https://www.r-project.org/) is obviously necessary to use
   _lunaR_ -- but even if you don't plan to use _lunaR_, it will help when
   working with Luna output.
 
+ - alternatively, the JupyterLab environment provides all the above if
+   you wish to go down that path
 
 ## _lunaC_
 
-1. Select the binary (ZIP file) from the table below (or or visit <https://github.com/remnrem/luna-base/releases>) and select the folder appropriate platform: macOS, Windows or Linux (Ubuntu x86_64)
+1. Select the appropriate __binary__ (ZIP/tar archive) from [this
+  table](index.md#quick-links) (or or visit
+  <https://github.com/remnrem/luna-base/releases>) and select the folder
+  appropriate platform: macOS (Intel or Silicon) or Windows.
+   (Linux users should compile from source.)
 
-Latest stable Luna command-line tool (binaries and source):
+2. Go the the command line on your machine, i.e. the `Terminal` App
+for macOS, or PowerShell for Windows.
 
-| Platform | Link |
-| ----- | ----- |
-| __Source code (all platforms)__ | [https://github.com/remnrem/luna-base/archive/refs/tags/v1.0.0.tar.gz](https://github.com/remnrem/luna-base/archive/refs/tags/v1.0.0.tar.gz)
-| macOS (Intel/x86_64) binary executable | [https://github.com/remnrem/luna-base/releases/download/v1.0.0/mac_luna.tar.gz](https://github.com/remnrem/luna-base/releases/download/v1.0.0/mac_luna.tar.gz) |
-| macOS (Silicon/ARM64) binary executable | [https://github.com/remnrem/luna-base/releases/download/v1.0.0/macos_arm64_luna.tar.gz](https://github.com/remnrem/luna-base/releases/download/v1.0.0/macos_arm64_luna.tar.gz) |
-| Windows binary executable | [https://github.com/remnrem/luna-base/releases/download/v1.0.0/win_luna.zip](https://github.com/remnrem/luna-base/releases/download/v1.0.0/win_luna.zip) |
-
-2. Go the the command line on your machine, i.e. [Terminal] for macOS.
-
-3. Fourth unzip/untar the archive, which will extract three files
-(`luna`, `destrat` and `behead`) into the _current directory_.  (For
+3. Unzip/untar the archive, which will extract executables files
+(e.g. at least `luna`, `destrat` and `behead`) into the _current directory_.  (For
 the Windows download, there will be an additional file,
 `libfftw3-3.dll.)`
 
@@ -61,13 +57,15 @@ To get the version numnber:
 luna -v
 ```
 ```
-luna-base version v0.24.1 (release date 28-Aug-2020)
-luna-base build date/time Aug 28 2020 09:58:53
+luna-base version v1.1.0  (release date 11-Oct-2024)
+luna-base build date/time Nov  1 2024 12:54:03
+Eigen library v3.4.0
+sqlite v3.41.2
 ```
 
-5. To enable you to run luna from any folder, place all three
+5. To enable running `luna` from any folder, place all three
 (or four) files in a folder that is in your command path
-(e.g. `/usr/local/bin/` or `'C:\Program Files\` for Windows.  Alternatively, add 
+(e.g. `/usr/local/bin/` or `'C:\Program Files\` for Windows, etc.  Alternatively, add 
 the folder containing these files to your _Path_ environment variable. 
 
 6. Mac users may get a security message about running executables downloaded from the web.

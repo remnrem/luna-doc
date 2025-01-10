@@ -2,8 +2,13 @@
 
 ![img](../img/mb0.png)
 
-_Moonbeam provides a conduit to connect [NSRR](https://sleepdata.org) data with Luna
-tools._
+_Moonbeam provides a conduit to connect [NSRR](https://sleepdata.org)
+data with Luna tools._
+
+!!!warn	"Prototyping Moonbeam"
+    Please note	that the backend server	support	for Moonbeam is	under flux and so this service may be temporarily unavailable:	in future releases we'll try to	make it	more stable and	performant.
+
+The functionality works with both _Moonlight_ and the Python _lunapi_ package. See [here](.
 
 Whereas [Moonlight](moonlight.md) was originally designed for use with
 data located on your own, local machine, _Moonbeam_ is an extension to

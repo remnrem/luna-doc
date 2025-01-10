@@ -1,9 +1,224 @@
 
 # Updates, additions and fixes
 
-Current stable version: __v1.00__ (main [downloads](download/index.md) page)
+Current stable version: __v1.2.0__ (main [downloads](download/index.md) page)
 
-## v1.00 (31-May-2024)
+<!---
+
+ GPA : added ability to specify fixed factors on inputs/make-specs  (  file|group|F1|F2/LVL , e.g. adds F2 w/ fixed values LVL ) 
+
+--->
+
+## v1.2.0 (03-Jan-2025)
+
+_New Luna "walk-through" didactic material_
+
+ - a comprehensive step-by-step guide to using Luna as applied to
+   real-life datasets; the web pages are available
+   [https://zzz.bwh.harvard.edu/luna-walkthrough/](https://zzz.bwh.harvard.edu/luna-walkthrough/)
+   and we'll post the accompanying walk-through data on
+   [NSRR](sleepdata.org) within the coming month.
+
+_General phenotype association (GPA) command_
+
+ - major new [`GPA`](ref/assoc.md#gpa) command for efficient
+   (permutation-based) linear models via `--gpa-prep` and `--gpa`
+   commands
+
+ - new binary format created by `--gpa-prep`, read by `--gpa`
+ 
+ - allow kNN missing data imputation with `knn=K` option
+
+ - added `desc`, `stats` and `dump` to give a description, output
+   statistics (mean, SD, N) or dump raw values from a binary file;
+   added `make-specs` to generate JSON specification files
+
+ - added asymptotic significance values (nominal and adjusted,
+   e.g. FDR)
+
+_Other new commands_
+
+ - [`META`](ref/annotations.md#meta) command to calculate/append
+   annotation meta-data
+
+ - [`DERIVE`](ref/evals.md#derive) command to generate
+   summary statistics from annotation meta-data values
+
+ - [`SCALE`](ref/manipulations.md#scale) to enforce normalized
+   scale (min/max based, with `min-max`, `clip-min` and `clip-max`)
+
+ - [`ESPAN`](ref/annotations.md#espan) command to give per-epoch
+   statistics about annotation coverage
+
+ - statistics to quantify [_ultradian dynamics_](ref/dynamics.md)
+   from epoch-level metrics; typically invoked via `dynam` added to
+   `PSD`, `COH`, `SPINDLES`, `SO`, `PSI`, `CORREL`,
+
+ - [`COMBINE`](ref/manipulations.md#combine) command, to make a
+   new channel that is the mean or median of others
+
+ - [`--bind`](ref/helpers.md#-bind) command, to combine different
+   EDFs into a single EDF (where the files have the same interval but
+   have different signals, i.e.  the complement of
+   [`--merge`](ref/helpers.md#-merge)
+
+ - [`RUN-POPS`](ref/pops.md#run-pops) command (wrapper around
+   `POPS`)
+ 
+_Lunapi_
+
+ - new [_Moonbeam_](lunapi.md#moonbeam) functionality in lunapi, allowing
+   NSRR users to directly pull individual recordings from select cohorts
+ 
+ - new [`empty_inst()`](lunapi/ref.md#projempty_inst) function to
+   create an empty EDF within Lunapi (i.e. one can then attach other
+   signals with `insert_signal()` to use Luna functionality on data
+   not from EDF
+
+ - documentation added for the [`scope()` viewer](lunapi/scope.md)
+
+_Signal inputs_
+
+ - new [`preload`](luna/args.md#preloading) special variable to load
+   entire file, avoiding random access calls (which can be desirable
+   when working on systems with slow `fseek()` I/O calls, e.g. network
+   drives, etc.
+
+ - extended the
+   [`CANONICAL`](ref/canonical.md#canonical-signal-definitions)
+   format, to allow _templates_ and `+=` variable appends
+
+ - the special variable `id` can now take a comma-delimited list:
+   `id=id1,id2`; also, `skip=id1,id2` will skip these IDs; (note:
+   `include`/`exclude` provide similar functionality but take files of
+   IDs, not the IDs themselves)
+
+ - added `retain-case` to keep the case of a channel is it
+   (case-insensitive) matches a primary; e.g. for alias `Fp1|EEG-Fp1`,
+   if we have `FP1` as a query, Luna will now (as of v1.1) change this
+   to `Fp1` (as it matches the primary).  If you wish to retain the
+   case of the original, set `retain-case=T`.
+
+ - added `order-signals=T` to make all inputs alphabetically ordered;
+   this can help to align outputs, e.g. from `HEADERS signals` or for
+   `CH1` x `CH2` pairwise outputs, i.e. so that one doesn't get a
+   mixture of `A`x`B` in some outputs but `B`x`A` in others (as
+   typically the order of channels is determined by position in the
+   EDF rather than alphabetically)
+
+
+_Annotations_
+
+ - extended [`.annot` format](ref/annotations.md#annot-files) to allow
+ meta-data in additional columns (7 onwards); this type of _tabular
+ meta-data_ can be enforced with
+ [`WRITE-ANNOTS`](ref/annotations.md#write-annots) by adding
+ `tab-meta` (or `tab-meta=T`); also added `meta` option to control
+ column 6 output
+
+ - support different annotation date formats via `date-format` (for
+   annotation files) and `edf-date-format` (for EDF headers, even
+   though EDF headers are meant to be European DMY format).  e.g. can
+   set `date-format=YMD` or `MDY` or `DMY` (default). `YMD` indicates `yyyy-mm-dd` format.
+
+ - allow `d1`, `d2` format for annotation files, where this indicates
+   the first, second, etc day based on the EDF start date:
+   `d1-hh:mm:ss` (or `d1 hh:mm:ss`), `d2-hh:mm:ss`, etc.
+
+  - added `annot-meta-default-num` (which accepts `T`/`F` values) to
+     set the default type of annotation meta-data to be numeric rather
+     than string (this is useful for the `DERIVE` command that will
+     typically assume numeric meta-data)
+   
+ - added `num-atype`, `txt-atype`, `bool-atype` and `int-atype`
+   special variables to set particular meta-data fields to a particular
+   type
+
+ - allow `;` as well as `|` delimiters for annotation meta-data in
+  `.annot` files; these can be changed with `annot-meta-delim1` and
+  `annot-meta-delim2` special variables (and can both be set to the
+  same value if needed)
+
+ - added `SEED_ANNOT`, `SEED_CH`, `OTHER_ANNOT` and `OTHER_CH` to
+   `OVERLAP` output (`OTHER` x `SEED` strata)
+
+ - `annot=` can now accept [_expanded values_](luna/args.md#sequence-expansion) 
+
+
+_Hypnograms_
+
+ - fixed error where `HYPNO`'s baseline `POST` variable (post-sleep recording time) was
+ one epoch smaller than it should be
+
+ - added `pre_sleep` and `post_sleep` annotations from `HYPNO annot`
+
+ - known issue: for long (multi-day) recordings, the timing of some `HYPNO`
+   variables is incorrect (e.g. `TX_` statistics); arguably, this is not
+   a big issue as values such as sleep-midpoint etc, have no intrinsic
+   meaning if the recording contains multiple sleep periods;  _in future,
+   we'll aim to add a flag / not calculate various hypnogram metrics when
+   there appears to be multiple sleep periods (either based on recording time
+   or other heuristics) - although this could get messy)
+
+ 
+_lunapi (Python interface)_
+
+ - finalized `scope()` interactive viewer
+ 
+ - added `moonbeam()` to `lunapi`
+
+
+_Misc additions, changes and fixes_
+
+ - added `default-starttime`, `no-default-starttime` and date equivalents
+ 
+ - new `log=file.txt` special option to mirror log output to a file;
+   also `--log` to output the command to std::cerr (which can be
+   useful when tracking outputs)
+
+ - added `key+=value key+=value2` --> `key=value1,value2` to allow repeated options, building up a comma-delimited list
+    ```
+    luna s.lst -s PSD sig+=C3  sig+=C4  sig+=F3,F4
+    luna s.lst -s PSD sig=C3,C4,F3,F4
+    ```
+
+ - added `force-digital-minmax` (and `force-digital-min`/`force-digital-max`) special options
+ 
+ - `SOAP` now iterates over channels and stratifies all outputs by `CH`
+
+ - revised `SO` variable naming scheme (e.g. `SO_P2P` now `SO_AMP_P2P`, etc)
+
+ - added `uppercase-keys` to [`CACHE record`](ref/)
+
+ - added `scale` added to [`PSC`](ref/psc.md) (for scaled-PCA implementation)
+
+ - `PSC` now takes `cmd-var=SPINDLES,DENS` etc to select only specific variables
+
+ - added `q` option to [`S2A`](ref/annotations.md#s2a) e.g. `q=10`
+ 
+ - fixed issue in decimal-place resolution of time tracks in EDF+D
+   (i.e. now using same number of decimal places as `.annot` output,
+   1e-4s by default
+
+ - fixed bug in qall-by-allq `CORREL` where off-diagonal elements had
+   flipped signs (i.e. treated as directed measures of
+   connectivity)
+
+ - added decimal-place outputs to HMS times in `SEGMENTS` 
+
+ - known issue: `dynam` does not work with `-t` output (i.e. cannot
+   register the col names for arbitrary commands yet...)
+
+ - added `so-fast-trans` and `so-slow-trans` (w/ arg in Hz as trans
+   freq) to return only FS or SS (SO fast/slow swtichers)
+
+ - added `winsor` option to `SPINDLES`; also changed the implementation of Q-score filtering; new
+   `q-frq={freq},{cycles},{freq2},{cycles2}` option; also `q-verbose` and `q-verbose-all` and `q-max`
+
+ - added outputs from `show-coef` for `SPINDLES`
+ 
+
+## v1.00 (10-Jul-2024)
 
 This major release contains a number of new analysis features as
 well as support for a Python interface to Luna,
@@ -17,14 +232,14 @@ _New interfaces_
  functions and an interactive viewer for signal and annotation data
 
 _New commands_
-
+ 
  - new [EDF-MINUS](ref/manipulations.md#edf-minus) command to
    collapse gapped EDF+D whilst aligning records, stage annotations
    and epochs
 
  - new [PCOUPL](ref/xxx.md) command for generic phase-event coupling
 
- - new [SVD](ref/ica.md) commad for time-series PCA via SVD
+ - new [SVD](ref/ica.md#svd) commad for time-series PCA via SVD
  
 
 _Annotations_
@@ -166,7 +381,7 @@ _Predictive modelling_
   - `RIPPLES`
   - `GED`
   - `NMF` 
-  - `ORDER` command (or that command-line 'sig' sets order)
+  - `ORDER` command (or that command-line `sig` sets order)
   - loops in scripts [todo]
   - channel range selector [C3][C4] .. use same syntax as [C3][1..4] .. will have to wait and expand on a per-EDF basis ... 
    - __Global coherence statistics__ via the [`SYNC` command](ref/cc.md#sync)  
@@ -935,7 +1150,7 @@ _Annotation format modifications/extensions_
  - added `combine-annots` option to merge _class_ and _instance_
    identifiers. It accepts a character argument but is `_` by default
    ); this sets the annotation `class` to `class_inst` (and sets
-   `inst` to '.' )
+   `inst` to `.` )
 
  - added the `skip-sl-annots` option to skip all SL-attached
    annotations; i.e. if wanting to only load annotations from an
@@ -959,7 +1174,7 @@ _EEG microstates_
 
 _Other fixes, minor modifications and new features_
 
- - added ability to specify an empty EDF (`--nr`, `--rs` and filename equals '.' ) 
+ - added ability to specify an empty EDF (`--nr`, `--rs` and filename equals `.` ) 
 
  - added 1st, 2nd, 5th and 10th percentiles to `STATS` 
 
@@ -996,7 +1211,7 @@ _Other fixes, minor modifications and new features_
    be skipped if subsequent `MASK`/`WRITE` commands are applied 
 
  - added `pick` option to `SIGNALS` to pick first of pick=a,b,c that
-   is present, and drop the rest; can map with 'rename' to rename the
+   is present, and drop the rest; can map with `rename` to rename the
    pick
  
  - allow sample-lists to have a comma-delim list of annotations, or
@@ -1008,7 +1223,7 @@ _Other fixes, minor modifications and new features_
  
   - `CANONICAL` does not now need an explicit GROUP to be specified;
    the file must still have a first col, it is just ignored now; also,
-   new 'drop-originals' option to drop all original (non-CANONICAL)
+   new `drop-originals` option to drop all original (non-CANONICAL)
    signals after making the new signals; matches case-insentive
   
  - changed `epoch-check` to accept number of `.eannot` epochs that are
@@ -1099,7 +1314,7 @@ _Other new commands/functionality_
   option `flanking-collapse-nrem` (default T), i.e. flank based on any
   NREM stage (1, 2 or 3) 4) option `req-pre-post`, to only consider
   stage transitions that have `FLANKING_ALL` >= `x` for the `POST`
-  stage; defaults to 4 (2 mins). Added 'CONF' and `OTHR` outputs.
+  stage; defaults to 4 (2 mins). Added `CONF` and `OTHR` outputs.
 
 _Minor modifications/fixes_
 

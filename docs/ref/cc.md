@@ -19,7 +19,7 @@ The `COH` function calculates the [magnitude-squared
 coherence](https://en.wikipedia.org/wiki/Coherence_(signal_processing))
 for pairs of signals with similar sampling rates.
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | --- | --- | --- |
@@ -47,7 +47,7 @@ evaluate 10 pairs, even if some pairwise comparisons are not of
 interest).
 
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 
 Coherence for power bands  (`B` x `CH1` x `CH2`)  
@@ -83,10 +83,7 @@ Full cross-spectra, per epoch (option: `epoch` and `spectrum`, strata: `E` x `F`
 | `LCOH` | Lagged coherence | 
 
 
-__nb. references for methods to be added__
-
-
-<h5>Example</h5>
+<h3>Example</h3>
 
 
 To estimate the cross-spectra (up to 20 Hz) between the two EEG channels during NREM2
@@ -135,7 +132,7 @@ per-epoch statistics for a given channel pair.
 As of v0.27, Luna also provides functions to incorporate spatial channel distance (i.e.
 for the EEG/MEG context) of channels, and to find disjoint sets of highly correlated channels.
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | ---- | ---- | ---- | 
@@ -196,7 +193,7 @@ defined by the `ch-high` option) channels, with `CHS` stratifier, if
 the `ch-high` option is given.
 
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 Whole-signal correlations for pairs of channels (strata: `CH1` x `CH2`) 
  
@@ -243,7 +240,7 @@ Disjoint sets of highly correlated channels (option: `ch-high`, strata: `CHS`)
 
 
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 Here we consider the epoch-by-epoch correlation between the two EOG
 channels for [tutorial](../tut/tut1.md) subject `nsrr02`.  Using
@@ -552,7 +549,7 @@ Epoch-level metrics (strata: `E` x `CH1` x `CH2` x `F1` x `F2`)
 
 See this [vignette](../vignettes/rcox.md) for an application of both dPAC and wPLI metrics.
 
-Here, using two EEG channels from the second individual in the [tutorial](#../tut/tut1.md) dataset, we extract only N2 sleep at consider
+Here, using two EEG channels from the second individual in the [tutorial](../tut/tut1.md) dataset, we extract only N2 sleep at consider
 wPLI between the two channels at a grid of 50 frequencies, linearly spaced between 1 and 25 Hz:
 ```
 luna s.lst 2 -o out.db
@@ -591,7 +588,7 @@ sender versus recipient).
 
 The command requires that channels have similar sampling rates.
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 To set the frequency or frequencies at which to calculate PSI either:
 
@@ -628,7 +625,7 @@ Secondary parameters are:
 | --- | --- | --- |
 |`cache-metrics` | `cache-metrics=c1`  | Cache net and pairwsie `PSC` (e.g. for `PSC`) |
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 Analysis parameter output (strata: `F` )
 
@@ -668,9 +665,9 @@ Channel pair output (olption: `epoch`, strata: `E` x `CH1` x `CH2`)
 | `PSI_RAW` | Raw PSI |
 | `STD` | Standard deviation of PSI |
 
-<h5>Example</h5>
+<h3>Example</h3>
 
-_to be added_
+See the [walk-through](https://zzz.bwh.harvard.edu/luna-walkthrough/p5/conn) for an example application of `PSI`.
 
 ## XCORR
 
@@ -713,8 +710,6 @@ Pairwise cross-correlations for a given sample delay `D` (option:
 | --- | --- |
 | `T` | Lag in seconds |
 | `XC` | Cross-correlation |
-
-<h3>Examples</h3>
 
 
 ## MI
@@ -792,7 +787,7 @@ Estimate the cross-correlation between two signals, within a window of _W_ secon
 report the estimated phase delay (in seconds) based on the maximal cross-correlation in
 that time window.
 
-<h5>Options</h5>
+<h3>Options</h3>
 
 | Parameter | Example | Description |
 | ---- | ----- | ----- |
@@ -801,7 +796,7 @@ that time window.
 | `verbose` | | Verbose output |
 | `epoch` | | Epoch-level output |
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 Channel-pair output (strata: `CH1` x `CH2`)
 
@@ -823,26 +818,22 @@ Epoch-level channel-pair output (option: `epoch`, strata: `CH1` x `CH2`)
 | `S` | Phase delay based on cross-correlation |
 
 
-<h5>Example</h5>
-
-_to be added_
 
 
 ## GP
 
 _Applies Granger prediction_
 
-<todo>
+(this section is a placeholder: the `GP` command is currently not fully tested/supported in the current Luna release)
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | ---- | ----- | ----- |
 | `sig` | `sig=C3,C4,F3,F4` | Optionally specify channels (default is to include all) |
 
 
-<h5>Output</h5>
-
+<h3>Output</h3>
 
 Channel-pair output (strata: `CH1` x `CH2`)
 
@@ -850,7 +841,6 @@ Channel-pair output (strata: `CH1` x `CH2`)
 | ---- | ---- |
 
 
-
-<h5>Example</h5>
+<h3>Example</h3>
 
 _to be added_

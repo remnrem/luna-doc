@@ -44,16 +44,16 @@ different from Luna's default band definitions:
 - beta: 13 to 30 Hz
 
 
-<h5>Parametes</h5>
+<h3>Parametes</h3>
 
 | Option | Description | 
 | ---- | ---- | 
 | `signal` | Specify which channels/signals to include |
 
-<h5>Outputs</h5>
+<h3>Outputs</h3>
 
 _to be completed_
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 _to be completed_

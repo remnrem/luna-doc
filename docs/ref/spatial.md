@@ -7,7 +7,7 @@ _Commands to apply spatial filtering and interpolation to dense EEG data_
 | [Special variables](#special-variables) | Built-in variables, such as `${frontal}` |
 | [`CLOCS`](#clocs)     | Specify EEG channel locations |
 | [`SL`](#sl)           | Surface Laplacian spatial filtering |
-| [`INTERPOLATE`](#int) | Epoch-wise interpolation of bad channels |
+| [`INTERPOLATE`](#interpolate) | Epoch-wise interpolation of bad channels |
 
 ## Special variables
 
@@ -38,7 +38,7 @@ For example, to only calculate coherence statistics between left and right hemis
 luna s.lst -o out.db -s 'COH sig1=${left} sig2=${right}' 
 ```
 
-## `CLOCS`
+## CLOCS
 
 _Attach EEG channel locations_
 
@@ -60,14 +60,14 @@ used by commands such as [`SL`](#sl).
 In _verbose_ mode, as well as attaching the coordinates, the command writes
 the polar and spherical coordinates to the output stream.
 
-<h5>Parametes</h5>
+<h3>Parametes</h3>
 
 | Option | Description | 
 | ---- | ---- | 
 | `file` | Specify which signals to include |
 | `verbose`  | Verbose output |
 
-<h5>Outputs</h5>
+<h3>Outputs</h3>
 
 Verbose channel location information (option: `verbose`, strata: `CH`)
 
@@ -82,12 +82,12 @@ Verbose channel location information (option: `verbose`, strata: `CH`)
 | `POLAR_ANGLE` | Angle (Polar) |
 | `POLAR_RAD` | Radius (Polar) |
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 _to be completed_
 
 
-## `SL`
+## SL
 
 _Applies the surface Laplacian spatial filter to dense EEG data_
 
@@ -95,14 +95,17 @@ The surface Laplacian (sometimes called Current Source Density, CSD)
 is a commonly used spatial filter, to increase the topographical
 specificity of signals, by filtering out very globally-distributed
 features. The surface Laplacian is applied in the time-domain, via the
-spherical derivative method of Perrin et al (1987, 1989).
+spherical derivative method of Perrin et al (1987, 1989). [Kayser &
+Tenke (2016)](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4537804/)
+provide an excellent review of the logic, parameterization and
+application of the surface Laplacian.
 
-This command requires channel locations to have been previously
-attached, via the [`CLOCS`](#clocs) command.  All signals are assumed
+This command requires channel locations; Luna contains default locations
+for typical 64-channel montages; otherwise, special maps can be attached
+using the [`CLOCS`](#clocs) command. All signals are assumed
 to have similar sampling rates.
 
-[Kayser & Tenke (2016)](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4537804/) provide an
-excellent review of the logic, parameterization and application of the surface Laplacian.
+<h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | ---- | ---- | ---- |
@@ -112,13 +115,12 @@ excellent review of the logic, parameterization and application of the surface L
 |`lambda` | `lambda=1e-3` | Regularization parameter, default = 1e-5 |
 
 
-
-<h5>Output</h5>
+<h3>Output</h3>
 
 There is no explicit output; the internal EDF channels will reflect the spatially-filtered EEG channels.   They
 can be written to a new EDF, e.g. with a subsequent `WRITE` command.
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 To get power spectra for spatially-filtered signals:
 
@@ -129,7 +131,7 @@ luna s.lst -o out.db -s 'CLOCS file=clocs & SL sig=${eeg} & PSD sig=${eeg} spect
 
 
 
-## `INTERPOLATE`
+## INTERPOLATE
 
 _Epoch-wise interpolation of bad channels_
 
@@ -143,24 +145,28 @@ missing channels on an epoch-by-epoch basis.  That is, as sleep
 recordings can be long, one does not necessarily want to refject an
 entire channel if it has hours of clean data.
 
-Channel locations must have been previously attached via the
-[`CLOCS`](#clocs) command. The data must be
-[`EPOCH`ed](epochs.md#epoch) prior to running this command.
+This command requires channel locations; Luna contains default locations
+for typical 64-channel montages; otherwise, special maps can be attached
+using the [`CLOCS`](#clocs) command. All signals are assumed
+to have similar sampling rates, and signals are assumed to be epoched.
 
-<h5>Parametes</h5>
+<h3>Parametes</h3>
 
 | Option | Description | 
 | ---- | ---- | 
 | `sig` | Specify which channels/signals to include |
+| `m`   | interpolation order (default 2, range 2-6) |
+| `order` | Legendre polynomial order (default 10) |
+| `lambda` | regularization parameter (default 1e-5) | 
 
 
-<h5>Outputs</h5>
+<h3>Outputs</h3>
 
 No explicit output.  The internal EDF will reflect the interpolated
 set of channels. After interpolation, this command clears the [`CHEP`
 mask](masks.md#chep).
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 As we illustrate in this [vignette](../vignettes/chep.md), here we use the `INTERPOLATE` command to clean up hdEEG data.  See the vignette
 and the documentation for  [`CHEP-MASK`](artifacts.md#chep-mask)  and [`CHEP`](masks.md#chep) for more details.[

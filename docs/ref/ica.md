@@ -8,7 +8,7 @@ _An implementation of the fastICA algorithm_
 | [`ADJUST`](#adjust)  | Adjust original signals given one or more ICs |
 | [`SVD`](#svd) | Apply time-series PCA to multiple channels | 
 
-## `ICA`
+## ICA
 
 _Independent components analysis_
 
@@ -53,7 +53,7 @@ time).
     sleep data.
 
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 Primary parameters are:
 
@@ -71,7 +71,7 @@ Secondary parameters include:
 | `tag`  | `V_` | Use `V_1`, `V_2`, etc, instead of `IC_1`, `IC_2`, etc |
 | `file` | `ica1` | Write ICs (S matrix) and other ICA output to files `ica1.S`, etc |
 
-<h5>Outputs</h5>
+<h3>Outputs</h3>
 
 As mentioned, one output of `ICA` is a set of new channels added to
 the (internal) EDF (unless `no-new-channels` is specified). These are
@@ -104,7 +104,7 @@ ICA matrix K (strata: `KCH` x `KIC`)
 | `K` | Element of K matrix |
 
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 Running `ICA` on a single EDF:
 
@@ -136,7 +136,7 @@ command to remove certain components from the original signals, as
 illustrated below.
 
 
-## `ADJUST`
+## ADJUST
 
 _Adjusts signals given various ICs and other criteria_
 
@@ -151,7 +151,7 @@ Currently, only two criteria are supported: topographical outliers and
 high correlation with one or more other channels (e.g. EOG or EMG).
 
  
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | ---- | ---- | ---- |
@@ -165,7 +165,7 @@ high correlation with one or more other channels (e.g. EOG or EMG).
 | `tag` | `V` | If the IC prefix is other than `IC_` it can be specified here |
 
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 This command primarily adjusts the channels in the (internal) EDF, rather than generating summary output.  Currently,
 the one output that is given is the correlation between the original and the adjusted channel:
@@ -178,7 +178,7 @@ Channel-level output (strata: `CH`)
 | `R` | Time-domain correlation between the pre- and post-adjusted signal |
 
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 Following from the `ICA` example above, to remove channel `IC_57` (and show before and after PSDs) we might write:
 
@@ -208,7 +208,7 @@ ADJUST sig=${eeg} adj=${ic} corr-sig=LOC,ROC corr-th=0.5,0.5
     that corresponds to these.
 
 
-## `SVD`
+## SVD
 
 _Singular value decomposition of time-series data (PCA)_
 
@@ -217,7 +217,7 @@ This command performs PCA via SVD of multiple channels, and
 channels must have the same sample rate.  A specified number of new channels (with
 the same sample rate) will be added to the in-memory EDF.
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | ---- | ---- | ---- |
@@ -228,7 +228,7 @@ the same sample rate) will be added to the in-memory EDF.
 | `winsor` | `0.02` | Winsorize time series prior to SVD at this percentile (e.g. 2nd, 98th) |
 | `no-new-channels` | | Do not add new channels to the EDF |
 
-<h5>Outputs</h5>
+<h3>Outputs</h3>
 
 The primary output (unless `no-new-channels` is set) are the `nc` new
 channels added to the EDF.

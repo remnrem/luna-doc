@@ -7,7 +7,7 @@ _Linear-phase signal filters_
 | [`FILTER`](#filter)  | Apply a FIR filter to one or more signals |
 | [`FILTER-DESIGN`](#filter-design) | Display filter properties | 
 
-## `FILTER`
+## FILTER
 
 _Applies a linear-phase FIR filter to a signal_
 
@@ -209,7 +209,7 @@ signals are not uniformly scaled in this particular representation):
 ![img](../img/band-filters.png){width="100%"}
 
 
-## `FILTER-DESIGN`
+## FILTER-DESIGN
 
 _Frequency and impulse responses for FIR filters designed via the Kaiser window method_
 
@@ -221,7 +221,7 @@ method to design the filter.  The `FILTER-DESIGN` command (or Luna
 This command does not depend on any EDFs to be present, and so can be
 run without a sample-list or EDF (see the example below).
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | --- | --- | --- |
@@ -249,7 +249,7 @@ The FIR design design approaches are as for the `FILTER` command: either through
 | `blackman` | Specify a Blackman window |
 
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 Per-filter basics (strata: _none_)
 
@@ -285,7 +285,7 @@ Impulse response (strata: `FIR` x `SEC`)
 | `FIR`   |  FIR filter label |
 | `IR`   |  Impulse response |
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 Consider a band-pass filter in the sigma band, 11 to 15Hz, applied to
 a signal with 200 Hz sampling rate.  Transition frequencies 11Hz and

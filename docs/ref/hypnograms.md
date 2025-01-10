@@ -9,7 +9,7 @@ These commands require staging annotations to be present in an
 |---|---|
 | [`HYPNO`](#hypno) | Sleep macro-architecture summaries |
 | [`STAGE`](#stage) | Output sleep stages per epoch |
-
+| [`DYNAM`](#dynam) | Summarize epoch-level outputs by NREM cycles | 
 
 ## HYPNO
 
@@ -1005,7 +1005,7 @@ id1   EEG    6      -5.5107
 _Export sleep stage information_
 
 This command simply reports sleep stage information (e.g. as encoded
-stages in an [annotation file](annotations.md#file-formats).
+stages in an [annotation file](annotations.md#luna-annotations).
 Internally, it creates a single annotation class called `SleepStage`,
 with instances that correspond to `W`, `N1`, `N2`, `N3`, `R`, `?` and
 `L` (_Lights On_).  The [`HYPNO`](#hypno) command does the same but
@@ -1068,4 +1068,19 @@ plot( d$E , d$STAGE_N )
 The [`lstages()`](../ext/R/ref.md#lstages) function in
 [_lunaR_](../ext/R/index.md) provides a quick way to run the `STAGE` command
 for a single EDF, returning just a vector of stage names.
+
+## DYNAM
+
+_Summarize outputs from other commands (or inputs from a file) in terms of hypnogram-derived NREM cycle dynamics_
+
+
+This command will typically be invoked by adding `dynam` as an option
+to one of the following commands that currently supports it: `PSD`,
+`COH`, `SPINDLES`, `SO`, `PSI`, `CORREL`.  Alternativey, epoch-level
+inputs can be specifed from a file, in which case this functionality
+is directly invoked via the `DYNAM` command.  The same functions are
+executed in either case.
+
+This commands requires that `HYPNO` has previously been run, as it
+relies on knowing the NREM cycle structure of a recording.
 

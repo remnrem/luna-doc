@@ -131,7 +131,7 @@ setting the [epoch-level mask](masks.md):
    1 of 1 channels with 1+ masked epoch, 0 with all epochs masked
 ```
 
-Finally, the [`RESTRUCTURE` (or `RE`)](masks.md#RESTRUCTURE) takes the epoch-level mask
+Finally, the [`RESTRUCTURE` (or `RE`)](masks.md#restructure) takes the epoch-level mask
 and actually drops those epochs permanently from the internal representation of the data - i.e. any subsequent
 analysis would be based on this subset of 988 epochs, not the full set.
 
@@ -294,7 +294,7 @@ plot( d$BETA_FAC , pch=20 , col = f( d$MASK ) , ylab="Beta fac")
 
 ![img](../img/buck.png){width="100%"}
 
-Comparing the results to the [`SIGSTATS`](#sigstats) method described
+Comparing the results to the [`SIGSTATS`](summaries.md#sigstats) method described
 above, which is applied to the same data, we see that this approach
 does a good job of flagging individual epochs with unusual artifacts,
 but does not flag the very extended stretches of gross artifact

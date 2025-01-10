@@ -44,27 +44,6 @@ following (all of which can be obtained for free):
   ```
 
 
-## zlib
-
-Many systems will have the zlib compression library installed by
-default.  If not, you'll see an error message about a missing `zlib.h` file
-when trying to compile Luna.
-
-Get the development version (i.e. which includes the source headers),
-either via a package manager such as (depending on your platform)
-`homebrew` or `apt-get`: e.g.
-
-```
-brew install zlib
-```
-or
-```
-apt-get install zlib1g-dev
-```
-
-Alternatively, obtain the source from the project website: [https://zlib.net](https://zlib.net)
-
-
 ## FFTW3 
 
 Beyond the preliminaries mentioned above, Luna

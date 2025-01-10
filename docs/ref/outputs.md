@@ -20,7 +20,7 @@ Writes a new EDF to disk, that will reflect any
 [manipulation](manipulations.md), [filtering](fir-filters.md), or [masking](masks.md), etc, that
 has been applied.
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | --- | --- | --- |
@@ -30,11 +30,11 @@ has been applied.
 | `edf`     | `edf=f1`     | Write to edf `f1.edf` | 
 | `sample-list` | `sample-list=v2.lst` | Name of the new sample-list |
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 No formal output, other than a message to the log and one or more new EDFs. 
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 To write a set of new EDFs that (for example) have been masked,
 filtered and retaining only one signal, given the commands in a file,
@@ -153,7 +153,7 @@ _Dumps signal information to a file_
 For one or more signals of similar sampling rates, this command
 generates a text file containing the raw signal data.
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | --- | --- | --- |
@@ -165,7 +165,7 @@ generates a text file containing the raw signal data.
 | `min`  | `min` | Minimal output to show only signal information (no headers or lead columns) | 
 
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 All output is written to a text file as specified by the `file` parameter.  For example:
 
@@ -220,7 +220,7 @@ for one or more channels, for a given epoch.
 If multiple channels are output, they must all have the same sample
 rate.
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | --- | --- | --- |
@@ -228,7 +228,7 @@ rate.
 | `epoch` | `100` | Show epoch 100 (default: first epoch) |
 | `sec`  | `0.5` | Only show a fixed duration (secs) of the epoch (default: whole epoch) |
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 All output is sent to the console (`stdout`) and so can be redirected,
 etc.  Output is tab-delimited; the first three columns are `T`
@@ -237,7 +237,7 @@ segment of data) and `SP` (sample point in this segment of data,
 starting at 0).  The subsequent columns are for the requested channels.
 
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 To output 0.05 second's worth of data for two EOG channels, from a particular epoch of an EDF (here, 222):
 
@@ -275,14 +275,14 @@ This command is unlikely to be of great utility to most users.  It
 dumps detailed information about the signals and annotations to
 `stdout`.
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Parameter | Description |
 | --- | --- |
 | `no-signals` | Do not show signal data |
 | `no-annots` | Do not show annotation information |
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 All output is sent to the console (`stdout`) and so can be redirected,
 etc.  Output is organized by EDF record, e.g.:
@@ -351,17 +351,17 @@ during Luna development, but is described here for completeness.)
 
 _Dumps basic information about record structure to standard output_
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 None.
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 Text written to the log/console; this command does not generate any
 output through Luna's standard output mechanism.
 
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 
 Taking the first [tutorial EDF](../tut/tut1.md) (where EDF is one second):
@@ -423,14 +423,14 @@ any [masks](masks.md#mask) that remove epochs have been applied;
 therefore, the `SEGMENTS` command can also be used in this
 context too.
 
-<h5>Parameters</h5>
+<h3>Parameters</h3>
 
 | Parameter | Description |
 | --- | --- |
 | `annot` | Add annotations to mark segment/gap boundaries |
 
 
-<h5>Output</h5>
+<h3>Output</h3>
 
 Basic EDF header information (strata: _none_)
 
@@ -452,7 +452,7 @@ Per-segment information  (strata: `SEG`)
 |`DUR_SEC` | Segment duration (seconds) |
 
 
-<h5>Example</h5>
+<h3>Example</h3>
 
 Taking the first tutorial EDF, which is a continuous EDF file:
 
