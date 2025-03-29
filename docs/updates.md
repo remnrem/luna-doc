@@ -1,15 +1,111 @@
 
 # Updates, additions and fixes
 
-Current stable version: __v1.2.0__ (main [downloads](download/index.md) page)
+Current stable version: __v1.2.2__ (main [downloads](download/index.md) page)
+
 
 <!---
 
- GPA : added ability to specify fixed factors on inputs/make-specs  (  file|group|F1|F2/LVL , e.g. adds F2 w/ fixed values LVL ) 
+
+ TODO: eval ${var} line by line, i.e. to allow dynamic assignment, etc
+
+ new ... or + line continuation in scripts
+   - means we can now indent code (i.e. for loops ) 
+   
+ added REPORT hide/show , which now modifies
+  old REPORT needs 'ensure' ... but trying to update cmddefs()
+  added compress to REPORT
+  
+ added annot-dir to WRITE-ANNOTS (i.e. to be used instead of file= ; this creates
+  the folder if it does not exist, same as WRITE)
+ 
+ added ROLLING-NORM method (using iterative sliding window to calculate mean and SD)
+
+ added M1 to MEANS - gives range-normed values (0..1) for a given CH/ANNOT pair, i.e. if
+  we have > 2 inst IDs for that 
+
+ allow [][1:3] form
+  note - [][#{x}] are evaluated later... so can have [][${a}] and then [][#{b}]
+  added LOOP / END-LOOP
+
+${b=SLOW,DELTA,THETA,ALPHA,SIGMA,BETA}
+
+HEADERS
+
+LOOP index=b vals=${b}
+
+LOOP index=c vals=[][1:2]
+
+TAG band/#{b}
+
+DESC sig=#{b},#{c},${a}
+
+% this is a loop
+END-LOOP all done
+
+END-LOOP
+
+
+
 
 --->
 
-## v1.2.0 (03-Jan-2025)
+## v1.2.2 (07-Mar-2025)
+
+Various minor additions and a few fixes.
+
+_Signals_
+
+ - for [`GPA`](ref/association.md#gpa), if variable name is `sex` or
+   `gender`, transform `M`/`F` to `1`/`0` values; also, added the
+   ability to specify fixed factors on `inputs`/`make-specs` commands (
+   `file|group|F1|F2/LVL` , e.g. adds `F2` w/ fixed values `LVL` )
+
+ - added `sig=root*` wildcard matching
+
+ - added `head=N` to [`MATRIX`](ref/outputs.md#matrix) to show only
+   the first _N_ epochs
+
+ - added `modal` to MTM (only for MTM, WREL and MTM currently), which
+   gives `CH` level output, for whole signals only (`WREL_PK_FREQ`,
+   `WREL_PK_AMPL`, etc)
+
+_Annotations_
+
+ - for [`MAKE-ANNOTS`](ref/annotations.md#make-annots), added several
+   new options: `w`/`w-left`/`w-right` added, to add flanking edges;
+   `midpoint`/`start`/`stop` to set zero-duration time-points; and
+   `pool`, that takes multiple annotations and combines but does not
+   flatten, c.f. union/intersection modes
+
+ - added `pos`/`neg` and `pos-pct`/`neg-pct` options to
+   [`S2A`](ref/annotations.md#s2a)
+
+ - added more label options (e.g. to include channel labelss) to
+   [`S2A`](ref/annotations.md#s2a)
+
+ - added `remap` to [`WRITE-ANNOTS`](ref/annotations.md#write-annots)
+   to specify on-the-fly mappings that do not change the internal
+   annotations (e.g. `pN1` --> `N1`)
+
+ - fixed occasional issue with AM/PM encoding of times in annotation files
+
+ - fixed a bug in `S2A` when spanning gaps in an EDF+D
+
+_Generic_
+
+ - added the `REPORT` command (with `cmd`, `fac` and `vars` options),
+   to explicitly request outputs in text-table mode that might not
+   otherwise be emitted
+
+ - added `n/m` numeric slicing of sample lists, i.e. to facilitate
+   batch submission of jobs to a cluster
+
+ - added `force-prefix` to [`POPS`](ref/pops.md#pops), i.e. to always
+   output `pN1`, `pN2`, etc, whether we have orig staging or not
+
+
+## v1.2.0/1 (03-Jan-2025)
 
 _New Luna "walk-through" didactic material_
 

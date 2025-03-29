@@ -749,10 +749,75 @@ second `${l}` is the Luna variable `l`.
 
 ### Conditional blocks
 
+There are two ways to specify conditional blocks: the `IF` command,
+and `[[` blocks. The preferred mechanism is `IF` because it a) is
+clearer to read, and b) it is sensitive to variables that are defined
+dynamically (i.e. during execution of the script).
+
+<h5>`IF`/`FI` commands</h5>
+
+Within a command file, you can execute only certain parts of the code
+depending on the value of a variable.  Specifically, 
+
+ - _empty_, `0`, or values starting with `N` or `F` (i.e. _no_ or _false_) all evaluate to _false_ / _null_
+
+ - all other values evaluate to true (non-null) 
+
+
+The commands here will only be evaluated if `${x}` is non-null:
+```
+IF x
+
+ ... some commands ....
+ ... some commands ....
+
+FI 
+```
+
+The term `ENDIF` can be used instead of `FI`.    Here, the commands within that block will be executed here:
+```
+luna s.lst x=T < cmd.txt 
+```
+but not here:
+```
+luna s.lst x=F < cmd.txt 
+```
+or here:
+```
+luna s.lst < cmd.txt 
+```
+
+Importantly, `IF` is responsive to variables defined within the script:
+
+```
+${x=T}
+
+... other commands ....
+
+IF x
+
+ ... some commands ....
+ ... some commands ....
+
+FI
+
+```
+
+This can be useful if the variable is dynamically set by the script (e.g. from the [`CONTAINS`](ref/summaries.md#contains) command). 
+
+
+<h5> `[[` blocks </h5>
+
+_This syntax is supported for historical reasons only: using the `IF` command is preferred._
+
 Within a command file, you can define blocks that are only executed if
-a [variable](#variables) is set to a non-null value, e.g. `1`.  If the variable is
-null (undefined or `0`) those blocks are skipped. This uses the following 
-double-bracket syntax:
+a [variable](#variables) is set to a non-null value, e.g. `1`.
+
+Importantly, these blocks are evaluated _when first reading the script_: this means they
+are not sensitive to variables defined on-the-fly (i.e. within a script, unlike the `IF` command.
+
+If the variable is null (undefined or `0`) those blocks are skipped. This
+uses the following double-bracket syntax:
 
 ```
 EPOCH len=${l}
@@ -801,6 +866,7 @@ It is possible to set nested conditional blocks:
 
 % commands here always executed
 ```
+
 
 
 ### Sequence expansion
@@ -1389,7 +1455,7 @@ _Controlling inputs_
 | Special Variable | Description |
 | ---- | ---- | 
 | [`id`](#ranges) | Only analyse these IDs from the sample list, e.g. `id=study-001` or `id=p1,p3` |
-| [`skip`](#ranges) | Skip these IDs from the sample list, e.g. `id=study-001` or `id=p1,p3` | 
+| [`skip`](#ranges) | Skip these IDs from the sample list, e.g. `skip=study-001` or `skip=p1,p3` | 
 | [`vars`](#individual-variables) | Specify a file with individual-level variables/values |
 | [`ids`](#swapping-ids) | Specify a file of remapped IDs |
 | [`exclude`](#exclude-lists) | Specify a file of IDs to exclude from analysis |

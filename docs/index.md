@@ -8,9 +8,17 @@ Originally oriented around command-line scripting
 including the [Python](http://python.org) module
 [_lunapi_](lunapi/index.md) and the [_lunaR_](ext/R/index.md) library
 for the [R](https://www.r-project.org/) statistical package. The
-__current release is v1.2.0__ (3-Jan-2025): see [here](updates.md) for
+__current release is v1.2.2__ (7-Mar-2025): see [here](updates.md) for
 a list of changes/additions. Please direct any questions to `luna.remnrem@gmail.com`.
-    
+
+!!!tip "Luna in your browser"
+     Test drive `lunapi` (the Python instantiation of Luna) in your
+     browswer, linked to example data and interactive notebooks using
+     this [link to a Binder-hosted cloud
+     instance](https://mybinder.org/v2/gh/remnrem/luna-api-notebooks/HEAD?urlpath=%2Fdoc%2Ftree%2F00_overview.ipynb).
+     For more information on `lunapi`, see [these
+     pages](lunapi/#index.md).
+
 ## A family of Luna tools
 
 ![img](img/overview1.png){width="100%"}
@@ -28,7 +36,7 @@ provide fundamentally the same basic functionality:
 
  - via the [_lunapi_](lunapi/index.md) Python package: this is the
    best approach for interactive analyses and for those familiar with
-   Python
+   Python; you can try it out in your browser via a Binder-hosted notebook [here](https://mybinder.org/v2/gh/remnrem/luna-api-notebooks/HEAD?urlpath=%2Fdoc%2Ftree%2F00_overview.ipynb) 
 
  - via the [_lunaR_](ext/R/index.md) R library: users more familiar
    with R may prefer this option (_although note that although we plan to maintain this as is, in the future more effort will be put into developing the Python interface_)

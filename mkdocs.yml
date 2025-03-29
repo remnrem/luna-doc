@@ -45,6 +45,7 @@ nav:
      - Updates: 'updates.md'
      - Tutorial: 'tut/tut1.md'
      - Concepts: 'luna/args.md'
+     - Commands: 'ref/index.md'
      - Python: 'lunapi/index.md'
      - lunaR: 'ext/R/index.md'     
      - Vignettes: 'vignettes/index.md'
@@ -62,6 +63,8 @@ nav:
      - 'Lunapi': 'https://github.com/remnrem/luna-api-notebooks/blob/main/tutorial.ipynb'
      - '/R/epeat': 'tut/tut4.md'
      - 'Moonlight': 'tut/tut5.md'
+
+ - Walkthrough: 'https://zzz.bwh.harvard.edu/luna-walkthrough'
 
  - Concepts:
     - 'Overview' : 'luna/args.md'
@@ -130,9 +133,7 @@ nav:
     - 'EEG polarity' : 'vignettes/nsrr-polarity.md'
     - 'UMAP clustering' : 'vignettes/nsrr-umap.md'
 
- - Walkthrough: 'https://zzz.bwh.harvard.edu/luna-walkthrough'
-
- - Installation:
+ - Install:
     - 'Overview': 'download/index.md'
     - 'Binaries': 'download/exec.md'
     - 'Source': 'download/source.md'

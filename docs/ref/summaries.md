@@ -7,7 +7,7 @@ _Basic commands to give overviews of the structure of an EDF_
 |[`DESC`](#desc)       | Simple description of an EDF, sent to the console |
 |[`SUMMARY`](#summary) | More verbose description, sent to the console | 
 |[`HEADERS`](#headers) | Tabulate (channel-specific) EDF header information | 
-|[`CONTAINS`](#contains) | Simple command to indicate whether certain signals are present |
+|[`CONTAINS`](#contains) | Indicate whether certain signals/stages/annotations are present |
 |[`ALIASES`](#aliases) | Display aliases assigned for channels and annotations |
 |[`TYPES`](#types) | Display current channel _types_ |
 |[`VARS`](#vars) | Display current individual-level variables | 
@@ -264,19 +264,33 @@ EDFs).
 
 ## CONTAINS
 
-_Use the return code mechanism to indicate whether particular signals are present_
+_Indicate whether particular signals, annotations or staging are present_
 
-This command is primarily intended to be used in the context of
-automated, script-based analyses, to provide a quick way of
-indicating whether particular channels (or sleep stage annotations) are
-present in an EDF.
+This command can be used to check whether certain necessary attributes
+(e.g. a particular signal or annotation, or the presence of staging)
+that may be required for a particular analysis are present.
 
-`CONTAINS` is unusual among Luna commands, in that it uses the _exit
-code_ or _return code_ mechanism to report its findings, to faciliate
-script-based analyses.  Using the bash shell, the default return code
-(i.e. after running any command, not just Luna) is 0, meaning
-"success".  It can be accessed via the bash `$?` special shell variable.  For
-signal checking, the following convention is used:
+`CONTAINS` is unusual among Luna commands, in that it can be run in different modes:
+
+ - reporting to the standard output mechanisms (as detailed below)
+
+ - optionally, set a variable based on the tested conditions
+ 
+ - optionally, skipping processing the current EDF if the conditions
+   aren't met
+
+ - optionally, using the _exit code_ or _return code_ to report its
+   findings based on all individuals/EDFs tested
+
+
+_Return codes_ 
+
+Using the bash shell, the default return code (i.e. after
+running any command, not just Luna) is 0, meaning "success".  It can
+be accessed via the bash `$?` special shell variable.
+
+For checking signals and annotations, the following convention is
+used:
 
  - 0 : all signals present (in all individuals)
  - 1 : at least 1 signal present (in all individuals)
@@ -300,8 +314,12 @@ This command can be run with _either_ the `sig` or `stages` options:
 
 | Parameter | Example | Description |
 | --- | --- | --- |
-| `sig` | `sig=${eeg}` | Channels to be checked for presence/absence |
+| `sig` | `${eeg}` | Channels to be checked for presence/absence |
+| `annot` | Instead of signals,  indicate whether specific annotations are present |
 | `stages`  | | Instead of signals, indicate whether sleep stage annotations are present |
+| `skip` | | Skip to the next EDF unless all of the requested signals/annotations are present |
+| `skip-if-none` | | Skip to the next EDF if none of the requested signals/annotations are present | 
+| `var` | `x` | Set variable `${x}` to `T` or `F` instead of setting the exit code |
 
 <h3>Output</h3>
 
