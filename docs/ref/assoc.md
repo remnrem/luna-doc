@@ -143,10 +143,10 @@ Secondary options: selecting subsets of individuals
 
 | Option | Example | Description |
 | ---- | ---- | ---- |
-| `ids` | `P1` | Only include individuals (rows) that match this list of `ID` values |
-| `exc-ids` | `P2,P3` | Exclude individuals (rows) that match this list of `ID` values |
+| `inc-ids` | `P1` | Only include individuals (rows) that match this list of `ID` values |
+| `ex-ids` | `P2,P3` | Exclude individuals (rows) that match this list of `ID` values |
 | `subset` | `+DIS`| Include only individuals (rows) that match for the variable `DIS` (any value other than `0`, `NaN` or missing, `NA`); alternatively, if `-DIS` then drop those individuals |
-
+inc-ids and ex-ids  
 
 Secondary options: analysis parameters
 
@@ -1028,9 +1028,9 @@ relationships between predictor and outcome variables).
 
 You can limit which individuals are read from a binary matrix file,
 e.g. to perform analyses on only subsets of individuals, with either
-`inc-ids`, `exc-ids` or `subset` options to `--gpa`.
+`inc-ids`, `ex-ids` or `subset` options to `--gpa`.
 
-It is often useful to combine `inc-ids` or `exc-ids` options with the
+It is often useful to combine `inc-ids` or `ex-ids` options with the
 `@{include}` directive, which reads a list of values from a text file
 (named `include` in this example) assuming one-value-per-line. It
 creates a matching comma-delimited string: e.g.  if `exclude.txt` is:
@@ -1051,7 +1051,7 @@ luna --gpa -o out.db \
      --options dat=b.1 nreps=10000 X=DIS inc-ids=p0022,p0132,p0288 
 ```
 
-Instead of using `inc-ids` or `exc-ids` to include or explicitly
+Instead of using `inc-ids` or `ex-ids` to include or explicitly
 exclude certain individuals, the `subset` option can include or
 exclude on the basis of variables values. For example, if a variable
 `MALE` exists coded `0`/`1`, then `subset=MALE` (or `subset=+MALE`)

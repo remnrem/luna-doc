@@ -867,7 +867,55 @@ It is possible to set nested conditional blocks:
 % commands here always executed
 ```
 
+### Loops
 
+Scripts can contain loops by adding the `LOOP` (and `END-LOOP`)
+commands.  The `LOOP` command requires two arguments: `index` to name
+the index variable, and `vals` which specifies the values to be looped
+over, as a comma-delimited list. If `index=i` then the loop index is referenced
+within the body of the loop using the `#{i}` syntax (i.e. distinct from a typical variable
+`${i}`. Loops can be nested.
+
+Here we use a loop to iterate over different sleep stages, i.e. using `MASK` for a command that respects epoch masks.
+
+```
+LOOP index=stg vals=N1,N2,N3,R
+ TAG stg/#{stg}
+ MASK ifnot=#{stg}
+ PSD sig=${s} spectrum dB
+END-LOOP
+```
+
+Note, if we need to apply `RE` or do other modifications of the signal data within a loop, you can use the freeze/thaw mechanism: i.e.
+to modify the above (as not all commands respect set masks 
+
+```
+FREEZE F1
+LOOP index=stg vals=N1,N2,N3,R
+ TAG stg/#{stg}
+ MASK ifnot=#{stg}
+ RE
+ PSD sig=${s} spectrum dB
+ THAW F1
+END-LOOP
+```
+
+Finally, here we have two nested loops, and show how the `vals` can be set either using a pre-existing variable,
+or in the case of numeric sequences, the `[][n:m]` [sequence expansion](#sequence-expansion) form described below:
+
+```
+${b=SLOW,DELTA,THETA,ALPHA,SIGMA,BETA}
+
+LOOP index=b vals=${b}
+ LOOP index=th vals=[][1:10]
+  TAG band/#{b}
+  TAG thr/#{th}
+
+  % .... some commands here... 
+
+ END-LOOP % for thresholds
+END-LOOP % for bands
+```
 
 ### Sequence expansion
 
@@ -878,11 +926,14 @@ etc).  This is done using the form `[x][y]` where _x_ and _y_ are of
 the form:
 
 
+
  - a single value, e.g. `ch-`
 
  - a comma-delimited list, e.g. `a,b,c`
 
  - an `n:m` integer numeric sequence, e.g. `1:3` (which implies `1,2,3`)
+
+ - an empty set
 
 The two lists are expanded as follows:
 
@@ -892,15 +943,17 @@ The two lists are expanded as follows:
 
  - `[a,b,c][1:3]` = `a1,a2,a3,b1,b2,b3,c1,c2,c3`
 
+ - `[][1:5]` = `1,2,3,4,5`
+
 These can also accept [variables](#variables). For example, the command:
 
 ```
 HILBERT sig=${eeg} f=11,15
 ```
 
-will add a new channel for every channel in `${eeg}` with a
-default suffix `_ht_mag`, e.g. `C3_ht_mag`, `C4_ht_mag`, etc, reflecting the instantaneous magnitude (envelope)
-from the filter-Hilbert transform.
+will add a new channel for every channel in `${eeg}` with a default
+suffix `_ht_mag`, e.g. `C3_ht_mag`, `C4_ht_mag`, etc, reflecting the
+instantaneous magnitude (envelope) from the filter-Hilbert transform.
 
 If one wants to subsequently refer to the whole group of these new
 channels, you can write `[${eeg}][_ht_mag]`, i.e. which expands to
@@ -1079,7 +1132,9 @@ Arguments in `param.txt` are inserted as though they were explicitly
 typed on the command line.  Note that whereas the command line expects
 `key=value` pairs, parameter files use a tab to delimit the key
 (variable name) and value.  Thus, parameter files should contain
-exactly two tab-delimited columns on every row. As a larger example:
+exactly two tab-delimited columns on every row.  (Lines can be
+commented out if starting with the `%` character, however.)  As a
+larger example:
 
 ```
 alias	EEG|C3-M2|C3|EEG1
@@ -1118,40 +1173,47 @@ MASK if=${excl}
 
 ### Annotations 
 
-The standard EDF format does not allow for any additional
-_annotations_, i.e. labels that typically describe events in the data,
-such as sleep stages, artifacts, or other scored features
-(e.g. spindles).  The EDF+ format has some limited support for
-annotations but is awkward to work with: although Luna can read EDF+ annotations,
-these are not the preferred mode.
+The standard EDF format does not allow for additional _annotations_,
+i.e. labels that typically describe events in the recording such as
+sleep stages, artifacts, or other scored features (e.g. respiratory
+events).  The EDF+ format has limited support for annotations but is
+somewhat awkward to work with: although Luna can read EDF+
+annotations, these are not the preferred mode.
 
 !!! note "EDF+ annotations"
-    EDF+ annotations are limited by record size, and hard to generate
-    or edit without altering the original EDF+ file.  For many
+    EDF+ annotations are limited by record size and hard to generate
+    or edit without altering the entire original EDF+.  For many
     practical applications, where the annotations reflect derived
     features of the sleep time series data, it is simpler to keep 
-    the signal data and the annotation information separate.
+    the signal data and their annotations separate.
 
 As well as EDF+ Annotations, Luna accepts various other types of
-_annotation file_ that typically describe _events_ in the EDF, which
-are specified in the [_sample-list_](#sample-lists) and associated
-with the EDF. Luna accepts the following annotation formats:
+_annotation file_ that typically describe _events_ in the EDF. These files
+can be specified in a [_sample-list_](#sample-lists) and will be associated
+with the EDF.  Luna accepts the following annotation formats:
 
 | Format | Description |
 | ---- | ---- | 
 | [.annot](../ref/annotations.md#annot-files) | Generic Luna annotation format (`.txt` and `.tsv` extensions are also valid) | 
 | [.eannot](../ref/annotations.md#eannot-files) | Simple epoch-level annotation files (can also be loaded via the [`EPOCH-ANNOT`](../ref/epochs.md#epoch-annot) command) | 
-| [EDF+](../ref/annotations.md#edf-annotations-channel) | EDF+ Annotation channels | 
 | [XML](../ref/annotations.md#nsrr-xml-files) | XML format used by the [National Sleep Research Resource](http://sleepdata.org) to distribute sleep staging, and information on manually-scored arousals, movements and artifacts |
+| [EDF+](../ref/annotations.md#edf-annotations-channel) | EDF+ Annotation channels | 
 
 ### Dates
 
 By default, all dates are assumed to be in _European_ (day-month-year)
 format (following from the use of EDF as the primary input format).
-This extends to annotation (e.g. `.annot`) files.  The special
-variables `read-mdy-annot-dates` and `read-mdy-edf-dates` allow for
-non-European (_month-day-year_) format dates to be read from files --
-either in annotations or EDF headers -- if set to true (`T`).
+This extends to annotation (e.g. `.annot`) files.
+
+The special variable `date-format` allows for non-European
+(_month-day-year_) format dates to be read from annotation files, by
+setting it equal to one of `DMY` (default), `MDY` (US date format) or
+`YMD` (following ISO 8601).  Note that _all_ annotation files must
+have similarly formatted dates when applying `date-format`.
+
+The equivalent special variable `edf-date-format` can be used if the
+EDF header contains a nonstandard date type.
+
 Currently, all outputs are in European format, and any other commands
 (e.g. to specify the EDF header via `SET-HEADERS`) still assumes
 European date format.
@@ -1494,30 +1556,34 @@ _Annotations_
 | Special Variable | Description |
 | ---- | ---- | 
 | [`annot-file`](#attaching-annotations) | Specify annotations to attach on the command line |
+| [`skip-annots`](#annotations) | (Or `skip-all-annots`). Same as `skip-sl-annots=T` and `skip-edf-annots=T` combined (default: F)  |
+| [`skip-sl-annots`](#annotations)  | Skip annotation files specified in the sample list (default: F) |
+| [`skip-edf-annots`](#edf+-annotations) | Skip EDF Annotations tracks from any EDF+ (default: F) |
+|
+| [`remap`](#remapping-annotations)| Specify an annotation remapping (cf. channel aliases) |
+| [`annot-remap`](#remapping-annotations) | Set automatic remapping of stages (default: `T`) |
+| [`nsrr-remap`](#remapping-annotations) | Set extra NSRR remapping of annotations (default: `F`) |
+| `annot-whitelist` | Read only annotations specified by a `remap` (T/F) |
+| `annot-unmapped` | Read only annotations _not_ specified by a `remap` (T/F) |
+|
 | [`annots`](#selecting-annotations)| (Or `annot`). Load only this (comma-delimited) list of annotation classes (rather than all) |
-| `tab-only` | Only allow tabs (vs tabs and spaces) as delimiters in `.annot` files |
-| `annot-keyval` | Set _key=value_ delimiter for annotation meta-date (default: `=`) |
+| `tab-only` | Only allow tabs (versus tabs _and spaces_) as delimiters in `.annot` files |
+|
+| [`edf-annot-class`](#edf-annotations) | Read these EDF+ (comma-delimited) labels as _classes_ (default: `N1,N2,N3,R,W,?,arousal,LM,NR`)|
+| [`edf-annot-class-all`](#edf-annotations) | Read all EDF+ labels as _classes_ (default: `F`) |
+|
+| `annot-keyval` | Set _key=value_ delimiter for annotation metadata (default: `=`) |
 | `align-annots` | (Advanced) Align these annotations (comma-delimited list) to EDF record start, assuming 1 second records | 
 | `class-inst-delimiter` | Specify character to delimit annotation classes and instances (default: `:`) |
 | `combine-annots` | Character to use when combining classes and instance IDs (default: '_' ) | 
-| `annot-whitelist` | Read only these annotations |
-| `annot-unmapped` | Read only these annotations |
-| `annot-remap` | Read only these annotations |
 |
 | `sec-dp` | Set number of decimal places for annotation time outputs (default: 3) |
 | `add-ellipsis` | For `WRITE-ANNOTS` of `.annot`only, set zero-duration events to have `...` stop fields |
 | `annot-segment` | Label for segment annotation from `SEGMENTS annot` (default: `segment`) |
 | `annot-gap` | Label for gap annotation from `SEGMENTS annot` (default: `gap`) |
 |
-| [`skip-annots`](#annotations) | (Or `skip-all-annots`). Same as `skip-sl-annots=T` and `skip-edf-annots=T` combined (default: F)  |
-| [`skip-sl-annots`](#annotations)  | Skip annotation files specified in the sample list (default: F) |
-| [`skip-edf-annots`](#edf+-annotations) | Skip EDF Annotations tracks from any EDF+ (default: F) |
 | [`inst-hms`](#inst-hms) | Assign missing annotation instance IDs based on time |
 | [`force-inst-hms`](#inst-hms) | Always assign annotation instance IDs based on time |
-| [`annot-remap`](#remapping-annotations) | Set automatic remapping of stages (default: `T`) |
-| [`nsrr-remap`](#remapping-annotations) | Set extra NSRR remapping of annotations (default: `F`) |
-| [`edf-annot-class`](#edf-annotations) | Read these EDF+ (comma-delimited) labels as _classes_ (default: `N1,N2,N3,R,W,?,arousal,LM,NR`)|
-| [`edf-annot-class-all`](#edf-annotations) | Read all EDF+ labels as _classes_ (default: `F`) |
 
 
 _Annotation meta-data_

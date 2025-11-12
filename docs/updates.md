@@ -1,54 +1,182 @@
 
 # Updates, additions and fixes
 
-Current stable version: __v1.2.2__ (main [downloads](download/index.md) page)
+Current stable version: __v1.3.2__ (main [downloads](download/index.md) page)
+
+## v1.3.2 (12-Nov-2025)
+
+Note: documentation for new features are currently not fully in place.
+
+_New commands_
+
+ - added `CLIP` to clip signals using either relative or absolute thresholds
+
+ - added `RAI` to calculate an index of REM loss of atonia from the EMG
+
+ - added the `REQUIRES` command with the `version` option
+
+ - added the `DROP-ANNOTS` command
+
+ - added the `ROLLING-NORM` command, which uses an iterative sliding window to calculate a signal mean and SD
+
+ - initial (beta) implementation of heart rate variability (`HRV`) metrics
 
 
-<!---
-
-
- TODO: eval ${var} line by line, i.e. to allow dynamic assignment, etc
-
- new ... or + line continuation in scripts
-   - means we can now indent code (i.e. for loops ) 
-   
- added REPORT hide/show , which now modifies
-  old REPORT needs 'ensure' ... but trying to update cmddefs()
-  added compress to REPORT
-  
- added annot-dir to WRITE-ANNOTS (i.e. to be used instead of file= ; this creates
-  the folder if it does not exist, same as WRITE)
+_Masks & epochs_
  
- added ROLLING-NORM method (using iterative sliding window to calculate mean and SD)
+ - added new `splice-gaps` mode for `EPOCH` generation
 
- added M1 to MEANS - gives range-normed values (0..1) for a given CH/ANNOT pair, i.e. if
-  we have > 2 inst IDs for that 
+ - for multi-day recording support, added `dhms` option to mask: e.g. `dhms=d2/06:00:00-d3/06:00:00`
 
- allow [][1:3] form
-  note - [][#{x}] are evaluated later... so can have [][${a}] and then [][#{b}]
-  added LOOP / END-LOOP
+ - added `stable-unique` and `stable-any` to `MASK`; for example
+   `stable-unique=X,A1,A2,...` to select one and only one of the
+   annotations `A1, A2, etc; or `stable-any=X,A1,A2,...` which means
+   to select any. Here X is the minimum number of flanking epochs required
 
-${b=SLOW,DELTA,THETA,ALPHA,SIGMA,BETA}
+ - added `MASK random-from=N,a1,a2,...` to set up to N from the set of epochs w/ an annot from [a1,a2,...]
+ 
+ - added `MASK trim=W` ( or `MASK trim=W,10` ) ; takes a single annot
 
-HEADERS
-
-LOOP index=b vals=${b}
-
-LOOP index=c vals=[][1:2]
-
-TAG band/#{b}
-
-DESC sig=#{b},#{c},${a}
-
-% this is a loop
-END-LOOP all done
-
-END-LOOP
+ - added `MASK leading`, `trailing`, `leading-trailing` (w/ mask- and unmask- explicit variants);
+    can take multiple annots
 
 
+_Annotations_
+
+ - now allows datetime to advance (e.g. for `WRITE-ANNOTS dhms`) even if `1.1.85` (null value) is in header
+ 
+ - reimplemented _annotation search_ with more efficient interval-tree implementation
+ 
+ - can now attach annotations only, and it will get start date/time from annots if present
+    (and duration)
+
+ - reject `hh:mm` or `mm:ss` format time-strings from annots
+
+ - added `ignore-annot` and `ignore-raw-annot` to complement `annot=X` (i.e. to exclude a particular annotation)
+
+ - added `annot-dir` to `WRITE-ANNOTS`, to be used instead of `file`;
+   this creates the folder if it does not exist, same as `WRITE` for `edf-dir`
+
+ - `AXA` allows [x]/[-x] and [][] but not root-matching...
+    TODO - make a generic annot=<> parser to handle both
+     xsigs and root_match
+
+ - can now drop annotations via `DROP-ANNOTS`
 
 
+_New functionality in core commands_
+
+ - changed `RECORD-SIZE` to allow for non-integer sample rate
+   (i.e. will resample signals as well as changing record size, to
+   maintain integer number of samples per record, with a Hz sampling
+   rate as close to the original as possible
+
+ - added `start` and `stop` to `OVERLAP`;  [ TODO: describe `rp` options ] 
+		    
+
+_Minor additions & changes_
+
+ - only flag as a _CONFLICT_ if overlapping stages are actually in conflict (i.e. now allow overlap stage annotations
+   that do not induce substantive conflicts)
+
+ - changed `EDFZ` - no longer use indexed-BGZF access - i.e. no .idx files needed; always _preload_; 
+   this then means one can keep EDF annotations as is
+
+ - added `SOF`, `DAR`, `TAR`, `TBR` & `GSI` to `PSD` (both total and per-epoch) via the 'slowing' option _[todo: document]_
+
+ - standardized the calculation of Hjorth complexity: to obtain the
+   old form, set the special variable `legacy-hjorth=T`
+
+ - added `REPORT` command with `hide`/`show` options
+   -- old REPORT needs 'ensure' ... but trying to update cmddefs()
+   -- added compress to REPORT
+   
+ - added `M1` to `MEANS` - gives range-normed values (0..1) for a given `CH`/`ANNOT` pair,
+   i.e. if we have > 2 instance IDs
+
+ - added `S2A` w/ waveforms
+
+ - added `slice=m/n` to `--validate`
+  
+ - `EPOCH require` now works for generic (annotation-based) epochs
+
+ - added `mirror` options to show commands
+ 
+ - added `show-assignments` special variable : print ${a=2} etc
+
+
+_Script syntax_
+
+ - new variable types: to complement standard variables (`${x}`), we
+   now have loop-indices (`#{i}`) and boolean/optional variables
+   (`?{i}`)
+ 
+ - added loop functionality in Luna scripts via `LOOP` / `END-LOOP`
+   and `#{idx}` loop-index variables
+
+ - added boolean variables (`?{x}`) that can be used in `IF` statements: if not set, it evaluates to `F`
+   (cannot += assign ?{x+=1})
+  -- can be used to reference a normal `${var}`, just handles missingness
+     differently
+  
+ - scripts are now dynamically evaluated for variable substitution
+   (i.e. line-by-line), allowing dynamic assignment, etc, rather than
+   all variables being evaluated prior to executing the script
+   
+ - `[[` conditional blocks are no longer supported: use `IF` and `FI`
+   statements instead
+
+ - we now allow `[x]` and `[-x]` in most major `annot=` specifiers (as well as `LOOP`)
+
+ - new `...` or `+` line continuation syntax in scripts: this means we
+   can now indent code (i.e. as it useful for loops) to make the
+   script more readable.
+
+ - allow `[][1:3]` form of [sequence substitution](luna/args.md#sequence-substitution); 
+   (note - `[][#{x}]` are evaluated later... so can have `[][${a}]` and then `[][#{b}]`)
+
+ - allow parameter file to be tab, space or = delimited (`param-spaces=T/F`, `param-equals=T/F`, both default to `T`)
+     e.g.   `var = value`;  `var = "escaped value with = char"`
+
+ - added ability to specify expression at variable assignment, with `:=` operator: e.g.  `${b:=${a}+1}`
+
+
+
+_Association model_
+
+ - added `strata=Z1,Z2,Z3` option to `GPA stats`, to give stratified group statistics (mean/SD/N)
+ 
+ - added GPA `comp` and `comp-verbose`, to perform _template/sign
+   tests_ for a set of tests, with respect to a prior (independent)
+   set of tests [todo: to add documentation]
+
+<!--
+Generate the “template” : (this obviously assuming you’ve correctly
+compiled the GPA matrix etc:; note, you don’t need empirical p-values
+here , this just takes the betas from the standard case/control tests:
+naturally, you can add covariates (Z) etc; the Yg specifics the
+‘groups’ of sleep metrics - here about 1372 tests
+ luna --gpa -o out.db --options dat=gpa/grins-cc.dat X=scz Yg=peaks,olap-ch
+  Extract a file of coefficients to text file (cmp.1) [ you could restrict to P < threshold here , probably a good idea  — but you don’t need to be too extreme ] 
+   destrat out.db +GPA -r X Y -v B | awk ' NR != 1 { print $2  , $3 , $4 } ' > cmp.1
+   This file is just one row = X-var,  Y-var, beta   [ note, the X-var is actually ignored subsequently, except it is needed when reading the file in ] 
+   Perform the case-only analysis (or, naturally, this could be an analysis of a different sample, etc — just has to have similar Y vars and to be statistically independent of the template-generating contrast (obvs);  the “comp” option is all you specify 
+    luna --gpa -o out.db --options dat=gpa/grins-co.dat X=@{o.1} nreps=200 Yg=peaks,olap-ch comp=cmp.1
 --->
+
+
+
+_Bug fixes_
+
+ - `sig` failed to find channels with single-character labels (e.g. `F`)
+
+ - fixed issue w/ `dynam` when no cycles are defined
+
+ - `THAW` does not fail if the freeze does not exist, unless `strict`
+     is set; i.e. this allows cases where a freeze wasn't made due to
+     0-records left
+
+
 
 ## v1.2.2 (07-Mar-2025)
 

@@ -1059,7 +1059,7 @@ leval( "HILBERT sig=EEG f=11,15 ripple=0.02 tw=0.5 phase" )
 For illustration, we'll also generate a copy of the original signal:
 
 ```
-leval( "COPY sig=EEG tag=SIGMA" )
+leval( "COPY sig=EEG tag=_SIGMA" )
 ```
 
 and then apply a bandpass filter to it, in the same sigma range as above:
@@ -1079,8 +1079,7 @@ EDF:
 lchs()
 ```
 ```
-[1] "EEG"                     "EEG_hilbert_11_15_mag"  
-[3] "EEG_hilbert_11_15_phase" "EEG_SIGMA"              
+[1] "EEG"        "EEG_ht_mag" "EEG_ht_ph"  "EEG_SIGMA" 
 ```
 
 To view some of the results, we can use `ldata()` to extract signals
@@ -1101,8 +1100,8 @@ Using R's plotting functions:
 par(mfcol=c(3,1),mar=c(0,4,0,0),xaxt='n',yaxt='n')
 plot( d$SEC , d$EEG , ylab = "Raw" , type="l" ,axes=F)
 plot( d$SEC , d$EEG_SIGMA , ylab = "Filtered" , type="l" , axes=F)
-lines( d$SEC , d$EEG_hilbert_11_15_mag , col="red" , lwd=2 ) 
-plot( d$SEC , d$EEG_hilbert_11_15_phase , ylab = "Phase" , type="l" , axes=F)
+lines( d$SEC , d$EEG_ht_mag , col="red" , lwd=2 ) 
+plot( d$SEC , d$EEG_ht_ph , ylab = "Phase" , type="l" , axes=F)
 ```
 
 ![img](../img/hilbert.png){width="100%"}

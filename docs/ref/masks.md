@@ -22,6 +22,12 @@ masks are related and some of the key commands which operate on them:
 
 ![img](../img/chep-mask.png){width="100%"}
 
+_Masks, epochs and records_
+
+![img](../img/rec-size1.png){width="100%"}
+
+![img](../img/rec-size2.png){width="100%"}
+
 
 ## MASK
 

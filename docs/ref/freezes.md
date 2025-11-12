@@ -49,6 +49,11 @@ and the status of any epoch-based masks.  Freezes are retained for the duration 
 operations on the currently loaded EDF - i.e. when running Luna on multiple EDFs,
 freezes are not saved after the last command has finished for that EDF.
 
+!!! Annotations
+
+   Note that _annotations_ are preserved across all freezes and thaws: i.e. 
+   if added during a freeze, they remain after thawing.  Use the `DROP-ANNOTS` command
+   to remove annotations added.
 
 <h3>Parameters</h3>
 
@@ -245,7 +250,7 @@ subsets for analyses:
 RESAMPLE sig=C3,C4 sr=128
 FILTER sig=C3,C4 bandpass=0.3,35 tw=0.5 ripple=0.02  
 
-% drop all wake eppchs, keep only C3 and C4
+% drop all wake epochs, keep only C3 and C4
 MASK if=W
 RE
 SIGNALS keep=C3,C4

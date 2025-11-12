@@ -979,7 +979,7 @@ number of respiratory events in REM versus NREM sleep.
 
 The `epoch` option lists, for each epoch, all the annotations
 that overlap with that epoch, given the specified overlap definition
-(`any`, `all` or `start`).  If the `show-mask` option is given as well,
+(`any`, `all` or `start`).  If the `show-masked` option is given as well,
 all epochs and annotations are shown; otherwise, only unmasked epochs
 and annotations are shown.  The output contains two variables
 (`EPOCH_MASK` and `ANN_MASK`) that indicate whether a given annotation

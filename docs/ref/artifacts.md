@@ -107,7 +107,7 @@ luna s.lst 1 sig=EEG -o out.db -s 'CHEP-MASK sig=EEG ep-th=2,2 '
 ```
 
 By itself, `CHEP-MASK` only alters the internal _CHEP_ mask: to actually remove these
-potentially aberrant epochs, we need to pair this commadn with `CHEP`, which sets the
+potentially aberrant epochs, we need to pair this command with `CHEP`, which sets the
 epoch-level mask based on the current _CHEP_ mask:
 
 ```
@@ -356,7 +356,7 @@ Although the impact on sample-level mean power in this frequency range is not ex
 pattern, whereby the presence or absence of line-noise seems to drive clear spikes in the variance of power, and these seem to overwhelm physiological sources
 of between-individual variation.  Naturally, this represents a rather large source of potential confounding.
 
-We can apply the `LINE-DENOISE` approach to this sample, as follows (showing here just targetted frequencies up to 24 Hz); (nb.
+We can apply the `LINE-DENOISE` approach to this sample, as follows (showing here just targeted frequencies up to 24 Hz); (nb.
 normally, one would add other commands, e.g. `PSD` or `WRITE` out new EDFs after running `LINE-DENOISE`):
 ```
 luna s.lst –s LINE-DENOISE sig=${eeg} f=4,8,12,16,20,24 w=1,0.5
@@ -385,7 +385,7 @@ some cases.
 !!! warning
     Correcting the EEG signal in this manner naturally entails
     changing the data in a complex way, which partially attenuates the
-    suspected artifactual signal sources, but potentially also induces
+    suspected artifactual signal sources. But it can also induce
     subtle (or not so subtle) new confounds.  Some downstream analyses
     may be more or less sensitive to these issues, and so these corrections
     may or may not be necessary or desirable. All steps here
@@ -704,7 +704,6 @@ recording (for this channel at least) is pure noise:
 
 ![img](../img/edger1.png)
 
-
 If not excluded manually during staging/EDF export, etc, it can be
 cumbersome for these periods to be included in downstream datasets:
 
@@ -730,55 +729,66 @@ is to have something automated and reproducible.
 
 <h4>Heuristic</h4>
 
-`EDGER` uses a very simple heuristic based on epochwise [Hjorth
+`EDGER` uses a simple heuristic based on epochwise [Hjorth
 parameters](summaries.md#sigstats).  For a single (EEG) channel, this plots
 the three parameters for a recording, showing a clear region at the end of the recording
 with excessively high amplitude (H1, on a log-scale) and low complexity (H3): 
 
 ![img](../img/edger2.png)
 
-`EDGER` defines trailing/leading periods that are outliers as follows: if epochs are flagged as "good" or "bad"
-based on Hjorth-parameter thresholds, it defines a window that maximizes both the mean and total number of bad epochs
-at the edge:
+`EDGER` defines trailing/leading periods that are outliers as follows:
+if epochs are flagged as "good" or "bad" based on Hjorth-parameter
+thresholds, it defines a window that _maximizes both the mean and
+total number of bad epochs at the edge_:
 
 ![img](../img/edger3.png)
 
-The above plot considers only the trailing window: a putative bad region is defined as that which maximizes the square of the count
-of bad epochs, divided by the number of epochs considered, moving out from the final epoch, to the last 2, then last 3, etc.     Applied
-to real data, the middle panel shows this statistic and the maximum (red line): 
+The above plot considers only the trailing window: a putative bad
+region is defined as that which maximizes the square of the count of
+bad epochs, divided by the number of epochs considered, moving out
+from the final epoch, to the last 2, then last 3, etc.  Applied to
+real data, the middle panel shows this statistic and the maximum (red
+line):
 
 ![img](../img/edger4.png)
 
-
 In practice, `EDGER` performs the following steps:
 
- - smooths the epochwise `0/1` vector before
+ - smooths the epochwise `0/1` "artifact vector" before
    selecting the cut-point, using a moving average with width +/-2mins
-   (i.e. a 9 epoch window centered on each epoch).
+   (i.e. a nine epoch window centered on each epoch).
 
- - it then flag epochs that are +/-3 SD units from median (`th=2`) for
-   either H1 or H3, based on sleep epochs _if the recording has sleep
-   staging present_; if no staging is present (or the option `all` is
-   given) then it uses all epochs
+ - it then flags epochs that are +/-3 SD units from the median
+   (`th=2`) for either H1 or H3. _If the recording has sleep staging
+   present_, the SD estimate is based only on sleep epochs. Otherwise,
+   otherwise (or the option `all` is given) it uses all epochs to
+   estimate the median/SD.
 
- - it can consider only the leading or trailing periods with (`only-start` or `only-end` flags)
+ - optionally, it can consider only leading or only trailing periods
+   (`only-start` or `only-end` flags)
 
- - if it encouters more than 10 minutes (20 epochs, can be set with `allow=20`) of "clean" data (the statistic is 0),
-   then do not flag any further after (or before) that point;  that is, the goal is to set lights off/on, rather than avoid
-   generically "bad data" per se.
+ - if it encouters more than 10 minutes (20 epochs, which can be set
+   with `allow=20`) of "clean" data then do not flag any further
+   beyond that point; _the goal is to set lights off/on, rather than
+   flag generically "bad data"_
    
- - if the maximum statistic implies fewer than 10 epochs (`req=10`) it
-    will not set lights off/on annotations; i.e. if only a minor
-    change would be made, not worth bothering, leave as is
-
- - if using multiple signals, it estimates the statistics separately
+ - if the maximum statistic implies fewer than 10 epochs (set with
+    `req=10`) it will not set lights off/on annotations; i.e. if only
+    a minor change would be made, it is not worth bothering, so leave as is
+ 
+ - if using multiple signals, it estimates statistics separately
     for each, then picks the earliest `lights-off` and the latest
-    `lights-on`
+    `lights-on` 
 
  - if `cache=<name>` is specified, this saves the estimates of
   `lights-off` and `lights-on` to the cache, in such a way that
   `HYPNO`, `STAGE`, `POPS` and `SOAP` will automatically use them to
   set epochs to `L` as appropriate.
+
+ - if the `mask` option is specified, then it will additionally set
+   the epoch `MASK` to flag lights-on epochs; running a subsequent `RE`
+   command would then mask out (remove from the in-memory EDF) those
+   epochs
 
 
 <h3>Parameters</h3>
@@ -786,7 +796,9 @@ In practice, `EDGER` performs the following steps:
 | Parameter | Example | Description |
 | --- | --- |----|
 | `sig` | `C3,C4`  |Restrict analysis to these channels | 
-| `cache` | `c1` | Saves the estimates of “lights-off” and “lights-on” such that HYPNO/STAGE/POPS/SOAP can use them to define.  |
+| `mask` | | Set the epoch _mask_ based on detected edges (i.e. for subsequent `RE`) | 
+| `cache` | `c1` | Saves the estimates of “lights-off” and “lights-on” such that HYPNO/STAGE/POPS/SOAP can use them to define. |
+| | | 
 | `only-start` | | Only consider leading artifact |
 | `only-end` | | Only consider trailing artifact |
 | `allow` | `allow=20` | By default, do not allow more than 20 epochs of (10 mins) 'good' data at either end  |
@@ -799,17 +811,21 @@ In practice, `EDGER` performs the following steps:
 
 <h3>Output</h3>
 
-
 Individual-level summaries (strata: _none_):
 
 | Variable | Description |
 | --- | --- |
-| `EOFF` | Eppch for lights off, if set (i.e. leading period trimming) |
+| `EOFF` | Epoch for lights off, if set (i.e. leading period trimming) |
 | `LOFF` | Clock-time for lights off, if set (i.e. leading period trimming) |
-| `EON` | Eppch for lights on, if set (i.e. leading period trimming) |
-| `LON` | Clock-time for lights on, if set (i.e. leading period trimming) |
+| `EON` | Epoch for lights on, if set (i.e. trailing period trimming) |
+| `LON` | Clock-time for lights on, if set (i.e. trailing period trimming) |
 
 Channel-level summaries (strata: `CH`):
+
+| Variable | Description |
+| --- | --- |
+| `EOFF` | Epoch for lights off, if set, from this channel |
+| `EON` | Epoch for lights on, if set, from this channel |
 
 Epoch-level summaries (options: `epoch` or `verbose`; strata: `E` x `CH`):
 
@@ -821,12 +837,13 @@ Epoch-level summaries (options: `epoch` or `verbose`; strata: `E` x `CH`):
 | `FLAG` | Indicator of whether epoch is "bad" (0=good/1=bad) | 
 | `STAT` | Smoothed flag (0/1) indicator | 
 | `XON` | Primary statistic to determine lights on (trailing artifact) | 
-| `XOFF` | Primary statistic to determine lights off ( trailing artifact) | 
+| `XOFF` | Primary statistic to determine lights off (leading artifact) | 
 | `TRIM` | Indicator (0/1) for whether this epoch should be trimmed | 
 
 <h3>Examples</h3>
 
 Based on the second individual from the [tutorial](tut/tut1.md) dataset:
+
 ```
 luna s.lst 2 -o out.db -s ' EDGER sig=EEG epoch cache=c1 & HYPNO cache=c1 '
 ```
@@ -867,7 +884,7 @@ and, if they exist, it will set epochs to `L` as appropriate.
     ```
     lights-on=06.00.04 (skipping 1419 epochs from end)
     ```
-    However, if applied to all epochs (adding `all`) as would be the case if staging were not avaialable, then 
+    However, if applied to all epochs (adding `all`) as would be the case if staging were not available, then 
     ```
     no trimming indicated: did not alter lights-off or lights-on times
     ```

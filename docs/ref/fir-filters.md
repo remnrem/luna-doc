@@ -216,7 +216,7 @@ _Frequency and impulse responses for FIR filters designed via the Kaiser window 
 Filters specified by the [`FILTER`](#filter) command use the [Kaiser
 window](https://www.mathworks.com/help/signal/ref/kaiserord.html)
 method to design the filter.  The `FILTER-DESIGN` command (or Luna
-`--fir` option) can be used to show the properties of these filters.
+`--fir-design` option) can be used to show the properties of these filters.
 
 This command does not depend on any EDFs to be present, and so can be
 run without a sample-list or EDF (see the example below).
@@ -291,12 +291,12 @@ Consider a band-pass filter in the sigma band, 11 to 15Hz, applied to
 a signal with 200 Hz sampling rate.  Transition frequencies 11Hz and
 15Hz have -6dB attenuation (i.e. 50% amplitude ratio).
 
-If specifying the `--fir` option, Luna expects the parameters above
+If specifying the `--fir-design` option, Luna expects the parameters above
 via standard input, e.g. piped from the `echo` shell command, with the
 output still sent to a database `out.db`:
 
 ```
-echo "fs=200 bandpass=11,15 ripple=0.02 tw=1" | luna --fir -o out.db
+echo "fs=200 bandpass=11,15 ripple=0.02 tw=1" | luna --fir-design -o out.db
 ```
 
 Examining the `out.db`, we see that this command produces the following output:

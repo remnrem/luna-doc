@@ -9,10 +9,13 @@ _Commands to define epochs for an EDF, and to attach annotations after loading a
 | [`EPOCH-ANNOT`](#epoch-annot) | Load epoch-wise annotations from a [`.eannot`](annotations.md#eannot-files)-format file | 
 | [Command table](#command-epoch-types) | Behavior of commands w.r.t. epochs & masks |
 
+
+
+
 ## Epoch types
 
-_Epochs_ are contiguous time intervals that span the recording.  Many
-Luna commands either explicitly or implicitly rely on epochs being
+_Epochs_ are time intervals that span the recording. Many Luna
+commands either explicitly or implicitly rely on epochs being
 defined. Epoching an EDF is often a first a step that is required for
 many other Luna functions that work with epoched data.
 
@@ -20,12 +23,33 @@ In most instances, if epochs have not been specifically defined (by
 the [EPOCH command](#epoch)), they will _default_ to non-overlapping
 30-second intervals, i.e. mirroring traditional (AASM) sleep staging.
 
-___Fixed versus generic epochs:___ The most basic type of epoch is of fixed length (e.g. 30 seconds).
+By default, epochs are non-overlapping, of fixed duration (30 seconds)
+and contigous with respect to clock-time (i.e.  not spanning gaps in
+the recording). These epoch properties can be changed various ways:
+
+ - `dur`: epoch duration can be set to any duration in seconds, e.g. 5 seconds with `dur=5`
+
+ - `inc`: the increment by default equals `dur` implying adjacenet but
+ non-overlapping epochs (e.g. 0-30 seconds, 30-60, 60-90, etc). If
+ `inc` is set to a different value, epochs can either be overlapping
+ or (less likely) spaced.  For example, with `inc=15`: 0-30, 15-45,
+ 30-60, 45-75, etc).
+
+TODO
+ - `annot`: __generic__ or _annotation-based_ epochs can be  ... ___Fixed versus generic epochs:___ The most basic type of epoch is of fixed length (e.g. 30 seconds).
 Epochs can be overlapping, e.g. shifting in 15 second increments
 however, but by default, epochs are contiguous but not overlapping.
 In contrast, _generic_ epochs are those of potentially variable
 duration, defined by existing [annotations](annotations.md); this is
 the most flexible form of epoch.
+
+ - `splice-gaps`: 
+
+
+![img](../img/epoch-splice1.png){width="100%"}
+![img](../img/epoch-splice2.png){width="100%"}
+![img](../img/epoch-splice3.png){width="100%"}
+![img](../img/epoch-splice4.png){width="100%"}
 
 Some commands (in particular `HYPNO`) require standard,
 non-overlapping epochs (otherwise, the resulting hypnogram metrics would
