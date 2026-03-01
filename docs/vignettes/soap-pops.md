@@ -258,7 +258,7 @@ If you ever see this type of pattern (plus a low kappa), it is telling you there
     ```
       retaining 4 of 10 PSCs, based on ANOVA p<0.2
     ```
-    This is only likley to happen in these contexts of completely corrupted studies - or perhaps if you are experimenting with other types of signals
+    This is only likely to happen in these contexts of completely corrupted studies - or perhaps if you are experimenting with other types of signals
     (other than the EEG) that might not always be expected to show very strong associations with sleep stages.
     
 ### Swapped files
@@ -822,5 +822,4 @@ applications of the SOAP (stage evaluation) command, as well as a
 quick skim of the POPS command for staging, currently in the context
 of a single-channel EEG.   We'll be posting updates to the model syntax, options
 and newly trained models in the near future... Stay tuned!
-
 

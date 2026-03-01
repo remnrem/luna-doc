@@ -67,7 +67,7 @@ search around.
 
 
 !!! Hint
-    For macOS and Linux users with the [luna.docker](http://zzz.bwh.harvard.edu/dist/luna/luna.docker) 
+    For macOS and Linux users with the [luna.docker](http://zzz.nyspi.org/dist/luna/luna.docker) 
     bash script installed, all the above can be accomplished with:
     ```
     luna.docker -rs abc123
@@ -907,7 +907,7 @@ This should be in the same `tutorial/` folder (if you are not, run `cd
 tutorial`).  Typing `ls` should show the `s.lst` file and the two
 folders, `edfs` and `cmd`.  Now run a command that generates an `out.db` file: e.g. 
 ```
-luna s.lst -o out.db -s "EPOCH & STATS sig=ECG,EEG epoch"
+luna s.lst -o out.db -s 'EPOCH & STATS sig=ECG,EEG epoch'
 ```
 (Note: depending on the set up, you may need to run this from the home directory
 inside Docker, if you have write permission issues based on your user.)
@@ -2198,7 +2198,7 @@ literate( f1 , chs= lchs() , annots= "spindles" ,  by.annot= "spindles" , w = 8 
 !!! warning
 
     The current implementation of `literate()` can lead to issues if
-    the function returns and error or is interupted (or may give issues by not allowing an interupt, e.g. from Ctrl-C, Ctrl-Z or similar):
+    the function returns an error or is interrupted (or may give issues by not allowing an interrupt, e.g. from Ctrl-C, Ctrl-Z or similar):
     this should be fixed on the next release...  for now, treat `literate()` with care...
     
 You could imagine adding some code to save each plot, or to make multiple plots

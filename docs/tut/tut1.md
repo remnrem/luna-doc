@@ -11,7 +11,7 @@ towards some more genuinely useful analyses of the sleep EEG.  The
 [fourth section](tut4.md) performs the same steps but using
 [_lunaR_](../ext/R/index.md) instead of [_lunaC_](../luna/args.md).
 The fifth section then retraces many of these steps using the interactive
-[_Moonlight_](../moonlight.md) tool. The [final section](https://github.com/remnrem/luna-api-notebooks/blob/main/tutorial.ipynb)
+[_Moonlight_](../apps/moonlight.md) tool. The [final section](https://github.com/remnrem/luna-api-notebooks/blob/main/tutorial.ipynb)
 traces the same steps but using the newer Python-based interace to Luna.
 
 !!! note "Data used in this tutorial"
@@ -47,7 +47,7 @@ need to grab them from the web, from the link below:
 
 | ZIP archive (67Mb) containing 3 EDFs, XML annotation files and 'sample list' |
 |----|
-| <http://zzz.bwh.harvard.edu/dist/luna/tutorial.zip> |
+| <http://zzz.nyspi.org/dist/luna/tutorial.zip> |
 
 After downloading, move the ZIP file to your working directory, and
 using the terminal, unzip the contents:
@@ -744,7 +744,7 @@ The above procedure can be further streamlined with the use of [data
 freezes](../ref/freezes.md).  Rather than run a separate script for
 each stage (N1, N2, N3 and R), we can make a _freeze_ (i.e. a
 snapshot) of the original dataset, and use the same
-[`MASK`](../ref/masks.md)/[`RE`](../ref/restructure.md) process to
+[`MASK`](../ref/masks.md)/[`RE`](../ref/masks.md#restructure) process to
 focus on a given stage, but then use [`THAW`](../ref/freezes.md#thaw)
 to return to the original (full) EDF.  Note that if running that same
 [`STATS`](../ref/summaries.md#stats) (or indeed, any command) multiple

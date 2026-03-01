@@ -24,16 +24,16 @@ see _lunaC_'s [help function](../luna/args.md#help).
 |[Freezes](freezes.md)             | Working with dataset freezes (snaphots) | 
 |[Canonical signals](canonical.md) | Harmonizing EDFs through _canonical signal_ specification |
 |[Manipulations](manipulations.md) | Manipulating signal data |
-|[Alignment](alignment.md)         | Utilities to align data across EDFs | 
 |[Outputs](outputs.md)             | Commands to output signals in different formats |
 |[FIR filters](fir-filters.md)     | FIR filter design and application |
 |[Artifacts](artifacts.md)         | Artifacts detection/correction routines |
+|[Physiological signal analysis](physio.md) | Heart-rate, atonia, and arousal analyses |
 |[Hypnograms](hypnograms.md)       | Characterizations of hypnograms |
+|[SOAP](soap.md)                   | Self-contained modelling and evaluation of sleep staging |
 |[POPS](pops.md)                   | Sleep staging & evaluation |
 |[Time/frequency analyses](power-spectra.md) | Power spectral density estimation and other T/F decompositions |
 |[Spindles and SO](spindles-so.md) | Spindles and slow oscillations |
 |[Coupling/connectivity](cc.md)    | Phase/amplitude coupling, coherence and other multi-signal analyses |
-|[Ultradian dynamics](dynamics.md) | Quantifying ultradian dynamics in epoch-level metrics | 
 |[Interval-based](intervals.md)    | Time/event-locked signal averaging, peak detection, enrichment |
 |[Spatial/topographical](spatial.md) | Channel locations, spatial filtering and interpolation |
 |[PSC](psc.md)                     | Principal spectral components |
@@ -72,10 +72,11 @@ __Annotations:__
 [`ESPAN`](annotations.md#espan): _epoch-based annotation coverage,_
 [`META`](annotations.md#meta): _add meta-data to annotatons,_
 [`A2S`](annotations.md#a2s): _make signal from annotation,_
-[`S2A`](annotations.md#s2a): _make annotation from signal._ 
+[`S2A`](annotations.md#s2a): _make annotation from signal,_
+[`ALIGN-ANNOTS`](annotations.md#align-annots): _align annotation timelines._ 
 __Expressions:__
-[Expressions](epochs.md#eval-expressions): _overview of expressions,_
-[`EVAL`](evalss.md#eval): _annotation-based expressions,_
+[Expressions](evals.md): _overview of expressions,_
+[`EVAL`](evals.md#eval): _annotation-based expressions,_
 [`TRANS`](evals.md#trans): _channel-based expressions,_
 [`DERIVE`](evals.md#derive): _derive summary summaries from annotation meta-data._
 __Epochs:__
@@ -90,9 +91,9 @@ __Freezes & caches:__
 [`FREEZE`](freezes.md#freeze): _freeze snapshot,_
 [`THAW`](freezes.md#thaw): _revive a prior freeze,_
 [`CLEAN-FREEZER`](freezes.md#clean-freezer): _empty freezer,_
-[`CACHE`](outputs.md#cache): _cache operations._
+[`CACHE`](freezes.md#cache): _cache operations._
 __Canonical signals:__
-[`CANONICAL`](manipulations.md#canonical): _make canonical signals._
+[`CANONICAL`](canonical.md#canonical): _make canonical signals._
 __Manipulations:__
 [`SIGNALS`](manipulations.md#signals): _drop signals,_
 [`RENAME`](manipulations.md#rename): _rename signals,_
@@ -100,20 +101,18 @@ __Manipulations:__
 [`RESAMPLE`](manipulations.md#resample): _resample signals,_
 [`ENFORCE-SR`](manipulations.md#enforce-sr): _check for sufficient sample rate,_ 
 [`REFERENCE`](manipulations.md#reference): _re-reference signals,_
-[`DEREFERENCE`](manipulations.md#deference): _de-reference signals,_
+[`DEREFERENCE`](manipulations.md#dereference): _de-reference signals,_
 [`MINMAX`](manipulations.md#minmax): _set channel min/max,_
 [`uV`](manipulations.md#uv): _force microvolts,_
 [`mV`](manipulations.md#mv): _force millivolts,_
 [`TIME-TRACK`](manipulations.md#time-track): _add time-track,_
 [`FLIP`](manipulations.md#flip): _flip signal,_
 [`SCALE`](manipulations.md#scale): _scale a signal,_
-[`SHIFT`](manipulations.md#shift): _shift a signal,_
-[`SCRAMBLE`](manipulations.md#scramble): _scramble a signal,_
 [`COMBINE`](manipulations.md#combine): _combine multiple signals,_
 [`ZC`](manipulations.md#zc): _zero-center signal,_
 [`ROBUST-NORM`](manipulations.md#robust-norm): _robust normalization,_
-[`EDF`](manipulations.md#edf): _force basic EDF,_
 [`RECORD-SIZE`](manipulations.md#record-size): _change record size,_
+[`ALIGN`](manipulations.md#align): _align channels/records,_
 [`EDF-MINUS`](manipulations.md#edf-minus): _convert EDF+ to EDF,_
 [`ANON`](manipulations.md#anon): _anonymize EDF,_
 [`SET-HEADERS`](manipulations.md#set-headers): _set EDF headers,_
@@ -122,10 +121,6 @@ __Manipulations:__
 [`RECTIFY`](manipulations.md#rectify): _rectify a signal,_
 [`REVERSE`](manipulations.md#reverse): _reverse a signal,_
 [`MOVING-AVERAGE`](manipulations.md#moving-average): _moving average filters._
-__Alignment:__
-[`ALIGN-EPOCHS`](alignment.md#align-epochs): _align two EDFs,_
-[`ALIGN-ANNOTS`](alignment.md#align-annots): _align annotations,_
-[`INSERT`](alignment.md#insert): _insert new channels._
 __Outputs:__ 
 [`WRITE`](outputs.md#write): _write EDF,_
 [`MATRIX`](outputs.md#matrix): _signals to text,_
@@ -143,20 +138,27 @@ __Artifacts:__
 [`LINE-DENOISE`](artifacts.md#line-denoise): _line denoising,_
 [`SUPPRESS-ECG`](artifacts.md#suppress-ecg): _correct ECG artifact,_
 [`ALTER`](artifacts.md#alter): _correct artifacts,_
+[`POL`](artifacts.md#pol): _signal polarity diagnostics,_
 [`EDGER`](artifacts.md#edger): _identify leading/trailing noise._
+__Physiological signal analysis:__
+[`HRV`](physio.md#hrv): _estimate heart-rate variability metrics from ECG,_
+[`RAI`](physio.md#rai): _calculate the REM atonia index from chin EMG,_
+[`AROUSALS`](physio.md#arousals): _detect candidate sleep arousals from EEG and optional EMG._
 __Hypnograms:__
 [`HYPNO`](hypnograms.md#hypno): _stage summaries,_
-[`STAGE`](hypnograms.md#stage): _dump stages._
+[`STAGE`](hypnograms.md#stage): _dump stages,_
+[`DYNAM`](hypnograms.md#dynam): _summarize epoch-level outputs by NREM cycles._
 __SOAP:__
 [`SOAP`](soap.md#soap):	_single observation & probabilities,_
 [`REBASE`](soap.md#rebase): _change epoch length,_
 [`PLACE`](soap.md#place): _align stages,_
 __POPS:__
 [`RUN-POPS`](pops.md#run-pops): _predict sleep stages,_
-[`POPS`](pops.md#pops): _lower-level POPS command,_
+[`POPS`](pops.md#pops-prediction): _lower-level POPS command,_
 [`EVAL-STAGES`](pops.md#eval-stages): _evaluate external stages,_
 [`--eval-stages`](pops.md#eval-stages): _evaluate external stages,_
-[`--pops`](pops.md#-pops): _train models._
+[`POPS train`](pops.md#pops-training): _create level 1 training features,_
+[`--pops`](pops.md#pops-training): _train models._
 __Time/frequency analysis:__
 [`PSD`](power-spectra.md#psd): _Welch PSD,_
 [`MTM`](power-spectra.md#mtm): _Multi-taper PSD,_
@@ -171,7 +173,8 @@ __Time/frequency analysis:__
 [`LZW`](power-spectra.md#lzw): _LZW compression,_
 [`1FNORM`](power-spectra.md#1fnorm): _remove the 1/f trend,_
 [`TV`](power-spectra.md#tv): _total variation denoiser,_
-[`ACF`](power-spectra.md#acf): _autocorrelation function_
+[`ACF`](power-spectra.md#acf): _autocorrelation function,_
+[`DFA`](power-spectra.md#dfa): _detrended fluctuation analysis._
 __Spindles and SO:__
 [`SPINDLES`](spindles-so.md#spindles): _spindles,_
 [`SO`](spindles-so.md#so): _slow oscillations._
@@ -179,13 +182,11 @@ __Coupling/connectivity:__
 [`COH`](cc.md#coh): _coherence,_
 [`CORREL`](cc.md#correl): _correlation,_
 [`CC`](cc.md#cc): _phase-amplitude coupling & phase lag,_
-[`PSI`](cc.md#): _phase slope index,_
+[`PSI`](cc.md#psi): _phase slope index,_
 [`MI`](cc.md#mi): _mutual information,_
 [`XCORR`](cc.md#xcorr): _cross-correlation,_
-[`TSYNC`](cc.md): _cross-correlation & phase delay,_
+[`TSYNC`](cc.md#tsync): _cross-correlation & phase delay,_
 [`GP`](cc.md#gp): _Granger prediction._
-__Ultradian dynamics:__
-[`dynam`](dynamics.md#dynam): _option to summarize ultradian dynamics_.
 __Interval-based:__
 [`OVERLAP`](intervals.md#overlap): _single-sample overlap analysis,_
 [`--overlap`](intervals.md#-overlap): _multi-sample overlap analysis,_ 
@@ -201,19 +202,17 @@ __Spatial/topographical:__
 [`SL`](spatial.md#sl): _surface Laplacian,_
 [`INTERPOLATE`](spatial.md#interpolate): _epoch/channel interpolation._
 __ICA:__
-[](ica.md)
 [`ICA`](ica.md#ica): _fit ICA,_
 [`ADJUST`](ica.md#adjust): _adjust given ICs,_
 [`SVD`](ica.md#svd): _fit SVD/PCA._
 __Microstates:__
-[](ms.md)
 [`MS`](ms.md#ms): _EEG microstates,_
 [`--kmer`](ms.md#-kmer): _sequence motifs,_
 [`--cmp-maps`](ms.md#-cmp-maps): _group/indiv map spatial analysis,_
 [`--label-maps`](ms.md#-label-maps): _label maps given a template,_
 [`--correl-maps`](ms.md#-correl-maps): _spatial correlations._
 __Clustering:__
-[`EXE`](clustering.md): _time-series clustering._
+[`EXE`](clustering.md#exe): _time-series clustering._
 __Association:__
 [`--gpa-prep`](assoc.md#gpa): _general permutation-based association model prep,_
 [`--gpa`](assoc.md#gpa): _general permutation-based association models,_
@@ -228,10 +227,9 @@ __Helpers:__
 [`--validate`](helpers.md#-validate): _validate files,_
 [`--repath`](helpers.md#-repath): _alter sample-lists,_
 [`--merge`](helpers.md#-merge): _merge EDFs,_
+[`--bind`](helpers.md#-bind): _bind files to IDs,_
 [`--xml`](helpers.md#-xml): _view XMLs,_
 [`--xml2`](helpers.md#-xml2): _dump EDFs (raw),_
-[`EXIT`](helpers.md#exit): _exit a Luna script,_
-[`READ`](helpers.md#read): _read whole EDF,_
 [`--otsu`](helpers.md#-otsu): _Otsu thresholding (file),_
 [`OTSU`](helpers.md#otsu): _Otsu thresholding (EDF)._
 __Experimental:__
@@ -241,8 +239,6 @@ __Experimental:__
 <!--
 
 __Notes/to add: __
-
-`POL`
 
 # to add/remove?
 FILE-MASK
@@ -258,7 +254,6 @@ PAC
 CFC
 GED
 ZOH 
-DFA
 L1OUT
 FIP
 

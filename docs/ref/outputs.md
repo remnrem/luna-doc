@@ -29,10 +29,17 @@ has been applied.
 | `edf-tag` | `edf-tag=v2` | Add a tag to each new EDF filename |
 | `edf`     | `edf=f1`     | Write to edf `f1.edf` | 
 | `sample-list` | `sample-list=v2.lst` | Name of the new sample-list |
+| `edfz` | `edfz` | Write the output as a gzipped EDF (typically `.edf.gz`) |
 
 <h3>Output</h3>
 
 No formal output, other than a message to the log and one or more new EDFs. 
+
+If the `edfz` option is specified, Luna writes a gzipped EDF rather
+than an uncompressed EDF.  In current Luna this is a plain gzip-based
+format: no separate `.idx` file is created, and gzipped EDFs are read
+by streaming the whole compressed file rather than by random access
+into an indexed compressed representation.
 
 <h3>Example</h3>
 
@@ -118,11 +125,11 @@ Finally, to check the filtering, we can use the [`MATRIX`](#matrix) command to
 dump the raw signals to a file.  First from the original EDF (for the first 10 epochs only): 
 
 ```
-luna s.lst 1 -s "MASK epoch=1-10 & RE & MATRIX sig=EEG file=old.txt"
+luna s.lst 1 -s 'MASK epoch=1-10 & RE & MATRIX sig=EEG file=old.txt'
 ```
 
 ```
-luna newx.lst 1 -s "MATRIX file=new.txt"
+luna newx.lst 1 -s 'MATRIX file=new.txt'
 ```
 
 
@@ -540,5 +547,4 @@ This creates an EDF in which contains epoch-level summary statistics of the orig
  - for other signals (e.g. light or heart rate, etc), the mean, min and max: `XYZ_M`, `XYZ_L`, `XYZ_U`
 
 The idea is that this SEDF file is an effective _thumbnail_ for the EDF, which can be quickly loaded and rendered, e.g. by a viewer application.   
-
 

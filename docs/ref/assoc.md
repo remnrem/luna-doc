@@ -68,7 +68,7 @@ This module comprises two commands:
    for an arbitrary set of covariates (_Z_)
 
 
-See [this page](https://zzz.bwh.harvard.edu/luna-walkthrough/p5/assoc/) of the
+See [this page](https://zzz.nyspi.org/luna-walkthrough/p5/assoc/) of the
 Luna walk-through to see an application of GPA, and the notes below the parameter and output tables
 for more context.
 
@@ -225,7 +225,7 @@ Optional summary statistics (strata: `VAR`; option: `stats`)
 
 <h3>Usage notes and examples</h3>
 
-See the [walk-through](https://zzz.bwh.harvard.edu/luna-walkthrough) for a semi-realistic application of GPA to real data. Below, we outline various aspects of GPA:
+See the [walk-through](https://zzz.nyspi.org/luna-walkthrough) for a semi-realistic application of GPA to real data. Below, we outline various aspects of GPA:
 
  - preparing [input data](#input-data)
 

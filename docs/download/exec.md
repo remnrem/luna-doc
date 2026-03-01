@@ -5,7 +5,7 @@ This page describes how to obtain precompiled executable files
 Linux.  Please first read the [overview](index.md) describing installation options
 to find the best option for your platform.
 
-As decribed below, the latest stable binary release is available from
+As described below, the latest stable binary release is available from
 this URL: <https://github.com/remnrem/luna-base/releases>.
 
 ## Preliminaries
@@ -111,4 +111,3 @@ You'll then see a further dialog box pop up, where you should click
 for destrat (and behead).  You only need to do this once per new
 installation.  Alternatively, you could always [compile from
 source](source.md), or use [Docker](docker.md) instead.
-

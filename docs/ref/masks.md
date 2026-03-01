@@ -78,7 +78,7 @@ There are three general types of mask:
 
  - those based on [_annotations_](annotations.md), using either the default syntax
   or (for more involved, niche scenarios) Luna's
-   [_eval_](expressions.md#eval),   
+   [_eval_](evals.md#eval),   
  - those based on _time intervals_, specified in terms of
    clock-time, elapsed-time or epoch number
  - other miscellaneous masks
@@ -146,7 +146,7 @@ will only mask epochs that are completely spanned by an arousal; in contrast,
 will also match epochs that have any extent of overlapping `arousal`.
 
 
-[_Eval_ expression](expressions.md#eval)-based masks:
+[_Eval_ expression](evals.md#eval)-based masks:
 
 | Option | Example | Description | 
 | ---- | ----- | ----- | 
@@ -801,7 +801,7 @@ Record-level information (strata: `REC`, options: `verbose`)
 
 Here we apply a simple mask and restructure the dataset:
 ```
-luna s.lst -o out.db -s "EPOCH & MASK epoch=5-8 & RESTRUCTURE"
+luna s.lst -o out.db -s 'EPOCH & MASK epoch=5-8 & RESTRUCTURE'
 ```
 From the log, we see that the EDF is just over 8.5 hours (30,664 seconds) in duration:
 ```
@@ -844,7 +844,7 @@ id00001   30664   120     30664    120
     restructuring: from the full EDF to four epochs, and then from
     four down to a single epoch. 
     ```
-    luna s.lst -o out.db -s "EPOCH & MASK epoch=5-8 & RESTRUCTURE & MASK epoch=2 & RESTRUCTURE"
+    luna s.lst -o out.db -s 'EPOCH & MASK epoch=5-8 & RESTRUCTURE & MASK epoch=2 & RESTRUCTURE'
     ```
     When looking at `out.db`, however with the same `destrat` command as above, only the second 
     `RESTRUCTURE` would be represented:
@@ -1083,4 +1083,3 @@ This removes 38 epochs in total, leaving 952 epochs in the final dataset, which 
   restructuring as an EDF+:   keeping 34710 records of 35850, resetting mask
   retaining 1157 epochs
 ```
-

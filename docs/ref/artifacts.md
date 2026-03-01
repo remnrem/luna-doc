@@ -9,6 +9,7 @@ _Commands to perform artifact detection/correction_
 | [`LINE-DENOISE`](#line-denoise) | Line denoising via spectrum interpolation |
 | [`SUPPRESS-ECG`](#suppress-ecg) | Correct cardiac artifact based on ECG | 
 | [`ALTER`](#alter) | Reference-channel regression-based artifact correction | 
+| [`POL`](#pol) | Signal polarity diagnostics |
 | [`EDGER`](#edger) | Utility to flag likely artifactual leading/trailing intervals | 
 
 ## CHEP-MASK
@@ -260,7 +261,7 @@ Epoch-level output (option: `verbose`, strata: `CH` x `E`):
 Taking the same EEG channel from the first tutorial EDF as in the
 `SIGSTATS` example above:
 ```
-luna s.lst 1 sig=EEG -o out.db -s "ARTIFACTS verbose" 
+luna s.lst 1 sig=EEG -o out.db -s 'ARTIFACTS verbose' 
 ```
 
 We see this command flags 60 epochs as potentially containing artifact:
@@ -831,9 +832,9 @@ Epoch-level summaries (options: `epoch` or `verbose`; strata: `E` x `CH`):
 
 | Variable | Description |
 | --- | --- |
-| `H1` | First Hjorth statisic |
-| `H2` | Second Hjorth statisic (if `h2` set) |
-| `H3` | Third Hjorth statisic |
+| `H1` | First Hjorth statistic |
+| `H2` | Second Hjorth statistic (if `h2` set) |
+| `H3` | Third Hjorth statistic |
 | `FLAG` | Indicator of whether epoch is "bad" (0=good/1=bad) | 
 | `STAT` | Smoothed flag (0/1) indicator | 
 | `XON` | Primary statistic to determine lights on (trailing artifact) | 
@@ -842,7 +843,7 @@ Epoch-level summaries (options: `epoch` or `verbose`; strata: `E` x `CH`):
 
 <h3>Examples</h3>
 
-Based on the second individual from the [tutorial](tut/tut1.md) dataset:
+Based on the second individual from the [tutorial](../tut/tut1.md) dataset:
 
 ```
 luna s.lst 2 -o out.db -s ' EDGER sig=EEG epoch cache=c1 & HYPNO cache=c1 '
@@ -888,3 +889,100 @@ and, if they exist, it will set epochs to `L` as appropriate.
     ```
     no trimming indicated: did not alter lights-off or lights-on times
     ```
+
+## POL
+
+_Signal polarity diagnostics_
+
+`POL` evaluates whether an EEG-like signal appears to have the
+expected polarity by comparing upward and downward half-waves after
+slow-band filtering. It is intended as a diagnostic command to flag
+channels whose sign may be inverted, or whose slow-wave morphology is
+atypical.
+
+The default method band-pass filters the signal, extracts candidate
+half-waves above a threshold, and compares the resulting upper and
+lower semi-signals using Hjorth summaries and relative spectral power.
+This is the same general heuristic described in the [polarity
+vignette](../vignettes/nsrr-polarity.md). In practice, `POL` is most
+useful on sleep EEG after restricting to NREM epochs and after basic
+artifact handling.
+
+<h3>Parameters</h3>
+
+Primary parameters:
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `sig` | `sig=C3,C4` | Signals to analyze |
+| `th` | `th=1` | SD threshold for selecting candidate half-waves |
+| `flim` | `flim=15` | Upper frequency limit for spectral summaries |
+| `f-lwr` | `f-lwr=0.5` | Lower band-pass frequency |
+| `f-upr` | `f-upr=4` | Upper band-pass frequency |
+
+Secondary parameters:
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `not-zc2zc` | `not-zc2zc` | Do not force extraction to span zero-crossing to zero-crossing |
+| `not-mirror` | `not-mirror` | Do not mirror opposite-polarity segments before comparison |
+| `double` | `double` | Use doubled upward segments instead of mirrored segments |
+| `raw` | `raw` | Use the raw signal rather than the band-passed signal for selected summaries |
+| `d-mode` | `d-mode` | Compare upward versus downward segments rather than positive versus negative signal portions |
+
+Notes:
+
+- By default, `POL` extracts thresholded half-waves from a 0.5 to 4 Hz band-passed signal and compares mirrored positive and negative segments.
+- `d-mode` changes the comparison from positive-versus-negative polarity to rising-versus-falling delta half-waves. In this mode, Luna also reports separate `UP_*` and `DOWN_*` summaries.
+- `double` and `d-mode` cannot be combined.
+
+<h3>Output</h3>
+
+Channel-level polarity summary (strata: `CH`)
+
+| Variable | Description |
+| --- | --- |
+| `UP_TIME` | Mean duration of upward half-waves |
+| `DOWN_TIME` | Mean duration of downward half-waves |
+| `MN` | Mean signal-level summary |
+| `MD` | Median signal-level summary |
+| `T_DIFF` | t-statistic comparing upward versus downward signal level |
+| `T_H1` | t-statistic comparing Hjorth activity |
+| `T_H2` | t-statistic comparing Hjorth mobility |
+| `T_H3` | t-statistic comparing Hjorth complexity |
+| `UP_H1` | Mean upward Hjorth activity (`d-mode` only) |
+| `UP_H2` | Mean upward Hjorth mobility (`d-mode` only) |
+| `UP_H3` | Mean upward Hjorth complexity (`d-mode` only) |
+| `DOWN_H1` | Mean downward Hjorth activity (`d-mode` only) |
+| `DOWN_H2` | Mean downward Hjorth mobility (`d-mode` only) |
+| `DOWN_H3` | Mean downward Hjorth complexity (`d-mode` only) |
+| `N_H` | Number of half-wave comparisons used for time-domain summaries |
+| `N_FFT` | Number of half-wave comparisons used for spectral summaries |
+
+Frequency-specific polarity summary (strata: `CH` x `F`)
+
+| Variable | Description |
+| --- | --- |
+| `T_RELPSD` | t-statistic comparing relative PSD |
+| `UP_PSD` | Mean upward PSD (`d-mode` only) |
+| `DOWN_PSD` | Mean downward PSD (`d-mode` only) |
+| `UP_RELPSD` | Mean upward relative PSD (`d-mode` only) |
+| `DOWN_RELPSD` | Mean downward relative PSD (`d-mode` only) |
+
+Implementation note:
+
+- `cmddefs.cpp` declares `T_PSD`, but the current `polarity.cpp` path does not emit it.
+
+<h3>Example</h3>
+
+After restricting to sleep EEG and setting epochs, a typical use is:
+
+```
+luna s.lst sig=C3,C4 -o out.db -s 'MASK ifnot=NREM & RE & EPOCH & POL sig=C3,C4 flim=15'
+```
+
+This runs the default polarity heuristic on the retained NREM data and
+reports channel-level and frequency-specific summary statistics. See
+the [polarity vignette](../vignettes/nsrr-polarity.md) for the
+underlying rationale and examples of how to interpret the resulting
+profiles.

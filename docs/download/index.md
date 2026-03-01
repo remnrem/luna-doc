@@ -1,6 +1,6 @@
 # Downloads
 
-<p align="right"><em>Current Luna release: <b>v1.2.0</b> (03-Jan-2025)</em></p>
+<p align="right"><em>Current Luna release: <b>v1.3.4</b> (27-Feb-2026)</em></p>
 
 
 
@@ -11,13 +11,13 @@ Latest stable Luna command-line tool (binaries and source):
 | Platform | Link/command |
 | ----- | ----- |
 | __Executables__ | |
-| macOS (Intel/x86_64) binaries | [https://github.com/remnrem/luna-base/releases/download/v1.2.0/mac_luna.tar.gz](https://github.com/remnrem/luna-base/releases/download/v1.2.0/mac_luna.tar.gz) |
-| macOS (Silicon/ARM64) binaries | [https://github.com/remnrem/luna-base/releases/download/v1.2.0/macos_arm64_luna.tar.gz](https://github.com/remnrem/luna-base/releases/download/v1.2.0/macos_arm64_luna.tar.gz) |
-| Windows binaries | [https://github.com/remnrem/luna-base/releases/download/v1.2.0/win_luna.zip](https://github.com/remnrem/luna-base/releases/download/v1.2.0/win_luna.zip) |
+| macOS (Intel/x86_64) binaries | [https://github.com/remnrem/luna-base/releases/download/v1.3.4/mac_luna.tar.gz](https://github.com/remnrem/luna-base/releases/download/v1.3.4/mac_luna.tar.gz) |
+| macOS (Silicon/ARM64) binaries | [https://github.com/remnrem/luna-base/releases/download/v1.3.4/macos_arm64_luna.tar.gz](https://github.com/remnrem/luna-base/releases/download/v1.3.4/macos_arm64_luna.tar.gz) |
+| Windows binaries | [https://github.com/remnrem/luna-base/releases/download/v1.3.4/win_luna.zip](https://github.com/remnrem/luna-base/releases/download/v1.3.4/win_luna.zip) |
 | __Python__ | |
 | _lunapi_ Python package only | `pip install lunapi` |
 | __Source__| |
-| Stable Luna (all platforms)| [https://github.com/remnrem/luna-base/archive/refs/tags/v1.2.0.tar.gz](https://github.com/remnrem/luna-base/archive/refs/tags/v1.2.0.tar.gz)
+| Stable Luna (all platforms)| [https://github.com/remnrem/luna-base/archive/refs/tags/v1.3.4.tar.gz](https://github.com/remnrem/luna-base/archive/refs/tags/v1.3.4.tar.gz)
 | Latest (unstable) Luna| [https://github.com/remnrem/luna-base/](https://github.com/remnrem/luna-base/) |
 | Latest (unstable) _lunaR_ | [https://github.com/remnrem/luna/](https://github.com/remnrem/luna/) |
 | __Docker__ | | 
@@ -62,7 +62,7 @@ multiple ways to obtain Luna:
 ## Data resources
 
 The [data](data.md) page contains a number of resources that can be
-used with Luna on any platform, including the [tutorial](../tut/tut1.md) and [walk-through](https://zzz.bwh.harvard.edu/luna-walkthrough)
+used with Luna on any platform, including the [tutorial](../tut/tut1.md) and [walk-through](https://zzz.nyspi.org/luna-walkthrough)
 data.
 
 
@@ -71,4 +71,3 @@ data.
 For recent changes and additions in the latest version, see the [CHANGELOG](../updates.md) page.
 
 For any known issues impacting the current release, see [this page](misc.md).
-

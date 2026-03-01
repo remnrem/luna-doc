@@ -90,8 +90,8 @@ To estimate the cross-spectra (up to 20 Hz) between the two EEG channels during 
 sleep for the [tutorial](../tut/tut1.md) individual `nsrr02`:
 
 ```
-luna s.lst nsrr02 -o out.db -s "MASK ifnot=NREM2 & RE \
-                                & COH spectrum max=20 sig=EEG,EEG(sec)"
+luna s.lst nsrr02 -o out.db -s 'MASK ifnot=NREM2 & RE \
+                                & COH spectrum max=20 sig=EEG,EEG(sec)'
 ```
 
 Loading this into [_lunaR_](../ext/R/index.md), 
@@ -168,7 +168,7 @@ To include spatial distances in correlations, it is first necessary to
 have previously attached a set of channel locations via the
 [`CLOCS`]() command) prior to running `CORREL`.  An example map (for a
 64-channel EEG) can be found
-[here](http://zzz.bwh.harvard.edu/dist/luna/clocs/clocs64): e.g. 
+[here](http://zzz.nyspi.org/dist/luna/clocs/clocs64): e.g. 
 
 ```
   CLOCS clocs=clocs64
@@ -248,9 +248,9 @@ channels for [tutorial](../tut/tut1.md) subject `nsrr02`.  Using
 the epoch level:
 
 ```
-luna s.lst nsrr02 -o out.db -s "MASK if=wake & RE \
+luna s.lst nsrr02 -o out.db -s 'MASK if=wake & RE \
                                 & STAGE \
-                                & CORREL epoch verbose sig=EOG(L),EOG(R)"
+                                & CORREL epoch verbose sig=EOG(L),EOG(R)'
 ```
 Note that the above command also reports the manually-assigned stage of each epoch (with the [`STAGE`](hypnograms.md#stage) 
 command, which we can use later when plotting results:
@@ -467,7 +467,7 @@ As well as the wavelet center frequency, one can specify
 the bandwidth of the wavelet, via the wavelet time-domain full width
 at half maximum (FWHM), following [this
 convention](https://www.biorxiv.org/content/10.1101/397182v1.full.pdf).
-See the [`CWT-DESIGN`](../power-spectra/#cwt-design) command for more
+See the [`CWT-DESIGN`](power-spectra.md#cwt-design) command for more
 details, i.e.  to better understand the implication of setting a
 particular FWHM for the frequency domain properties of the wavelet.
 In general, smaller FWHM values (in the time-domain) correspond to
@@ -667,7 +667,7 @@ Channel pair output (olption: `epoch`, strata: `E` x `CH1` x `CH2`)
 
 <h3>Example</h3>
 
-See the [walk-through](https://zzz.bwh.harvard.edu/luna-walkthrough/p5/conn) for an example application of `PSI`.
+See the [walk-through](https://zzz.nyspi.org/luna-walkthrough/p5/conn) for an example application of `PSI`.
 
 ## XCORR
 

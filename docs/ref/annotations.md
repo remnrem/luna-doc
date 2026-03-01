@@ -816,7 +816,7 @@ edf_annot A1+A2_OFF         1     00.00.01          10.18.43
 ...
 ```
 
-For each annotaton that _start_ (and _stop_) times are given: in seconds elapsed since start of the EDF (`START`), 
+For each annotation that _start_ (and _stop_) times are given: in seconds elapsed since start of the EDF (`START`), 
 the same information but in _hh:mm:ss_ format (`START_ELAPSED_HMS`) and as clock-time (`START_HMS`).
 
 !!! note "Spaces in annotation labels"
@@ -1374,7 +1374,7 @@ e.g. `annot=A_*_X` would not be parsed as a wildcard, whereas
 _Collapsing EDF+D annotations_: If the current data are in EDF+D
 *(with gaps), adding the `collapse` option will splice out those gaps,
 as shown in this
-[vignette](../vignettes/merge/#edfd-to-edf-conversion).  Note that if
+[vignette](../vignettes/merge.md#edfd-to-edf-conversion).  Note that if
 combined in the same Luna run as a `WRITE` command, you should place
 `WRITE-ANNOTS collapse` first, as if the EDF+D isn't truly
 discontinuous (i.e. it may skip initial epochs, but is still a single
@@ -1713,7 +1713,7 @@ One thing to watch out for when working with expressions and
 annotation meta-data is the treatment of missing values - `DERIVE` in
 principle detects and handles missing values, but the logic of the
 expression may not be as expected under some conditions.  See the page
-on [eval expressions](eval.md) for more details.
+on [eval expressions](evals.md) for more details.
 
 
 ## SPANNING
@@ -1881,7 +1881,7 @@ classes, as well as the group of annotations as a whole.  It can output the foll
   - number of seconds spanned by an annotation (per epoch)
   - an indicator for whether any annotation spans that epoch
   - the proportion of the epoch spanned by annotations
-  - the count of unqiue events spanning that epoch
+  - the count of unique events spanning that epoch
 
 Outputs are generated both per annotation class, and as a single, combined set (pooling all annotation classes).
 
@@ -2307,4 +2307,3 @@ However, with `span-gaps` addded, then we would see:
 
 
 ## ALIGN-ANNOTS
-

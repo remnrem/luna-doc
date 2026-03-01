@@ -8,9 +8,9 @@ A version is hosted online at
 
 ## Dockerized version
 
-The [Dockerized](download/docker.md) version of Luna contains Hypnoscope.
+The [Dockerized](docker.md) version of Luna contains Hypnoscope.
 
-1) Start the Docker container (described [here](download/docker.md#pulling-luna) and [here](download/docker.md#lunadocker) and go to the `hypnoscope`
+1) Start the Docker container (described [here](docker.md#pulling-luna) and [here](docker.md#lunadocker) and go to the `hypnoscope`
 folder, and make sure it is up-to-date:
 
 ```
@@ -45,7 +45,7 @@ which should bring up a browser window.
 
 _Hypnoscope_ will be distributed as a proper R package, but for now,
 you may need to first install these libraries (as well as having
-[lunaR](ext/R/index.md) installed):
+[lunaR](../ext/R/index.md) installed):
 
 ```
 install.packages( c("shiny","shinybusy","shinyjs","dplyr","lubridate","shinydashboard","datamods") )

@@ -7,17 +7,17 @@ This page describes Luna's automated sleep stager (POPS). This
 and its companion command, [SOAP](soap.md). POPS is generic in the
 sense that it can be trained on multiple different types of signals.
 
-The interactive [_Moonlight_](../moonlight.md) viewer provides a simple
+The standalone [LunaScope](https://zzz.nyspi.org/lunascope/) application provides a simple
 point-and-click interface to POPS (in prediction mode only), which is
 appropriate for applying our pre-made single-EEG POPS model to small
-numbers of EDFs.  If using command-line Luna, the easiest place to start is with
+numbers of EDFs. If using command-line Luna, the easiest place to start is with
 the [RUN-POPS](#run-pops) command.
 
 | Command | Description | 
 | ---- | ------ | 
 | [_Models_](#models) | An overview of the current POPS models and expected signals | 
 | [`RUN-POPS`](#run-pops) | __A high-level convenience wrapper around `POPS`__ |
-| [Moonlight](#moonlight) | Instantiation of POPS base model in web-application | 
+| [LunaScope](#lunascope) | Point-and-click interface to POPS | 
 | [`POPS`](#pops-prediction) _prediction mode_ | Apply automated sleep stage _prediction_ |
 | [`EVAL-STAGES`](#eval-stages) | Apply POPS evaluation metrics to external predictions |
 | [`--eval-stages`](#eval-stages) | Similar to above, but without an attached EDF |
@@ -29,7 +29,7 @@ the [RUN-POPS](#run-pops) command.
 
 An initial single EEG POPS model (`s2`) is hosted here:
 
-URL = [http://zzz.bwh.harvard.edu/dist/luna/pops.zip](http://zzz.bwh.harvard.edu/dist/luna/pops.zip)
+URL = [http://zzz.nyspi.org/dist/luna/pops.zip](http://zzz.nyspi.org/dist/luna/pops.zip)
 
 Currently, we only distribute a _single-EEG_ model however, although
 more will be added in the near future.
@@ -45,7 +45,7 @@ next sections using either [RUN-POPS](#run-pops) or the lower-level
 [POPS](#pops-prediction) interface shows how to use these models for
 prediction.
 
-The core `s2` (aka Moonlight's _M1_, see below) model requires the following:
+The core `s2` model requires the following:
 
  - a single central EEG, based on a contralateral mastoid reference,
    i.e. C3-M2 or C4-M1.  In practice, similar EEGs channels can be
@@ -58,10 +58,9 @@ The core `s2` (aka Moonlight's _M1_, see below) model requires the following:
    (called _ZEN_ below), which can be obtained via the `ROBUST-NORM`
    Luna command
 
-The `s2` model can be used in two different ways (which correspond to the
-_M1_ and _M2_ labels in the [_Moonlight_](../moonlight.md)
-instantiation of POPS - both are based on the same underyling `s2`
-model, however).
+The `s2` model can be used in two different ways in a point-and-click
+LunaScope workflow, although both are based on the same underlying
+`s2` model.
 
  - The default use takes a single EEG channel from the test subject and makes predictions
 
@@ -551,7 +550,7 @@ After making the predictions, POPS create the annotations, and outputs the kappa
   kappa = 0.821632; 3-class kappa = 0.871336 (n = 1195 epochs)
 ```
 
-Note that these are the same kappas are output by _Moonlight_ above.
+Note that these are the same kappas output by LunaScope above.
 
 This also prints the 5-class confusion matrix:
 
@@ -594,15 +593,14 @@ be adding some vignettes in the future to consider best practice for
 applying POPS, adding new models (e.g. including EOGs, EMGs, etc).
 
 
-## Moonlight
+## LunaScope
 
 One easy route to use POPS (at least for small numbers of EDFs) is the
-point-and-click [_Moonlight_](../moonlight.md) tool.  Opening the
-_Hypnogram/POPS_ panel, we can select the _M1_ model (which actually
-maps to the `s2` model described above), specify the single channel to
-use (`EEG`, which is C4-M1), and check that we need to bandpass the
-signal prior to staging).  Click _Run POPS_ and then 5-10 seconds
-later, you'll have this output;
+point-and-click [LunaScope](https://zzz.nyspi.org/lunascope/) tool.
+Opening the _Hypnogram/POPS_ panel, we can select the relevant POPS
+model, specify the single channel to use (`EEG`, which is C4-M1), and
+check that we need to bandpass the signal prior to staging. Click
+_Run POPS_ and then 5-10 seconds later, you'll have this output;
 
 ![img](../img/mlref/ml-ref19.png)
 
@@ -610,9 +608,8 @@ The epoch-level predictions are available in a table from the second sub-panel t
 
 ![img](../img/mlref/ml-ref20.png)
 
-(It is also possible to set lights-off/on times (approximately
-anyway) by selecting and dragging the mouse on the top hypnogram - see
-the main Moonlight tutorial).
+(It is also possible to set lights-off/on times approximately by
+selecting and dragging the mouse on the top hypnogram.)
 
 __However, if you are wishing to a) use different models, b) alter
 parameters, and/or c) stage more than a handful of studies in a

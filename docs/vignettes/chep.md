@@ -23,7 +23,7 @@ filtered 0.3-35 Hz and downsampled to 100 Hz.
 
 | ZIP archive (180.7Mb) containing the EDF can be downloaded here |
 | --------------------------------------------------------------- |
-| <http://zzz.bwh.harvard.edu/dist/luna/chep-vig.zip>             |
+| <http://zzz.nyspi.org/dist/luna/chep-vig.zip>             |
 
 After downloading and unzipping the data, we can check the list of channels,
 length of the recording, the sampling rate 

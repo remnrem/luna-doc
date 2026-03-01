@@ -5,6 +5,8 @@ This page describes the _high-level_ interface to Luna functions.
 also contains a few further details.  Below, we assume the `lunapi`
 package will always be aliased as `lp`, i.e.:
 
+An auto-generated API reference is also available [here](https://remnrem.github.io/luna-api/). This page is intended to be a slightly more readable guide to the same interface.
+
 ```
 import lunapi as lp
 ```
@@ -29,8 +31,7 @@ p = proj.inst(x)
 The sections below describe the suite of functions for a)
 [manipulating projects](#projects), b) [working with
 instances](#instances) as well as c) other [helper
-functions](#helpers) and d) the [Moonbeam](#moonbeam) utility to pull
-NSRR data directly into Python.  Below, we'll first tabulate all commands in the next section,
+functions](#helpers).  Below, we'll first tabulate all commands in the next section,
 and then give some more details on usage in the following sections.
 
 
@@ -44,9 +45,6 @@ Major commands are described in __bold text__.  Below:
 
  - any `inst` class is assumed to be called `p` (i.e. from `p = proj.inst(x)`)
 
- - any `moonbeam` class is assumed to be called `mb`
- 
-
 ### Projects 
 
 Projects are _singleton classes_ that organize Luna functions and objects within a single Python session. 
@@ -58,7 +56,7 @@ Projects are _singleton classes_ that organize Luna functions and objects within
 | [__`lp.proj()`__](#lpproj) | __Initiate/reference a _lunapi_ project__ |
 | [__`proj.inst()`__](#projinst)  | __Create a new instance__ |
 | [`proj.empty_inst()`](#projempty_inst) | Create an empty instance | 
-| [`proj.retire()`]() | Retire a project | 
+| [`proj.retire()`](#projretire) | Retire a project | 
 
 <h5>Sample lists</h5>
 
@@ -73,16 +71,18 @@ Projects are _singleton classes_ that organize Luna functions and objects within
 | [`proj.get_edf()`](#projget_edf) | Returns the EDF filename of a sample-list observation |
 | [`proj.get_annots()`](#projget_annots) | Returns the annotation filename(s) of a sample-list observation |
 | [`proj.clear()`](#projclear) | Clears the current sample-list |
+| [`proj.desc()`](#projdesc) | Returns descriptive information for all sample-list individuals |
 
 <h5>Executing Luna commands</h5>
 
 | Command | Description |
 |----|-----|
 | __[`proj.proc()`](#projproc)__ | __Evaluate Luna commands on all sample-list individuals__ |
-| __[`proj.strata()`](#projstrata)__ | __Return a list of command/strata pairs from a prior eval() run__ |
-| __[`proj.table()`](#projtable)__ | __Return a table as a dataframe from a prior eval() run__ |
+| [`proj.silent_proc()`](#projsilent_proc) | Evaluate Luna commands silently |
+| __[`proj.strata()`](#projstrata)__ | __Return a list of command/strata pairs from a prior `proc()` run__ |
+| __[`proj.table()`](#projtable)__ | __Return a table as a dataframe from a prior `proc()` run__ |
 | [`proj.commands()`](#projcommands) | Return a list of commands executed from a prior `proc()` run | 
-| [`proj.variables()`](#projvariables) | Return the variables (table header) for a specific command/strata pair from a prior eval() run |
+| [`proj.variables()`](#projvariables) | Return the variables (table header) for a specific command/strata pair from a prior `proc()` run |
 | [`proj.empty_result_set()`](#projempty_result_set) | Indicate whether there are any results in the project results cache |
 
 <h5>Variables</h5>
@@ -90,11 +90,11 @@ Projects are _singleton classes_ that organize Luna functions and objects within
 | Command | Description |
 |----|-----|
 | __[`proj.var()`](#projvar)__ | __Get/set project-wide variable__ |
-| [`proj.varmap()`](#projvarmap) | Get/set project-wide variables (via a `dict()`) |
 | [`proj.vars()`](#projvars) | Gets/sets project-wide options/variables |
-| [`proj.clear_var()`](#projclear_var) | Clears a project-wide option/variable  |
-| [`proj.clear_vars()`](#projclear_vars) | Clears all project-wide options/variables | 
+| [`proj.clear_vars()`](#projclear_vars) | Clears one, some, or all project-wide options/variables |
 | [`proj.clear_ivars()`](#projclear_ivars) | Clears all individual-specific variables (for all individuals) | 
+| [`proj.include()`](#projinclude) | Reads and sets project variables from a parameter file |
+| [`proj.aliases()`](#projaliases) | Returns signal and annotation aliases |
 
 <h5>Models</h5>
 
@@ -109,6 +109,9 @@ Projects are _singleton classes_ that organize Luna functions and objects within
 |----|-----|
 | [`proj.silence()`](#projsilence) | Turns off the console/log echoing |
 | [`proj.is_silenced()`](#projis_silenced) | Reports on whether the console/log is silenced |
+| [`proj.reset()`](#projreset) | Drops the Luna problem flag |
+| [`proj.reinit()`](#projreinit) | Re-initializes the project |
+| [`proj.flush()`](#projflush) | Flushes the cached output buffer |
 | [`proj.import_db()`](#projimport_db) | Imports a prior Luna output database from a file |
 
 
@@ -130,11 +133,18 @@ in the project's sample list, then any EDF and annotation files are automaticall
 | Command | Description |
 |----|-----|
 | __[`inst.headers()`](#instheaders)__ | Returns a dataframe of channel-header information | 
+| [`inst.id()`](#instid) | Returns the current instance identifier |
+| [`inst.desc()`](#instdesc) | Returns a descriptive summary of the attached record |
 | __[`inst.annots()`](#instannots)__ | Returns a list of current annotation classes |
 | __[`inst.channels()`](#instchannels)__ | Returns a list of current channels |
+| [`inst.chs()`](#instchs) | Alias for `inst.channels()` |
 | [`inst.stat()`](#inststat) | Returns information on the attached data |
 | [`inst.has_channels()`](#insthas_channels) | Returns a list of true/false values for whether certain channels exist |
+| [`inst.has()`](#insthas) | Alias for `inst.has_channels()` |
 | [`inst.has_annots()`](#insthas_annots) | Returns a list of true/false values for the presence of certain annotation classes |
+| [`inst.has_annot()`](#insthas_annot) | Alias for `inst.has_annots()` |
+| [`inst.fetch_annots()`](#instfetch_annots) | Returns annotation events as a dataframe |
+| [`inst.fetch_fulls_annots()`](#instfetch_fulls_annots) | Returns full annotation events as a dataframe |
 | [`inst.stages()`](#inststages) | Returns a list of current sleep stages |
 | [`inst.has_staging()`](#insthas_staging) | Returns true/false for whether stage annotations are available |
 
@@ -143,17 +153,23 @@ in the project's sample list, then any EDF and annotation files are automaticall
 | Command | Description |
 |----|-----|
 | __[`inst.eval()`](#insteval)__ | Evaluate arbitrary Luna commands |
+| [`inst.eval_dummy()`](#insteval_dummy) | Evaluate commands in dummy mode and return backend log text |
+| [`inst.eval_lunascope()`](#insteval_lunascope) | Evaluate commands for the LunaScope viewer and return log text |
 | __[`inst.strata()`](#inststrata)__ | Reports on the contents of the current result cache |
 | __[`inst.table()`](#insttable)__ | Displays a table from the current result cache |
 | [`inst.proc()`](#instproc) | Evaluate arbitrary Luna commands and directly return all results |
+| [`inst.silent_proc()`](#instsilent_proc) | Evaluate arbitrary Luna commands silently |
+| [`inst.silent_proc_lunascope()`](#instsilent_proc_lunascope) | Internal silent evaluation helper for LunaScope |
+| [`inst.variables()`](#instvariables) | Return the variables for a specific command/strata pair |
 | [`inst.empty_result_set()`](#instempty_result_set) | Indicates whether the results cache is currently non-empty |
 
 <h5>Individual-level variables</h5>
 
 | Command | Description |
 |----|-----|
-| [`inst.ivar()`](#instivar) | Set or get an individual variable |
-| [`inst.ivars()`](#instivars) | Returns all individual variables |
+| [`inst.var()`](#instvar) | Set or get an individual variable |
+| [`inst.vars()`](#instvars) | Returns or sets individual variables |
+| [`inst.clear_vars()`](#instclear_vars) | Clears one, some, or all individual variables |
 
 <h5>Extracting signals & annotations</h5>
 
@@ -164,6 +180,10 @@ in the project's sample list, then any EDF and annotation files are automaticall
 | [`inst.slices()`](#instslices) | Returns an array of individual signal/annotation data based on selected intervals (slices) |
 | [`inst.e2i()`](#inste2i) | Helper function to convert epochs to intervals |
 | [`inst.s2i()`](#insts2i) | Helper function to convert epochs to intervals |
+| [`inst.mask()`](#instmask) | Applies one or more mask expressions and rebuilds epochs |
+| [`inst.segments()`](#instsegments) | Runs `SEGMENTS` and returns the `SEGMENTS: SEG` table |
+| [`inst.epoch()`](#instepoch) | Runs `EPOCH` with optional arguments |
+| [`inst.epochs()`](#instepochs) | Returns a compact epoch summary table |
 
 <h5>Updating signals & annotations</h5>
 
@@ -172,13 +192,16 @@ in the project's sample list, then any EDF and annotation files are automaticall
 | __[`inst.insert_signal()`](#instinsert_signal)__ | __Inserts a new signal into the in-memory EDF__ |
 | [`inst.update_signal()`](#instupdate_signal) | Updates an existing signal in the in-memory EDF |
 | [`inst.insert_annot()`](#instinsert_annot) | Insert/append annotation events |
+| [`inst.freeze()`](#instfreeze) | Saves the current timeline mask to a freezer tag |
+| [`inst.thaw()`](#instthaw) | Restores a saved freezer tag |
+| [`inst.empty_freezer()`](#instempty_freezer) | Clears all freezer tags for this instance |
 
 <h5>Models</h5>
 
 | Command | Description |
 |----|-----|
 | [`inst.pops()`](#instpops) | Run POPS stager for a single individual |
-| [`inst.predict_SUN2019()`](inst#predict_sun2019) | Fit Sun et al (2019) brain-age prediction model |
+| [`inst.predict_SUN2019()`](#instpredict_sun2019) | Fit Sun et al (2019) brain-age prediction model |
 
 <h5>Plotting</h5>
 
@@ -188,7 +211,8 @@ in the project's sample list, then any EDF and annotation files are automaticall
 | [`lp.hypno_density()`](#lphypno_density) | Make a hypno-density (posterior stage probabilites) | 
 | [`inst.psd()`](#instpsd) | Calculate and plot a PSD curve |
 | [`inst.spec()`](#instspec) | Calculate and plot a spectrogram heatmap |
-| [`lp.topo_heat()`](#insttopo_heat) | Topo-plot |
+| [`inst.tfview()`](#insttfview) | Plot an MTM spectrogram view for a selected interval |
+| [`lp.topo_heat()`](#lptopo_heat) | Topo-plot |
 
 
 ### Helpers
@@ -198,29 +222,30 @@ in the project's sample list, then any EDF and annotation files are automaticall
 | Command | Description |
 |----|-----|
 | [`lp.cmdfile()`](#lpcmdfile) | Loads and parses a Luna command file |
-| [`lp.include()`](#lpinclude) | Reads and sets project variables based on a parameter file |
+| [`proj.include()`](#projinclude) | Reads and sets project variables based on a parameter file |
+| [`lp.fetch_doms()`](#lpfetch_doms) | Lists all Luna command domains |
+| [`lp.fetch_cmds()`](#lpfetch_cmds) | Lists all commands for a domain |
+| [`lp.fetch_params()`](#lpfetch_params) | Lists parameters for a command |
+| [`lp.fetch_tbls()`](#lpfetch_tbls) | Lists output tables for a command |
+| [`lp.fetch_vars()`](#lpfetch_vars) | Lists variables for a command/table |
+| [`lp.fetch_desc_dom()`](#lpfetch_desc_dom) | Returns the description for a domain |
+| [`lp.fetch_desc_cmd()`](#lpfetch_desc_cmd) | Returns the description for a command |
+| [`lp.fetch_desc_param()`](#lpfetch_desc_param) | Returns the description for a command parameter |
+| [`lp.fetch_desc_tbl()`](#lpfetch_desc_tbl) | Returns the description for a command table |
+| [`lp.fetch_desc_var()`](#lpfetch_desc_var) | Returns the description for a command variable |
+| [`lp.strata()`](#lpstrata) | Lists command/strata pairs from a raw results object |
+| [`lp.table()`](#lptable) | Converts one command/strata pair to a dataframe |
+| [`lp.tables()`](#lptables) | Converts all raw results into dataframes |
+| [`lp.show()`](#lpshow) | Displays a set of result tables |
+| [`lp.subset()`](#lpsubset) | Subsets rows and columns of a result table |
+| [`lp.concat()`](#lpconcat) | Concatenates matching tables across result collections |
+| [`lp.version()`](#lpversion) | Returns the `lunapi` and Luna versions |
 
 ### Scope
 
 | Command | Description |
 |----|-----|
 | __[`lp.scope()`](#lpscope)__ | __Initiate the Scope viewer__ |
-
-
-### Moonbeam
-
-
-| Command | Description |
-|----|-----|
-| __[`mb = lp.moonbeam()`](#lpmoonbeam)__ | __Initiate a Moonbeam object (`mb`)__ |
-| __[`mb.cohorts()`](#mbcohorts)__ | __List available cohorts__ |
-| __[`mb.cohort()`](#mbcohort)__ | __Set/list current cohort__ |
-| __[`mb.inst()`](#mbinst)__ | __Beam/create an individual from the current cohort__ | 
-| __[`mb.pheno()`](#mbpheno)__ | __Beam any phenotypes information for an individual__ |
-| [`mb.set_cache()`](#mbset_cache) | Explicitly set cache |
-| [`mb.cached()`](#mbcached) | Check whether a file is cached |
-| [`mb.pull()`](#mbpull) | Pull (all files for) an individual |
-| [`mb.pull_file()`](#mbpull_file) | Pull a single file |
 
 
 ---
@@ -429,6 +454,36 @@ _Validate all files in a sample list_
       proj.validate()
 ```
 
+### proj.reset()
+
+_Drop the Luna problem flag_
+
+```
+ reset()
+
+    Args:
+      none
+
+    Returns:
+      nothing
+```
+
+### proj.reinit()
+
+_Re-initialize the project_
+
+```
+ reinit()
+
+    Args:
+      none
+
+    Returns:
+      nothing
+```
+
+This resets project-level variables and state in the underlying Luna engine without replacing the project object itself.
+
 This provides the same functionality as the `--validate` option of
 Luna, which is described [here](../ref/helpers.md#-validate).
 
@@ -552,13 +607,27 @@ _Clears the current sample-list_
 
 ```
 
+### proj.desc()
+
+_Return descriptive information for all sample-list individuals_
+
+```
+ desc()
+
+    Args:
+      none
+
+    Returns:
+      a dataframe of per-individual descriptive information
+```
+
 
 ### proj.proc()
 
 _Evaluate Luna commands on all sample-list individuals_
 
 ```
- eval( cmdstr )
+ proc( cmdstr )
 
     Args:
       cmdstr (str)  a valid Luna command script 
@@ -567,33 +636,51 @@ _Evaluate Luna commands on all sample-list individuals_
       dict of command/strata (str) keys to dataframe values
 
     Example:
-      proj.eval( 'HEADERS' )
+      proj.proc( 'HEADERS' )
 
 ```
 
-`eval()` also populates the `proj` results cache, i.e. that can be subsequently queried with `proj.strata()`, `proj.table()`, etc.
+`proc()` also populates the `proj` results cache, which can subsequently be queried with `proj.strata()`, `proj.table()`, etc.
 
-The `lp.cmdfile()` utility function can be used to pass a file-based Luna script to `eval()` (i.e.
+The `lp.cmdfile()` utility function can be used to pass a file-based Luna script to `proc()` (i.e.
 which will strip out comments, etc).
 
 Multi-line scripts can be passed by using triple-quotes, e.g.:
 ```
-proj.eval( """
+proj.proc( """
 MASK ifnot=N2
 RE
 STATS sig=${eeg}
 """ )
 ```
 
-Note that `eval()` can used both project-wide and individual-specific
+Note that `proc()` can use both project-wide and individual-specific
 variables in scripts, e.g. as above (`${eeg}`).
 
-Note: a similar form of this command exists `silent_eval()` which has identical syntax but suppresses any console/log output.
+Note: a similar form of this command exists, `proj.silent_proc()`, which has identical syntax but suppresses console/log output.
+
+
+### proj.silent_proc()
+
+_Evaluate Luna commands on all sample-list individuals without console/log output_
+
+```
+ silent_proc( cmdstr )
+
+    Args:
+      cmdstr (str)  a valid Luna command script
+
+    Returns:
+      dict of command/strata (str) keys to dataframe values
+
+    Example:
+      res = proj.silent_proc( 'HEADERS' )
+```
 
 
 ### proj.strata()
 
-_Return a list of command/strata pairs from a prior `eval()` run_
+_Return a list of command/strata pairs from a prior `proc()` run_
 
 ```
  strata()
@@ -605,17 +692,17 @@ _Return a list of command/strata pairs from a prior `eval()` run_
       a dataframe of commands and strata pairs in the project-level results cache
 
     Example:
-      proj.eval( 'HEADERS' )
+      proj.proc( 'HEADERS' )
       proj.strata()
 
 ```
 
-The project results cache stores the results of	the last successful run	of `proj.eval()`
+The project results cache stores the results of the last successful run of `proj.proc()`.
 
 
 ### proj.table()
 
-_Return a table as a dataframe from a prior `eval()` run_
+_Return a table as a dataframe from a prior `proc()` run_
 
 ```
  table( cmd , strata = 'BL' )
@@ -628,19 +715,19 @@ _Return a table as a dataframe from a prior `eval()` run_
       a dataframe of values associated with a specific command/strata pair in the project-level results cache
 
     Example:
-      proj.eval( 'HEADERS' )
+      proj.proc( 'HEADERS' )
       proj.table( 'HEADERS' )
       proj.table( 'HEADERS' , 'CH' )
 
 ```
 
-The project results cache stores the results of the last successful run of `proj.eval()`.  A list of available tables
+The project results cache stores the results of the last successful run of `proj.proc()`.  A list of available tables
 is given by `proj.strata()`.  All individuals from the sample-list are combined as different rows of the same results
 table.
 
 ### proj.commands()
 
-_Return a list of commands executed from a prior `eval()` run_
+_Return a list of commands executed from a prior `proc()` run_
 
 ```
  commands()
@@ -652,18 +739,18 @@ _Return a list of commands executed from a prior `eval()` run_
       a dataframe of commands in the project-level results cache
 
     Example:
-      proj.eval( 'HEADERS' )
+      proj.proc( 'HEADERS' )
       proj.commands()
 
 ```
 
-The project results cache stores the results of the last successful run of `proj.eval()`
+The project results cache stores the results of the last successful run of `proj.proc()`.
 
 
 
 ### proj.variables()
 
-_Return the variables (table header) for a specific command/strata pair from a prior `eval()` run_
+_Return the variables (table header) for a specific command/strata pair from a prior `proc()` run_
 
 ```
  table( cmd , strata = 'BL' )
@@ -676,7 +763,7 @@ _Return the variables (table header) for a specific command/strata pair from a p
       a dataframe of variable names from the table associated with a specific command/strata pair in the project-level results cache
 
     Example:
-      proj.eval( 'HEADERS' )
+      proj.proc( 'HEADERS' )
       proj.variables( 'HEADERS' )
       proj.variables( 'HEADERS' , 'CH' )
 
@@ -699,12 +786,12 @@ _Indicate whether there are any results in the project results cache_
       bool, True if the project results cache is empty
       
     Example:
-      proj.eval( 'HEADERS' )
-      proj.proj.empty_result_set()
+      proj.proc( 'HEADERS' )
+      proj.empty_result_set()
 
 ```
 
-The project results cache stores the results of the last successful run of `proj.eval()`.
+The project results cache stores the results of the last successful run of `proj.proc()`.
 
 
 ### proj.var()
@@ -726,27 +813,6 @@ _Sets or gets a project-wide option/variable_
       proj.var( 'path' , '/tutorial/')
       proj.var( 'path' )
 ```
-
-### proj.varmap()
-_Sets project-wide options/variables_
-
-```
- varmap(d)
-
-    Args:
-      d (dict)      key/value pairs
-
-    Returns:
-      nothing, if value is not None (it sets the option)
-
-    Example:
-      proj.varmap( { 'path': '/tutorial/' , 'annot-file': '/path/to/a.annot' , 'ch': 'EEG1,EEG2' } )
-      proj.vars()
-```
-
-Special variables (i.e. above `path` and `annot-file` are enacted rather than set (i.e. only `ch` above will appear in `proj.vars()`).
-
-Also note that some special project-wide variables may be automatically set (e.g. `sleep` equals `N1,N2,N3,R`).
 
 ### proj.vars()
 
@@ -787,41 +853,28 @@ _Gets/sets project-wide options/variables_
       proj.vars()            # returns all variables (including presets)
 ```
 
-### proj.clear_var()
-
-_Clears a project-wide option/variable_
-
-```
- clear_var(key)
-
-    Args:
-      key (str)  name of the variable
-
-    Returns:
-      nothing
-
-    Example:
-      proj.clear_var( 'path' )
-```
-
-If the variable does not exist, this has no effect.
+Special variables (e.g. `path` or `annot-file`) are enacted rather than simply stored, and some project-wide variables may be set automatically.
 
 ### proj.clear_vars()
 
-_Clears all project-wide options/variables_
+_Clears one, some, or all project-wide options/variables_
 
 ```
- clear_vars()
+ clear_vars( key = None )
 
     Args:
-      none
+      key (str or list[str], optional)  variable(s) to clear; if omitted, clears all
 
     Returns:
       nothing
 
     Example:
+      proj.clear_vars( 'path' )
+      proj.clear_vars( [ 'path' , 'annot-file' ] )
       proj.clear_vars()
 ```
+
+If `key` is omitted, all project-level variables are cleared.
 
 ### proj.clear_ivars()
 
@@ -845,6 +898,36 @@ attached through Luna's `vars` special variable, i.e. `proj.var( 'vars' , 'path/
 (Note that although the Luna variable is `vars` it would perhaps have been better called `ivars`,
 as `lunapi` uses the `vars`/`ivars` nomenclature to distinguish betwen project-wide and individual-specific
 variables.
+
+### proj.include()
+
+_Include options and variables from a parameter file_
+
+```
+ include( f )
+
+    Args:
+      f (str)  parameter file to read
+
+    Returns:
+      backend return value from the Luna wrapper
+```
+
+This is the project-level equivalent of using `@file` on the Luna command line.
+
+### proj.aliases()
+
+_Return a table of signal and annotation aliases_
+
+```
+ aliases()
+
+    Args:
+      none
+
+    Returns:
+      a dataframe with alias type and preferred/alias labels
+```
 
 ### proj.pops()
 
@@ -898,7 +981,7 @@ proj.pops( s='C3_M2' )
 Currently, the default (and only) model is `s2`; more models should be added soon.
 
 More than two channels can be used (as _equivalence channels_) by
-running `POPS` via `proj.eval()` directly.  See the main Luna pages for details on POPS.
+running `POPS` via `proj.proc()` directly.  See the main Luna pages for details on POPS.
 
 
 ### proj.predict_SUN2019()
@@ -930,7 +1013,7 @@ allow Python lists as well as comma-delimited strings: i.e. `cen = [
 'C3' , 'C4' ]` as well as `cen = 'C3,C4'`.
 
 See the main Luna pages for details on the Sun et al (2019) model, and on
-the [PREDICT](http://zzz.bwh.harvard.edu/luna/ref/predict/) command in general.
+the [PREDICT](http://zzz.nyspi.org/luna/ref/predict/) command in general.
 
 
 ### proj.silence()
@@ -969,6 +1052,20 @@ _Reports on whether the console/log is silenced_
     Example:
       proj.silence()         # turn off logging
       proj.is_silenced()
+```
+
+### proj.flush()
+
+_Flush the cached output buffer_
+
+```
+ flush()
+
+    Args:
+      none
+
+    Returns:
+      nothing
 ```
 
 ### proj.import_db()
@@ -1079,6 +1176,34 @@ _Returns a dataframe of channel-header information_
       p.headers()
 ```
 
+### inst.id()
+
+_Return the current instance identifier_
+
+```
+ id()
+
+    Args:
+      none
+
+    Returns:
+      the current instance ID
+```
+
+### inst.desc()
+
+_Return a descriptive summary of the attached record_
+
+```
+ desc()
+
+    Args:
+      none
+
+    Returns:
+      a dataframe showing ID, timing, duration, signal counts, annotation counts, and signals
+```
+
 ### inst.annots()
 
 _Returns a list of current annotation classes_
@@ -1150,6 +1275,14 @@ _Returns a list of current channels_
 
 This function can also be called as `chs()` instead of `channels()`.
 
+### inst.chs()
+
+_Alias for `inst.channels()`_
+
+```
+ chs()
+```
+
 
 ### inst.has_channels()
 
@@ -1174,6 +1307,14 @@ This function uses Luna channel aliasing when matching: i.e. if
 alternate labels have been specified, etc, when determining a match.
 Also, matches are case-insensitive.
 
+### inst.has()
+
+_Alias for `inst.has_channels()`_
+
+```
+ has(x)
+```
+
 
 ### inst.has_annots()
 
@@ -1194,6 +1335,43 @@ _Returns a list of true/false values for the presence of certain annotation clas
 
 ```
 Note that matching is case-sensitive and must be exact.
+
+### inst.has_annot()
+
+_Alias for `inst.has_annots()`_
+
+```
+ has_annot(x)
+```
+
+### inst.fetch_annots()
+
+_Return annotation events as a dataframe_
+
+```
+ fetch_annots( anns , interp = -1 )
+
+    Args:
+      anns (str or list[str])         one or more annotation class labels
+      interp (float, optional)        interpolation value for sample-level expansion
+
+    Returns:
+      a dataframe with `Class`, `Start`, and `Stop` columns
+```
+
+### inst.fetch_fulls_annots()
+
+_Return full annotation events as a dataframe_
+
+```
+ fetch_fulls_annots( anns )
+
+    Args:
+      anns (str or list[str])   one or more annotation class labels
+
+    Returns:
+      a dataframe with `Class`, `Instance`, `Channel`, `Meta`, `Start`, and `Stop` columns
+```
 
 
 ### inst.stages()
@@ -1257,7 +1435,35 @@ _Evaluate arbitrary Luna commands_
 
 This populates the internal _results cache_ which can be queried with `strata()`, `table()`, etc.
 
-To turn off console logging use `proj.silence()`.   Alternatively, use `silent_eval()` which is similar to `eval()` but suppresses console output.
+To turn off console logging use `proj.silence()`. Alternatively, use `inst.silent_proc()`, which is similar to `proc()` but suppresses console output.
+
+### inst.eval_dummy()
+
+_Evaluate commands in dummy mode and return backend log text_
+
+```
+ eval_dummy( cmdstr )
+
+    Args:
+      cmdstr (str)  a Luna command script
+
+    Returns:
+      backend status/log text
+```
+
+### inst.eval_lunascope()
+
+_Evaluate commands for the LunaScope viewer and return backend log text_
+
+```
+ eval_lunascope( cmdstr )
+
+    Args:
+      cmdstr (str)  a Luna command script
+
+    Returns:
+      backend status/log text
+```
 
 ### inst.strata()
 
@@ -1299,6 +1505,21 @@ _Displays a table from the current result cache_
       p.table( 'HEADERS' , 'CH' )
 ```
 
+### inst.variables()
+
+_Return the variables for a specific command/strata pair_
+
+```
+ variables( cmd , strata = 'BL' )
+
+    Args:
+      cmd (str)                command name
+      strata (str, optional)   stratum label, defaulting to `BL`
+
+    Returns:
+      a list of variable names for that output table
+```
+
 
 
 ### inst.proc()
@@ -1322,7 +1543,29 @@ _Evaluate arbitrary Luna commands and directly return all results_
 
 This is effectively the same function as `eval()` - it just varies in how it returns results: whereas `eval()` returns a table summary of the results generated (command, factor/level), as generated by `inst.strata()`; in contrast, `proc()` returns an object representing all results directly.  As with `eval()`, this also populates the internal _results cache_. which can be queried with `strata()`, `table()`, etc.
 
-To turn off console logging use `proj.silence()`.  Alternatively, use `silent_proc()` which is similar to `proc()` but suppresses console output.
+To turn off console logging use `proj.silence()`. Alternatively, use `inst.silent_proc()`, which is similar to `proc()` but suppresses console output.
+
+### inst.silent_proc()
+
+_Evaluate Luna commands silently_
+
+```
+ silent_proc( cmdstr )
+
+    Args:
+      cmdstr (str)  a Luna command script
+
+    Returns:
+      dict of command/strata keys to dataframes
+```
+
+### inst.silent_proc_lunascope()
+
+_Internal silent evaluation helper for LunaScope_
+
+```
+ silent_proc_lunascope( cmdstr )
+```
 
 
 ### inst.empty_result_set()
@@ -1343,53 +1586,63 @@ _Indicates whether the results cache is currently non-empty_
       if p.empty_result_set(): print( 'no results' )
 ```
 
-The result cache may be empty is the previous command failed.
+The result cache may be empty if the previous command failed.
 
+### inst.clear_vars()
 
-### inst.ivar()
+_Clear one, some, or all individual variables_
+
+```
+ clear_vars( keys = None )
+
+    Args:
+      keys (str, list[str], or set[str], optional)  variable(s) to clear
+
+    Returns:
+      nothing
+
+    Example:
+      p.clear_vars( 'x' )
+      p.clear_vars( [ 'a' , 'b' ] )
+      p.clear_vars()
+```
+
+### inst.var()
 
 _Set or get an individual variable_
 
 ```
-  var( key = None , value = None )
+ var( key = None , value = None )
 
     Args:
-      key (str)                 variable name
-      value (str, optional)     value (if setting)
+      key (str or dict, optional)   variable name or dictionary of key/value pairs
+      value (str, optional)         value, if setting a single variable
 
     Returns:
-      if key is None, returns all variables
-      if key is a dict, set key/value pairs
-      else, if value is None, returns the value of variable key
-      else, sets variable 'key' to 'value'
+      all variables if `key` is `None`, a single value if getting one variable, or nothing if setting
 
     Example:
       p.var( 'x' , 22 )
-      p.var( { 'a':22 , 'b':23 , 'c': 'abc' } )
-      p.var( 'x' )   # returns 22
+      p.var( { 'a': 22 , 'b': 23 , 'c': 'abc' } )
+      p.var( 'x' )
 ```
 
-Note, this may return automatically set individual-variables (i.e. `${eeg}` based on channel labels).
+### inst.vars()
 
-
-### inst.ivars()
-
-_Returns all individual variables_
+_Return or set individual variables_
 
 ```
- ivars()
+ vars( key = None , value = None )
 
     Args:
-      none
+      key (str or dict, optional)   variable name or dictionary of key/value pairs
+      value (str, optional)         value, if setting a single variable
 
     Returns:
-      a dict of key/value pairs for individual-variables set
-
-    Example:
-      p.ivars()
+      a dictionary of current individual variables if `key` is omitted
 ```
 
-Note, this may include automatically set `ivars` (i.e. `${eeg}` based on channel labels).
+This may include automatically set individual variables such as `${eeg}` based on channel labels.
 
 ### inst.data()
 
@@ -1512,6 +1765,64 @@ Intervals are in _time-points_;	1 time-point is	1e-9 seconds.
 This is a member function of `inst` to provide a similar interface to `inst.e2i()` -
 it is a simple conversion from seconds to time-points that does not use `inst` member data at all.
 
+### inst.mask()
+
+_Apply one or more Luna mask expressions and rebuild epochs_
+
+```
+ mask( f = None )
+
+    Args:
+      f (str or list[str], optional)  one or more mask expressions/files to apply
+
+    Returns:
+      nothing
+```
+
+This runs `MASK` for each supplied expression and then issues `RE` to rebuild epochs.
+
+### inst.segments()
+
+_Run `SEGMENTS` and return the `SEGMENTS: SEG` table_
+
+```
+ segments()
+
+    Args:
+      none
+
+    Returns:
+      the `SEGMENTS: SEG` dataframe
+```
+
+### inst.epoch()
+
+_Run `EPOCH` with optional arguments_
+
+```
+ epoch( f = '' )
+
+    Args:
+      f (str, optional)  additional `EPOCH` arguments
+
+    Returns:
+      nothing
+```
+
+### inst.epochs()
+
+_Return a compact epoch summary dataframe_
+
+```
+ epochs()
+
+    Args:
+      none
+
+    Returns:
+      an `EPOCH: E` dataframe restricted to `E`, `E1`, `LABEL`, `HMS`, `START`, `STOP`, and `DUR`
+```
+
 ### inst.insert_signal()
 
 _Inserts a new signal into the in-memory EDF_
@@ -1588,21 +1899,85 @@ Note, unlike `slice()` and `slices()`, intervals are input in _seconds_ here, no
 
 If the annotation class already exists, events are appended; otherwise, a new class is created.
 
-### inst.pops()
+### inst.freeze()
 
-e for s1 (in two-channel mode, if do_reref == True )
-      m2 (str, optional)  mastoid reference for s2 (in two-channel mode, if do_reref == True )
+_Persist the current timeline mask to a freezer tag_
+
+```
+ freeze( f )
+
+    Args:
+      f (str)  freezer tag name
 
     Returns:
-          this command populates the project results cache with POPS results
-	        explicitly returns proj.table( 'POPS' , 'E' )
+      nothing
+```
+
+### inst.thaw()
+
+_Restore a previously saved freezer tag_
+
+```
+ thaw( f , remove = False )
+
+    Args:
+      f (str)                 freezer tag name
+      remove (bool, optional) if `True`, remove the tag after thawing
+
+    Returns:
+      nothing
+```
+
+### inst.empty_freezer()
+
+_Clear all persisted freezer tags for this instance_
+
+```
+ empty_freezer()
+
+    Args:
+      none
+
+    Returns:
+      nothing
+```
+
+### inst.pops()
+
+_Run the POPS stager_
+
+```
+ pops( s = None, s1 = None , s2 = None,
+       path = None , lib = None ,
+       do_edger = True ,
+       no_filter = False ,
+       do_reref = False ,
+       m = None , m1 = None , m2 = None ,
+       lights_off = '.' , lights_on = '.' ,
+       ignore_obs = False ,
+       args = '' )
+
+    Args:
+      s (str, optional)   central EEG channel (single-channel mode)
+      s1 (str, optional)  first central EEG channel (two-channel mode)
+      s2 (str, optional)  second central EEG channel (two-channel mode)
+      path (str, optional) path to POPS resources
+      lib (str, optional)  POPS library name
+      do_edger (bool)      perform EDGER cleaning before POPS
+      no_filter (bool)     assume EEGs are already filtered
+      do_reref (bool)      apply mastoid rereferencing
+      m, m1, m2 (str, optional)  mastoid references
+      lights_off, lights_on (str) optional light markers
+      ignore_obs (bool)    ignore observation-level issues
+      args (str)           extra POPS arguments
+
+    Returns:
+      populates the instance results cache and returns the POPS output table
 
     Example:
-          # single channel example, all defaults
-	        p.pops( 'EEG' )
-		      # two-channel, without filtering , and applying mastoid references
-		            p.pops( s1='C3', m1='M2', s2='C4',m2='M1', no_filter=True )
-			    ```
+      p.pops( 'EEG' )
+      p.pops( s1='C3', m1='M2', s2='C4', m2='M1', no_filter=True )
+```
 
 This is the `inst`-analog of `proj.pops()` (i.e. fits to a
 single individual rather than all individuals in the `proj`
@@ -1621,7 +1996,7 @@ p.pops( s='C3_M2' )
 Currently, the default (and only) model is `s2`; more models should be added soon.
 
 More than two channels can be used (as _equivalence channels_) by
-running `POPS` via `p.eval()` directly.  See the main Luna pages for details on POPS.~
+running `POPS` via `p.eval()` directly.  See the main Luna pages for details on POPS.
 
 ### inst.predict_SUN2019()
 
@@ -1656,7 +2031,7 @@ comma-delimited strings: i.e. `cen = [ 'C3' , 'C4' ]` as well as `cen
 = 'C3,C4'`.
 
 See the main Luna pages for details on the Sun et al (2019) model, and on
-the [PREDICT](http://zzz.bwh.harvard.edu/luna/ref/predict/) command in general.
+the [PREDICT](http://zzz.nyspi.org/luna/ref/predict/) command in general.
 
 ### inst.hypno()
 
@@ -1783,6 +2158,42 @@ _Calculate and plot a spectrogram heatmap_
 This is a wrapper to call the Luna `PSD` command and the `lp.spec()` to plot a spectrogram of results.  Currently, it uses 
 the Welch method to generate a spectrogram.
 
+### inst.tfview()
+
+_Generate an MTM spectrogram view for a selected interval_
+
+```
+ tfview( ch , e = None , t = None , a = None ,
+         tw = 2 , sec = 2 , inc = 0.1 ,
+         f = ( 0.5 , 30 ) , winsor = 0.025 ,
+         anns = None , norm = None ,
+         traces = True ,
+         xlines = None , ylines = None ,
+         silent = True , pal = 'turbo' )
+
+    Args:
+      ch (str)                 main channel
+      e (int or list[int], optional)   one epoch or an epoch range
+      t (list[float], optional)        start/stop times in seconds
+      a (optional)              reserved for future use
+      tw (float)                MTM time-bandwidth parameter
+      sec (float)               segment length in seconds
+      inc (float)               segment increment in seconds
+      f (tuple[float,float])    frequency range
+      winsor (float)            winsorization fraction for power values
+      anns (list[str], optional) annotations to overlay
+      norm (str, optional)      normalization mode
+      traces (bool)             whether to draw the raw trace above the spectrogram
+      xlines, ylines            optional guide lines
+      silent (bool)             suppress console output from the underlying Luna call
+      pal (str)                 matplotlib palette name
+
+    Returns:
+      an MTM spectrogram plot
+```
+
+This helper runs `MTM` internally over the selected interval, extracts the `CH_F_SEG` and `CH_SEG` tables, and then plots the result.
+
 ### lp.spec()
 
 _Plot a spectrogram heatmap given prior spectral resuts_
@@ -1860,17 +2271,126 @@ _Loads and parses a Luna command file_
 
 `cmdfile( f )`
 
-### lp.include()
+Unlike the command-line helper, the generated API docs define `cmdfile()` as reading the file contents verbatim so that multi-line control statements are preserved.
+
+### Parameter Files
 
 _Reads and sets project variables based on a parameter file_
 
 `include( f )`
 
-N.b. `lp.include( 'path/to/param' )` use the same function that the Luna command-line option `@path/to/param` uses, e.g. 
+This is the documented API entry point for reading a parameter file into the current project, analogous to using `@param` on the Luna command line, e.g.
 ```
 luna s.lst @param -o out.db < cmd.txt
 ```
 
+### lp.fetch_doms()
+
+_Fetch all Luna command domains_
+
+`fetch_doms()`
+
+### lp.fetch_cmds()
+
+_Fetch all commands in a domain_
+
+`fetch_cmds( dom )`
+
+### lp.fetch_params()
+
+_Fetch all parameters for a command_
+
+`fetch_params( cmd )`
+
+### lp.fetch_tbls()
+
+_Fetch all output tables for a command_
+
+`fetch_tbls( cmd )`
+
+### lp.fetch_vars()
+
+_Fetch all variables for a command/table_
+
+`fetch_vars( cmd , tbl )`
+
+### lp.fetch_desc_dom()
+
+_Return the description for a domain_
+
+`fetch_desc_dom( dom )`
+
+### lp.fetch_desc_cmd()
+
+_Return the description for a command_
+
+`fetch_desc_cmd( cmd )`
+
+### lp.fetch_desc_param()
+
+_Return the description for a command parameter_
+
+`fetch_desc_param( cmd , param )`
+
+### lp.fetch_desc_tbl()
+
+_Return the description for a command table_
+
+`fetch_desc_tbl( cmd , tbl )`
+
+### lp.fetch_desc_var()
+
+_Return the description for a command/table variable_
+
+`fetch_desc_var( cmd , tbl , var )`
+
+These helpers mirror Luna's internal command registry and are useful for building interactive tooling or checking command metadata programmatically.
+
+### lp.strata()
+
+_List command/strata pairs from a raw results object_
+
+`strata( ts )`
+
+### lp.table()
+
+_Convert one command/strata pair from a raw results object to a dataframe_
+
+`table( ts , cmd , strata = 'BL' )`
+
+### lp.tables()
+
+_Convert all raw results to dataframes_
+
+`tables( ts )`
+
+### lp.show()
+
+_Display a collection of result tables_
+
+`show( dfs )`
+
+### lp.subset()
+
+_Subset rows and columns of a result table_
+
+`subset( df , ids = None , qry = None , vars = None )`
+
+This can subset by `ID`, by a pandas query string, and by a selected list of columns.
+
+### lp.concat()
+
+_Extract and concatenate matching tables across result collections_
+
+`concat( dfs , tlab , vars = None , add_index = None , ignore_index = True )`
+
+This is useful when a higher-level workflow has produced multiple result dictionaries and you want to stack one named table across them.
+
+### lp.version()
+
+_Return the `lunapi` and Luna versions_
+
+`version()`
 
 
 
@@ -1878,7 +2398,7 @@ luna s.lst @param -o out.db < cmd.txt
 
 _Initiates the scope viewer for a single instance_ 
 
-See [the scope page](#scope.md) for notes on using this tool in practice.  Basic usuage is
+See [the scope page](scope.md) for notes on using this tool in practice. [LunaScope](https://zzz.nyspi.org/lunascope/) is a standalone desktop application built on top of _lunapi_ and is generally a better, more full-featured viewer. In contrast, `lp.scope()` is a smaller embedded viewer intended mainly for use inside JupyterLab notebooks. Basic usage is
 
 ```
 lp.scope( p )
@@ -1942,84 +2462,3 @@ that most users can ignore):
       lp.scope( p ) 
 
 ```    
-
-
-
-### lp.moonbeam()
-
-_Initiate a [Moonbeam](../apps/moonbeam.md) object_
-
-```
-mb = lp.moonbeam( token )
-```
-
-where `token` is your [NSRR](https://sleepdata.org/) token, which
-for NSRR users who are logged into the site is available from <https://sleepdata.org/token>.
-
-!!!warn "Prototyping Moonbeam"
-    Please note that the backend server support for Moonbeam is under flux and so this service may be temporarily unavailable:  in future releases we'll try to make it more stable and performant.
-
-### mb.cohorts()
-
-_List available cohorts_
-
-```
-mb.cohorts()
-```
-
-Returns a Pandas data-table of available cohorts for the logged-in user
-
-### mb.cohort()
-
-_Select a cohort and return available individuals_
-
-For example, to select `cfs` (Cleveland Family Study) is that was listed as an available cohort:
-
-```
-mb.cohort( 'cfs' )
-```
-
-Returns of Pandas data-frame of individuals (ID and files).
-
-### mb.inst()
-
-_Pull an individual (EDF & annotations) from a selected cohort_
-
-```
-p = mb.inst( id )
-```
-
-Generates and attaches an instance to `p` (i.e. similar to `p = proj.inst()`) assuming that `id` is a string
-that matches an ID in the attached cohort.  If it exists locally (cached), that version will be used; otherwise,
-_Moonbeam_ will attempt to download it from the server.
-
-### mb.pheno()
-
-_Pull phenotypic data from the selected individual_
-
-```
-mb.pheno()
-```
-
-Returns	of Pandas data-frame of	phenoytpes for the last pulled individual.
-
-
-### mb.set_cache()
-
-_Set the cache folder explicitly_ 
-
-
-### mb.cached()
-
-_Internal function: check whether data are cached_
-
-### mb.pull()
-
-_Internal function: pull an individual_
-
-### mb.pull_file()
-
-_Interal function: pull a file_
-
-
-

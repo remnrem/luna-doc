@@ -869,7 +869,7 @@ over the night during sleep, using data from the [tutorial
 data](../tut/tut1.md) (second individual in this case):
 
 ```
-luna s.lst nsrr02 -o out.db -s "EPOCH & MASK if=wake & RESTRUCTURE & STATS epoch sig=ECG" 
+luna s.lst nsrr02 -o out.db -s 'EPOCH & MASK if=wake & RESTRUCTURE & STATS epoch sig=ECG' 
 ```
 
 ```
@@ -1167,4 +1167,4 @@ Per-channel-pair statistics (strata: `CHS`)
 
 <h3>Example</h3>
 
-See the [Luna walk-through](https://zzz.bwh.harvard.edu/luna-walkthrough/p2/dupes) for an example. 
+See the [Luna walk-through](https://zzz.nyspi.org/luna-walkthrough/p2/dupes) for an example. 

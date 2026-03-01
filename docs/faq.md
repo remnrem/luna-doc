@@ -12,7 +12,7 @@ extension library for R ([_lunaR_](ext/R/index.md)).
 
 ## Which? 
 
-The current version is the _beta-release_ __v1.00 (31-May-2024)__.
+The current version is __v1.3.4 (27-Feb-2026)__.
 Use `luna -v` to display the specific build date/time.
 
 ## Where?
@@ -26,17 +26,17 @@ School](https://hms.harvard.edu/), Boston, MA, United States.
 Luna was primarily developed by Shaun Purcell, with input from
 a number of colleagues:
 
-- Senthil Pananivelu for maintaining distributions and work on Moonlight & Moonbeam
+- Senthil Pananivelu for maintaining distributions and work on Moonlight
 - Nataliia Kozhemiako for input into multiple EEG analytic components and the revised artifact detection workflows
 - Shyamal Agarwal for work on automating the build distribution and NSRR's Automated Pipeline (NAP) built around Luna
-- Michael Rueschman for input on Moonlight & Moonbeam
+- Michael Rueschman for input on Moonlight
 - Alexander Kent for testing and feedback
 - Susan Redline and her team developing the [National Sleep Research Resource](http://sleepdata.org)
 - Dennis Dean for sharing his original SpectralTrainFig code-base
 - Sara Mariani and Charmaine Demanuele for input on several EEG and ECG analysis components
 
 Interested to contribute (either as a colleague or as a job)? Please
-[contact me](http://zzz.bwh.harvard.edu/index.html#contact).
+[contact me](http://zzz.nyspi.org/index.html#contact).
 
 ## How?
 
@@ -57,7 +57,7 @@ epidemiological studies with polysomnography.
 
 As a relative newcomer to sleep research (my personal background is
 primarily in [psychiatric
-genetics](http://zzz.bwh.harvard.edu/publications.html)), the
+genetics](http://zzz.nyspi.org/publications.html)), the
 development of Luna has tracked with my (still steep) learning curve,
 in how to think about sleep signal data.  Because of this, I adopted
 the tools I was most familiar with (namely
@@ -342,7 +342,7 @@ luna s.lst -s STATS sig=${eeg}
 ```
 or 
 ```
-luna s.lst -s "STATS sig=${eeg}"
+luna s.lst -s 'STATS sig=${eeg}'
 ```
 In both cases, `${eeg}` will be replaced with `XYZ` _before_ Luna even sees any input/commands.
 
@@ -389,4 +389,3 @@ As noted [here](https://www.edfplus.info/specs/edffloat.html), the
 EDF+ spec allows for a logarithmic transformation which can be helpful
 to represent floating-point data with a large dynamic range.  This is
 __not__ currently implemented in Luna.
-

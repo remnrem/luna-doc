@@ -1,27 +1,34 @@
-document.addEventListener("DOMContentLoaded", function() {
-	load_navpane();
-    });
+function installLunaHeaderLinks() {
+  const targets = document.querySelectorAll(
+    ".md-header__topic .md-ellipsis"
+  );
 
-function load_navpane() {
-    var width = window.innerWidth;
-    if (width <= 1200) {
-        return;
-    }
+  if (!targets.length) return;
 
-    var nav = document.getElementsByClassName("md-nav");
-    for(var i = 0; i < nav.length; i++) {
-        if (typeof nav.item(i).style === "undefined") {
-            continue;
-        }
+  const html = [
+    '<span class="luna-site-links">',
+    '<a href="https://zzz.nyspi.org/luna/">Luna</a>',
+    '<span class="luna-site-links__sep">|</span>',
+    '<a href="https://zzz.nyspi.org/lunascope/">LunaScope</a>',
+    '<span class="luna-site-links__sep">|</span>',
+    '<a href="https://zzz.nyspi.org/luna-walkthrough">Walkthrough</a>',
+    '<span class="luna-site-links__sep">|</span>',
+    '<a href="https://github.com/remnrem/luna-base">GitHub</a>',
+    "</span>",
+  ].join("");
 
-        if (nav.item(i).getAttribute("data-md-level") && nav.item(i).getAttribute("data-md-component")) {
-            nav.item(i).style.display = 'block';
-            nav.item(i).style.overflow = 'visible';
-        }
-    }
+  targets.forEach((target, index) => {
+    const topic = target.closest(".md-header__topic");
+    if (!topic) return;
+    if (index !== 0) return;
+    if (topic.dataset.lunaLinked === "true") return;
+    topic.dataset.lunaLinked = "true";
+    target.innerHTML = html;
+  });
+}
 
-    var nav = document.getElementsByClassName("md-nav__toggle");
-    for(var i = 0; i < nav.length; i++) {
-	nav.item(i).checked = true;
-    }
+document.addEventListener("DOMContentLoaded", installLunaHeaderLinks);
+
+if (typeof document$ !== "undefined" && document$.subscribe) {
+  document$.subscribe(installLunaHeaderLinks);
 }

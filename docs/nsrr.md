@@ -212,16 +212,16 @@ Here are some convenience [_parameter-files_](luna/args.md#parameter-files) for 
 
 | Cohort | _N_ EDFs records | Sample list | 
 | ----   | --- | ---- | 
-| CCSHS  |     | [`ccshs.txt`](http://zzz.bwh.harvard.edu/luna/dist/nsrr/parameter-files/ccshs.txt) |  
-| CFS    |     | [`cfs.txt`](http://zzz.bwh.harvard.edu/luna/dist/nsrr/parameter-files/cfs.txt) |  
-| CHAT (baseline)       |  | [`chat-baseline.txt`](http://zzz.bwh.harvard.edu/luna/dist/nsrr/parameter-files/chat-baseline.txt) |  
-| CHAT (follow-up)      |  | [`chat-followup.txt`](http://zzz.bwh.harvard.edu/luna/dist/nsrr/parameter-files/chat-followup.txt) |  
-| CHAT (non-randomized) |  | [`chat-nonrandomized.txt`](http://zzz.bwh.harvard.edu/luna/dist/nsrr/parameter-files/chat-nonrandomized.txt) |  
-| MESA   |     | [`mesa.txt`](http://zzz.bwh.harvard.edu/luna/dist/nsrr/parameter-files/mesa.txt) |  
-| MrOS   |     | [`mros.txt`](http://zzz.bwh.harvard.edu/luna/dist/nsrr/parameter-files/mros.txt) |  
-| SHHS1  |     | [`shhs1.txt`](http://zzz.bwh.harvard.edu/luna/dist/nsrr/parameter-files/shhs1.txt) |  
-| SHHS2  |     | [`shhs2.txt`](http://zzz.bwh.harvard.edu/luna/dist/nsrr/parameter-files/shhs2.txt) |  
-| SOF    |     | [`sof.txt`](http://zzz.bwh.harvard.edu/luna/dist/nsrr/parameter-files/sof.txt) |  
+| CCSHS  |     | [`ccshs.txt`](http://zzz.nyspi.org/luna/dist/nsrr/parameter-files/ccshs.txt) |  
+| CFS    |     | [`cfs.txt`](http://zzz.nyspi.org/luna/dist/nsrr/parameter-files/cfs.txt) |  
+| CHAT (baseline)       |  | [`chat-baseline.txt`](http://zzz.nyspi.org/luna/dist/nsrr/parameter-files/chat-baseline.txt) |  
+| CHAT (follow-up)      |  | [`chat-followup.txt`](http://zzz.nyspi.org/luna/dist/nsrr/parameter-files/chat-followup.txt) |  
+| CHAT (non-randomized) |  | [`chat-nonrandomized.txt`](http://zzz.nyspi.org/luna/dist/nsrr/parameter-files/chat-nonrandomized.txt) |  
+| MESA   |     | [`mesa.txt`](http://zzz.nyspi.org/luna/dist/nsrr/parameter-files/mesa.txt) |  
+| MrOS   |     | [`mros.txt`](http://zzz.nyspi.org/luna/dist/nsrr/parameter-files/mros.txt) |  
+| SHHS1  |     | [`shhs1.txt`](http://zzz.nyspi.org/luna/dist/nsrr/parameter-files/shhs1.txt) |  
+| SHHS2  |     | [`shhs2.txt`](http://zzz.nyspi.org/luna/dist/nsrr/parameter-files/shhs2.txt) |  
+| SOF    |     | [`sof.txt`](http://zzz.nyspi.org/luna/dist/nsrr/parameter-files/sof.txt) |  
 
 See the hints in the section above for some notes on using a shell
 alias to automatically point to the parameter file for a given project
@@ -235,7 +235,6 @@ The following variables defined (with examples from CFS):
 | `${emg}` | `emg=EMG` | Primary EMG channel | 
 | `${eog}` | `eog=LOC,ROC` | Left and right EOG channels | 
 | `${ecg}` | `ecg=ECG1` | Primary ECG channel |
-
 
 
 

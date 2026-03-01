@@ -2,7 +2,7 @@
 
 In this final section, we'll repeat some (but not all) of the steps from
 the previous tutorial
-pages, using [_Moonlight_](../moonlight.md) instead of the
+pages, using [_Moonlight_](../apps/moonlight.md) instead of the
 command-line ([_lunaC_](../luna/args.md)) or R
 ([_lunaR_](../ext/R/index.md)) packages.  As might be expected, this
 makes some things easier, but other things harder: that is the reason
@@ -38,7 +38,7 @@ when it appears to start a new session.
     necessarily have restrictions on the number of
     concurrent users this service is able to support.  If the app gives a message that the maximum number
     of users has been reached, try again later.  Alternatively, follow
-    [these instructions](../moonlight-install.md) to use locally either a Dockerized
+    [these instructions](../download/moonlight-install.md) to use locally either a Dockerized
     version of _Moonlight_ or install and run it directly using _lunaR_.
 
 
@@ -253,7 +253,7 @@ selecting epochs for the first individual that:
 
   - were in persistent sleep (at least 10 minutes of sleep prior)
 
-  - occured between 11pm and 3am
+  - occurred between 11pm and 3am
 
   - were during stage 2 NREM sleep
 
@@ -385,7 +385,7 @@ documentation as needed:
 | _Rename_          | [`RENAME`](../ref/manipulations.md#rename) | Rename a single signal to something else |
 | _Drop_            | [`SIGNALS drop`](../ref/manipulations.md#signals) | Remove one or more signals from the EDF |
 | _Copy_            | [`COPY`](../ref/manipulations.md#copy) | Generate a copy of a single signal |
-| _Transform_       | [`TRANS`](../ref/eval.md#trans) | Arbitrary transformations of signals | 
+| _Transform_       | [`TRANS`](../ref/evals.md#trans) | Arbitrary transformations of signals | 
 | _Mask_            | [`MASK`](../ref/masks.md#mask) | Set the epoch mask given various criteria |
 | _Map channels_    | [`CANONICAL`](../ref/canonical.md#canonical) | Make new channels with specified labels/convntions | 
 | _Map annots_      | [`REMAP`](../ref/annotations.md#remap) | Change annotation labels | 
@@ -606,4 +606,4 @@ increased noise).
 __This concludes the _Moonlight_ tutorial, seeded on the original Luna
  (and _lunaR_) tutorials.  _Moonlight_ has a number of other
 capabilities not even mentioned here. To learn about these other features (including
-automated sleep staging) please visit [this page](../moonlight.md).__
+automated sleep staging) please visit [this page](../apps/moonlight.md).__

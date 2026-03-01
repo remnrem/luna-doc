@@ -238,7 +238,7 @@ Here we estimate spindles for all NREM2 sleep for the
 [tutorial](../tut/tut1.md) individual `nsrr02`:
 
 ```
-luna s.lst nsrr02 -o out.db -s "MASK ifnot=NREM2 & RE & SPINDLES fc=11,15 sig=EEG"
+luna s.lst nsrr02 -o out.db -s 'MASK ifnot=NREM2 & RE & SPINDLES fc=11,15 sig=EEG'
 ```
 
 We see some output is sent to the console describing the process.  For
@@ -453,7 +453,7 @@ basic command to estimate spindles (for all NREM2 sleep, with no other
 artifact detection in place), adding the `empirical` threshold:
 
 ```
-luna s.lst sig=EEG -o out.db -s "MASK ifnot=NREM2 & RE & SPINDLES fc=11,15 empirical" 
+luna s.lst sig=EEG -o out.db -s 'MASK ifnot=NREM2 & RE & SPINDLES fc=11,15 empirical' 
 ```
 
 In [_lunaR_](../ext/R/index.md), we use [`ldb()`](../ext/R/ref.md#ldb) to load the resulting `out.db` file:
@@ -518,9 +518,9 @@ Re-running with aberrant epochs removed prior to spindle detection
 [`SIGSTATS`](summaries.md#sigstats) commands:
 
 ```
-luna s.lst sig=EEG -o out2.db -s "MASK ifnot=NREM2 & RE \
+luna s.lst sig=EEG -o out2.db -s 'MASK ifnot=NREM2 & RE \
                                   & ARTIFACTS mask & SIGSTATS mask th=3,3,3 & RE \
-                                  & SPINDLES fc=11,15 empirical" 
+                                  & SPINDLES fc=11,15 empirical' 
 ```
 
 This appears to normalize the "optimal" thresholds somewhat, in that
@@ -593,8 +593,8 @@ To illustrate this QC metric, we'll detect spindles for the second
 
 ```
 luna s.lst 2 sig=EEG -o out.db \
-  -s "MASK ifnot=NREM2 & RE & \
-      SPINDLES fc=11,15 enrich q=-9 annot=sp1 cycles=12"
+  -s 'MASK ifnot=NREM2 & RE & \
+      SPINDLES fc=11,15 enrich q=-9 annot=sp1 cycles=12'
 ```
 
 Here, we detect both fast and slow spindles, targeting 11 and 15 Hz
@@ -856,9 +856,9 @@ Additional output (option: `hms`, strata: `MSPINDLE` or `CH` x `MSPINDLE`))
 <h3>Example</h3>
 
 ```
-luna s.lst 2 sig=EEG -o out.db -s "MASK ifnot=NREM2 & RE & \
+luna s.lst 2 sig=EEG -o out.db -s 'MASK ifnot=NREM2 & RE & \
                                    SPINDLES fc-lower=10 fc-upper=16 fc-step=0.25 \
-                                            collate list-all-spindles"
+                                            collate list-all-spindles'
 ```
 
 The total _m_-spindle density is 4.89 spindles per second, i.e. this
@@ -950,8 +950,8 @@ Mean _IF_ stratified by relative location in spindle (option: `if`, strata `CH` 
 
 With the [tutorial](../tut/tut1.md) data:
 ```
-luna s.lst 2 -o out.db -s "MASK ifnot=NREM2 & RE & \
-                           SPINDLES sig=EEG fc=11,15 if tlock q=0.3 cycles=12"
+luna s.lst 2 -o out.db -s 'MASK ifnot=NREM2 & RE & \
+                           SPINDLES sig=EEG fc=11,15 if tlock q=0.3 cycles=12'
 
 ```
 To get the estimate of _IF_ per spindle (which will should typically be very highly correlated with `FRQ` and `FFT`, 
@@ -1841,5 +1841,4 @@ abline(v=270,lty=2)
 Here we see, for both R1 and R2 definitions, an increased fast spindle
 wavelet power around the negative peak of the SO (270 degrees) for
 this individual.
-
 

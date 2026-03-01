@@ -667,7 +667,7 @@ command-line _lunaC_ statement (i.e. when working with the same
 [tutorial](../../tut/tut1.md) dataset):
 
 ```
-luna s.lst 2 -o out.db -s "EPOCH & MASK ifnot=NREM2 & RE & PSD sig=EEG epoch spectrum" 
+luna s.lst 2 -o out.db -s 'EPOCH & MASK ifnot=NREM2 & RE & PSD sig=EEG epoch spectrum' 
 ```
 
 The contents of the resulting `out.db` file from the _lunaC_ command
@@ -775,8 +775,8 @@ nsrr02   TOTAL       EEG    220.76089    1.00000
     the second `DESC` command:
 
     ```
-    luna s.lst 2 -s "SIGNALS keep=EEG"
-    luna s.lst 2 -s "DESC"
+    luna s.lst 2 -s 'SIGNALS keep=EEG'
+    luna s.lst 2 -s 'DESC'
     ```	 
 
     In R, with the same EDF [`lattach()`](#lattach()-ed, the second `DESC` statement 
@@ -788,7 +788,7 @@ nsrr02   TOTAL       EEG    220.76089    1.00000
     ```
     That is, even though separate `leval()` statements are made, they are really equivalent to the following command line (i.e. which would also show that only 1 signal is present from `DESC`):
     ```
-    luna s.lst 2 -s "SIGNALS keep=EEG & DESC"
+    luna s.lst 2 -s 'SIGNALS keep=EEG & DESC'
     ```
 
 
@@ -860,7 +860,7 @@ You should find that `k` and `k2` are effectively identical.
     ```
     is effectively the same as: 
     ```
-    luna s.lst 1 -s "MASK ifnot=NREM1 && MASK ifnot=NREM2 && RE && PSD" 
+    luna s.lst 1 -s 'MASK ifnot=NREM1 && MASK ifnot=NREM2 && RE && PSD' 
     ```
     In contrast:
     ```
@@ -871,16 +871,16 @@ You should find that `k` and `k2` are effectively identical.
     ```
     is effectively the same as: 
     ```
-    luna s.lst -s "MASK ifnot=NREM1"
+    luna s.lst -s 'MASK ifnot=NREM1'
     ```
     ```
-    luna s.lst -s "MASK ifnot=NREM2"
+    luna s.lst -s 'MASK ifnot=NREM2'
     ```
     ```
-    luna s.lst -s "RE"
+    luna s.lst -s 'RE'
     ```
     ```
-    luna s.lst -s "PSD"
+    luna s.lst -s 'PSD'
     ```
 
 
@@ -1080,7 +1080,7 @@ the following `out.db` file, which will contain results for three
 individuals:
 
 ```
-luna s.lst -o out.db -s "HEADERS"
+luna s.lst -o out.db -s 'HEADERS'
 ```
 
 In R, this file can be directly imported with `ldb()`:

@@ -1,154 +1,125 @@
 
 # Updates, additions and fixes
 
-Current stable version: __v1.3.2__ (main [downloads](download/index.md) page)
+Current stable version: __v1.3.4__ (main [downloads](download/index.md) page)
+
+## v1.3.4 (27-Feb-2026)
+
+Release notes pending.
 
 ## v1.3.2 (12-Nov-2025)
 
-Note: documentation for new features are currently not fully in place.
+Documentation for several new commands is still pending.
 
 _New commands_
 
- - added `CLIP` to clip signals using either relative or absolute thresholds
+ - added `CLIP` to clip signals using either relative or absolute thresholds; documentation pending
 
- - added `RAI` to calculate an index of REM loss of atonia from the EMG
+ - added `RAI` to calculate an index of REM loss of atonia from the EMG; documentation pending
 
- - added the `REQUIRES` command with the `version` option
+ - added `REQUIRES`, including a `version` option; documentation pending
 
- - added the `DROP-ANNOTS` command
+ - added `DROP-ANNOTS`; documentation pending
 
- - added the `ROLLING-NORM` command, which uses an iterative sliding window to calculate a signal mean and SD
+ - added `ROLLING-NORM`, which uses an iterative sliding window to calculate a signal mean and SD; documentation pending
 
- - initial (beta) implementation of heart rate variability (`HRV`) metrics
+ - initial (beta) implementation of `HRV` metrics; documentation pending
 
 
 _Masks & epochs_
  
- - added new `splice-gaps` mode for `EPOCH` generation
+ - added `splice-gaps` mode for [`EPOCH`](ref/epochs.md#epoch)
 
- - for multi-day recording support, added `dhms` option to mask: e.g. `dhms=d2/06:00:00-d3/06:00:00`
+ - for multi-day recording support, added `dhms` support to [`MASK`](ref/masks.md#mask), e.g. `dhms=d2/06:00:00-d3/06:00:00`
 
- - added `stable-unique` and `stable-any` to `MASK`; for example
-   `stable-unique=X,A1,A2,...` to select one and only one of the
-   annotations `A1, A2, etc; or `stable-any=X,A1,A2,...` which means
-   to select any. Here X is the minimum number of flanking epochs required
+ - added `stable-unique` and `stable-any` to [`MASK`](ref/masks.md#mask); for example, `stable-unique=X,A1,A2,...` selects one and only one of `A1,A2,...`, whereas `stable-any=X,A1,A2,...` selects any of them. Here `X` is the minimum number of flanking epochs required
 
- - added `MASK random-from=N,a1,a2,...` to set up to N from the set of epochs w/ an annot from [a1,a2,...]
+ - added `MASK random-from=N,a1,a2,...` to select up to `N` epochs from the set with one of the specified annotations
  
- - added `MASK trim=W` ( or `MASK trim=W,10` ) ; takes a single annot
+ - added `MASK trim=W` (or `MASK trim=W,10`) for trimming with respect to a single annotation
 
- - added `MASK leading`, `trailing`, `leading-trailing` (w/ mask- and unmask- explicit variants);
-    can take multiple annots
+ - added `MASK leading`, `trailing`, and `leading-trailing` (with explicit `mask-` and `unmask-` variants); these can take multiple annotations
 
 
 _Annotations_
 
- - now allows datetime to advance (e.g. for `WRITE-ANNOTS dhms`) even if `1.1.85` (null value) is in header
+ - [`WRITE-ANNOTS`](ref/annotations.md#write-annots) with `dhms` now allows date-time values to advance even if the EDF header date is the null `1.1.85` value
  
- - reimplemented _annotation search_ with more efficient interval-tree implementation
+ - reimplemented annotation search using a more efficient interval-tree implementation
  
- - can now attach annotations only, and it will get start date/time from annots if present
-    (and duration)
+ - annotations can now be attached without signal data; when present, start date/time and duration are inferred from the annotation file
 
- - reject `hh:mm` or `mm:ss` format time-strings from annots
+ - `hh:mm` or `mm:ss` format time strings are now rejected in annotations
 
- - added `ignore-annot` and `ignore-raw-annot` to complement `annot=X` (i.e. to exclude a particular annotation)
+ - added `ignore-annot` and `ignore-raw-annot` to complement `annot=X`, i.e. to explicitly exclude particular annotations
 
- - added `annot-dir` to `WRITE-ANNOTS`, to be used instead of `file`;
-   this creates the folder if it does not exist, same as `WRITE` for `edf-dir`
+ - added `annot-dir` to [`WRITE-ANNOTS`](ref/annotations.md#write-annots), to be used instead of `file`; this creates the folder if it does not exist, analogous to `edf-dir` for [`WRITE`](ref/outputs.md#write)
 
- - `AXA` allows [x]/[-x] and [][] but not root-matching...
-    TODO - make a generic annot=<> parser to handle both
-     xsigs and root_match
+ - `AXA` now allows `[x]`, `[-x]`, and `[][]`; fuller documentation is still pending
 
- - can now drop annotations via `DROP-ANNOTS`
+ - annotations can now be dropped via `DROP-ANNOTS`; documentation pending
 
 
 _New functionality in core commands_
 
- - changed `RECORD-SIZE` to allow for non-integer sample rate
-   (i.e. will resample signals as well as changing record size, to
-   maintain integer number of samples per record, with a Hz sampling
-   rate as close to the original as possible
+ - changed [`RECORD-SIZE`](ref/manipulations.md#record-size) to allow non-integer sample rates, resampling signals as needed so that the number of samples per record remains integral while preserving a sampling rate as close as possible to the original
 
- - added `start` and `stop` to `OVERLAP`;  [ TODO: describe `rp` options ] 
-		    
+ - added `start` and `stop` to [`OVERLAP`](ref/intervals.md#overlap)
+
 
 _Minor additions & changes_
 
- - only flag as a _CONFLICT_ if overlapping stages are actually in conflict (i.e. now allow overlap stage annotations
-   that do not induce substantive conflicts)
+ - overlapping stage annotations are now only flagged as a _CONFLICT_ if they are truly in conflict
 
- - changed `EDFZ` - no longer use indexed-BGZF access - i.e. no .idx files needed; always _preload_; 
-   this then means one can keep EDF annotations as is
+ - changed EDFZ handling: indexed-BGZF access is no longer used, `.idx` files are no longer required, and EDFZ input is always preloaded
 
- - added `SOF`, `DAR`, `TAR`, `TBR` & `GSI` to `PSD` (both total and per-epoch) via the 'slowing' option _[todo: document]_
+ - added `SOF`, `DAR`, `TAR`, `TBR`, and `GSI` to [`PSD`](ref/power-spectra.md#psd) (whole-signal and per-epoch output) via the `slowing` option; fuller documentation is still pending
 
- - standardized the calculation of Hjorth complexity: to obtain the
-   old form, set the special variable `legacy-hjorth=T`
+ - standardized the calculation of Hjorth complexity; to obtain the old form, set the special variable `legacy-hjorth=T`
 
- - added `REPORT` command with `hide`/`show` options
-   -- old REPORT needs 'ensure' ... but trying to update cmddefs()
-   -- added compress to REPORT
+ - added `REPORT` with `hide` and `show` options; documentation pending
    
- - added `M1` to `MEANS` - gives range-normed values (0..1) for a given `CH`/`ANNOT` pair,
-   i.e. if we have > 2 instance IDs
+ - added `M1` to [`MEANS`](ref/intervals.md#means), giving range-normalized values (0..1) for a given `CH`/`ANNOT` pair when more than two instances are present
 
- - added `S2A` w/ waveforms
+ - added waveform output support to [`S2A`](ref/annotations.md#s2a)
 
  - added `slice=m/n` to `--validate`
   
- - `EPOCH require` now works for generic (annotation-based) epochs
+ - [`EPOCH require`](ref/epochs.md#epoch) now works for generic (annotation-based) epochs
 
- - added `mirror` options to show commands
+ - added `mirror` options to show commands; documentation pending
  
- - added `show-assignments` special variable : print ${a=2} etc
+ - added `show-assignments` special variable to print `${a=2}`-style assignments; documentation pending
 
 
 _Script syntax_
 
- - new variable types: to complement standard variables (`${x}`), we
-   now have loop-indices (`#{i}`) and boolean/optional variables
-   (`?{i}`)
+ - to complement standard variables (`${x}`), Luna scripts now support loop indices (`#{i}`) and boolean/optional variables (`?{i}`)
  
- - added loop functionality in Luna scripts via `LOOP` / `END-LOOP`
-   and `#{idx}` loop-index variables
+ - added loop functionality via `LOOP` / `END-LOOP` and `#{idx}` loop-index variables
 
- - added boolean variables (`?{x}`) that can be used in `IF` statements: if not set, it evaluates to `F`
-   (cannot += assign ?{x+=1})
-  -- can be used to reference a normal `${var}`, just handles missingness
-     differently
+ - added boolean variables (`?{x}`) for use in `IF` statements; if not set, they evaluate to `F`
   
- - scripts are now dynamically evaluated for variable substitution
-   (i.e. line-by-line), allowing dynamic assignment, etc, rather than
-   all variables being evaluated prior to executing the script
+ - scripts are now dynamically evaluated for variable substitution line-by-line, allowing dynamic assignment rather than requiring all variables to be evaluated before script execution
    
- - `[[` conditional blocks are no longer supported: use `IF` and `FI`
-   statements instead
+ - `[[` conditional blocks are no longer supported; use `IF` and `FI` instead
 
- - we now allow `[x]` and `[-x]` in most major `annot=` specifiers (as well as `LOOP`)
+ - `[x]` and `[-x]` are now allowed in most major `annot=` specifiers, as well as in `LOOP`
 
- - new `...` or `+` line continuation syntax in scripts: this means we
-   can now indent code (i.e. as it useful for loops) to make the
-   script more readable.
+ - added `...` and `+` line-continuation syntax in scripts, allowing indentation and more readable loop bodies
 
- - allow `[][1:3]` form of [sequence substitution](luna/args.md#sequence-substitution); 
-   (note - `[][#{x}]` are evaluated later... so can have `[][${a}]` and then `[][#{b}]`)
+ - added `[][1:3]` form of [sequence expansion](luna/args.md#sequence-expansion)
 
- - allow parameter file to be tab, space or = delimited (`param-spaces=T/F`, `param-equals=T/F`, both default to `T`)
-     e.g.   `var = value`;  `var = "escaped value with = char"`
+ - parameter files can now be tab-, space-, or `=`-delimited (`param-spaces=T/F`, `param-equals=T/F`, both default `T`), e.g. `var = value`
 
- - added ability to specify expression at variable assignment, with `:=` operator: e.g.  `${b:=${a}+1}`
-
+ - added expression evaluation at variable assignment with `:=`, e.g. `${b:=${a}+1}`
 
 
 _Association model_
 
- - added `strata=Z1,Z2,Z3` option to `GPA stats`, to give stratified group statistics (mean/SD/N)
+ - added `strata=Z1,Z2,Z3` to [`GPA`](ref/assoc.md#gpa) statistics, to give stratified group statistics (mean/SD/N)
  
- - added GPA `comp` and `comp-verbose`, to perform _template/sign
-   tests_ for a set of tests, with respect to a prior (independent)
-   set of tests [todo: to add documentation]
+ - added GPA `comp` and `comp-verbose` to perform template/sign tests with respect to a prior independent set of tests; documentation pending
 
 <!--
 Generate the “template” : (this obviously assuming you’ve correctly
@@ -173,8 +144,29 @@ _Bug fixes_
  - fixed issue w/ `dynam` when no cycles are defined
 
  - `THAW` does not fail if the freeze does not exist, unless `strict`
-     is set; i.e. this allows cases where a freeze wasn't made due to
-     0-records left
+   is set; i.e. this allows cases where a freeze was not made because
+   zero records remained
+
+
+_New commands still lacking full reference coverage_
+
+ - `CLIP`
+
+ - `RAI`
+
+ - `REQUIRES`
+
+ - `DROP-ANNOTS`
+
+ - `ROLLING-NORM`
+
+ - `HRV`
+
+ - `REPORT`
+
+ - `IPC`
+
+ - `S2C`
 
 
 
@@ -184,7 +176,7 @@ Various minor additions and a few fixes.
 
 _Signals_
 
- - for [`GPA`](ref/association.md#gpa), if variable name is `sex` or
+ - for [`GPA`](ref/assoc.md#gpa), if variable name is `sex` or
    `gender`, transform `M`/`F` to `1`/`0` values; also, added the
    ability to specify fixed factors on `inputs`/`make-specs` commands (
    `file|group|F1|F2/LVL` , e.g. adds `F2` w/ fixed values `LVL` )
@@ -209,7 +201,7 @@ _Annotations_
  - added `pos`/`neg` and `pos-pct`/`neg-pct` options to
    [`S2A`](ref/annotations.md#s2a)
 
- - added more label options (e.g. to include channel labelss) to
+ - added more label options (e.g. to include channel labels) to
    [`S2A`](ref/annotations.md#s2a)
 
  - added `remap` to [`WRITE-ANNOTS`](ref/annotations.md#write-annots)
@@ -239,9 +231,9 @@ _New Luna "walk-through" didactic material_
 
  - a comprehensive step-by-step guide to using Luna as applied to
    real-life datasets; the web pages are available
-   [https://zzz.bwh.harvard.edu/luna-walkthrough/](https://zzz.bwh.harvard.edu/luna-walkthrough/)
+   [https://zzz.nyspi.org/luna-walkthrough/](https://zzz.nyspi.org/luna-walkthrough/)
    and we'll post the accompanying walk-through data on
-   [NSRR](sleepdata.org) within the coming month.
+   [NSRR](https://sleepdata.org) within the coming month.
 
 _General phenotype association (GPA) command_
 
@@ -274,7 +266,7 @@ _Other new commands_
  - [`ESPAN`](ref/annotations.md#espan) command to give per-epoch
    statistics about annotation coverage
 
- - statistics to quantify [_ultradian dynamics_](ref/dynamics.md)
+ - statistics to quantify _ultradian dynamics_
    from epoch-level metrics; typically invoked via `dynam` added to
    `PSD`, `COH`, `SPINDLES`, `SO`, `PSI`, `CORREL`,
 
@@ -291,9 +283,6 @@ _Other new commands_
  
 _Lunapi_
 
- - new [_Moonbeam_](lunapi.md#moonbeam) functionality in lunapi, allowing
-   NSRR users to directly pull individual recordings from select cohorts
- 
  - new [`empty_inst()`](lunapi/ref.md#projempty_inst) function to
    create an empty EDF within Lunapi (i.e. one can then attach other
    signals with `insert_signal()` to use Luna functionality on data
@@ -389,8 +378,6 @@ _lunapi (Python interface)_
 
  - finalized `scope()` interactive viewer
  
- - added `moonbeam()` to `lunapi`
-
 
 _Misc additions, changes and fixes_
 
@@ -412,7 +399,7 @@ _Misc additions, changes and fixes_
 
  - revised `SO` variable naming scheme (e.g. `SO_P2P` now `SO_AMP_P2P`, etc)
 
- - added `uppercase-keys` to [`CACHE record`](ref/)
+ - added `uppercase-keys` to [`CACHE record`](ref/index.md)
 
  - added `scale` added to [`PSC`](ref/psc.md) (for scaled-PCA implementation)
 
@@ -424,7 +411,7 @@ _Misc additions, changes and fixes_
    (i.e. now using same number of decimal places as `.annot` output,
    1e-4s by default
 
- - fixed bug in qall-by-allq `CORREL` where off-diagonal elements had
+ - fixed bug in all-by-all `CORREL` where off-diagonal elements had
    flipped signs (i.e. treated as directed measures of
    connectivity)
 
@@ -461,9 +448,9 @@ _New commands_
    collapse gapped EDF+D whilst aligning records, stage annotations
    and epochs
 
- - new [PCOUPL](ref/xxx.md) command for generic phase-event coupling
+ - new [`PCOUPL`](ref/power-spectra.md#pcoupl) command for generic phase-event coupling
 
- - new [SVD](ref/ica.md#svd) commad for time-series PCA via SVD
+ - new [`SVD`](ref/ica.md#svd) command for time-series PCA via SVD
  
 
 _Annotations_
@@ -555,7 +542,7 @@ _Scripting: filters and sequence expansions_
  - we now allow for more generic `[][]` expansion syntax,
    i.e. `[seq1][seq2]` where the terms or sequences are either in the
    form `n:m` (where `n` and `m` are integers, with `n` <= `m`) or as
-   a commad-delimited list.
+   a comma-delimited list.
  
  - no nesting of terms if allowed, but they can be applied sequentially:
    ```
@@ -581,7 +568,7 @@ _Misc. fixes and changes_
 
  - `WRITE` now resets EDF start date if needed (i.e. when changing start time if collapsing to standard EDF)
 
- - fixed the `ids=<list>` option (to swap in alternate IDs on reading a sample list), as it was previosly not working
+ - fixed the `ids=<list>` option (to swap in alternate IDs on reading a sample list), as it was previously not working
 
  - `POPS` `ignore-obs-staging` option is now fixed
 
@@ -612,7 +599,7 @@ _Predictive modelling_
    - prototype [`TCLST`] command for time-series clustering
 _LunaR_
  - `lunaR` is now in CRAN
- - documention (e.g. `?leval`) added to the lunaR package 
+ - documentation (e.g. `?leval`) added to the lunaR package 
  - new `lload()`, `lhead()` and `lcols()` convenience functions 
  - additional `lheatmap()` options added
 
@@ -629,14 +616,12 @@ hypnogram-based annotations, 2) reworked [`MASK`](ref/masks.md#mask)
 interface to simplify masks based on multiple annotations, 3) allowing
 generic (variably-sized) epochs based on annotations, 4) a new
 framework to implement model-based prediction given PSG-derived
-features, in the [`PREDICT`](../ref/predict.md) command, also suppored
-in Moonlight, 5) epoch-wise analysis using the mutlitaper command
+features, in the [`PREDICT`](ref/predict.md) command, also supported
+in Moonlight, 5) epoch-wise analysis using the multitaper command
 [`MTM`](ref/power-spectra.md#mtm), 6) ability to generate new
 annotations conveniently on-the-fly based on pairwise contrasts of
-existing ones, 7) the [Moonbeam](moonbeam.md) utility, that allows
-NSRR data to be pulled directly into Moonlight (for NSRR users) and 8)
-a prototype of a new utility for viewing hypnograms
-([Hypnoscope](hypnoscope.md)).
+existing ones, 7) a prototype of a new utility for viewing hypnograms
+([Hypnoscope](apps/hypnoscope.md)).
 
 
 _Hypnograms_
@@ -647,7 +632,7 @@ _Hypnograms_
 
  - [`HYPNO`](ref/hypnograms.md#hypno) epoch-level output now has
    `PRE`, `SPT`, and `POST` flags (0/1) to reflect epochs that are
-   pre-sleep, during the sleep period time, or post-slep; also, the
+   pre-sleep, during the sleep period time, or post-sleep; also, the
    base-level output has two new variables, `PRE` and `POST` to give
    the recording time pre- and post-sleep (anchored on EDF/recording
    start/top times, rather than lights off, i.e. the
@@ -676,9 +661,6 @@ _Prediction models_
 
 _Moonlight_
 
- - __major:__ added a new [_Moonbeam_](moonbeam.md) feature to directly pull [NSRR](sleepdata.org) data into Moonlight for
-   NSRR users
-
  - __major:__ added a new _Models_ tab to support model-based prediction of
     metrics, initially an estimate of adult "brain-age" based on the
     NREM sleep EEG, implementing a model described
@@ -686,7 +668,7 @@ _Moonlight_
 
 _Hypnoscope_
 
- - an initial implementation of the [Hypnoscope](hypnoscope.md)
+ - an initial implementation of [Hypnoscope](apps/hypnoscope.md)
    utility for viewing multiple hypnograms and generating
    hypnogram-based metrics
 
@@ -813,11 +795,11 @@ _Masks, epochs, freezes and caches_
    i.e. it can be allowed to build up between successive `FREEZE` /
    `THAW` operations
 
- - the [`RE`](res/epochs.md#restructure) command has a new
+ - the [`RE`](ref/masks.md#restructure) command has a new
    `preserve-cache` option, which does not wipe the cache when
    restructuring a dataset
 
- - added a new [`C2A`](ref/freezes.md#c2a) cache to annotation command
+ - added a new `C2A` cache to annotation command
 
 _Annotations_
 
@@ -878,7 +860,7 @@ _Spindle/slow oscillation detection:_
    these `rp` (relative position) terms.  Finally, `SO` annotations do
    not output `dur` now, only `frq`.
  
- - [`SPINDLES`](ref/spindles-so.md#SPINDLES) annotations (from
+ - [`SPINDLES`](ref/spindles-so.md#spindles) annotations (from
    the `annot` argument) now add `rp_mid` (as a 0-1 proportion) to indicate
    the mid/peak of the spindle, i.e. rather than in the old time-point based form
    `mid=tp:123456789`
@@ -932,7 +914,7 @@ _Minor additions and fixes_
  - Luna can now correctly take `.edfz` and `.edf.gz` files on the
    command line (versus from sample list)
 
- - fixed issue with the [`CPT`](ref/association.md#cpt) command when
+ - fixed issue with the [`CPT`](ref/assoc.md#cpt) command when
     multiple classes of DV are specified; also added a `all-dvars` (or
    `dv=*`) option to select all named DVs from the DV files; also, can
    cluster based on time (`T`) as well as `F`, `CH`, `CH1` and `CH2`;
@@ -943,14 +925,14 @@ _Minor additions and fixes_
    `MEDIAN.X` to `X_MD`; also added `X_MN`
 
  - [`STATS`](ref/summaries.md#stats) has a `kurt3` to specify
- unadjusted kurtosis values (i.e.  veresus _excess_ values), such that
+ unadjusted kurtosis values (i.e. versus _excess_ values), such that
  _X~N(0,1)_ has an expected value of 3.0, not 0;
 
- - [`PEAKS`](ref/intervals.md#peaks) now output annotatons (`annot`) as well as cache; can
+ - [`PEAKS`](ref/intervals.md#peaks) now output annotations (`annot`) as well as cache; can
    include `w` to add window (sec) around each point
 
 
-_Interal changes/library upgrades_
+_Internal changes/library upgrades_
 
  - upgraded to [Eigen](https://eigen.tuxfamily.org/) library to 3.4.0
 
@@ -964,7 +946,7 @@ _Interal changes/library upgrades_
 
 _Moonlight_
 
- - new interactive [_Moonlight_](moonlight.md) viewer (public demostration host: [http://remnrem.net](http://remnrem.net))
+ - new interactive [_Moonlight_](apps/moonlight.md) viewer (public demonstration host: [http://remnrem.net](http://remnrem.net))
 
  - extended [tutorial](tut/tut5.md) that uses _Moonlight_ to recapitulate the prior Luna/lunaR tutorials 
 
@@ -1002,7 +984,7 @@ _Major new functionality_
    as default `no-specials=T`; i.e. add options `specials` instead of
    `no-specials`; and likewise `headers` from `no-headers`.  We've also added `dhms` and `minimal` options.
 
- - added `impulse` option to [`SIGGEN`](   (T,A,D)  and `add` not clear; makes new channle, or updates/replaces an existing one. 
+ - added `impulse` option to [`SIGGEN`](ref/simul.md#siggen), and clarified `add`; this makes a new channel, or updates/replaces an existing one.
 
  - new [`REMAP`](ref/annotations.md#remap) command to perform annotation remapping on _already-loaded_x data;
  
@@ -1195,7 +1177,7 @@ _Micro-architecture/signal processing_
    Analysis](https://pubmed.ncbi.nlm.nih.gov/26318848/)
  
  - new prototype/alpha implementation of detrended fluctuation
-   analysis via the [`DFA`](ref/exp.md#dfa) command
+   analysis via the [`DFA`](ref/power-spectra.md#dfa) command
 
  - added Petrosian fractal dimension and permutation entropy (`pe`,
    with `pe-m` and `pe-t` options) to [`SIGSTATS`](ref/summaries.md#sigstats)
@@ -1420,7 +1402,7 @@ _Other fixes, minor modifications and new features_
 
  - added `drop` and `keep` options to the `PSC` command
 
- - added `import=file.txt` command to [`CACHE`]( to read from destrat
+ - added `import=file.txt` command to [`CACHE`](ref/freezes.md#cache) to read from destrat
    output; can take `factors` and `v` param (as well as required
    `cache=`)
 
@@ -1474,7 +1456,7 @@ _Major new functionality_
     commands through code refactoring, tweaking our use of FFTW and
     the incorporation of the Eigen matrix library
 
-- A beta-version of our new Luna-powered __NAP__ (NSRR Automated Pipeline) __cloud-based portal__, described [here](nap.md),
+- A beta-version of our new Luna-powered __NAP__ (NSRR Automated Pipeline) __cloud-based portal__,
   and available for testing from this URL [http://remnrem.net/nap/](http://remnrem.net/nap/) populated with public
   [Sleep-EDF dataset](https://physionet.org/content/sleep-edfx/1.0.0/). 
 
@@ -1521,9 +1503,9 @@ _Other new commands/functionality_
  
  - Added the [`SEDF` command](ref/outputs.md#sedf) to produce _thumbnail-like_ summary EDFs (to be used in future NAP iterations)
 
- - Added a simple [`SIGGEN` command](ref/manipulations.md#siggen) to generate test signals (currently only sine waves)
+ - Added a simple [`SIGGEN` command](ref/simul.md#siggen) to generate test signals (currently only sine waves)
 
- - Added the [`CONTAINS` command](ref/summaries.md) that indicates
+ - Added the [`CONTAINS` command](ref/summaries.md#contains) that indicates
    (via Luna's exit code) whether one or more signals are present in
    the EDF (i.e. helps guide programmatic driving of Luna pipelines,
    to be used in future NAP iterations)
@@ -1548,7 +1530,7 @@ _Minor modifications/fixes_
    this command also now properly supports EDF+C, EDF+D files properly
    (e.g. in how the EDF start time is changed, etc)
 
- -  one can now add generic canonical signals via [`CANONICAL`](ref/manipulations.md#canonical); it will not change the
+ -  one can now add generic canonical signals via [`CANONICAL`](ref/canonical.md#canonical); it will not change the
    `SR` if set to missing (`.`); the canonical signal definition now
    includes units
 
@@ -1615,7 +1597,7 @@ _Minor modifications/fixes_
  - the [`CLOCS`](ref/spatial.md#clocs) command now has an option
    `verbose`, to dump pairwise channel distances
 
- - multiple changes to the [`.annot`](ref/annotations.md#annot) file
+ - multiple changes to the [`.annot`](ref/annotations.md#annot-files) file
    format: allow durations (+seconds); allow hh:mm:ss elapsed time
    (0+hh:mm:ss offsets); allow fractional seconds in hh:mm:ss
    specfication; added channel labels and six-column format (but
@@ -1681,7 +1663,7 @@ _New commands_
    variables (e.g. `${eeg}` and `${emg}`); the `HEADERS` command
    now also outputs a `TYPE` field
 
- - [`CANONICAL`](ref/manipulations.md#canonical) command to generate _canonical signals_,
+ - [`CANONICAL`](ref/canonical.md#canonical) command to generate _canonical signals_,
    `cs_EEG`, `cs_LOC`, `cs_ROC`, `cs_EMG` and `cs_ECG` 
 
  - [`VARS`](ref/summaries.md#vars) command to output all variables defined for a given
@@ -1841,11 +1823,11 @@ sequences](luna/args.md#variables), e.g. `[ICA][1:10]` expands to
  - can now [write EDF+ files](ref/outputs.md#write)
 
  - new _experimental_ commands for __multi-channel EEG__:
-[`CLOCS`](ref/cc.md#clocs) (to read channel locations), 
-[`CHEP`](ref/cc.md#chep) (channel/epoch masks), 
-[`INTERPOLATE`](ref/cc.md#interpolate) (to interpolate missing channels/epoch based on spherical splines), 
-[`SL`](ref/cc.md#sl) (to compute the surface Laplacian), and 
-[`ICA`](ref/cc.md#ica) (implementation of the fastICA algorithm).
+[`CLOCS`](ref/spatial.md#clocs) (to read channel locations), 
+[`CHEP`](ref/masks.md#chep) (channel/epoch masks), 
+[`INTERPOLATE`](ref/spatial.md#interpolate) (to interpolate missing channels/epoch based on spherical splines), 
+[`SL`](ref/spatial.md#sl) (to compute the surface Laplacian), and 
+[`ICA`](ref/ica.md#ica) (implementation of the fastICA algorithm).
 
  - added individual-ID wildcards in the specification of output
    database names (`-o` or `-a`), i.e. to write to a separate database
@@ -1918,4 +1900,3 @@ sequences](luna/args.md#variables), e.g. `[ICA][1:10]` expands to
 ## v0.22 (31-March-2019)
 
 Initial public release.
-

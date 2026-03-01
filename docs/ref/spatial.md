@@ -48,7 +48,7 @@ A _clocs_ file should consist of 4 tab-delimited columns:
  - X, Y and Z Cartesian coordinates
 
 An example channel map for a standard 64-channel EEG montage is
-available [here](http://zzz.bwh.harvard.edu/dist/luna/clocs/clocs64).
+available [here](http://zzz.nyspi.org/dist/luna/clocs/clocs64).
 
 Blank lines and lines starting with either the `#` or `%` character
 are ignored.  All channel labels are internally converted to upper
@@ -188,4 +188,3 @@ will interpolate; the right plot shows the PSD before and after QC and interpola
 Normally, one would want to specify a [`WRITE`](outputs.md#write)
 command following interpolation, i.e. in order to save the
 interpolated data and so not need to repeat this step.
-

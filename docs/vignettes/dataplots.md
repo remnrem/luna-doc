@@ -23,7 +23,7 @@ the [CHAT](http://sleepdata.org/datasets/chat/) study:
 
 Each point represents the manually-assigned stage for a 30-second
 epoch: REM (orange), NREM 1, 2 and 3 (light, mid and dark blue
-respectivly) and wake (cream).  As is typical in young sleepers, we
+respectively) and wake (cream).  As is typical in young sleepers, we
 see about four _cycles_ of successive NREM and REM bouts, with
 progressively longer REM bouts towards the end of the night.
 
@@ -266,7 +266,6 @@ different views of a dataset can bring what might otherwise be
 unappreciated features and facets to the fore. 
 
 _So, the bottom line -- be sure to look at any data you download from the NSRR!_
-
 
 
 

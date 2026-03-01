@@ -4,7 +4,7 @@
 
 The primary output of most [_lunaC_](args.md) commands is a
 specially-formatted _database_ file, which can contain the results of
-one or more analyses for one for more individuals/EDFs.  Although they
+one or more analyses for one or more individuals/EDFs.  Although they
 can have any filename (typically in this documentation we call them
 `out.db`) we'll refer to these output databases generically as _lunout_
 (<b>L</b>una-<b>out</b>put) files.  This section describes how to use
@@ -32,7 +32,7 @@ files.
  
 ## destrat
 
-As described [here](args.md#destrat), the `-o` (or `-a`) argument instructs Luna to
+As described [here](args.md#lunout-databases), the `-o` (or `-a`) argument instructs Luna to
 write its output to a _lunout_ database file:
 
 ```
@@ -131,12 +131,12 @@ documentation):
 destrat out.db +HEADERS > my-file.txt
 ```
 
-!!! Hint 
+!!! hint
     All destrat command, variable, factor and level names are _case-sensitive_.
 
 To extract information from the second strata group (which is defined
 by the factor `CH`), we need to explicitly list the factor(s) that
-define it, use either the `-r` or `-c` options. The choice of `-r`
+define it, using either the `-r` or `-c` options. The choice of `-r`
 versus `-c` influences the layout of the output, in terms of whether
 factors are listed as additional _rows_ or _columns_.  This is
 probably easiest to show by example.  In the first instance:
@@ -180,7 +180,7 @@ both the entire record as well as per-epoch:
 
 
 ```
-luna s.lst nsrr01 sig="EEG,EEG(sec)" -o out.db -s "EPOCH & PSD epoch"
+luna s.lst nsrr01 sig="EEG,EEG(sec)" -o out.db -s 'EPOCH & PSD epoch'
 ```
 
 (note the use of quotes around the `sig` list, which avoids the

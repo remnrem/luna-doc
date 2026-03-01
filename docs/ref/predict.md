@@ -14,7 +14,7 @@ For example, one `PREDICT` model supports the prediction of the
 so-called _brain age index_ using the NREM EEG, based on a model from
 [Sun et al (2019)](https://pubmed.ncbi.nlm.nih.gov/30448611/).  This
 model has also been incorporated into the [Moonlight
-viewer](../moonlight.md).  Over time, different models as well as
+viewer](../apps/moonlight.md).  Over time, different models as well as
 support for model classes beyond linear models will be compiled here.
 
    
@@ -176,18 +176,18 @@ channels, but will always emit a single (averaged) value.
 
 <h4>Restructing/freezing with caches</h4>
 
-In the above example, note that the [`RE`](../masks#restructure)
+In the above example, note that the [`RE`](masks.md#restructure)
 command had the special option `preserve-cache`.  By default,
-[`RE`](../masks#restructure) and [`THAW`](../freezes#thaw) would
+[`RE`](masks.md#restructure) and [`THAW`](freezes.md#thaw) would
 otherwise wipe the cache.  When using a cache, this is typically not
 what one wants, i.e.  if we wish to retain the cached values until a
 subsequent `PREDICT` command.
 
 Consider the following example (given here not as a full working
 example, but just a skeletal script): if we wished to use sigma band
-power from both N2 and N3 (from the Welch [`PSD`](../power-spectra#psd) command, which emits a
+power from both N2 and N3 (from the Welch [`PSD`](power-spectra.md#psd) command, which emits a
 variable also called `PSD` with strata defined by band `B` and channel `CH` alongside
-a further `STG` stratum that aligns with the [`TAG`](../summaries#tag) commands below):
+a further `STG` stratum that aligns with the [`TAG`](summaries.md#tag) commands below):
 
 ```
 CACHE cache=c1 record=PSD,PSD,B,CH,STG
@@ -769,4 +769,3 @@ NREM sleep EEG features to provide a robust estimate of "brain age".
 The difference between predicted and observed age is labelled the
 _brain age index_.  The model was trained on over 2,500 adults aged 18
 to 80.
-

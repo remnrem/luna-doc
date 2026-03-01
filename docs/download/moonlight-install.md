@@ -19,11 +19,11 @@ Nonetheless, it is your responsibility as a user to ensure that no private data 
 
 ## Docker
 
-With Docker Desktop installed, pull the latest `remnrem/luna` image, as described [here](download/docker.md).
+With Docker Desktop installed, pull the latest `remnrem/luna` image, as described [here](docker.md).
 
 If using RStudio via the Docker container, the easiest way to initiate _Moonlight_ is to run the single command:
 ```
-source("http://zzz.bwh.harvard.edu/dist/luna/ml.R")
+source("http://zzz.nyspi.org/dist/luna/ml.R")
 ```
 This will a) change the current directory to `/build/moonlight/` (which is where it is installed on the image) and b) kick off the app.
 
@@ -78,7 +78,7 @@ Please note that within a single R process, you can only run a single
 instance of _Moonlight_.  If you try to open multiple windows from the
 same instance, you will see the following error message:
 
-![img](img/mlwarn.png)
+![img](../img/mlwarn.png)
 
 This is typically harmless - it just means that you've swapped browser
 windows, and if you simply continue working in that new window,
@@ -91,4 +91,3 @@ any one moment in time.
 Therefore, if you want to run multiple _Moonlight_ instances on the
 same machine, please use separate R processes (or open separate Docker
 containers).
-

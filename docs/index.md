@@ -8,16 +8,13 @@ Originally oriented around command-line scripting
 including the [Python](http://python.org) module
 [_lunapi_](lunapi/index.md) and the [_lunaR_](ext/R/index.md) library
 for the [R](https://www.r-project.org/) statistical package. The
-__current release is v1.2.2__ (7-Mar-2025): see [here](updates.md) for
+__current release is v1.3.4__ (27-Feb-2026): see [here](updates.md) for
 a list of changes/additions. Please direct any questions to `luna.remnrem@gmail.com`.
 
-!!!tip "Luna in your browser"
-     Test drive `lunapi` (the Python instantiation of Luna) in your
-     browswer, linked to example data and interactive notebooks using
-     this [link to a Binder-hosted cloud
-     instance](https://mybinder.org/v2/gh/remnrem/luna-api-notebooks/HEAD?urlpath=%2Fdoc%2Ftree%2F00_overview.ipynb).
-     For more information on `lunapi`, see [these
-     pages](lunapi/#index.md).
+!!! tip "LunaScope"
+     [LunaScope](https://zzz.nyspi.org/lunascope/) is a new interactive GUI for Luna,
+     built on top of _lunapi_. It provides a more full-featured point-and-click
+     environment for visual review and interactive analysis.
 
 ## A family of Luna tools
 
@@ -36,7 +33,7 @@ provide fundamentally the same basic functionality:
 
  - via the [_lunapi_](lunapi/index.md) Python package: this is the
    best approach for interactive analyses and for those familiar with
-   Python; you can try it out in your browser via a Binder-hosted notebook [here](https://mybinder.org/v2/gh/remnrem/luna-api-notebooks/HEAD?urlpath=%2Fdoc%2Ftree%2F00_overview.ipynb) 
+   Python
 
  - via the [_lunaR_](ext/R/index.md) R library: users more familiar
    with R may prefer this option (_although note that although we plan to maintain this as is, in the future more effort will be put into developing the Python interface_)
@@ -55,8 +52,6 @@ On top of these components, we have also developed a few interactive tools:
 
  - [_scope_](lunapi/scope.md), an interactive viewer designed for the JupyterLab environment using _lunapi_
 
- - [_Moonbeam_](apps/moonbeam.md), a connector to [NSRR](http://sleepdata.org) data, available in either _lunapi_ or _lunaR_
-
 These tools can either be [installed individually](download/index.md)
 or they can be accessed via prebuilt [Docker containers](download/docker.md)
 
@@ -70,7 +65,7 @@ the command-line tool, but versions are available for both R and
 Python interfaces.
 
 __2.__ You might then want to step through the
-[__walk-through__](https://zzz.bwh.harvard.edu/luna-walkthrough/),
+[__walk-through__](https://zzz.nyspi.org/luna-walkthrough/),
 referencing this main documentation throughout (although note that completing
 the multi-part walk-through may take several sessions).
 
@@ -129,4 +124,3 @@ areas are not well supported, or effectively outside of Luna's scope.
     * _Support for multiple formats_: currently, Luna is mainly based
       around EDF and EDF+ files (as well as plain text)  
  
-

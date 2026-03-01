@@ -33,7 +33,7 @@ the structure of individual differences across related sleep measures
 (although interpreting components can be challenging). More directly,
 it has the potential to provide a powerful set of independent measures
 for subsequent statistical analyses (or, in the context of the
-[`POPS`](../pops/) model, sleep staging), as well as a means to
+[`POPS`](pops.md) model, sleep staging), as well as a means to
 handle multiple-testing problems.
 
 Two commands provide support to 1) fit a PSC decomposition to existing
@@ -348,4 +348,3 @@ The `PSC` checks that all of the required features (i.e. `PSD` for `C3` and `C4`
 in the cache; if they are not, the `PSC` command reports an error message.   Naturally, the `PSC` is not able to check that other factors
 are similar (i.e. whether absolute or relative, raw versus log-scaled power was used, or whether power is only from N2 sleep etc).  Naturally,
 for the PSCs to be interpretable in these new individuals, it is important to ensure that one is comparing like with like.
-

@@ -302,7 +302,7 @@ Signals           : C3[128] C4[128]
 That is, although the duration of observed records is still 80,820
 seconds, the total time spanned (i.e. including gaps) is longer
 (84,871 seconds).  We can also look at the structure of a discontinuous EDF+D more
-explicitly with the [`SEGMENTS`](../ref/outputs/#segments)
+explicitly with the [`SEGMENTS`](../ref/outputs.md#segments)
 command:
  
 ```
@@ -334,7 +334,7 @@ ID      GAP  DUR_HR  DUR_MIN DUR_SEC  START   START_HMS   STOP   STOP_HMS
 merged  1    1.12527 67.5167 4051     40410   08.07.29    44461  09.15.00
 ```
 
-Alternatively, we can use the [_Moonlight_](../moonlight.md) viewer (public test version
+Alternatively, we can use the [_Moonlight_](../apps/moonlight.md) viewer (public test version
 available at [http://remnrem.net](http://remnrem.net)) to view the structure of an
 EDF+D. After uploading `merged.edf` to this tool, the
 _Strucutre/Segments_ tab shows:
@@ -442,7 +442,7 @@ Note that we do not even have to combine the annotation files, i.e. we can speci
 luna merged.edf annot-file=pt1.annot,pt2.annot ...
 ```
 
-If we upload both `merged.edf` and `merged.annot` to [_Moonlight_](../moonlight.md), we can now see the annotations are appropriately aligned
+If we upload both `merged.edf` and `merged.annot` to [_Moonlight_](../apps/moonlight.md), we can now see the annotations are appropriately aligned
 with the signal data (i.e. see the extended hypnogram is now added beneath the spectrogram):
 
 ![img](../img/plus/ml2.png)
@@ -769,7 +769,7 @@ plus   segment   3      38452500000_42452500000  38.4525  42.4525
 ```
 
 Note that `gap` annotations are actually expanded - one _time-point_ past the end
-of the gap (1e-09 seconds).  This is done purposefully, so that we used with
+of the gap (1e-09 seconds).  This is done purposefully, so that, if used with
 `WRITE-ANNOTS collapse`, the `gap` annotations are not entirely spliced out,
 but rather form single annotations at the end and start of the respective flanking segments,
 as above.  Also note that the _instance ID_ (`INST`) is set to the
@@ -826,8 +826,6 @@ for (s in 1:length(segs) ) {
 }
 dev.off()
 ```
-
-
 
 
 

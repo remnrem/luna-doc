@@ -9,6 +9,7 @@ power spectral density estimation_
 | [`MTM`](#mtm)         | Multi-taper method for power spectral density estimation |
 | [`FFT`](#fft)         | Basic discrete Fourier transform of a signal |
 | [`IRASA`](#irasa)     | Irregular-resampling auto-spectral analysis |
+| [`DFA`](#dfa)         | Detrended fluctuation analysis |
 | [`HILBERT`](#hilbert) | Hilbert transform |
 | [`CWT`](#cwt)         | Continuous wavelet transform |
 | [`CWT-DESIGN`](#cwt-design) | Complex Morlet wavelet properties |
@@ -1888,6 +1889,76 @@ of typical EEG, ECG and EMG respectively.
 luna s.lst 1 -o out.db -s 'MASK ifnot=NREM2 & RE & ACF sig=EEG,ECG,EMG lag=300'
 ```
 The output from this second run are plotted in the lower panel of the above figure.
+
+
+## DFA
+
+_Implements detrended fluctuation analysis (DFA)_
+
+`DFA` runs a Fourier-domain detrended fluctuation analysis following
+the implementation of [Nolte et al.
+(2019)](https://pubmed.ncbi.nlm.nih.gov/31004085/). Rather than
+returning only a single exponent, it evaluates the fluctuation
+function over a grid of time scales and reports the local slope at
+each scale.
+
+The command can be applied to the whole trace or epoch by epoch. It
+can also first apply a narrowband filter plus Hilbert transform, and
+then run DFA either on the filtered waveform or on its amplitude
+envelope. This makes it useful for both broadband and band-limited
+scaling analyses.
+
+<h3>Parameters</h3>
+
+| Parameter | Example | Description |
+| ---- | ----- | ----- |
+| `sig` | `C3,C4` | Signals to analyze |
+| `n` | `100` | Number of analysis windows/scales |
+| `min` | `0.1` | Minimum window size, in seconds |
+| `m` | `2` | Log-scale span exponent for the window grid |
+| `epoch` | `epoch` | Run DFA separately for each epoch |
+| `alpha-lwr` | `0.5` | Lower time scale, in seconds, for the summary alpha fit |
+| `alpha-upr` | `10` | Upper time scale, in seconds, for the summary alpha fit |
+
+_Secondary parameters_
+
+| Parameter | Example | Description |
+| ---- | ----- | ----- |
+| `f-lwr` | `0.5` | Lower frequency for optional narrowband filtering |
+| `f-upr` | `4` | Upper frequency for optional narrowband filtering |
+| `ripple` | `0.01` | FIR ripple for narrowband filtering |
+| `tw` | `1` | FIR transition width for narrowband filtering |
+| `envelope` | `envelope=F` | If `F`, use the filtered signal rather than the Hilbert envelope |
+
+<h3>Outputs</h3>
+
+Whole-trace DFA results by time scale (strata: `CH` x `SEC`)
+
+| Variable | Description |
+| ----- | ----- |
+| `FLUCT` | Fluctuation magnitude at this time scale |
+| `SLOPE` | Local DFA slope at this time scale |
+
+Whole-trace summary DFA fit (strata: `CH`)
+
+| Variable | Description |
+| ----- | ----- |
+| `ALPHA` | Summary log-log slope of fluctuation versus scale |
+| `R2` | R-squared of the summary log-log fit |
+
+Epoch-level DFA results by time scale (option: `epoch`, strata: `E` x `CH` x `SEC`)
+
+| Variable | Description |
+| ----- | ----- |
+| `FLUCT` | Fluctuation magnitude at this time scale |
+| `SLOPE` | Local DFA slope at this time scale |
+
+Epoch-level summary DFA fit (option: `epoch`, strata: `E` x `CH`)
+
+| Variable | Description |
+| ----- | ----- |
+| `ALPHA` | Summary log-log slope of fluctuation versus scale |
+| `R2` | R-squared of the summary log-log fit |
 
 
 <!----

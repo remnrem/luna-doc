@@ -1,7 +1,12 @@
 # scope
 
 _lunapi_ provides a simple viewer utility for EDFs, `scope`, designed to work
-in the JupyterLab environment.  Key features include:
+in the JupyterLab environment.
+
+!!! info "LunaScope versus `scope`"
+    [LunaScope](https://zzz.nyspi.org/lunascope/) is a standalone desktop application built on top of _lunapi_, and is the recommended general-purpose viewer. In contrast, `scope` is a smaller embedded viewer intended primarily for inclusion in JupyterLab notebooks when working interactively with in-memory _lunapi_ objects.
+
+Key features of `scope` include:
 
  - it compresses and downsamples signals to allow viewing of large
    files over long periods
@@ -146,5 +151,5 @@ Scope is still under development:
 
  - toggling the _Hjorth_ checkbox does not update the top plot by itself, as it should (i.e. one needs to select a new channel as well)
 
-
+For most desktop viewing and signal-review workflows, [LunaScope](https://zzz.nyspi.org/lunascope/) will generally be a better option than `scope`.
 

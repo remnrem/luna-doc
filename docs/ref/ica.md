@@ -15,7 +15,7 @@ _Independent components analysis_
 This command implements the [fastICA algorithm](https://www.cs.helsinki.fi/u/ahyvarin/),
 providing a C/C++ implementation of R's [fastICA package](https://cran.r-project.org/web/packages/fastICA/fastICA.pdf).
 
-We hope that in future [vignettes](../vignettes/) we will be able to
+We hope that in future [vignettes](../vignettes/index.md) we will be able to
 provide a more contextualized account of how to apply ICA using Luna to
 sleep data in practice.  __For now, this page contains only bare-bones
 reference material__.
@@ -247,4 +247,3 @@ Component weights (right singular vectors) (strata: `C` x `FTR`)
 | Variable | Description |
 | --- | --- |
 | `V` | Weight/right singular vector value |
-

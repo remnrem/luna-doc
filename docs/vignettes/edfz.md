@@ -1,32 +1,34 @@
 # EDFZ: working with compressed EDFs 
 
-Luna supports reading and writing compressed EDFs,
-i.e.  with decompression performed on-the-fly.  We call such files
-_EDFZ files_.  Specifically, Luna uses the
-[BGZF](https://samtools.github.io/hts-specs/SAMv1.pdf) library
-(developed to support high throughput sequencing alignment/map files), which
-itself takes advantage of the
-[gzip](https://en.wikipedia.org/wiki/Gzip) file format's ability to
-concatenate compressed files in a way that allows for random access of
-small blocks.  This means it is possible to allow random access into
-part of a compressed file without having to decompress the entire file.
+Luna supports reading and writing compressed EDFs, i.e. with
+decompression performed on-the-fly.  Historically we referred to these
+as _EDFZ_ files.  In current Luna, the practical format is simply a
+gzipped EDF, typically with a `.edf.gz` extension.
+
+Two points are important:
+
+- Luna can read any gzipped EDF, whether or not it was created by Luna
+
+- gzipped EDFs are read as a whole stream, i.e. there is no indexed random-access scheme and no accompanying `.idx` file
 
 For large projects, there can be considerable savings in terms of disk
-space from working with compressed files.  Importantly, the format is
-simply a special case of the gzip format, so an EDFZ file can be
-easily decompressed with the standard `gunzip` tool, e.g.: 
+space from working with compressed files.  Because the format is just
+gzip, a compressed EDF can be easily decompressed with the standard
+`gunzip` tool, e.g.: 
 ``` 
-cat my.edfz | gunzip > my.edf 
+cat my.edf.gz | gunzip > my.edf 
 ```
 
 Here we consider two use-cases (PSGs from the NSRR, and a hdEEG
-study), to consider the space/time trade-offs in working with EDFZ
+study), to consider the space/time trade-offs in working with gzipped EDFs
 instead of EDF.  We'll also consider how this plays with Luna's
 [`RECORD-SIZE`](../ref/manipulations.md#record-size) command, which
 allows you to change the internals of the EDF format.  Because Luna
-reads an EDF one record at a time, different records sizes can have
+reads standard EDFs one record at a time, different records sizes can have
 different impacts on different workflows.  Here we'll consider
-streaming over the entire EDF.
+streaming over the entire EDF.  For gzipped EDFs, Luna reads the file
+as a whole stream rather than using random access into the compressed
+representation.
 
 These tests were performed on an iMac with a 4 GHz Intel Core i7
 processor and 32 GB RAM.
@@ -40,7 +42,7 @@ processor and 32 GB RAM.
     uncompressed copies of the original EDF too... On the other hand,
     if you are moving EDFs to a separate system (e.g. a Linux compute
     cluster) specifically for Luna analyses, this might be a really
-    good use-case for creating and migrating EDFZ files only.
+    good use-case for creating and migrating gzipped EDFs only.
 
 
 ## Use-case #1, NSRR PSG
@@ -52,12 +54,12 @@ processor and 32 GB RAM.
 
 From the original EDF, we'll obtain three other files, using
 compression and/or a different record-size, using the following
-commands.  To write a compressed (EDFZ) file, add the `edfz` option
+commands.  To write a compressed EDF, add the `edfz` option
 to [`WRITE`](../ref/outputs.md#write):
 
 
 ```
-luna t1.lst -s "WRITE edfz edf-dir=test/ edf-tag=z1 sample-list=z1.lst" 
+luna t1.lst -s 'WRITE edfz edf-dir=test/ edf-tag=z1 sample-list=z1.lst' 
 ```
 
 As well as the original 1 second record size, we'll try working with a
@@ -69,34 +71,30 @@ the [`RECORD-SIZE`](../ref/manipulations.md#record-size) command
 immediate write of the reformatted EDF):
 
 ```
-luna t1.lst -s "RECORD-SIZE dur=30 edf-dir=test/ edf-tag=t30 sample-list=t30.lst" 
+luna t1.lst -s 'RECORD-SIZE dur=30 edf-dir=test/ edf-tag=t30 sample-list=t30.lst' 
 ```
 
-Finally, to change both record size and write as an EDFZ:
+Finally, to change both record size and write as a compressed EDF:
 ```
-luna t1.lst -s "RECORD-SIZE dur=30 edfz edf-dir=test/ edf-tag=z30 sample-list=z30.lst" 
-```
-
-Here are the resulting __file sizes  (in bytes)__ for EDF and EDFZ:
-```
-          EDF       EDFZ      IDX     EDFZ+IDX  RATIO
-RS = 1    54495840  24578092  476909  25055001  46%
-RS = 30   54495840  23660147  15873   23676020  43%
+luna t1.lst -s 'RECORD-SIZE dur=30 edfz edf-dir=test/ edf-tag=z30 sample-list=z30.lst' 
 ```
 
-Using the EDFZ format reduces file size by more than half: from 54Mb
+Here are the resulting __file sizes (in bytes)__ for EDF and gzipped EDF:
+```
+          EDF       EDF.GZ    RATIO
+RS = 1    54495840  24578092  45%
+RS = 30   54495840  23660147  43%
+```
+
+Using gzip reduces file size by more than half: from 54Mb
 to around 24Mb.  In general, PSG files compress quite well.  As
 expected, changing EDF record size has no impact on the EDF file size, 
-whereas there is a small difference in the efficiency of EDFZ compression.
+whereas there is a small difference in the efficiency of compression.
 
-!!! note ".edfz.idx files" 
-    Saving as an EDFZ also produces an _index_
-    file (`IDX` above), i.e. if we save `test/my.edfz` Luna will
-    additionally generate a file `test/my.edfz.idx`.  The index files
-    needs to be kept with the EDFZ file; they are simple text files
-    that specify the EDF total record size (in bytes), and the offsets
-    for each record in the EDFZ.  You can safely ignore the contents of these
-    files.
+!!! note
+    Current Luna no longer creates `.idx` files for compressed EDF
+    output.  The output is a plain gzipped EDF, typically with an
+    `.edf.gz` extension.
 
 
 But how much of a price do we pay (if any) for having to decompress
@@ -116,28 +114,28 @@ luna t1.lst -s STATS
 The __times taken (in seconds)__ to load the data and complete this command are:
 
 ```
-          EDF    EDFZ
+          EDF    EDF.GZ
 RS = 1    2.8    10.5
 RS = 30   1.9    2.3
 ```
 
-In this case, we see that working with EDFZ and small record sizes (1
+In this case, we see that working with gzip and small record sizes (1
 second) incurs noticeable overhead (in relative terms), taking 10.5 instead
 of 2.8 seconds.  However, using the larger 30-second	 record size speeds things up in both
-cases: in fact, the compressed EDFZ is now _faster_ than the
+cases: in fact, the compressed EDF is now _faster_ than the
 original EDF, but only using 43% of the disk space.  You do pay a 0.4
 second cost per-file on loading, but for any non-trivial analysis,
 this will be negligible in comparison to the overall processing time.
 
 Importantly, identical results (from the `STATS` command) were
-obtained for all four analyses.  That is, EDFZ is a _lossless_
+obtained for all four analyses.  That is, gzip is a _lossless_
 compression format.  We can also check that after using `gunzip` on
-the EDFZ, we obtain an EDF that is _identical_ to the original one
+the compressed EDF, we obtain an EDF that is _identical_ to the original one
 (for the same record size).  For example, if `test/my-t30.edf` was the
 original EDF:
 
 ``` 
-cat test/my-t30.edfz | gunzip > test/my-t30-v2.edf 
+cat test/my-t30.edf.gz | gunzip > test/my-t30-v2.edf 
 ```
 and we'll find that:
 ```
@@ -161,9 +159,9 @@ Using the same approach as above, here are the __file sizes (in bytes)__
 and the compression ratios, as a function of record size (`RS`):
 
 ```
-         EDF         EDFZ        IDX     EDFZ+IDX    RATIO
-RS = 1   4022440384  2568741043  489936  2569230979  64%
-RS = 30  4021936384  2532976251  16321   2532992572  63%
+         EDF         EDF.GZ      RATIO
+RS = 1   4022440384  2568741043  64%
+RS = 30  4021936384  2532976251  63%
 ```
 
 These EEG files tend not to compress quite as well as the PSG files:
@@ -175,21 +173,21 @@ non-trivial.
 In terms of __speed__, naturally everything takes longer (this is a much larger dataset, to be fair):
 
 ```
-          EDF   EDFZ
+          EDF   EDF.GZ
 RS = 1    168   201
 RS = 30   140   151
 ```
 
 We see a similar pattern to above, however, in that larger EDF record
 sizes increase speed overall, as well as making the speed difference
-between EDF and EDFZ files relatively trivial.
+between EDF and gzipped EDF files relatively trivial.
 
 
 ## Conclusion
 
 
 Overall, the combination of large (i.e. epoch-length) record sizes and
-EDFZ appears to result in a favourable combination of performance in
+gzip compression appears to result in a favourable combination of performance in
 terms of both space and time.  If working with large datasets, or
 making copies of original EDFs that are used by Luna only, you may
 want to consider the `edfz` option of `WRITE` and `RECORD-SIZE`.

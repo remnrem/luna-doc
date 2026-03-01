@@ -5,27 +5,31 @@ describe some of the more practical aspects, or best-practice
 workflows, of various features of Luna, as well as their application
 to [NSRR](../nsrr.md) and other data.
 
-- [It's about time: specifying annotation intervals](times.md) (Apr 2023)
+- [Using Luna at scale](scale.md)
 
-- [Merging and converting EDFs](merge.md) (Mar 2023)
+- [Luna for Windows users](windows.md)
 
-- [Evaluating, manipulating & predicting stages (SOAP/POPS)](soap-pops.md) (Sep 2022)
+- [It's about time: specifying annotation intervals](times.md)
 
-- [EEG microstate analysis](microstates.md), by Lei Wang (Nov 2021)
+- [Merging and converting EDFs](merge.md)
 
-- [Artifact rejection for hdEEG sleep data](chep.md), by Nataliia Kozhemiako (May 2021)
+- [Evaluating, manipulating & predicting stages (SOAP/POPS)](soap-pops.md)
 
-- [Working with discontinuous EDFs and annotations](annots.md) (Feb 2021)
+- [EEG microstate analysis](microstates.md), by Lei Wang
 
-- [Cox & Fell's _Analyzing human sleep EEG_](rcox.md), by Shaun Purcell & Roy Cox (Aug 2020)
+- [Artifact rejection for hdEEG sleep data](chep.md), by Nataliia Kozhemiako
 
-- [NSRR whole-dataset visualizations](dataplots.md) (Jan 2020)
+- [Working with discontinuous EDFs and annotations](annots.md)
 
-- [Working with compressed EDFs](edfz.md) (Apr 2019)
+- [Cox & Fell's _Analyzing human sleep EEG_](rcox.md), by Shaun Purcell & Roy Cox
 
-- [EEG polarity issues in the NSRR](nsrr-polarity.md), by Shaun Purcell and Michael Prerau (Apr 2019)
+- [NSRR whole-dataset visualizations](dataplots.md)
 
-- [UMAP clustering of NSRR data](nsrr-umap.md) (Apr 2019)
+- [Working with compressed EDFs](edfz.md)
+
+- [EEG polarity issues in the NSRR](nsrr-polarity.md), by Shaun Purcell and Michael Prerau
+
+- [UMAP clustering of NSRR data](nsrr-umap.md)
 
 
 

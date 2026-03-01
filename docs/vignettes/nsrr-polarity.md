@@ -326,7 +326,7 @@ properties.
 
 In this particular illustrative case, we've taken all positive and
 negative components, but in practice the method (implemented in the
-under-development [`POL`](../ref/exp.md#pol) command, only considers
+[`POL`](../ref/artifacts.md#pol) command) only considers
 peaks that are at least some threshold (e.g. 1 SD) above or below the
 mean.  There are a bunch of other options that can be tweaked also,
 but describing these is beyond the scope of this vignette.  In this

@@ -23,7 +23,7 @@ for [local download](#access).  It operates in two modes:
     for exposing various properties of the staging and timing of
     studies in a whole cohort: for example, if all recordings are
     truncated at a particular clock time. See [this
-    vignette](vignettes/dataplots.md) for motivations and examples, as
+    vignette](../vignettes/dataplots.md) for motivations and examples, as
     well as the [gallery](#gallery) below.
 
 
@@ -34,9 +34,9 @@ and notes on how Luna can generate them.
 
 <h3>N=1 mode</h3>
 
-You can upload a staging [annotation file](ref/annotations.md) that
+You can upload a staging [annotation file](../ref/annotations.md) that
 follows sleep stage conventions as described
-[here](ref/hypnograms.md).  Alternatively, click _Example hypnogram_
+[here](../ref/hypnograms.md).  Alternatively, click _Example hypnogram_
 to load single example dataset.
 
 ![img](../img/hypnoscope-n1-load.png){:width="25%"}
@@ -61,7 +61,7 @@ can make edits here and click _Import/update_ to recalculate statistics:
 ![img](../img/hypnoscope-n1b.png){:width="25%"}
 
 The metrics and summaries are described on this
-[Luna](ref/hypnograms.md) and [Moonlight](moonlight.md) pages.
+[Luna](../ref/hypnograms.md) and [Moonlight](moonlight.md) pages.
 
 <h3>N>1 mode</h3>
 
@@ -197,7 +197,7 @@ to fill more of the display.
 
 ## Access
 
-See [these notes](hypnoscope-install.md) on how to access _Hypnoscope_
+See [these notes](../download/hypnoscope-install.md) on how to access _Hypnoscope_
 directly, e.g.  to run locally rather than use the instance at
 [http://remnrem.net/](http://remnrem.net/).
 
@@ -208,8 +208,8 @@ directly, e.g.  to run locally rather than use the instance at
 
 In individual hypnogram _N=1_ mode,  _Hypnoscope_ accepts the same formats as Luna to represent sleep staging 
 annotations.  General annotation file formats are described
-[here](ref/annotations.md).  Sleep stage conventions are described
-[here](ref/hypnograms.md).
+[here](../ref/annotations.md).  Sleep stage conventions are described
+[here](../ref/hypnograms.md).
 
 The simplest format is `.eannot` - a basic plaintext file with one
 label per line for each (30-second) epoch, using stage labels: `N1`
@@ -219,7 +219,7 @@ start to midnight.
 
 Alternatively, `.annot` and `.XML` formats are supported (see the
 above links for details), which can contain clock-time
-information. The Luna [tutorial data](tut/tut1.md) contains
+information. The Luna [tutorial data](../tut/tut1.md) contains
 examples of XML annotation files the specify sleep stage information.
 
 ### Multiple hypnograms

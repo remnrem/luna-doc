@@ -14,7 +14,7 @@ Whereas [Moonlight](moonlight.md) was originally designed for use with
 data located on your own, local machine, _Moonbeam_ is an extension to
 directly pull web-based datasets into _Moonlight_, including those in
 the [National Sleep Research Resource
-(NSRR)](https://sleepdata.org). [NSRR](sleepdata.org) can click on the
+(NSRR)](https://sleepdata.org). [NSRR](https://sleepdata.org) can click on the
 _Moonbeam_ button (on the left panel of the main _Moonlight_ page) and
 it will bring up this type of dialog box:
 
@@ -48,7 +48,7 @@ of the ECG for the middle part of the night:
 
 ![img](../img/mb5.png)
 
-See the main [Moonlight](moonlight.md) and [Luna](ref/index.md) pages for more
+See the main [Moonlight](moonlight.md) and [Luna](../ref/index.md) pages for more
 detailed descriptions of the various functions.
 
 ## Uploading your own data
@@ -61,7 +61,7 @@ As well as viewing NSRR data, _Moonlight_ can also be used to view your own EDF/
  - via the _User URLs_ option on the _Moonbeam_ tab, that allows you
     to enter two links (HTTP URLs): 1) for an EDF and 2) optionally, an
     annotation file (NSRR XML format, or Luna .annot/.eannot
-    format, as described [here](ref/annotations.md)).
+    format, as described [here](../ref/annotations.md)).
 
 ![img](../img/mb6.png){:width="80%"}
 

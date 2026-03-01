@@ -24,7 +24,7 @@ the [EPOCH command](#epoch)), they will _default_ to non-overlapping
 30-second intervals, i.e. mirroring traditional (AASM) sleep staging.
 
 By default, epochs are non-overlapping, of fixed duration (30 seconds)
-and contigous with respect to clock-time (i.e.  not spanning gaps in
+and contiguous with respect to clock-time (i.e.  not spanning gaps in
 the recording). These epoch properties can be changed various ways:
 
  - `dur`: epoch duration can be set to any duration in seconds, e.g. 5 seconds with `dur=5`

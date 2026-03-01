@@ -49,9 +49,6 @@ We have built web-based applications on top of Luna, primarily:
  - [Moonlight](../../apps/moonlight.md) - an interactive browser tool for
    interactive viewing and analysis of a single recording
 
- - [Moonbeam](../../apps/moonbeam.md) - an extension to Moonlight that enables
-   NSRR users to directly pull NSRR data into Moonlight
-
  - [Hypnoscope](../../apps/hypnoscope.md) - a tool for viewing many hypnograms,
    with different options to sort, align and filter
 

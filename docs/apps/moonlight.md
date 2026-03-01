@@ -12,12 +12,6 @@ hypnogram-based analyses including automated staging using
 [POPS](../ref/pops.md).  Below we give a brief tour of the current main
 components.
 
-!!! info "Moonbeam & National Sleep Research Resource Data"
-    _Moonlight_ also includes the [_Moonbeam_](moonbeam.md) extension that
-    allows [NSRR](sleepdata.org) users to directly pull NSRR signal data into _Moonlight_ via the web,
-    described [here](moonbeam.md)
-
-
 !!! warning "Moonlight development and scope"
      _Moonlight_ is actively
      under development - please let us know of any rough edges or
@@ -33,7 +27,7 @@ components.
      
 ## Access
 
-See [these notes](moonlight-install.md) on how to access _Moonlight_.  Briefly, you can:
+See [these notes](../download/moonlight-install.md) on how to access _Moonlight_.  Briefly, you can:
 
  - use our AWS hosted instances at [http://remnrem.net/](http://remnrem.net/).  _Advantages:_
    no installation. _Disadvantages:_ slower to upload EDFs to the cloud,
@@ -41,11 +35,11 @@ See [these notes](moonlight-install.md) on how to access _Moonlight_.  Briefly, 
 
  - pull our Dockerized version of luna and run from
    there. _Advantages:_ runs on all platforms that can support Docker
-   Desktop (see [here](download/docker.md)). _Disadvantages:_
+   Desktop (see [here](../download/docker.md)). _Disadvantages:_
    requires Docker set up; some Docker versions can currently have slow I/O under default configurations
    on certain platforms
 
- - run directly from a local version of [_lunaR_](ext/R/index.md): _Advantages_: most
+ - run directly from a local version of [_lunaR_](../ext/R/index.md): _Advantages_: most
    flexible and fastest option. _Disadvantages_: requires 
    installation of R and _lunaR_
 
@@ -655,7 +649,7 @@ _We thank Drs. Sun, Westover and colleagues for sharing their work to support th
 
 ![img](../img/mlref/ml-ref14.png)
 
-This panel allows arbitrary [Luna commands](ref.md) to be executed on
+This panel allows arbitrary [Luna commands](../ref/index.md) to be executed on
 the currently attached EDF/annotation dataset, as well as providing a
 simple graphical viewer.
 
@@ -730,4 +724,3 @@ results can be of use.
 
 
 _This concludes our Moonlight tour_
-

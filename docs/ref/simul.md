@@ -389,7 +389,7 @@ luna . -o out.db --nr=10 --rs=1 \
 
 _Generate, or add-in, artificial test signals_
 
-_This command is largely redundant (given `SIMUL`), but is decribed here for completeness._
+_This command is largely redundant (given `SIMUL`), but is described here for completeness._
 
 This is a simple command to generate test signal data (on top of an existing EDF).  Currently, it
 only generates sine wave signals, or pulses of a given duration.

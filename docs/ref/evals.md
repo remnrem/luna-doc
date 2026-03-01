@@ -741,7 +741,7 @@ all commands quoted between `"` characters, then you can use `#`
 instead (or `\"`):
 
 ```
-luna s.lst -s "EVAL expr=# if(A) && ifnot(B) # " 
+luna s.lst -s 'EVAL expr=# if(A) && ifnot(B) # ' 
 ```
 
 ```
@@ -1055,7 +1055,7 @@ TRANS sig=Z expr=" S = sd(SpO2 ) ;
 #### Individual variables
 
 To incorporate (individual-level) Luna variables (e.g. either defined on the command-line, within the script, or from a file
-via the [`vars`](../../luna/args/#individual-variables) option, you can use the usual `${var}` syntax.  These variables are expanded prior to the expression being evaluated. 
+via the [`vars`](../luna/args.md#individual-variables) option, you can use the usual `${var}` syntax.  These variables are expanded prior to the expression being evaluated. 
 
 ```
 luna s.lst f=100 -s 'TRANS sig=C3 expr=" C3 = C3 * ${f} " '
@@ -1067,7 +1067,7 @@ would show in the log that `${f}` has already been swapped in before the express
 ```
 
 Alternatively, to include variables that may differ between different
-individuals, you can use [`vars`](../../luna/args/#individual-variables) : i.e. the following assumes that
+individuals, you can use [`vars`](../luna/args.md#individual-variables) : i.e. the following assumes that
 `file.txt` has columns `ID` and also `t` to define `${t}` for each
 individual:
 
@@ -1248,4 +1248,3 @@ Primary output (strata: _none_ )
 See [this page on the META command](annotations.md#meta) for an
 example using `DERIVE`.  More examples will be added here in the
 future.
-

@@ -40,7 +40,7 @@ _Validate all EDFs and annotation files in a project_
 
 This command checks that files can be opened correctly - e.g. spotting
 EDFs with corrupt headers or other issues.  See the [Luna walk
-through](https://zzz.bwh.harvard.edu/luna-walkthrough/p1/valid) for
+through](https://zzz.nyspi.org/luna-walkthrough/p1/valid) for
 some examples of using `--validate`.
 
 If invalid files are found, Luna writes a message to the console
@@ -337,5 +337,4 @@ _to be added_
 _Derive Otsu optimal binary threshold for values from an internal EDF channel_
 
 _to be added_
-
 

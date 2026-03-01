@@ -60,7 +60,7 @@ is no further output (except some notes written to the log).
 For an EDF with 6 signals, including `EMG`, `EOG-L` and `EOG-R`, this command would drop these three signals:
 
 ```		
-luna s.lst -s "SIGNALS drop=EMG,EOG-L,EOG-R & DESC"
+luna s.lst -s 'SIGNALS drop=EMG,EOG-L,EOG-R & DESC'
 ```
 as shown by the relevant lines in the output from `DESC`:
 ```
@@ -69,7 +69,7 @@ Signals           : EEG1[256] EEG2[256] EEG3[256]
 ```
 In contrast, the `keep` option with the same arguments: 
 ```
-luna s.lst -s "SIGNALS keep=EMG,EOG-L,EOG-R & DESC"
+luna s.lst -s 'SIGNALS keep=EMG,EOG-L,EOG-R & DESC'
 ```
 yields the expected output:
 ```
@@ -847,7 +847,7 @@ Focusing only on the signals `PR` and `EEG` in the first
 of 1 second:
 
 ```
-luna s.lst 1 sig=PR,EEG -s "SUMMARY" 
+luna s.lst 1 sig=PR,EEG -s 'SUMMARY' 
 ```
 ```
 # signals      : 2
@@ -874,7 +874,7 @@ To generate a new EDF (which contains only these two signals) with an
 altered record size (in this example, 50 seconds):
 
 ```
-luna s.lst 1 sig=PR,EEG -s "RECORD-SIZE dur=50 edf-tag=r50" 
+luna s.lst 1 sig=PR,EEG -s 'RECORD-SIZE dur=50 edf-tag=r50' 
 ```
 
 (Note that setting a 50-second record size would be unusual, this is
@@ -994,7 +994,7 @@ and write `CONF` variable to the standard output.
 The solution to this is simply to supply an offset to the epoch command, which can either be done
 manually:
 ```
-luna s.lst -s 'EPOCH offset=4 & HYPNO`
+luna s.lst -s 'EPOCH offset=4 & HYPNO'
 ```
 or automatically with respect to a set of annotations (i.e. making the offset equal to the start of the first of these annotions encountered):
 ```
@@ -1505,7 +1505,7 @@ luna --build fin > f.lst
 splice     fin/splice.edf     fin/splice.annot
 ```
 
-We'll use the [SPANNING](../annotations.md#spanning) command to
+We'll use the [SPANNING](annotations.md#spanning) command to
 give some information on the new EDF, which also confirms this is a standard EDF:
 ```
 luna f.lst -o out.db -s SPANNING annot=N1,N2,N3,R,W,?
@@ -1640,7 +1640,7 @@ A typical EDF with identifying information in the header (showing only
 relevant rows from the `SUMMARY` output):
 
 ```
-luna my.edf -s "SUMMARY" | head 
+luna my.edf -s 'SUMMARY' | head 
 ```
 ```
 EDF filename   : my.edf
@@ -1655,7 +1655,7 @@ Start time     : 23:07:56
 Here we see how the `ANON` command effectively wipes this information:
 
 ```
-luna my.edf -s "ANON & SUMMARY" | head 
+luna my.edf -s 'ANON & SUMMARY' | head 
 ```
 ```
 EDF filename   : my.edf
@@ -1672,7 +1672,7 @@ are identical except they have the `Patient ID` and `Start Date` fields
 set to missing:
 
 ```
-luna s.lst -s "ANON & WRITE edf-dir=edfs/ edf-tag=anon sample-list=s2.lst" 
+luna s.lst -s 'ANON & WRITE edf-dir=edfs/ edf-tag=anon sample-list=s2.lst' 
 ```
 
 ## SET-HEADERS
@@ -1756,7 +1756,7 @@ None, other than a message to the console log.
 Sets an individual-level variable `var` to the text string `val`:
 
 ```
-luna s.lst -s 'SET-VAR var=val`
+luna s.lst -s 'SET-VAR var=val'
 ```
 
 ## SET-TIMESTAMPS
@@ -1879,4 +1879,3 @@ Note that `median` and `tri` cannot be specified together.
 <h3>Output</h3>
 
 None.
-

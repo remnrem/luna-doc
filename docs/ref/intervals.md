@@ -81,7 +81,7 @@ _Channel-specific annotations_
 By default, within the same channel seeds of the same class are
 shuffled together, whereas seeds
 assigned to different channels are shuffled independently.  Shuffling
-can be modified such that all some or all seed classes/channels are shuffled
+can be modified such that some or all seed classes/channels are shuffled
 together (via the `align` option).  When shuffling, the same
 constraint that no event can span a background boundary will still
 hold.  Alternatively, one can collapse all events of the same
@@ -97,8 +97,8 @@ the `within-channel` option.
 
 !!! info "Annotations and channels"
     Not all annotations need be associated with a channel, either in general or with
-    the `OVERLAP` command in particular.  An annotation is associated with a channel is
-    it is a channel label appears in the third column of a full-format `.annot` file.  If
+    the `OVERLAP` command in particular. An annotation is associated with a channel if
+    a channel label appears in the third column of a full-format `.annot` file. If
     this is a period (`.`), then no channel is associated.
 
 _Unsuitable inputs_
@@ -115,7 +115,7 @@ _Seed metrics_
 
 `OVERLAP` assesses the _pile-up_ among seeds, by enumerating the
 observed and expected counts of all combinations of overlapping
-annotations.  It also tracks that number of overlapping events
+annotations. It also tracks the number of overlapping events
 irrespective of their particular labels/channels. Depending on
 context, not all of these metrics will necessarily be of interest:
 i.e.  it will depend on what the annotations mean.
@@ -126,7 +126,7 @@ By default, "overlap" is defined as _any_ overlap between two
 annotations.  This can be modified with the `midpoint` and/or `f`
 options, which reduce each annotation to a central (0-duration)
 mid-point and add a fixed _flanking_ interval to expand each
-annotation, respectively.  That is, to enfore that all annotations had
+annotation, respectively.  That is, to enforce that all annotations had
 the same duration, one would combine `midpoint` and `f`.
 
 _Non-seed annotations_
@@ -137,7 +137,7 @@ see below).
 Rather, various metrics of _seed-other_ overlap and proximity
 are estimated:
 
- - overlap and proxmity metrics for specific _seed-other pairs_ (this appears under the `SEED OTHER` strata)
+ - overlap and proximity metrics for specific _seed-other pairs_ (this appears under the `SEED OTHER` strata)
 
  - counts of particular _combinations_ of
    overlapping _other_ annotations (`SEED OTHERS` strata).  For example, if the _seed_ class
@@ -165,7 +165,7 @@ than expected by chance, either in absolute terms (`D1`) or "signed"
 (e.g. if the _seed_ tends to occur _before_ some _other_ annotation,
 rather than just _near_, which might instead imply seeds are equally
 likely to occur _after_).  By default, annotations that actually
-overlap directly are still inlcuded in these proximity/distance
+overlap directly are still included in these proximity/distance
 metrics, just with a distance of 0 (this behaviour can be changed by
 the option `dist-excludes-overlapping`).  By default, only pairs that
 occur within 10 seconds or each other are included in these analyses
@@ -176,7 +176,7 @@ _Statistics_
 
 This command outputs one-sided empirical P-values (for greater than
 expected overlap) but also the observed metric scaled as a Z score
-based on the mean and varince of the empirical null distribution; i.e.
+based on the mean and variance of the empirical null distribution; i.e.
 here large negative values reflect metrics that are _lower than
 expected chance_.  Note that, unless the null hypothesis is true,
 these Z scores will reflect the _number_ of events as well as the
@@ -231,9 +231,9 @@ _Event definitions_
 | ---- | ---- | ---- |
 | `f` | `0.5`, `A1:0,A2:1,A3:0` | Specifying the flanking region for all/some annotations |
 | `midpoint` | `midpoint=A` | Collapse all or some annotations to their midpoint |
-| `pool-channels` | `A,B` | Pool annotations across channels for these annotataions (or all annotations, if no args) |
+| `pool-channels` | `A,B` | Pool annotations across channels for these annotations (or all annotations, if no args) |
 | `chs-inc` | `Cz,Fz` | Only analyse these channels for all/some annotations |
-| `chs-exc` | | Exclude these channels for all some/annotations | 
+| `chs-exc` | | Exclude these channels for all/some annotations | 
 | `flt` |  `wgt,10,.` | Annotation meta-data filters | 
 
 _Generation of new annotations_
@@ -269,7 +269,7 @@ Pairwise seed-other overlap/proximity (strata: `SEED` x `OTHER`)
 | `D2_P` | Empirical p-value for signed proximity metric (two-sided) |
 | `D2_Z` | Z score for signed proximity metric |
 | `D_N` | Number of seeds in the distance metrics |
-| `D_N_EXP` | Expected nunbver of seeds in the distance metrics |
+| `D_N_EXP` | Expected number of seeds in the distance metrics |
 | `N_OBS` | Observed number of overlaps |
 | `N_EXP` | Expected number of overlaps |
 | `N_P` | Empirical p-value for overlap |
@@ -301,7 +301,7 @@ Seed - _any other_ overlap (strata: `SEED`)
 
 Note, the `OVERLAP` command does not look at, or require, any signal data present in the EDF.
 As such, it can be run based on annotation (`.annot`) files alone - either via the [`--overlap`](#-overlap)
-command describd below (but for a single sample), or by specifying an empty sample list (`.`) to make
+command described below (but for a single sample), or by specifying an empty sample list (`.`) to make
 Luna generate a dummy/empty EDF in memory, as described [here](../luna/args.md#empty-edfs):
 
 ```
@@ -311,7 +311,7 @@ luna . --nr=10000 --rs=1 annot-file=test.annot -o out.db \
 
 The implied duration (i.e. 10,000 times 1 second = 10,000 seconds in
 the above example) should be sufficiently large to contain all
-annotataions specified; with `bg`, this implicitly defines the _background_.
+annotations specified; with `bg`, this implicitly defines the _background_.
 
 
 <h4>Other notes</h4>
@@ -330,14 +330,14 @@ Recent changes in v0.99:
 
 ## --overlap
 
-_Multi-sample wrapper for `OVELAP`_
+_Multi-sample wrapper for `OVERLAP`_
 
 This command reads in multiple annotation files, saves a single combined
 annotation file, creates a dummy EDF in memory, then reads in the combined annotations
 and performs an enrichment analysis, as described [above](#overlap).
 
 All annotation files must be in `.annot` format; they can be reduced
-and must contain an `duration_sec` spectial value.
+and must contain a `duration_sec` special value.
 
 <h3>Parameters</h3>
 
@@ -372,7 +372,7 @@ This command requires the signals to have similar sampling rates.
 
 !!! info
     Note that the flanking regions are not checked for what annotation they contain: i.e. if there are
-    contiguous annotations of the same class, then the flanking regions will contin the same annotation. 
+    contiguous annotations of the same class, then the flanking regions will contain the same annotation. 
     ```
     class instance start stop
      A     i1       10    20
@@ -417,7 +417,7 @@ luna s.lst -o out -s 'CWT sig=C3 fc=15 cycles=7 & MEANS sig=C3_cwt_mag annot=N1,
 
 _Find peaks in signals_
 
-The command identitifies peaks (local minima and maxima) in signals, and caches those sample-points for use in
+The command identifies peaks (local minima and maxima) in signals, and caches those sample-points for use in
 subsequent commands, primarily [`TLOCK`](#tlock).
 
 <h3>Parameters</h3>
@@ -464,7 +464,7 @@ several reasonably intuitive parameters:
  - _influence_ : the extent to which detected peaks influence the
   baseline (0 = no influence, 1 = complete influence).  For stationary
   series, use low/zero _influence_ values; using higher numbers will
-  better capture abrup changes in the baseline of time-series
+  better capture abrupt changes in the baseline of time-series
 
  - _threshold_ : the number of SD units above the moving average.
   This can be set based on the expected rate: e.g. approximately,
@@ -622,7 +622,7 @@ to spindles detected at `O2`, etc).  Thus `same-channel` would, in
 this instance, only report the 64 averages, i.e. for spindles detected
 _in that same channel_.
 
-The first set of outputs simply tell us how many interevals were found:
+The first set of outputs simply tell us how many intervals were found:
 ```
 destrat out.db +TLOCK -r CH sCH sF
 ```
@@ -649,7 +649,7 @@ In the second example, we'll create a second set of channels to plot
 against the 400 spindle peaks.  Note, these can be completely
 arbitrary other channels, but in this instance we'll generate wavelet
 coefficients (via `CWT`) for wavelets with central frequency values of
-1 Hz to 20 Hz in 1 Hz increments.  Then we'll ask `TLCOK` to plot the time-locked
+1 Hz to 20 Hz in 1 Hz increments.  Then we'll ask `TLOCK` to plot the time-locked
 average of each wavelet coefficient, but all time-locked to the fast spindle peaks.
 i.e. as a proof-of-principle, we'd expect to see sigma-frequency wavelets increase in
 power in this interval. 

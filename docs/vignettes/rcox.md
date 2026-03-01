@@ -21,7 +21,7 @@ against the transparent Matlab code _C&F_ provide, our intention here
 is to 1) illustrate using Luna in the context of high-density sleep
 EEG data, and 2) hopefully cast a little light onto the admittedly
 _black box_ nature of various Luna commands.  A strong theme of _C&F_
-is to point out the ways in which seemingly minor methodolgocial
+is to point out the ways in which seemingly minor methodological
 differences can have marked effects on the results of analyses: in
 this spirit, we step through some of these methods and try to make
 Luna's particular implementation clear, as well as validating our
@@ -57,7 +57,7 @@ first one (linked mastoid reference):
 | ---- | ---- | ---- |
 | Linked mastoid EDFs (__primary__) | 6 EDFs (3 individuals for N2 & N3) | [`cox_fell_edfs_mast.zip`](https://sleepdata.org/datasets/coxfell2020/files/m/browser/cox_fell_edfs_mast.zip) |
 | Common average EDFs  | 6 EDFs (3 individuals for N2 & N3)  | [`cox_fell_edfs_ave.zip`](https://sleepdata.org/datasets/coxfell2020/files/m/browser/cox_fell_edfs_ave.zip) |
-| Surface Laplacian EDFs  | 6 EDFs (3 individuals for N2 & N3) | [`cox_fell_edfs_lap.zip`](http://zzz.bwh.harvard.edu/dist/luna/cf/cox_fell_edfs_lap.zip) - _not posted_ |
+| Surface Laplacian EDFs  | 6 EDFs (3 individuals for N2 & N3) | [`cox_fell_edfs_lap.zip`](http://zzz.nyspi.org/dist/luna/cf/cox_fell_edfs_lap.zip) - _not posted_ |
 
 After downloading the zip archive to your working directory, extracting the contents should generate a subfolder `edfs` containing six EDFs:
 ```
@@ -301,8 +301,8 @@ composite of a slow 1 Hz sinusoidal oscillation of large amplitude
 (10).
 
 We can now perform the same DFT/FFT analysis using Luna.  Although the DFT/FFT is
-core to many methods, in practice Luna uses Welch's algorithm (in [`PSD`](../ref/power-spectra/#psd)) or
-multi-tapers (in [`MTM`](../ref/power-spectra/#mtm)), either of which are generally superior for
+core to many methods, in practice Luna uses Welch's algorithm (in [`PSD`](../ref/power-spectra.md#psd)) or
+multi-tapers (in [`MTM`](../ref/power-spectra.md#mtm)), either of which are generally superior for
 sleep EEG data, as _C&F_ note. 
 
 For the purpose of this vignette however, we shall uncover a _hidden_
@@ -694,7 +694,7 @@ figures aren't as pretty as in _C&F_).  First, we'll load some
 coordinates for the channels:
 
 ```
-xy <- read.table( "http://zzz.bwh.harvard.edu/dist/luna/cf/xy.lay", header=T)
+xy <- read.table( "http://zzz.nyspi.org/dist/luna/cf/xy.lay", header=T)
 ```
 Next, we'll define a simple `ftopo()` function, which uses the `akima` library for interpolation:
 ```
