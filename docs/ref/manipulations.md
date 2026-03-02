@@ -17,6 +17,7 @@ _Commands to alter basic properties of the EDF and the signals therein_
 |[`FLIP`](#flip) | Flip polarity of signal | 
 |[`ZC`](#zc) | Mean-center signal |
 |[`ROBUST-NORM`](#robust-norm) | Robust normalisation |
+|[`CLIP`](#clip) | Clip a signal using absolute or relative thresholds |
 |[`COMBINE`](#combine) | Combine two or more channels into a new channel (e.g. sum/mean) | 
 |[`SCALE`](#scale) | Rescale a channel (min/max scaling) |
 |[`SHIFT`](#shift) | Shift a signal |
@@ -745,6 +746,65 @@ luna s.lst -s ' SCALE sig=oxy clip-mip=0 clip-max=1 min-max=0,100 '
 Typically a `SCALE` command will be paired with subsequent analyses,
 or a `WRITE` command to output a new EDF.  (i.e. by itself the above command
 would only change the in-memory EDF and then quit/move to the next EDF).
+
+
+## CLIP
+
+_Clip a signal using absolute or relative thresholds_
+
+The `CLIP` command truncates one or more signals in the in-memory EDF
+so that values outside specified bounds are clipped to those bounds.
+Unlike [`SCALE`](#scale), which can optionally clip as part of a
+rescaling step, `CLIP` is a standalone command intended specifically
+for threshold-based clipping.
+
+Thresholds can be specified either directly on the signal scale or via
+quantiles of the observed signal distribution. This command modifies
+the in-memory signal only; pair it with [`WRITE`](outputs.md#write) if
+you want to save the clipped signal to a new EDF.
+
+<h3>Parameters</h3>
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `sig` | `sig=C3,C4` | One or more signals to clip |
+| `lwr` | `lwr=-500` | Absolute lower bound |
+| `upr` | `upr=500` | Absolute upper bound |
+| `lwr-pct` | `lwr-pct=0.01` | Lower clipping threshold set to this percentile |
+| `upr-pct` | `upr-pct=0.99` | Upper clipping threshold set to this percentile |
+
+Percentile thresholds must lie strictly between 0 and 1.
+
+If multiple threshold options are given, Luna applies them in the
+following order for each selected signal:
+
+1. absolute lower bound (`lwr`)
+2. absolute upper bound (`upr`)
+3. percentile lower bound (`lwr-pct`)
+4. percentile upper bound (`upr-pct`)
+
+<h3>Output</h3>
+
+No formal output other than changing the selected signals in the
+internal EDF and writing a note to the log.
+
+<h3>Examples</h3>
+
+Clip a signal to an absolute range:
+
+```
+luna s.lst -s ' CLIP sig=EMG lwr=-200 upr=200 '
+```
+
+Clip a signal based on distribution tails:
+
+```
+luna s.lst -s ' CLIP sig=C3 lwr-pct=0.01 upr-pct=0.99 '
+```
+
+As above, `CLIP` is distinct from the `CLIP` summary metric reported
+by [`SIGSTATS`](summaries.md#sigstats), which quantifies the
+proportion of clipped sample points rather than modifying the signal.
 
 
 ## COMBINE

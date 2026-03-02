@@ -60,8 +60,8 @@ can make edits here and click _Import/update_ to recalculate statistics:
 
 ![img](../img/hypnoscope-n1b.png){:width="25%"}
 
-The metrics and summaries are described on this
-[Luna](../ref/hypnograms.md) and [Moonlight](moonlight.md) pages.
+The metrics and summaries are described on the
+[Luna](../ref/hypnograms.md) and [LunaScope](https://zzz.nyspi.org/lunascope/) pages.
 
 <h3>N>1 mode</h3>
 

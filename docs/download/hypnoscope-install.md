@@ -1,11 +1,5 @@
 # Running Hypnoscope
 
-## remnrem.net
-
-A version is hosted online at
-[https://remnrem.net](https://remnrem.net).  For uploading large
-`.hypnos` files, it will be better to run Hypnoscope locally, however.
-
 ## Dockerized version
 
 The [Dockerized](docker.md) version of Luna contains Hypnoscope.

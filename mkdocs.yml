@@ -62,7 +62,6 @@ nav:
      - 'Deeper dive': 'tut/tut3.md'
      - 'Lunapi': 'https://github.com/remnrem/luna-api-notebooks/blob/main/tutorial.ipynb'
      - '/R/epeat': 'tut/tut4.md'
-     - 'Moonlight': 'tut/tut5.md'
 
  - Walkthrough: 'https://zzz.nyspi.org/luna-walkthrough'
 
@@ -116,7 +115,6 @@ nav:
     - Example usage: 'ext/R/example.md'
     - Reference: 'ext/R/ref.md'
     - Plotting: 'ext/R/viz.md'
-    - 'Moonlight'  : 'apps/moonlight.md'
     - 'Hypnoscope' : 'apps/hypnoscope.md'
 
  - Vignettes: 
@@ -141,7 +139,7 @@ nav:
     - 'Source': 'download/source.md'
     - 'Docker': 'download/docker.md'
     - 'lunapi (Python)': 'https://github.com/remnrem/luna-api-notebooks?tab=readme-ov-file#lunapi-a-python-interface-for-luna'
-    - 'Moonlight': 'download/moonlight-install.md'
+    - 'LunaScope': 'https://zzz.nyspi.org/lunascope/install/'
     - 'Hypnoscope': 'download/hypnoscope-install.md'
     - 'Data': 'download/data.md'
     - 'Notes': 'download/misc.md'

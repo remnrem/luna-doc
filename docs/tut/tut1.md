@@ -10,9 +10,8 @@ detail.  The [third section](tut3.md) extends the range of commands
 towards some more genuinely useful analyses of the sleep EEG.  The
 [fourth section](tut4.md) performs the same steps but using
 [_lunaR_](../ext/R/index.md) instead of [_lunaC_](../luna/args.md).
-The fifth section then retraces many of these steps using the interactive
-[_Moonlight_](../apps/moonlight.md) tool. The [final section](https://github.com/remnrem/luna-api-notebooks/blob/main/tutorial.ipynb)
-traces the same steps but using the newer Python-based interace to Luna.
+The [final section](https://github.com/remnrem/luna-api-notebooks/blob/main/tutorial.ipynb)
+traces the same steps but using the newer Python-based interface to Luna.
 
 !!! note "Data used in this tutorial"
     This tutorial, based on data from 

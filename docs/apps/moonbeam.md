@@ -8,14 +8,14 @@ data with Luna tools._
 !!!warn	"Prototyping Moonbeam"
     Please note	that the backend server	support	for Moonbeam is	under flux and so this service may be temporarily unavailable:	in future releases we'll try to	make it	more stable and	performant.
 
-The functionality works with both _Moonlight_ and the Python _lunapi_ package. See [here](.
+The functionality works with Luna's interactive GUI workflows and the Python _lunapi_ package.
 
-Whereas [Moonlight](moonlight.md) was originally designed for use with
+Whereas Luna's interactive viewer workflows were originally designed for use with
 data located on your own, local machine, _Moonbeam_ is an extension to
-directly pull web-based datasets into _Moonlight_, including those in
+directly pull web-based datasets into the viewer, including those in
 the [National Sleep Research Resource
 (NSRR)](https://sleepdata.org). [NSRR](https://sleepdata.org) can click on the
-_Moonbeam_ button (on the left panel of the main _Moonlight_ page) and
+_Moonbeam_ button (on the left panel of the main application page) and
 it will bring up this type of dialog box:
 
 ![img](../img/mb1.png){:width="25%"}
@@ -30,8 +30,8 @@ NSRR cohorts you have permission to access.
 
 After selecting the cohort, the rightmost menu will be populated with
 the IDs of all recordings. Select one and click Import and after a
-little while the EDF and annotation data will be imported into
-Moonlight. As below, a new Moonbeam panel shows any covariate data for
+little while the EDF and annotation data will be imported into the
+viewer. As below, a new Moonbeam panel shows any covariate data for
 that individual, taken from the associated .csv files, in a searchable
 table that also lists the definitions of each variable:
 
@@ -41,19 +41,19 @@ By selecting the Signals tab, you can view the raw signals, aligned to any annot
 
 ![img](../img/mb4.png)
 
-Moonlight supports numerous other visualization and data manipulation
+The interactive viewer supports numerous other visualization and data manipulation
 options. For example, here is a whole-night visualization of some
 signals based on epoch-level Hjorth parameters, which shows drop-out
 of the ECG for the middle part of the night:
 
 ![img](../img/mb5.png)
 
-See the main [Moonlight](moonlight.md) and [Luna](../ref/index.md) pages for more
+See the main [LunaScope](https://zzz.nyspi.org/lunascope/) and [Luna](../ref/index.md) pages for more
 detailed descriptions of the various functions.
 
 ## Uploading your own data
 
-As well as viewing NSRR data, _Moonlight_ can also be used to view your own EDF/annotation files:
+As well as viewing NSRR data, the same interactive workflow can also be used to view your own EDF/annotation files:
 
  - upload files directly from your local machine (top left menu item
    from the main page)
@@ -77,7 +77,7 @@ the original files.
 
 ## Notes and caveats
 
- - Moonbeam/Moonlight are designed to view single recordings: it is
+ - Moonbeam and the interactive viewer are designed to view single recordings: it is
    not the right tool for downloading entire cohorts.
 
  - Downloads typically take roughly 5-15 seconds, but this may vary
@@ -99,7 +99,7 @@ the original files.
    are not currently integrated into NSRR annotations, so take care
    when interpreting metrics such as SOL and TIB.
 
- - We will monitor usage and interest in Moonlight/Moonbeam and
+ - We will monitor usage and interest in Moonbeam and related GUI workflows and
    potentially expand capacity of the AWS-hosted instance at
    [https://remnrem.net]()
  

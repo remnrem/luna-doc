@@ -334,8 +334,7 @@ ID      GAP  DUR_HR  DUR_MIN DUR_SEC  START   START_HMS   STOP   STOP_HMS
 merged  1    1.12527 67.5167 4051     40410   08.07.29    44461  09.15.00
 ```
 
-Alternatively, we can use the [_Moonlight_](../apps/moonlight.md) viewer (public test version
-available at [http://remnrem.net](http://remnrem.net)) to view the structure of an
+Alternatively, we can use [LunaScope](https://zzz.nyspi.org/lunascope/) to view the structure of an
 EDF+D. After uploading `merged.edf` to this tool, the
 _Strucutre/Segments_ tab shows:
 
@@ -442,7 +441,7 @@ Note that we do not even have to combine the annotation files, i.e. we can speci
 luna merged.edf annot-file=pt1.annot,pt2.annot ...
 ```
 
-If we upload both `merged.edf` and `merged.annot` to [_Moonlight_](../apps/moonlight.md), we can now see the annotations are appropriately aligned
+If we upload both `merged.edf` and `merged.annot` to [LunaScope](https://zzz.nyspi.org/lunascope/), we can now see the annotations are appropriately aligned
 with the signal data (i.e. see the extended hypnogram is now added beneath the spectrogram):
 
 ![img](../img/plus/ml2.png)
@@ -826,7 +825,6 @@ for (s in 1:length(segs) ) {
 }
 dev.off()
 ```
-
 
 
 

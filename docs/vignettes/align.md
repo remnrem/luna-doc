@@ -4,7 +4,7 @@
 
 - basic downsampling, relabelling
 - staging (POPS)
-- viz. (Moonlight)
+- viz. (LunaScope)
 - spindles / spectral
 
 - INSERT / XCORR align

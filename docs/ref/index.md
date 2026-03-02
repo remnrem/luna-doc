@@ -108,6 +108,7 @@ __Manipulations:__
 [`TIME-TRACK`](manipulations.md#time-track): _add time-track,_
 [`FLIP`](manipulations.md#flip): _flip signal,_
 [`SCALE`](manipulations.md#scale): _scale a signal,_
+[`CLIP`](manipulations.md#clip): _clip a signal,_
 [`COMBINE`](manipulations.md#combine): _combine multiple signals,_
 [`ZC`](manipulations.md#zc): _zero-center signal,_
 [`ROBUST-NORM`](manipulations.md#robust-norm): _robust normalization,_

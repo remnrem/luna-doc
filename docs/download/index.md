@@ -16,6 +16,9 @@ Latest stable Luna command-line tool (binaries and source):
 | Windows binaries | [https://github.com/remnrem/luna-base/releases/download/v1.3.4/win_luna.zip](https://github.com/remnrem/luna-base/releases/download/v1.3.4/win_luna.zip) |
 | __Python__ | |
 | _lunapi_ Python package only | `pip install lunapi` |
+| LunaScope Python package | `pip install lunascope` |
+| __Interactive GUI__ | |
+| LunaScope install instructions | [https://zzz.nyspi.org/lunascope/install/](https://zzz.nyspi.org/lunascope/install/) |
 | __Source__| |
 | Stable Luna (all platforms)| [https://github.com/remnrem/luna-base/archive/refs/tags/v1.3.4.tar.gz](https://github.com/remnrem/luna-base/archive/refs/tags/v1.3.4.tar.gz)
 | Latest (unstable) Luna| [https://github.com/remnrem/luna-base/](https://github.com/remnrem/luna-base/) |
@@ -57,6 +60,13 @@ multiple ways to obtain Luna:
 !!! hint "Quick start w/ Docker"
     If you have trouble installing Luna via the above methods, using a Docker container may instead prove to be a relatively easy
     way to get a full Luna environment up and running.
+
+
+## LunaScope
+
+[LunaScope install instructions](https://zzz.nyspi.org/lunascope/install/)
+
+For installation and setup of the LunaScope interactive GUI, please use the dedicated LunaScope install page linked above.
     
 
 ## Data resources

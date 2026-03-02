@@ -313,7 +313,7 @@ id01    14    4    40
 i.e. most of the initial epochs are assigned to class `4` (which has exemplar epoch 40).   The exemplar epochs can be plotted to show a _typical_ example of that class.
 
 
-The [_Moonlight_](../apps/moonlight.md) vewier has an _EXE_ panel that implements `EXE representative` and shows the outputs: here it runs `representative=5` to select five examplars.  These are shown in the plots below (on the right - color-coded black, red, green, blue and cyan).  The raw signal plotted above each is the 30-seconds signal of the _exemplar_ epoch in each case.  (The left plot is a heatmap of the distance matrix - with colder colors for less similar epochs):
+Interactive viewer workflows such as [LunaScope](https://zzz.nyspi.org/lunascope/) can show the outputs of `EXE representative`: here it runs `representative=5` to select five examplars.  These are shown in the plots below (on the right - color-coded black, red, green, blue and cyan).  The raw signal plotted above each is the 30-seconds signal of the _exemplar_ epoch in each case.  (The left plot is a heatmap of the distance matrix - with colder colors for less similar epochs):
 
 ![img](../img/mlref/ml-ref32.png)
 

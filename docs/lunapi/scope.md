@@ -47,7 +47,7 @@ The top bar has a slider which can be used to move the viewing window
 over the recording.  Below it are visual indications of a) whether
 epochs are masked or not, and the current window, b) a hypnogram (if
 the recording has associated staging), and c) by default, a "Hjorth
-plot" for the first EEG channel.   (Hjorth plots are [described here](../apps/moonlight.md#hjorth).)
+plot" for the first EEG channel.   (Hjorth plots are also available in [LunaScope](https://zzz.nyspi.org/lunascope/).)
 
 Below, we zoom into the main controls (top left of the window): the
 main control is _Width_ which controls the width of the display window
@@ -152,4 +152,3 @@ Scope is still under development:
  - toggling the _Hjorth_ checkbox does not update the top plot by itself, as it should (i.e. one needs to select a new channel as well)
 
 For most desktop viewing and signal-review workflows, [LunaScope](https://zzz.nyspi.org/lunascope/) will generally be a better option than `scope`.
-

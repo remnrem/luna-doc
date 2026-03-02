@@ -5,17 +5,13 @@ Current stable version: __v1.3.4__ (main [downloads](download/index.md) page)
 
 ## v1.3.4 (27-Feb-2026)
 
-Release notes pending.
-
-## v1.3.2 (12-Nov-2025)
-
-Documentation for several new commands is still pending.
+This release includes the additions below. Some command coverage is still pending.
 
 _New commands_
 
- - added `CLIP` to clip signals using either relative or absolute thresholds; documentation pending
+ - added [`CLIP`](ref/manipulations.md#clip) to clip signals using either relative or absolute thresholds
 
- - added `RAI` to calculate an index of REM loss of atonia from the EMG; documentation pending
+ - added [`RAI`](ref/physio.md#rai) to calculate an index of REM loss of atonia from the EMG
 
  - added `REQUIRES`, including a `version` option; documentation pending
 
@@ -23,7 +19,7 @@ _New commands_
 
  - added `ROLLING-NORM`, which uses an iterative sliding window to calculate a signal mean and SD; documentation pending
 
- - initial (beta) implementation of `HRV` metrics; documentation pending
+ - initial (beta) implementation of [`HRV`](ref/physio.md#hrv) metrics
 
 
 _Masks & epochs_
@@ -150,17 +146,11 @@ _Bug fixes_
 
 _New commands still lacking full reference coverage_
 
- - `CLIP`
-
- - `RAI`
-
  - `REQUIRES`
 
  - `DROP-ANNOTS`
 
  - `ROLLING-NORM`
-
- - `HRV`
 
  - `REPORT`
 

@@ -12,8 +12,8 @@ __current release is v1.3.4__ (27-Feb-2026): see [here](updates.md) for
 a list of changes/additions. Please direct any questions to `luna.remnrem@gmail.com`.
 
 !!! tip "LunaScope"
-     [LunaScope](https://zzz.nyspi.org/lunascope/) is a new interactive GUI for Luna,
-     built on top of _lunapi_. It provides a more full-featured point-and-click
+     <a href="https://zzz.nyspi.org/lunascope/">LunaScope</a> is a new interactive GUI for Luna,
+     built on top of <em>lunapi</em>. It provides a more full-featured point-and-click
      environment for visual review and interactive analysis.
 
 ## A family of Luna tools
@@ -37,7 +37,16 @@ provide fundamentally the same basic functionality:
 
  - via the [_lunaR_](ext/R/index.md) R library: users more familiar
    with R may prefer this option (_although note that although we plan to maintain this as is, in the future more effort will be put into developing the Python interface_)
-   
+
+On top of these components, we have also developed a few interactive tools:
+
+ - [_LunaScope_](https://zzz.nyspi.org/lunascope/), an interactive point-and-click GUI for Luna, built on top of _lunapi_ for visual review and exploratory analysis
+
+ - [_scope_](lunapi/scope.md), an interactive viewer designed for the JupyterLab environment using _lunapi_
+
+These tools can either be [installed individually](download/index.md)
+or they can be accessed via prebuilt [Docker containers](download/docker.md)
+
 !!! Note
     In this documentation, we often refer to _lunaC_ simply as
     _Luna_.  Also, `luna` is the filename of both the actual command line
@@ -45,15 +54,6 @@ provide fundamentally the same basic functionality:
     _lunapi_ or _lunaR_ where necessary. Most material is
     common to all packages, as they are based on the same basic C/C++ Luna
     library.
-
-On top of these components, we have also developed a few interactive tools:
-
- - [_Moonlight_](apps/moonlight.md), an interactive viewer and web-based frontend, based on _lunaR_ (and also available via [http://remnrem.net](https://remnrem.net)
-
- - [_scope_](lunapi/scope.md), an interactive viewer designed for the JupyterLab environment using _lunapi_
-
-These tools can either be [installed individually](download/index.md)
-or they can be accessed via prebuilt [Docker containers](download/docker.md)
 
 
 ## Getting started
@@ -96,7 +96,7 @@ The [Commands](ref/index.md) pages list all supported functionality; main areas 
     * Interval-based analyses of event timing
     * Sample-level linear association models
     * Manipulating annotation data and meta-data
-    * Visual data exploration via _Moonlight_ or _scope_
+    * Visual data exploration via _LunaScope_ or _scope_
 
 ## Things Luna _doesn't_ aim to do
 

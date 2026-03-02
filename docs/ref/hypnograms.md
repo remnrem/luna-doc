@@ -918,7 +918,7 @@ hypnogram, but with metrics that can be compared between individuals.
 
 _Annotations_
 
-To illustrate the types of annotations created by `HYPNO annot`, here we used [Moonlight](../apps/moonlight.md).  Loading the _Example_
+To illustrate the types of annotations created by `HYPNO annot`, here we used [LunaScope](https://zzz.nyspi.org/lunascope/).  Loading the _Example_
 recording, under the _Luna_ tab we entered the command: `HYPNO annot`. This adds a large number of annotations to the dataset.
 We then went to the _Annotations_ tab and selected various ones to display.   First, this is the overall hypnogram for this individual:
 
