@@ -2,6 +2,8 @@
 
 _Miscellaneous functions designed to help with Luna workflows_
 
+This page covers utility commands that support project-level workflows rather than signal analysis. `--build` automatically generates a Luna sample-list by traversing a directory tree. `--validate` checks that all EDFs and annotation files in a project are readable. `--repath` updates file paths in an existing sample-list. `--merge` concatenates multiple EDFs end-to-end; `--bind` combines EDFs by adding channels from one into another. `--xml` and `--xml2` parse and display NSRR XML annotation files. `OTSU` and `--otsu` apply Otsu's thresholding method to EDF channels or external data files, respectively.
+
 |Command | Description | 
 |---|---|
 | [`--build`](#-build)  | Generate a sample list automatically |
@@ -11,8 +13,8 @@ _Miscellaneous functions designed to help with Luna workflows_
 | [`--bind`](#-bind) | Merge (column/channel bind) multiple EDFs |
 | [`--xml`](#-xml) | View NSRR XML annotation files |
 | [`--xml2`](#-xml2) | View NSRR XML annotation files (verbose) |
-| [`--otsu](-otsu) | Calculate thresholds based on Otsu's method (external data) |
-| [`OTSU`](otsu) | Calculate thresholds based on Otsu's method (internal channel) |
+| [`--otsu`](#-otsu) | Calculate thresholds based on Otsu's method (external data) |
+| [`OTSU`](#otsu) | Calculate thresholds based on Otsu's method (internal channel) |
 
 ## --build
 
@@ -114,7 +116,7 @@ A new sample list written to the standard output stream.
 
 <h3>Example</h3>
 
-If the working folder have changed from `Users/js7/data` to
+If the working folder has changed from `Users/js7/data` to
 `home/jsmith/cfs/`, for example.  The original sample list (4 files
 from CFS):
 
@@ -288,19 +290,46 @@ _Dump XML annotation files_
 
 Also see `--xml2`
 
-_to be added_
+`--xml` is a lightweight command-line helper to inspect a single sleep-annotation
+XML file without loading an EDF. Internally, Luna parses the XML and prints a
+compact, chronologically ordered summary of the events it finds.
+
+The implementation auto-detects standard NSRR-style XML versus Profusion-style
+XML. For each scored event it prints start/stop time, duration, event type (if
+present), concept/label, and notes (if present). For Profusion XML, Luna also
+expands the `SleepStages` block into epoch-wise stage rows using the XML
+`EpochLength`.
 
 <h3>Parameters</h3>
 
-_to be added_
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `{xml}` | `study.xml` | A single XML file to inspect |
+
+!!! note
+    This helper is invoked directly from the command line, e.g. `luna --xml file.xml`.
+    It does not require an EDF, sample list, or output database.
 
 <h3>Output</h3>
 
-_to be added_
+No Luna output tables are created. Output is printed directly to standard
+output as a compact text listing.
+
+Typical rows have the form:
+
+```text
+start - stop    (duration secs)    EventType    EventConcept    Notes
+```
+
+If the XML contains an `EpochLength` field, Luna also prints that near the
+start of the listing. For Profusion XML, sleep stages are rendered as
+`SleepStage` rows.
 
 <h3>Example</h3>
 
-_to be added_
+```bash
+luna --xml shhs1-200001-nsrr.xml
+```
 
 
 ## --xml2
@@ -309,32 +338,148 @@ _Dump any XML file_
 
 Also see `--xml`
 
-_to be added_
+`--xml2` is the verbose counterpart to `--xml`. Instead of extracting a compact
+event list, it dumps the parsed XML tree itself so that element names,
+attributes, and nested text nodes can be inspected directly.
+
+This is mainly useful when working with unfamiliar XML variants, debugging field
+names, or checking how Luna is seeing a given file before writing import logic
+or annotation mappings.
 
 <h3>Parameters</h3>
 
-_to be added_
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `{xml}` | `study.xml` | A single XML file to dump verbosely |
 
 <h3>Output</h3>
 
-_to be added_
+No Luna output tables are created. Output is written directly to standard
+output as a recursive tree dump from TinyXML, showing:
+
+- document / element / text node structure
+- element names
+- attributes and attribute values
+- text payloads
+
+The output is intentionally low-level and mirrors the parsed XML structure more
+than the semantic sleep-event content.
 
 <h3>Example</h3>
 
-_to be added_
+```bash
+luna --xml2 shhs1-200001-nsrr.xml
+```
 
 
 ## --otsu
 
 _Derive Otsu optimal binary threshold for values from an external file_
 
-_to be added_
+`--otsu` is the command-line helper form of Otsu thresholding. It reads a single
+numeric vector from standard input, evaluates candidate thresholds across the
+observed value range, and reports the cut-point that maximizes between-class
+variance under Otsu's method.
 
+This helper does **not** operate on EDF channels. Use [`OTSU`](#otsu) for the
+in-EDF version.
+
+Internally, Luna reads whitespace-delimited numeric values from `stdin`, so the
+input can be one number per line or any whitespace-separated stream of numbers.
+
+<h3>Parameters</h3>
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `k` | `k=100` | Number of candidate threshold bins / cut-points to evaluate |
+
+!!! note
+    The current implementation reads values from standard input. Although older
+    helper conventions sometimes mention a sample list, `--otsu` does not use an
+    EDF or sample list in this code path.
+
+<h3>Output</h3>
+
+Top-level helper summary:
+
+| Variable | Description |
+| --- | --- |
+| `EMPTH` | Estimated Otsu threshold |
+| `EMPF` | Empirical percentile at the selected threshold |
+
+Threshold-scan output (strata: `TH`)
+
+| Variable | Description |
+| --- | --- |
+| `SIGMAB` | Between-class variance at that candidate threshold |
+| `F` | Empirical percentile at that candidate threshold |
+
+The helper also prints a short console summary reporting the selected threshold
+and percentile.
+
+<h3>Example</h3>
+
+```bash
+cat values.txt | luna --otsu k=200
+```
+
+Or equivalently:
+
+```bash
+awk '{print $3}' data.txt | luna --otsu
+```
 
 
 ## OTSU
 
 _Derive Otsu optimal binary threshold for values from an internal EDF channel_
 
-_to be added_
+`OTSU` applies the same Otsu threshold scan directly to one or more EDF signals.
+For each requested channel, Luna extracts the whole-trace values, evaluates
+candidate thresholds, and reports the cut-point that maximizes between-class
+variance.
 
+This is useful when you want a data-driven binary cut-point for an existing
+signal channel without first exporting the values.
+
+<h3>Parameters</h3>
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `sig` | `sig=C3,C4` | One or more signals on which to estimate Otsu thresholds |
+| `k` | `k=100` | Number of candidate threshold bins / cut-points to evaluate |
+| `verbose` | `verbose` | Accepted by the implementation; current output is driven by the standard tables |
+
+<h3>Output</h3>
+
+Channel-level summary (strata: `CH`)
+
+| Variable | Description |
+| --- | --- |
+| `EMPTH` | Estimated Otsu threshold for this channel |
+| `EMPF` | Empirical percentile at the estimated threshold |
+
+Threshold scan by channel (strata: `CH × TH`)
+
+| Variable | Description |
+| --- | --- |
+| `SIGMAB` | Between-class variance at that candidate threshold |
+| `F` | Empirical percentile at that candidate threshold |
+
+<h3>Example</h3>
+
+```bash
+luna s.lst -o out.db -s 'OTSU sig=EMG k=200'
+```
+
+To inspect the selected threshold per channel:
+
+```bash
+destrat out.db +OTSU -r CH
+```
+
+To inspect the full threshold scan:
+
+```bash
+destrat out.db +OTSU -r CH TH
+```

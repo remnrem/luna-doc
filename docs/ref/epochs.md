@@ -2,6 +2,8 @@
 
 _Commands to define epochs for an EDF, and to attach annotations after loading an EDF_
 
+Epochs are fixed-length time windows into which Luna divides a recording for analysis — by default 30 seconds, matching AASM sleep staging convention. Most commands that operate on time-series data require epochs to be defined first, either explicitly with `EPOCH` or implicitly (Luna applies a 30-second default if none has been set). `EPOCH` also supports overlapping windows (e.g. 4-second epochs in 2-second steps) and annotation-based generic epochs. `EPOCH-ANNOT` loads an epoch-level annotation file in `.eannot` format, attaching stage or other labels to each epoch.
+
 | Command   | Description |
 |------|---|
 | [Epoch definitions](#epoch-types) | Overview of epochs |
@@ -16,7 +18,7 @@ _Commands to define epochs for an EDF, and to attach annotations after loading a
 
 _Epochs_ are time intervals that span the recording. Many Luna
 commands either explicitly or implicitly rely on epochs being
-defined. Epoching an EDF is often a first a step that is required for
+defined. Epoching an EDF is often a first step that is required for
 many other Luna functions that work with epoched data.
 
 In most instances, if epochs have not been specifically defined (by
@@ -25,11 +27,11 @@ the [EPOCH command](#epoch)), they will _default_ to non-overlapping
 
 By default, epochs are non-overlapping, of fixed duration (30 seconds)
 and contiguous with respect to clock-time (i.e.  not spanning gaps in
-the recording). These epoch properties can be changed various ways:
+the recording). These epoch properties can be changed in various ways:
 
  - `dur`: epoch duration can be set to any duration in seconds, e.g. 5 seconds with `dur=5`
 
- - `inc`: the increment by default equals `dur` implying adjacenet but
+ - `inc`: the increment by default equals `dur` implying adjacent but
  non-overlapping epochs (e.g. 0-30 seconds, 30-60, 60-90, etc). If
  `inc` is set to a different value, epochs can either be overlapping
  or (less likely) spaced.  For example, with `inc=15`: 0-30, 15-45,
@@ -70,7 +72,7 @@ Without any parameters set, the default is 30-seconds, with no overlap
 general, if the increment is not specified, it defaults to the epoch
 length (i.e. no overlap between epochs).
 
-By default, epochs start at 0 seconds (start of EDF).   The 
+By default, epochs start at 0 seconds (start of EDF).
 
 | Parameter | Example |Description |
 | --- | --- | --- | 
@@ -205,7 +207,7 @@ nsrr01  14  30  5 22:04:47  390.00->420.00   E14  405   390  420 390000000000->4
 <h4>Generic epochs</h4>
 
 Generic epochs are those based on existing _annotations_.  One or more
-annotation label followed the `annot` option of `EPOCH`: e.g.
+annotation labels follow the `annot` option of `EPOCH`: e.g.
 ```
 EPOCH annot=Obstructive_Apnea,Hypopnea 
 ```
@@ -256,14 +258,14 @@ nsrr02 6  5   6   22:59:33  6087.20->6092.20  Hypopnea  6089.7 6087.2 6092.2 608
 Now `DUR` is fixed at 5 seconds for each epoch; note how the start times are the same as above (e.g. 3043.70 seconds for the first epoch)
 but now the end is altered, reflecting the effect of `start w=5`.
 
-!!! hint "Reducing/expanded annotations to epochs"
+!!! hint "Reducing/expanding annotations to epochs"
     If requested, note
     that either `start`, `midpoint` or `stop` are applied first
     (i.e. shrinking the annotation to a single time-point), followed
     by either `w`, `w-before` or `w-after` (i.e. expanding the
     interval either before, after or around (centered on) that
     time-point.  Note that it is also possible to apply the `w*`
-    expansion options with first reducing the annotations by `start`,
+    expansion options by first reducing the annotations by `start`,
     `midpoint` or `stop`.  This expands the interval by the requested number
     of seconds, at either the start (`w-before`), the end (`w-after`) or at both
     start and end (`w`). 
@@ -278,7 +280,7 @@ This command reads a __plain-text__ file from disk, expecting the
 apply multiple sets of annotations to epochs with multiple
 `EPOCH-ANNOT` commands.
 
-The behavior of this command similar but not identical to what would
+The behavior of this command is similar but not identical to what would
 happen if the `.eannot` file were directly specified in the
 [_sample-list_](../luna/args.md#sample-lists) (i.e. as any other XML,
 `.annot` annotation file).  As this command can be performed
@@ -387,7 +389,7 @@ one might subsequently apply other analysis commands, or write out a new EDF (se
     annotations files for different individuals (assuming 
     that those annotation files are named based on the IDs).
    
-Here is an example of using a script (instead of the `-s` option) for
+Here is an example of using a script (instead of the `-s` option) to
 achieve the same result as above, but here using a sample list and
 renaming the annotation file to, for example,
 `annots/id001.epoch.eannot`.  We might specify the sample list `s.lst`
@@ -484,7 +486,7 @@ SET-HEADERS SET-TIMESTAMPS SET-VAR SIGGEN SIGNALS
 SIMUL SL SUMMARY TAG  TIME-TRACK TYPES  VARS  WRITE-ANNOTS
 ```
 
-The following pull the entire signal and treat it as a continous
+The following pull the entire signal and treat it as a continuous
 time-series - i.e. they effectively ignore any epoch definitions.
 Typically, commands that manipulate/generate an EDF signal do not work
 with epochs, as they must replace the whole signal in the EDF.
@@ -496,7 +498,7 @@ REVERSE S2A SEGMENTS SPANNING
 THAW TLOCK TRANS TV uV WRITE Z-PEAKS
 ```
 
-<h4>Commands that work with any epoch defintions</h4>
+<h4>Commands that work with any epoch definitions</h4>
 
 These commands will not consider signal data outside of unmasked epochs.
 
@@ -505,7 +507,7 @@ Of these, the following allow generic (variable-sized) epochs:
 | Command | Notes |
 |----|----|
 |`CHEP`| Variable epoch size allowed, but not directly accounted for in analysis |
-|`CHEP-MASK`|    (make more sense w/ equal sized : epochs weighted equally) |
+|`CHEP-MASK`|    (makes more sense w/ equal sized : epochs weighted equally) |
 |`DUMP-MASK`| | 
 |`DUPES`| |    
 |`EPOCH`| |    
@@ -514,7 +516,7 @@ Of these, the following allow generic (variable-sized) epochs:
 |`HEAD`| Select which epoch w/ "epoch" arg; always dump from epoch |
 |`INTERPOLATE`|    |
 |`MASK`| |
-|`MATRIX`| Only outputs data in epoched |
+|`MATRIX`| Only outputs epoched data |
 |`MSE`|    |
 |`MTM`| | Also has a concept of _segments_ | 
 |`PSC`| Only works on stats, which may be epoch level but size etc is arbitrary; they will be equally weighted in analyses however |

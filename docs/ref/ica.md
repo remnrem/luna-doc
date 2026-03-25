@@ -2,6 +2,8 @@
 
 _An implementation of the fastICA algorithm_
 
+Independent Component Analysis (ICA) decomposes multi-channel EEG into statistically independent components, most commonly used to identify and remove stereotyped artifacts (ocular, cardiac, muscular) from the signal. `ICA` fits the fastICA algorithm to one or more channels and adds the resulting independent components as new EDF signals for inspection. `ADJUST` subtracts specified components from the original channels to produce a cleaned signal. `SVD` applies singular value decomposition (PCA) to multi-channel data as a related alternative, useful for dimensionality reduction.
+
 | Command | Description | 
 | ---- | ------ | 
 | [`ICA`](#ica)      | Fit ICA model to signal data |
@@ -27,7 +29,7 @@ the EDF containing these ICs.
     
 Currently, this command works on a whole-recording basis, e.g. rather
 than epoch-by-epoch.  This may not be appropriate if the whole
-recording contains very different types of signals/artifatcs (i.e. if
+recording contains very different types of signals/artifacts (i.e. if
 the spatial sources of the components is not relatively stable over
 time).
 
@@ -125,7 +127,7 @@ We can visualize the PSD of the ICs by extracting the information in
 destrat out.db +PSD -r F CH > psd.out
 
 ```
-combined with the topographics of the ICs, and then use lunaR's [`ltopo.rb()`](../ext/R/viz.md#ltoporb) or similar functions to view these:
+combined with the topographies of the ICs, and then use lunaR's [`ltopo.rb()`](../ext/R/viz.md#ltoporb) or similar functions to view these:
 
 ![img](../img/ica/ica.png){width="100%"}
 
@@ -160,7 +162,7 @@ high correlation with one or more other channels (e.g. EOG or EMG).
 | `adj` | `[IC_][1:57]` | Putative set of ICs that may be adjusted for |
 | `force` | `IC_5` | Force this component to be removed |
 | `spatial` | 3 | Select components with extreme spatial variance |
-| `corr-sig` | `LOC,ROC` | Other signals aginst which ICs will be correlated |
+| `corr-sig` | `LOC,ROC` | Other signals against which ICs will be correlated |
 | `corr-th` | `0.8,0.8` | Absolute time-domain correlation threshold (matches # of `corr-sig` channels) |
 | `tag` | `V` | If the IC prefix is other than `IC_` it can be specified here |
 
@@ -238,8 +240,8 @@ Primary per-component output (strata: `C`)
 | Variable | Description |
 | --- | --- |
 | `W` | Singular value |
-| `INC` | Is this componenent included (e.g. given `nc`) |
-| `VE` | Variance explainend | 
+| `INC` | Is this component included (e.g. given `nc`) |
+| `VE` | Variance explained |
 | `CVE` | Cumulative variance explained |
 
 Component weights (right singular vectors) (strata: `C` x `FTR`)

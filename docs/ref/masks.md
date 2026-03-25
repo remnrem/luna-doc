@@ -1,8 +1,8 @@
 # Masks
 
-_Commands to mask certain epochs in or out of analyses (depending on
-annotations and other features) and to drop or retain certain
-channels/signals_
+_Commands to mask certain epochs in or out of analyses, and to drop or retain certain channels/signals_
+
+Masks are the primary mechanism by which Luna includes or excludes data from subsequent analyses without permanently altering the underlying EDF. `MASK` sets per-epoch inclusion/exclusion flags based on annotations, expressions, or signal statistics; `DUMP-MASK` outputs the current mask state; and `RESTRUCTURE` (or `RE`) permanently removes masked-out epochs and optionally channels from the in-memory dataset. `CHEP` provides a finer-grained channel/epoch mask system, most commonly used with high-density EEG when particular channels are bad in particular epochs but not others.
 
 | Command   | Description |
 |------|---|
@@ -131,7 +131,7 @@ assuming that these three annotations existed for that record.
 
 _Full versus partial epoch matching:_
 
-By default, annotation-based masks match an epoch if the specifed
+By default, annotation-based masks match an epoch if the specified
 annotation(s) have _any degree_ of overlap with that epoch.
 Alternatively, masks can require that the _entire epoch_ is spanned by
 that annotation in order to make a match, by adding a `+` symbol
@@ -159,14 +159,15 @@ will also match epochs that have any extent of overlapping `arousal`.
 _Including/excluding epochs based on time intervals_
 
 Rather than annotations, these options mask certain epochs based on
-time intervals or epoch connts.
+time intervals or epoch counts.
 
 | Option | Example | Description | 
 | ---- | ----- | ----- | 
 | `epoch`        | `epoch=6,9-10,20-25` | Mask epochs outside of this set of epochs (i.e. include these ones) |
-| `mask-epoch`   | `mask-epoch=20-50` | As above, except mask epochs inside this range | 
+| `mask-epoch`   | `mask-epoch=20-50` | As above, except mask epochs inside this range |
 | `sec`     | `sec=0-60` | Set mask to include all epochs that span the interval from 0 to 60 seconds (i.e. these are _unmasked_, all other epochs are _masked_)|
 | `hms`     | `hms=8:00-9:00` | Set mask to include all epochs that span the interval from 8am to 9am (uses 24-hour clock) |
+| `dhms`    | `dhms=d1/22:00:00-d2/06:00:00` | As `hms` but anchored to a specific day of the recording (requires a valid EDF start date) |
 
 
 _Other miscellaneous mask options_
@@ -216,7 +217,7 @@ may yield the following output:
  total of 971 of 1022 retained
 ```
 
-The same information is also tabulated in any specified [_lunout_](../luna/destrat.md) database as follows.
+The same information is also tabulated in any specified [output](../luna/destrat.md) database as follows.
 
 Output stratified by mask (strata: `EPOCH_MASK`):
 
@@ -229,7 +230,7 @@ Output stratified by mask (strata: `EPOCH_MASK`):
 | `N_RETAINED` | Number of epochs retained after this operation | 
 | `N_TOTAL` | Total number of epochs |
 | `MATCH_LOGIC` | `OR` or `AND` if based on an annotation mask |
-| `MATCH_TYPE` | Primary annotation maask, e.g. `ifnot` |
+| `MATCH_TYPE` | Primary annotation mask, e.g. `ifnot` |
 | `MASK_MODE` | `force`, `mask` or `unmask` |
 
 For the above example, these values would be as follows (some outputs excluded):
@@ -266,7 +267,7 @@ context and general principles, along with examples of using masks.
  such as arousal events.  In this case, by default Luna evaluates epochs as
  _containing at least one_ arousal event versus _not containing any_
  arousal events.  The `+` special syntax (`+annotation`) will mask only if
- `annotaiton` spans the entire epoch.
+ `annotation` spans the entire epoch.
 
 !!! hint "Masks with finer temporal resolution" 
     To achieve a mask with a finer temporal resolution, you can always
@@ -471,7 +472,7 @@ will overwrite any previously specified mask.
 
 <h3>Randomly selecting a subset of epochs</h3>
 
-To randomly select a up to a particular number of epochs _from the set of 
+To randomly select up to a particular number of epochs _from the set of
 currently unmasked epochs_, use the `random` mask.  For example, to
 select 10 epochs at random:
 
@@ -506,7 +507,32 @@ valid start time in the header).
 MASK hms=8:00-9:00
 ```
 
-!!! note 
+For recordings spanning multiple days, `dhms` extends `hms` by
+anchoring to a specific day of the recording.  Days are specified as
+`d1`, `d2`, etc., relative to the EDF start date (which must be valid
+in the EDF header).  For example, to select epochs from 10pm on the
+first recording day through 6am on the second:
+
+```
+MASK dhms=d1/22:00:00-d2/06:00:00
+```
+
+Alternatively, a literal date can be given in place of `dN`.  A
+single `dhms` mask selects a single contiguous window; to extract the
+same clock-time window across _all_ days of a multi-day recording, use
+the [`DAYS`](actigraphy.md#days) command first to create
+per-day (and per-hour) annotations, and then use those annotations
+with standard annotation-based `MASK` commands.  For example:
+
+```
+DAYS
+MASK if=hour_08
+```
+
+would include only epochs falling in the 8–9am window across every
+calendar day of the recording.
+
+!!! note
     As is always the case for the `MASK` command, these options
     operate only on entire epochs, in this case selecting all epochs
     that overlap with the specified time intervals.  Thus, the
@@ -852,7 +878,7 @@ id00001   30664   120     30664    120
     ID        DUR1    DUR2    NR1      NR2
     id00001   120     30      120      30
     ```
-    In this case, there is `destrat` assumes only one instance of each
+    In this case, `destrat` assumes only one instance of each
     variable (e.g. `DUR1` for a given individual `ID` and strata
     (e.g. here, the default or baseline strata).  
 
@@ -894,7 +920,7 @@ id00001   30664   120     30664    120
 
     ```
 
-    That is, the output from `STRUCTURE` is now under the `STG`
+    That is, the output from `RESTRUCTURE` is now under the `STG`
     strata, rather than baseline.  Further, the output from
     `DUMP-MASK`, which was previously stratified by epoch-number `E`
     alone is now under `STG` as well as `E`, because we've added the

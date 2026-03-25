@@ -1,6 +1,8 @@
 # Outputs
 
-_Commands to rewrite EDFs and signals/annotations in other text-based formats_
+_Commands to rewrite EDFs and signals/annotations in other formats_
+
+These commands write data out of Luna, either as modified EDFs or as plain-text representations of signals and annotations. `WRITE` saves the current in-memory EDF (with any applied filters, masks or manipulations) to a new file. `MATRIX` exports signal values and annotations to a text table; `HEAD` shows a small snippet of signal data for quick inspection. `DUMP-RECORDS` and `RECS` expose the underlying EDF record structure. `SEGMENTS` lists continuous intervals within a discontinuous EDF+. `SEDF` generates a compact summary EDF intended for visualization.
 
 |Command | Description | 
 |---|---|
@@ -86,7 +88,7 @@ That is, the new EDF filenames have a `-v2` tag added. The folder
 (which must be specified with a `/` character in the `edf-dir`
 argument) will be created if it does not exist. In addition, Luna
 creates a new [_sample-list_](../luna/args.md#sample-lists) called
-`newx.lst`, that points to these new EDFs:
+`newx.lst` that points to these new EDFs:
 
 ```
 cat newx.lst 
@@ -246,7 +248,7 @@ starting at 0).  The subsequent columns are for the requested channels.
 
 <h3>Example</h3>
 
-To output 0.05 second's worth of data for two EOG channels, from a particular epoch of an EDF (here, 222):
+To output 0.05 seconds' worth of data for two EOG channels, from a particular epoch of an EDF (here, 222):
 
 ```
 luna s.lst 1 -s HEAD epoch=222 sig=EOG_L,EOG_R sec=0.05 > o.txt
@@ -468,7 +470,7 @@ luna s.lst 1 -s SEGMENTS
 
 ```
 
-We'd expect just a single segement to be reported, and this is indeed what we see:
+We'd expect just a single segment to be reported, and this is indeed what we see:
 
 ```
 destrat out.db +SEGMENTS
@@ -488,7 +490,7 @@ nsrr01  1    11.3667  682      40920     0     21.58.17   40920  09.20.17
 
 In contrast, if we break up the data (e.g. using the
 [`MASK`](masks.md#mask) command, then the data are implicitly
-represnted as a discontinuous EDF+ after [restructuring](masks.md#restructure):
+represented as a discontinuous EDF+ after [restructuring](masks.md#restructure):
 
 
 ```
@@ -499,7 +501,7 @@ luna s.lst 1 -t out -s 'MASK epoch=9-12,22-23,70-74 & RE & SEGMENTS'
     Note, purely to illustrate different options,  here we used Luna's `-t` output option rather than `-o`
     
 
-Now the `SEGMENT` command shows the expected three segments:
+Now the `SEGMENTS` command shows the expected three segments:
 ```
 cat out/nsrr01/SEGMENTS.txt
 ```
@@ -508,7 +510,7 @@ cat out/nsrr01/SEGMENTS.txt
 ID	NSEGS
 nsrr01	3
 ```
-with the correponding times:
+with the corresponding times:
 ```
 cat out/nsrr01/SEGMENTS-SEG.txt 
 ```
@@ -541,10 +543,9 @@ creates a "summary" EDF
 | `sig` |  Signals to output (if not given, all signals) |
 | `sedf-dir` | Directory for SEDFs (if not working directory)  |
 
-This creates an EDF in which contains epoch-level summary statistics of the original EDF. That is, if the original EDF has 1000 30-second epochs, the SEDF will comprise only 1000 records, where each record has a duration of 30 seconds, and contains only a single value.  For a given channel, e.g. `CZ`, the `SEDF` will contain three new channels, depending on the _type_ of that channel.  For a channel called `XYZ` in the original:
+This creates an EDF that contains epoch-level summary statistics of the original EDF. That is, if the original EDF has 1000 30-second epochs, the SEDF will comprise only 1000 records, where each record has a duration of 30 seconds, and contains only a single value.  For a given channel, e.g. `CZ`, the `SEDF` will contain three new channels, depending on the _type_ of that channel.  For a channel called `XYZ` in the original:
 
  - for oscillatory signals (e.g. EEG, EMG, etc), the three Hjorth parameters: `XYZ_H1`, `XYZ_H2` and `XYZ_H3`
  - for other signals (e.g. light or heart rate, etc), the mean, min and max: `XYZ_M`, `XYZ_L`, `XYZ_U`
 
 The idea is that this SEDF file is an effective _thumbnail_ for the EDF, which can be quickly loaded and rendered, e.g. by a viewer application.   
-

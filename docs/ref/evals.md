@@ -1,6 +1,6 @@
 # Expressions
 
-Here we describe _eval_ expressions: what they are and how they can be used by several Luna commands. 
+_Eval_ expressions are a flexible mini-language built into Luna for combining signals and annotations in arbitrary ways. `EVAL` uses these expressions to generate new epoch-level annotations from logical or arithmetic operations on existing signal or annotation data. `TRANS` applies channel-based transformations to create or modify signals on the fly. `DERIVE` summarises annotation meta-data into individual-level scalar variables. Together these commands fill the gap between fixed commands and full scripting: when masking or annotation commands alone are insufficient, eval expressions usually provide the needed flexibility.
 
 
 | Command  | Description |
@@ -93,7 +93,7 @@ Naturally, unlike these toy examples, in practice _eval_ statements
 will be evaluating annotation data on an epoch-by-epoch basis (the
 presence/absence, or quantity of certain annotations, as well as their
 associated meta-data).  We describe [below](#mapping-annotations) how
-annotation data are represented is _eval_ expressions.  The rest of this section comprises a
+annotation data are represented in _eval_ expressions.  The rest of this section comprises a
 description of [variables](#variables), [operators and functions](#operators-and-functions) and 
 [complex expressions](#complex-expressions).
 

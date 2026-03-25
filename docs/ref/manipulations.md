@@ -2,6 +2,8 @@
 
 _Commands to alter basic properties of the EDF and the signals therein_
 
+This page covers a broad set of commands for modifying signals and EDF properties in memory. Channel management commands (`SIGNALS`, `RENAME`, `COPY`) control which channels are present and how they are labelled. Unit and amplitude commands (`uV`, `mV`, `REFERENCE`, `FLIP`, `ZC`, `ROBUST-NORM`, `CLIP`, `SCALE`, `RECTIFY`) adjust signal values. Timing and structural commands (`RESAMPLE`, `RECORD-SIZE`, `EDF-MINUS`) modify sample rates and EDF record layout. Header and metadata commands (`ANON`, `SET-HEADERS`, `SET-VAR`, `SET-TIMESTAMPS`) update EDF header fields and Luna variables. These tools are typically used to clean and standardize EDFs before running analytical commands.
+
 | Command | Description |
 | -----  | ----- | 
 |[`SIGNALS`](#signals) | Retain/remove specific EDF channels |
@@ -16,7 +18,7 @@ _Commands to alter basic properties of the EDF and the signals therein_
 |[`mV`](#mv) | Rescale units to mV |
 |[`FLIP`](#flip) | Flip polarity of signal | 
 |[`ZC`](#zc) | Mean-center signal |
-|[`ROBUST-NORM`](#robust-norm) | Robust normalisation |
+|[`ROBUST-NORM`](#robust-norm) | Robust normalization |
 |[`CLIP`](#clip) | Clip a signal using absolute or relative thresholds |
 |[`COMBINE`](#combine) | Combine two or more channels into a new channel (e.g. sum/mean) | 
 |[`SCALE`](#scale) | Rescale a channel (min/max scaling) |
@@ -28,7 +30,7 @@ _Commands to alter basic properties of the EDF and the signals therein_
 |[`ANON`](#anon)    | Strip ID information from EDF header |
 |[`SET-HEADERS`](#set-headers) | Directly specify certain EDF headers |
 |[`SET-VAR`](#set-var) | Directly specify Luna variables |
-|[`SET-TIMESTAMPS`](#set-timestamps) | Directly specify EDF record time-stamps |
+|[`SET-TIMESTAMPS`](#set-timestamps) | Directly specify EDF record timestamps |
 |[`RECTIFY`](#rectify) | Rectify a signal |
 |[`REVERSE`](#reverse) | Reverse a signal |
 |[`MOVING-AVERAGE`](#moving-average) | Moving average (or median) of a signal | 
@@ -113,7 +115,7 @@ No formal output, other than changing the labels of channels in the internal EDF
 <h3>Example</h3>
 
 In its simplest form, if we have a channel named `THOR_RES`, for
-example, we can rename to some other label -- here just using `XX` --
+example, we can rename it to some other label -- here just using `XX` --
 using `RENAME`, and then use that new label in other commands:
 
 ```
@@ -135,7 +137,7 @@ The primary difference is that `RENAME` accepts (individual-specific)
 variables as arguments, i.e. which can allow different individuals to
 have different assignments (with `sig` and/or `new`).  For example, in
 this toy example, we change `THOR_RES` and `ABDO_RES` (all present in
-the three individuals in the [tutorial dataset](../tut/tut1.md) to
+the three individuals in the [tutorial dataset](../tut/tut1.md)) to
 different labels.  If we have a tab-delimited file that defines these
 variables for each individual:
 
@@ -184,7 +186,7 @@ Signal   : SaO2[1] PR[1] EEG_sec_[125] ECG[250] EMG[125] EOG_L_[50]
            LIGHT[1] OX_STAT[1]
 ```
 
-Another difference is that using a signal aliases allows a many-to-one
+Another difference is that using signal aliases allows a many-to-one
 mapping, whereas `RENAME` requires a one-to-one mapping of
 labels. That is, `"alias=XX|AA|BB|CC"` will map either `AA`, `BB` or
 `CC` to `XX` (i.e. where an individual EDF may have none, one or
@@ -198,7 +200,7 @@ luna s.lst vars=ch.txt "alias=XX|AA|BB|CC" \
      -s ' RENAME sig=XX new=${CHS} & WRITE edf-dir=edfs/ ' 
 ```
 
-This effectively uses `XX` as an intermediate (mapped to from _either_ `AA`, `BB` or `CC`) and will then write to
+This effectively uses `XX` as an intermediate (mapped from _either_ `AA`, `BB` or `CC`) and will then write to
 the new EDF a label as defined in `ch.txt`.   Of course, an alternative would be to also supply individual-specific
 labels for both `sig` and `new` in the `vars.txt` file, e.g. if it had two columns defining `OLD` and `NEW` variables/columns:
 ```
@@ -381,7 +383,7 @@ see above for details.
 
 ## MINMAX
 
-Set digitial and physical minimum and maximum values in the EDF header
+Set digital and physical minimum and maximum values in the EDF header
 to be equal across multiple channels.  This can be necessary to enable
 other software to be able to work with an EDF, by making it better
 conform to the EDF specification.  Signals specified here must be
@@ -400,7 +402,7 @@ the EDF.
 
 No formal output is given. The channels are rescaled internally.  Any
 subsequent commands (i.e. including `WRITE` to write a new EDF) will
-therefore based based on these new header values.
+therefore be based on these new header values.
 
 <h3>Example</h3>
 
@@ -479,7 +481,7 @@ _Converts a signal to mV units_
 
 Checks the `unit` (physical dimension) field of the EDF header for either `V`, `mV` or `uV`
 and rescales the signal appropriately.  If the header specifies some
-of unit, or none, then no action is taken.
+other unit, or none, then no action is taken.
 
 <h3>Parameters</h3>
 
@@ -637,7 +639,7 @@ _Standardizes a signal using a robust approach_
 Normalizes a signal, using as measures of central tendency and spread
 the median and an estimate of the SD based on the inter-quartile range
 ( 0.7413 times _IQR_ ).  Additionally, this command can winsorize a
-signal (and optiomally re-normalize after winsorization, to ensure
+signal (and optionally re-normalize after winsorization, to ensure
 (non-robust) mean/SD of 0/1).  This can be performed either on the whole signal, or
 epoch-by-epoch.
 
@@ -703,7 +705,7 @@ P95	2.83286
 P98	2.83286
 P99	2.83286
 ```
-This above also shows the impact of winsoriation, e.g. `P01`, `P02` and `P05` are all identical now. 
+This also shows the impact of winsorization, e.g. `P01`, `P02` and `P05` are all identical now. 
 
 If for some reason it is important to further rescale the signal to have mean and SD of 0 and 1 more precisely, then add the option `second-norm` to `ROBUST-NORM`.  This results in the following mean and SD: 
 ```
@@ -727,7 +729,7 @@ scale will be rescaled to set the min/max at those values.
 | --- | --- | --- |
 | `min-max` | 0,100 | Lower and upper bounds |
 | `clip-min` | 0 | Lower bound to clip (on original scale) |
-| `clip--max` | 1 | Upper bound to clip (on original scale) |
+| `clip-max` | 1 | Upper bound to clip (on original scale) |
 
 <h3>Output</h3>
 
@@ -740,7 +742,7 @@ outliers (below 0, or above 1, e.g. due to resampling or other artifact).   The 
 clips at 0 and 1; it then rescales to a percent (0-100) rather than a proportion (0-1) scale:
 
 ```
-luna s.lst -s ' SCALE sig=oxy clip-mip=0 clip-max=1 min-max=0,100 '
+luna s.lst -s ' SCALE sig=oxy clip-min=0 clip-max=1 min-max=0,100 '
 ```
 
 Typically a `SCALE` command will be paired with subsequent analyses,
@@ -811,13 +813,13 @@ proportion of clipped sample points rather than modifying the signal.
 
 _Combine two or more channels to create a new channel_
 
-This commands allows for new channels to be created based on simple
+This command allows new channels to be created based on simple
 sum/mean/median of one or more channels.
 
 By default, this command requires that all channels requested (by `sig`) are present; an
 error will be given otherwise.  This behavior can be changed by adding `allow-missing`,
 which means that only the available channels are used (e.g. if only 2 of 3 found, the
-sum would be based just on those two).  If no available channels are available, no new
+sum would be based just on those two).  If no channels are available, no new
 channel is created.  If only two channels are available and a median is requested, this is
 automatically changed to a mean instead.
 
@@ -1056,7 +1058,7 @@ manually:
 ```
 luna s.lst -s 'EPOCH offset=4 & HYPNO'
 ```
-or automatically with respect to a set of annotations (i.e. making the offset equal to the start of the first of these annotions encountered):
+or automatically with respect to a set of annotations (i.e. making the offset equal to the start of the first of these annotations encountered):
 ```
 luna s.lst -s 'EPOCH align=N1,N2,N3,R,W,? & HYPNO'
 ```
@@ -1082,14 +1084,14 @@ an additional two seconds, which would be half an EDF record).
 <h6>Fractional offsets</h6>
 
 Finally, a more tedious issue arises if the annotations/epochs _start_ at
-arbitray, fractional time points within an EDF.  In the example above, we, for example, 
+arbitrary, fractional time points within an EDF.  In the example above, we have, for example,
 an annotation starting:
 ```
    N1      4110.9609375
 ```
 In this example, with a sample rate of 256 Hz, this offset corresponds exactly to 246 (= 0.9609375 * 256 ) samples
 past the start of each second.  Although one solution would be to have a very short EDF record sizes (i.e. the length of
-one sample, 1/256 seconds), this may for technical reasons make data access suboptimal for many readers; further, we consdier the
+one sample, 1/256 seconds), this may for technical reasons make data access suboptimal for many readers; further, we consider the
 more general case, where the offset is not even exactly aligned with a sample point. 
 
 The `ALIGN` command attempts to handle this issue, by creating a new
@@ -1264,12 +1266,12 @@ In terms of _file (EDF) generation_:
 
     3) no constraints on annotation start/stops, 
 
-    4) no constrains on gap durations
+    4) no constraints on gap durations
 
 
 Further, when Luna _masks_ a recording (by flagging _epochs_ as masked
 or not), the actual transformation is at the level of EDF
-_records_.  Here, records and epochs align, such that is we mask epoch 2, this
+_records_.  Here, records and epochs align, such that if we mask epoch 2, this
 cleanly splices out records 3 and 4:
 
 ```
@@ -1318,7 +1320,7 @@ When handling gaps, there are two choices:
      (zero-padding) and leave annotations as they are
 
    - __splice out gaps__: this "ignores" gaps, similar to simply
-     reading a EDF+D as a standard EDF, _except_ here `EDF-MINUS` a)
+     reading an EDF+D as a standard EDF, _except_ here `EDF-MINUS` a)
      still aligns retained segments to record and/or epoch/staging
      boundaries, and b) alter any annotation timelines to be
      locally-consistent with the new spliced set of signals
@@ -1466,14 +1468,14 @@ is).
 
 So, we'd select 'splice' mode: by default, this uses the staging
 annotations to align segments (`N1`, `N2`, `N3`, `R`, `W` and `?`),
-editting segments such that the resulting output is cleanly/consistently
+editing segments such that the resulting output is cleanly/consistently
 aligned.  We'll put the new EDF in the folder `fin/`:
 
 
 ```
 mkdir fin
 ```
-and run `EFD-MINUS`:
+and run `EDF-MINUS`:
 ```
 luna m.lst -o out.db -s EDF-MINUS out=fin/splice policy=splice
 ```
@@ -1525,7 +1527,7 @@ It then further lists the structure of the EDF+D
 The five segments are spliced and realigned:
 ```
   found 5 segment(s)
-    [ original segments ] -> [ aligned, editted ] --> [ final segments ]
+    [ original segments ] -> [ aligned, edited ] --> [ final segments ]
    ++ seg #1 : 0.00-5803.00 (5803s) [included] --> 0.00-5790.00 --> 0.00-5790.00 (13s shorter)
     - gap #2 : 5803.00-5810.00 (7s) [spliced]
    ++ seg #2 : 5810.00-10116.00 (4306s) [included] --> 5810.00-10100.00 --> 5790.00-10080.00 (16s shorter)
@@ -1576,7 +1578,7 @@ luna f.lst -o out.db -s SPANNING annot=N1,N2,N3,R,W,?
 ```
 
 We see that there is a 1-to-1 matching between annotations (staging) and EDF epochs now,
-and alignment between epochs, stage annotatons (and EDF records):
+and alignment between epochs, stage annotations (and EDF records):
 ```
 destrat out.db +SPANNING | behead
 ```
@@ -1645,7 +1647,7 @@ This is the impact of zero-padding:
 
 ```
   found 5 segment(s)
-    [ original segments ] --> [ aligned, editted final segments ]
+    [ original segments ] --> [ aligned, edited final segments ]
    ++ seg #1 : 0.00-5803.00 (5803s) [included] --> 0.00-5790.00 (13s shorter)
     - gap #2 : 5803.00-5810.00 (7s) [zero-padded] --> 5790.00-5810.00 (13s longer)
    ++ seg #2 : 5810.00-10116.00 (4306s) [included] --> 5810.00-10100.00 (16s shorter)
@@ -1773,7 +1775,7 @@ Channel-specific headers
 | `sig` | `${eeg}` | Specify the channel(s) to modify |
 | `transducer` | | Set the transducer field for specified channels (max 80 chars) |
 | `physical-dimension` | | Set the physical dimension (units) for specified channels (max 8 chars) |
-| `unit` | | Same as `physical-dimensions` |
+| `unit` | | Same as `physical-dimension` |
 | `prefiltering` | | Set the prefiltering field for specified channels (max 80 chars) |
 
 
@@ -1835,7 +1837,7 @@ All times are expected in seconds, one value per line, and all values must be in
 
 | Parameter | Example | Description |
 | ---- | ---- | ---- |
-| `file` | `timestxt` | Required text file of new time-stamps |
+| `file` | `timestxt` | Required text file of new timestamps |
 
 <h3>Output</h3>
 
@@ -1849,7 +1851,7 @@ See [this vignette](../vignettes/merge.md) for an example of using `SET-TIMESTAM
 
 _Rectifies a signal_
 
-This commands sets all values of an EDF signal to their absolute values.  It is primarily designed for use
+This command sets all values of an EDF signal to their absolute values.  It is primarily designed for use
 working with other functions such as `HILBERT` and `PEAKS`, to build up larger processing procedures.
 
 <h3>Parameters</h3>
@@ -1865,7 +1867,7 @@ None.
 
 <h3>Example</h3>
 
-As toy example, here rectifying a signal with positive and negative values (an EEG):
+As a toy example, here we rectify a signal with positive and negative values (an EEG):
 
 ```
 luna s.lst 1 -o out.db \
@@ -1902,7 +1904,7 @@ destrat out.db +STATS -r CH run/2 -v MIN MAX | behead
 
 _Reverse a signal_
 
-This command is primarily designed for evaluated other
+This command is primarily designed for evaluating other
 time-domain/phase-based methods, e.g. to provide a sanity-check by
 completely reversing a signal in the time-domain.
 
@@ -1914,7 +1916,7 @@ completely reversing a signal in the time-domain.
 
 <h3>Output</h3>
 
-None (other than to reverse the in-memory signal.
+None (other than reversing the in-memory signal).
 
 ## MOVING-AVERAGE
 

@@ -1,16 +1,589 @@
 # Artifact detection
 
-_Commands to perform artifact detection/correction_
+_Commands to perform artifact detection and correction_
 
-|Command |Description | 
+Luna provides several complementary tools for dealing with signal artifacts in PSG data.
+A typical workflow moves from broad assessment to targeted correction: `QC` gives a
+multi-domain overview of signal quality across the whole recording; `EDGER` trims
+artifactual leading/trailing intervals; `CHEP-MASK` and `ARTIFACTS` flag bad
+channel/epoch pairs for EEG; `POL` checks signal polarity; and `LINE-DENOISE`,
+`SUPPRESS-ECG`, and `ALTER` apply spectral or regression-based corrections to specific
+artifact types. These tools are designed to be combined — running multiple routines in
+sequence is usually warranted for robust cleaning.
+
+| Command | Role | Description |
+|---|---|---|
+| [`QC`](#qc) | Broad assessment | Multi-domain PSG signal quality control |
+| [`EDGER`](#edger) | Structural cleaning | Flag likely artifactual leading/trailing intervals |
+| [`CHEP-MASK`](#chep-mask) | Detection | CHannel/EPoch (CHEP) outlier detection |
+| [`ARTIFACTS`](#artifacts) | Detection | Per-epoch Buckelmueller et al. (2006) artifact detection |
+| [`POL`](#pol) | Diagnostic | Signal polarity diagnostics |
+| [`LINE-DENOISE`](#line-denoise) | Correction | Line denoising via spectrum interpolation |
+| [`SUPPRESS-ECG`](#suppress-ecg) | Correction | Correct cardiac artifact based on ECG |
+| [`ALTER`](#alter) | Correction | Reference-channel regression-based artifact correction |
+
+## QC
+
+_Multi-domain PSG signal quality control_
+
+!!! warning "Active development"
+    `QC` is under active development and expansion. Thresholds, defaults,
+    channel-domain coverage, and output details may still evolve.
+
+`QC` performs automated signal quality assessment for standard PSG channels.
+It operates independently on up to six signal domains — respiratory effort
+(**RESP**), pulse oximetry (**OXY**), EEG, chin/limb EMG, ECG/EKG, and EOG —
+producing per-epoch flags and channel-level quality designations that can guide
+downstream analysis, signal exclusion, or manual review.
+
+!!! info "Minimal configuration"
+    Most parameters have sensible physiological defaults. A typical call need
+    only specify which channels belong to which domain:
+    ```
+    QC eeg=C3,C4 emg=lchin ecg=ECG1 eog=LOC,ROC resp=THOR,ABD oxy=SpO2 epoch
+    ```
+
+<h3>Design principles</h3>
+
+**Line noise is tracked separately.** In all domains except RESP and OXY, line
+noise (50/60 Hz) is evaluated but its flag does _not_ contribute to the primary
+`FLAG_EPOCH` or channel-level `FLAGGED` designation. Line noise is tracked
+independently as `LN_FLAG`. The rationale: line noise is almost always trivially
+removable by notch or bandpass filtering, whereas structural artifacts (flatline,
+clipping, gross amplitude excursions) indicate a fundamentally compromised signal.
+
+**Hjorth parameters use a pre-filtered signal.** For EEG and EOG, Hjorth activity
+and complexity are computed on a bandpass-filtered copy of the epoch (IIR
+Butterworth), not on the raw signal. A two-pass algorithm characterises the
+night-level distribution first, then identifies outliers by robust z-score.
+
+**ECG beat detection is global.** R-peak detection is performed once on the
+complete signal (_mpeakdetect2_ algorithm: bandpass 5–20 Hz FIR, differentiate,
+square, moving-window integrate, smoothed-Z thresholding) before any per-epoch
+analysis. Per-epoch metrics are derived from that global peak list, avoiding
+edge-effect instability.
+
+**Unit handling.** EEG and EOG channels are expected in µV; ECG in mV. The
+command auto-converts between µV/mV/V when the channel physical dimension header
+is set correctly.
+
+<h3>Analysis pipeline</h3>
+
+```
+Signal assignment → Unit check → Set epochs → Per-epoch criteria → Channel aggregation → Output + annotations
+```
+
+A channel is flagged `FLAGGED=1` if either of two thresholds is met:
+
+- Proportion of flagged epochs > `flag-prop` (default 0.50), **or**
+- Longest contiguous bad run ≥ `flag-run` seconds (default 3600 s = 1 h)
+
+The same two tests are applied independently to line-noise epochs to produce `LN_FLAG`.
+
+<h3>Domain methods</h3>
+
+<h4>RESP — Respiratory effort</h4>
+
+Respiratory channels are assessed using a spectral SNR approach over longer
+analysis windows (default 120 s, step 10 s). A power ratio is computed between
+a physiological respiratory frequency band (default 0.1–1 Hz) and a noise
+reference band (default 1–10 Hz). Windows where this ratio falls below the
+threshold or where noise-band power dominates are flagged.
+
+Criteria: **SNR** (P[0.1–1 Hz] / P[1–10 Hz] below threshold), **Flatline**
+(peak-to-peak amplitude near zero or ≥ 50% of derivatives are near-zero),
+**Clipping** (≥ 1% of samples at ADC limits), **Jump** (epoch deviation >
+5× MAD of within-epoch differences).
+
+<h4>OXY — SpO2 / pulse oximetry</h4>
+
+Values are expected in percent (0–100); signals in the 0–1 range are
+automatically rescaled. Assessment uses 30 s non-overlapping epochs.
+
+Criteria: **Out of range** (≥ 10% of samples outside 50–100%), **Flatline**
+(constant signal for ≥ `oxy-flat-k` consecutive epochs), **Jump** (epoch-to-epoch
+change > `oxy-jump-th`%, default 4%), **Missing** (≥ 10% of samples at or below
+the invalid floor).
+
+<h4>EEG</h4>
+
+Six independent epoch-level criteria using 30 s epochs. Spectral metrics use
+Welch PSD (4 s segments, 50% overlap).
+
+Criteria: **Flatline** (SD < 2 µV or ≥ 80% of derivatives near-zero),
+**Clipping** (≥ 1% of samples at ADC limits), **Extreme amplitude** (≥ 5%
+of samples exceed |500 µV|), **HF contamination** (P[20–40 Hz] / P[0.5–20 Hz]
+> 1.5), **Spectral peakedness** (SPK > 15 or KURT > 5 on detrended log-PSD
+residuals 2–28 Hz), **Hjorth outlier** (|robust z| > 10 on bandpass-filtered
+signal 0.5–40 Hz). Line noise tracked separately.
+
+The **spectral peakedness** algorithm: (1) min-max scale the log-PSD over
+2–28 Hz to [0,1]; (2) linearly detrend; (3) apply 11-point median filter;
+(4) compute residuals. **SPK** is the total variation; **KURT** is excess kurtosis.
+Both are amplitude-independent and sensitive to narrowband spectral peaks.
+
+<h4>EMG</h4>
+
+Criteria: **Flatline** (SD < 0.5 µV or ≥ 80% near-zero derivatives),
+**Clipping** (≥ 1% of samples at ADC limits), **High broadband RMS**
+(epoch RMS > 150 µV), **Impulse artifact** (≥ 5 samples with |z| > 8).
+Line noise tracked separately.
+
+<h4>ECG / EKG</h4>
+
+Global R-peak detection is performed before any per-epoch analysis. The
+_mpeakdetect2_ algorithm handles inverted ECG polarity automatically.
+
+Criteria: **Flatline** (SD < 0.02 mV), **Clipping** (≥ 1% at ADC limits),
+**HR implausibility** (mean HR from clean RR intervals outside 25–220 bpm),
+**RR implausibility** (> 20% of RR intervals outside 300–2000 ms),
+**Insufficient beats** (< 5 R-peaks detected).
+Line noise tracked separately.
+
+Use `ecg-add-peaks` to attach detected R-peak locations as EDF+ annotations
+(label `qc-ecg-peak`) for downstream HRV or arrhythmia analysis.
+
+<h4>EOG</h4>
+
+Shares the EEG artifact framework with physiologically appropriate defaults:
+wider amplitude tolerance (|700 µV|), lower frequency band (0.3–20 Hz), Hjorth
+pre-filtering restricted to 0.5–20 Hz.
+
+Criteria: **Flatline** (SD < 3 µV), **Clipping**, **Extreme amplitude** (≥ 5%
+of samples exceed |700 µV|), **HF contamination** (P[20–40 Hz] / P[0.3–20 Hz]
+> 1.5), **Hjorth outlier** (|robust z| > 10, bandpass 0.5–20 Hz).
+Line noise tracked separately.
+
+<h3>Annotations</h3>
+
+When annotations are enabled (default), `QC` writes epoch-spanning interval
+annotations for flagged and line-noise windows, merging adjacent flagged epochs.
+
+By default, one annotation class is created **per channel** (prefix `QC`):
+
+| Annotation | Description |
 |---|---|
-| [`CHEP-MASK`](#chep-mask)   | CHannel/EPoch (CHEP) outlier detection |
-| [`ARTIFACTS`](#artifacts)   | Per-epoch Buckelmueller et al. (2006) artifact detection | 
-| [`LINE-DENOISE`](#line-denoise) | Line denoising via spectrum interpolation |
-| [`SUPPRESS-ECG`](#suppress-ecg) | Correct cardiac artifact based on ECG | 
-| [`ALTER`](#alter) | Reference-channel regression-based artifact correction | 
-| [`POL`](#pol) | Signal polarity diagnostics |
-| [`EDGER`](#edger) | Utility to flag likely artifactual leading/trailing intervals | 
+| `{prefix}_{CH}` | Merged flagged-epoch intervals for this channel |
+| `{prefix}_LN_{CH}` | Merged line-noise epoch intervals (EEG/EMG/ECG/EOG) |
+
+Use `annot-domain` to switch to per-domain annotations (aggregates all channels
+of that type):
+
+| Annotation | Description |
+|---|---|
+| `{prefix}_{DOMAIN}` | Merged flagged-epoch intervals for this domain |
+| `{prefix}_{DOMAIN}_LN` | Merged line-noise epoch intervals |
+
+<h3>Parameters</h3>
+
+<h4>General options</h4>
+
+| Parameter | Default | Description |
+|---|---|---|
+| `resp` | — | Channels for the respiratory domain |
+| `oxy` | — | Channels for the SpO2/oximetry domain |
+| `eeg` | — | Channels for the EEG domain |
+| `emg` | — | Channels for the EMG domain |
+| `ecg` | — | Channels for the ECG domain |
+| `eog` | — | Channels for the EOG domain |
+| `epoch` | off | Emit per-epoch WIN-level metrics for all active domains |
+| `annot` | `QC` | Annotation prefix; emits per-channel annotations `{prefix}_{CH}` |
+| `annot-domain` | — | Emit per-domain annotations instead; value sets prefix (default `QC`) |
+| `annot-show` | `T` | Set `F` to suppress all QC annotations |
+
+<h4>RESP parameters</h4>
+
+| Parameter | Default | Description |
+|---|---|---|
+| `resp-min-sr` | 32 Hz | Target minimum sample rate; channels below `resp-hard-min-sr` are skipped |
+| `resp-hard-min-sr` | 4 Hz | Absolute minimum sample rate |
+| `resp-win` | 120 s | Analysis window size |
+| `resp-inc` | 10 s | Analysis window step |
+| `resp-p1-lwr` | 0.1 Hz | Respiratory signal band lower bound |
+| `resp-p1-upr` | 1.0 Hz | Respiratory signal band upper bound |
+| `resp-p2-lwr` | 1.0 Hz | Noise band lower bound |
+| `resp-p2-upr` | 10.0 Hz | Noise band upper bound |
+| `resp-snr-th` | 10 | SNR threshold |
+| `resp-flat-floor` | 1×10⁻⁴ | Amplitude floor for flatline detection |
+| `resp-flat-prop` | 0.5 | Proportion of near-zero derivatives flagging flatline |
+| `resp-clip-prop` | 0.01 | Proportion of clipped samples flagging a window |
+| `resp-jump-th` | 5.0 | MAD multiplier for jump artifact detection |
+| `resp-flag-prop` | 0.5 | Channel FLAGGED if this fraction of epochs are bad |
+| `resp-flag-run` | 3600 s | Channel FLAGGED if contiguous bad run ≥ this many seconds |
+| `resp-add-channel` | off | Label for an optional noise-estimate waveform added as a new EDF channel |
+
+<h4>OXY parameters</h4>
+
+| Parameter | Default | Description |
+|---|---|---|
+| `oxy-win` | 30 s | Analysis window size |
+| `oxy-range-lo` | 50 % | Lower bound of valid SpO2 range |
+| `oxy-range-hi` | 100 % | Upper bound of valid SpO2 range |
+| `oxy-range-prop` | 0.10 | Epoch flagged if this fraction of samples are out of range |
+| `oxy-flat-th` | 0.2 % | Flatline SD threshold |
+| `oxy-flat-k` | 10 | Minimum run length in epochs before flatline flagging |
+| `oxy-jump-th` | 4.0 % | Maximum permitted epoch-to-epoch SpO2 change |
+| `oxy-invalid-floor` | 0.0 % | Values at or below this are treated as missing |
+| `oxy-missing-prop` | 0.10 | Epoch flagged if this fraction of samples are missing |
+| `oxy-flag-prop` | 0.5 | Channel FLAGGED if this fraction of epochs are bad |
+| `oxy-flag-run` | 3600 s | Channel FLAGGED if contiguous bad run ≥ this many seconds |
+
+<h4>EEG parameters</h4>
+
+| Parameter | Default | Description |
+|---|---|---|
+| `eeg-min-sr` | 100 Hz | Minimum sample rate |
+| `eeg-win` | 30 s | Analysis window size |
+| `eeg-flat-th` | 2.0 µV | Epoch flagged if SD below this |
+| `eeg-flat-prop` | 0.80 | Epoch flagged if this fraction of derivatives are near-zero |
+| `eeg-flat-eps` | 1×10⁻⁴ µV | Near-zero derivative threshold |
+| `eeg-clip-prop` | 0.01 | Epoch flagged if this fraction of samples at ADC limits |
+| `eeg-amp-th` | 500 µV | Extreme amplitude threshold |
+| `eeg-amp-prop` | 0.05 | Epoch flagged if this fraction of samples exceed the amplitude threshold |
+| `eeg-hf-lo` | 20 Hz | HF power band lower bound |
+| `eeg-hf-hi` | 40 Hz | HF power band upper bound |
+| `eeg-sig-lo` | 0.5 Hz | Reference signal band lower bound |
+| `eeg-sig-hi` | 20 Hz | Reference signal band upper bound |
+| `eeg-hf-th` | 1.5 | Epoch flagged if P[HF] / P[signal] exceeds this ratio |
+| `eeg-peak-th` | 15.0 | SPK threshold: total variation of detrended log-PSD residuals (2–28 Hz) |
+| `eeg-kurt-th` | 5.0 | KURT threshold: excess kurtosis of detrended log-PSD residuals |
+| `eeg-hjorth-lo` | 0.5 Hz | Pre-filter lower cutoff (IIR Butterworth bandpass) |
+| `eeg-hjorth-hi` | 40 Hz | Pre-filter upper cutoff |
+| `eeg-hjorth-z` | 10.0 | \|Robust z\| threshold for Hjorth outlier |
+| `eeg-ln-bw` | 2 Hz | ± Hz bandwidth around 50 and 60 Hz for line noise |
+| `eeg-ln-th` | 0.30 | Line noise epoch flagged if max(P50, P60) / P[broadband] exceeds this |
+| `eeg-flag-prop` | 0.5 | Channel FLAGGED if this fraction of epochs are bad |
+| `eeg-flag-run` | 3600 s | Channel FLAGGED if contiguous bad run ≥ this many seconds |
+
+<h4>EMG parameters</h4>
+
+| Parameter | Default | Description |
+|---|---|---|
+| `emg-min-sr` | 100 Hz | Minimum sample rate |
+| `emg-flat-th` | 0.5 µV | Epoch flagged if SD below this |
+| `emg-flat-prop` | 0.80 | Epoch flagged if this fraction of derivatives are near-zero |
+| `emg-clip-prop` | 0.01 | Epoch flagged if this fraction of samples at ADC limits |
+| `emg-rms-th` | 150 µV | High broadband RMS threshold |
+| `emg-imp-n` | 5 | Minimum impulse sample count to flag epoch |
+| `emg-imp-z` | 8.0 | Z-score threshold for impulse detection |
+| `emg-ln-th` | 0.30 | Line noise epoch flagged if P[line] / P[10–100 Hz] exceeds this |
+| `emg-flag-prop` | 0.5 | Channel FLAGGED if this fraction of epochs are bad |
+| `emg-flag-run` | 3600 s | Channel FLAGGED if contiguous bad run ≥ this many seconds |
+
+<h4>ECG parameters</h4>
+
+| Parameter | Default | Description |
+|---|---|---|
+| `ecg-min-sr` | 128 Hz | Minimum sample rate |
+| `ecg-flat-th` | 0.02 mV | Epoch flagged if SD below this |
+| `ecg-flat-prop` | 0.80 | Epoch flagged if this fraction of derivatives are near-zero |
+| `ecg-clip-prop` | 0.01 | Epoch flagged if this fraction of samples at ADC limits |
+| `ecg-hr-min` | 25 bpm | Minimum plausible heart rate |
+| `ecg-hr-max` | 220 bpm | Maximum plausible heart rate |
+| `ecg-rr-min` | 300 ms | Minimum plausible RR interval |
+| `ecg-rr-max` | 2000 ms | Maximum plausible RR interval |
+| `ecg-rr-prop` | 0.20 | Epoch flagged if this fraction of RR intervals are implausible |
+| `ecg-min-beats` | 5 | Epoch flagged if fewer than this many R-peaks detected |
+| `ecg-ln-th` | 0.40 | Line noise epoch flagged if max(P50, P60) / P[5–25 Hz] exceeds this |
+| `ecg-add-peaks` | off | Attach R-peak locations as EDF+ annotations (`qc-ecg-peak`) |
+| `ecg-flag-prop` | 0.5 | Channel FLAGGED if this fraction of epochs are bad |
+| `ecg-flag-run` | 3600 s | Channel FLAGGED if contiguous bad run ≥ this many seconds |
+
+<h4>EOG parameters</h4>
+
+| Parameter | Default | Description |
+|---|---|---|
+| `eog-min-sr` | 32 Hz | Minimum sample rate |
+| `eog-flat-th` | 3.0 µV | Epoch flagged if SD below this |
+| `eog-amp-th` | 700 µV | Extreme amplitude threshold |
+| `eog-amp-prop` | 0.05 | Epoch flagged if this fraction of samples exceed the amplitude threshold |
+| `eog-hf-lo` | 20 Hz | HF power band lower bound |
+| `eog-hf-hi` | 40 Hz | HF power band upper bound |
+| `eog-sig-lo` | 0.3 Hz | Reference signal band lower bound |
+| `eog-sig-hi` | 20 Hz | Reference signal band upper bound |
+| `eog-hf-th` | 1.5 | Epoch flagged if P[HF] / P[signal] exceeds this ratio |
+| `eog-hjorth-lo` | 0.5 Hz | Pre-filter lower cutoff |
+| `eog-hjorth-hi` | 20 Hz | Pre-filter upper cutoff |
+| `eog-hjorth-z` | 10.0 | \|Robust z\| threshold for Hjorth outlier |
+| `eog-ln-th` | 0.30 | Line noise epoch flagged if max(P50, P60) / P[broadband] exceeds this |
+| `eog-flag-prop` | 0.5 | Channel FLAGGED if this fraction of epochs are bad |
+| `eog-flag-run` | 3600 s | Channel FLAGGED if contiguous bad run ≥ this many seconds |
+
+<h3>Output</h3>
+
+Output strata: `CH × DOMAIN` (summary), `CH × DOMAIN × WIN` (per-epoch, with `epoch` option)
+
+<h4>Cross-domain summary (CH × DOMAIN)</h4>
+
+| Variable | Description |
+|---|---|
+| `FLAGGED` | Channel flagged as bad in this domain (0/1) |
+| `LOW_SR` | Channel skipped due to insufficient sample rate (RESP only; implies FLAGGED=1) |
+| `N_FLAG_EPOCH` | Number of flagged epochs |
+| `MAX_FLAG_RUN` | Longest contiguous run of flagged epochs (seconds) |
+| `LN_FLAG` | Channel flagged for line noise (0/1); EEG/EMG/ECG/EOG only |
+| `MAX_LN_RUN` | Longest contiguous line-noise run (seconds) |
+
+<h4>EEG channel summary (CH × EEG)</h4>
+
+| Variable | Description |
+|---|---|
+| `FLAGGED` | Channel flagged as bad (0/1) |
+| `P_FLAT` | Proportion of flatline epochs |
+| `P_CLIP` | Proportion of clipped epochs |
+| `P_AMP` | Proportion of extreme-amplitude epochs |
+| `P_HF` | Proportion of HF-contamination epochs |
+| `P_PEAK` | Proportion of spectral peakedness flagged epochs |
+| `P_HJORTH` | Proportion of Hjorth outlier epochs |
+| `P_LN` | Proportion of line-noise epochs (does not affect FLAGGED) |
+| `LN_FLAG` | Channel flagged for excessive line noise (0/1) |
+
+<h4>EEG per-epoch (CH × EEG × WIN)</h4>
+
+| Variable | Description |
+|---|---|
+| `SD` | Epoch standard deviation (µV) |
+| `HF_RATIO` | Ratio of HF band to signal band power |
+| `LN_RATIO` | Ratio of line-noise band to broadband power |
+| `SPK` | Spectral peakedness: total variation of detrended log-PSD residuals |
+| `KURT` | Spectral kurtosis: excess kurtosis of detrended log-PSD residuals |
+| `ACT` | Hjorth activity on bandpass-filtered signal |
+| `CPLX` | Hjorth complexity on bandpass-filtered signal |
+| `FLAT` / `CLIP` / `AMP` / `HF` / `LN` / `PEAK` / `HJORTH` | Per-criterion flags (0/1) |
+| `FLAG_EPOCH` | Epoch flagged as bad (0/1); excludes line noise |
+
+ECG per-epoch additionally includes `NP` (R-peak count), `HR` (bpm), `RR` (mean RR in ms), `P_RR` (fraction implausible RR), and `RR_FLAG`.
+
+<h3>Example</h3>
+
+```
+% Re-reference EEG and EOG channels
+REFERENCE sig=C3 ref=A2
+REFERENCE sig=C4 ref=A1
+REFERENCE sig=LOC ref=A2
+REFERENCE sig=ROC ref=A2
+
+% Set channel variables
+${eeg=C3,C4}
+${eog=LOC,ROC}
+${emg=EMG12,EMG13}
+${ecg=ECG}
+${resp=AIRFLOW,THOR_EFFORT,ABDO_EFFORT}
+${oxygen=SpO2}
+
+% Restrict to scored sleep epochs only
+MASK if=W
+RE
+
+% Run multi-domain QC
+% ecg-add-peaks attaches R-peak annotations; epoch emits per-epoch metrics
+QC eeg=${eeg} eog=${eog} emg=${emg} ecg=${ecg} resp=${resp} oxy=${oxygen} ecg-add-peaks epoch
+```
+
+
+## EDGER
+
+_Utility to identify likely artifactual leading/trailing intervals_
+
+Unattended PSGs often have considerable periods of noisy signal,
+especially at the start and/or end of recordings.  For example, 
+recording devices may be programmed to start/stop recording
+at fixed times and may therefore continue recording even after electrodes
+have been removed.  Further, unattended recordings often do not
+contain accurate lights off/on markers, meaning that such regions
+cannot necessarily be excluded based _a priori_ (i.e. based
+on lights off/on annotations).
+
+As one example (from the NSRR), clearly just eyeballing these data, the last third of the
+recording (for this channel at least) is pure noise:
+
+![img](../img/edger1.png)
+
+If not excluded manually during staging/EDF export, etc, it can be
+cumbersome for these periods to be included in downstream datasets:
+
+ - they unnecessarily increase file size/processing time
+
+ - often, these leading/trailing regions contain signals with
+   excessively high (or low) amplitudes and/or variances, which 
+   can impact certain types of analysis, including automated sleep
+   staging approaches if they normalize inputs across 
+   the whole recording (as Luna's [`POPS`](pops.md) does): this can
+   adversely impact the "true" or _physiologic_ period of the recording,
+   e.g. artificially restricting the range 
+
+The `EDGER` command attempts to define such regions - with a
+particular focus on finding contiguous intervals of leading and
+trailing artifact, distinct from noise occurring within the main
+portion of the recording.  It also attempts to empirically define
+lights on/lights off times (or at least likely specific if not
+sensitive flagging of Lights On epochs).
+In principle, the behavior of `EDGER` would be very
+simple to do _by eye_ via manual analysis: the goal here
+is to have something automated and reproducible.
+
+<h4>Heuristic</h4>
+
+`EDGER` uses a simple heuristic based on epochwise [Hjorth
+parameters](summaries.md#sigstats).  For a single (EEG) channel, this plots
+the three parameters for a recording, showing a clear region at the end of the recording
+with excessively high amplitude (H1, on a log-scale) and low complexity (H3): 
+
+![img](../img/edger2.png)
+
+`EDGER` defines trailing/leading periods that are outliers as follows:
+if epochs are flagged as "good" or "bad" based on Hjorth-parameter
+thresholds, it defines a window that _maximizes both the mean and
+total number of bad epochs at the edge_:
+
+![img](../img/edger3.png)
+
+The above plot considers only the trailing window: a putative bad
+region is defined as that which maximizes the square of the count of
+bad epochs, divided by the number of epochs considered, moving out
+from the final epoch, to the last 2, then last 3, etc.  Applied to
+real data, the middle panel shows this statistic and the maximum (red
+line):
+
+![img](../img/edger4.png)
+
+In practice, `EDGER` performs the following steps:
+
+ - smooths the epochwise `0/1` "artifact vector" before
+   selecting the cut-point, using a moving average with width +/-2mins
+   (i.e. a nine epoch window centered on each epoch).
+
+ - it then flags epochs that are +/-3 SD units from the median
+   (`th=2`) for either H1 or H3. _If the recording has sleep staging
+   present_, the SD estimate is based only on sleep epochs. Otherwise
+   (or the option `all` is given), it uses all epochs to
+   estimate the median/SD.
+
+ - optionally, it can consider only leading or only trailing periods
+   (`only-start` or `only-end` flags)
+
+ - if it encounters more than 10 minutes (20 epochs, which can be set
+   with `allow=20`) of "clean" data then do not flag any further
+   beyond that point; _the goal is to set lights off/on, rather than
+   flag generically "bad data"_
+   
+ - if the maximum statistic implies fewer than 10 epochs (set with
+    `req=10`) it will not set lights off/on annotations; i.e. if only
+    a minor change would be made, it is not worth bothering, so leave as is
+ 
+ - if using multiple signals, it estimates statistics separately
+    for each, then picks the earliest `lights-off` and the latest
+    `lights-on` 
+
+ - if `cache=<name>` is specified, this saves the estimates of
+  `lights-off` and `lights-on` to the cache, in such a way that
+  `HYPNO`, `STAGE`, `POPS` and `SOAP` will automatically use them to
+  set epochs to `L` as appropriate.
+
+ - if the `mask` option is specified, then it will additionally set
+   the epoch `MASK` to flag lights-on epochs; running a subsequent `RE`
+   command would then mask out (remove from the in-memory EDF) those
+   epochs
+
+
+<h3>Parameters</h3>
+
+| Parameter | Example | Description |
+| --- | --- |----|
+| `sig` | `C3,C4`  |Restrict analysis to these channels | 
+| `mask` | | Set the epoch _mask_ based on detected edges (i.e. for subsequent `RE`) | 
+| `cache` | `c1` | Saves the estimates of “lights-off” and “lights-on” such that HYPNO/STAGE/POPS/SOAP can use them to define. |
+| | | 
+| `only-start` | | Only consider leading artifact |
+| `only-end` | | Only consider trailing artifact |
+| `allow` | `allow=20` | By default, do not allow more than 20 epochs of (10 mins) 'good' data at either end  |
+| `req` | `req=10` | By default, require equivalent of 10 epochs of bad data to be flagged | 
+| `w` | `w=9` | By default, smoothing window (total window, in epochs) - otherwise, 4 epochs either side (`w=9`) | 
+| `all` | | Use all epochs to norm metrics (default: sleep only) |
+| `wake` | | Use only wake epochs to norm metrics (default: sleep only) |
+| `h2` | | Include second Hjorth parameter (default is not to) |
+| `epoch` | | Give epoch-level output information (same as `verbose`) |
+
+<h3>Output</h3>
+
+Individual-level summaries (strata: _none_):
+
+| Variable | Description |
+| --- | --- |
+| `EOFF` | Epoch for lights off, if set (i.e. leading period trimming) |
+| `LOFF` | Clock-time for lights off, if set (i.e. leading period trimming) |
+| `EON` | Epoch for lights on, if set (i.e. trailing period trimming) |
+| `LON` | Clock-time for lights on, if set (i.e. trailing period trimming) |
+
+Channel-level summaries (strata: `CH`):
+
+| Variable | Description |
+| --- | --- |
+| `EOFF` | Epoch for lights off, if set, from this channel |
+| `EON` | Epoch for lights on, if set, from this channel |
+
+Epoch-level summaries (options: `epoch` or `verbose`; strata: `E` x `CH`):
+
+| Variable | Description |
+| --- | --- |
+| `H1` | First Hjorth statistic |
+| `H2` | Second Hjorth statistic (if `h2` set) |
+| `H3` | Third Hjorth statistic |
+| `FLAG` | Indicator of whether epoch is "bad" (0=good/1=bad) | 
+| `STAT` | Smoothed flag (0/1) indicator | 
+| `XON` | Primary statistic to determine lights on (trailing artifact) | 
+| `XOFF` | Primary statistic to determine lights off (leading artifact) | 
+| `TRIM` | Indicator (0/1) for whether this epoch should be trimmed | 
+
+<h3>Examples</h3>
+
+Based on the second individual from the [tutorial](../tut/tut1.md) dataset:
+
+```
+luna s.lst 2 -o out.db -s ' EDGER sig=EEG epoch cache=c1 & HYPNO cache=c1 '
+```
+```
+ CMD #1: EDGER
+   options: cache=c1 epoch sig=EEG
+  set epochs to default 30 seconds, 1195 epochs
+  skipping... cache c1 not found for this individual...
+  set 0 leading/trailing sleep epochs to '?' (given end-wake=120 and end-sleep=5)
+  anchoring on sleep epochs only for normative ranges, using 715 of 1195 epochs
+  for EEG, flagged 279 epochs (H1=279, H3=0)
+  H(1) bounds: 3.58692 .. 7.11721
+  H(3) bounds: 0.411734 .. 2.39102
+  setting cache c1 to store times
+  lights-on=05.14.35 (skipping 241 epochs from end)
+
+..................................................................
+ CMD #2: HYPNO
+   options: cache=c1 sig=*
+  from TRIM cache, setting lights_on = 28590 secs, 476.5 mins from start
+  set 242 final epochs to L based on a lights_on time of 28590 seconds from EDF start
+  set 0 leading/trailing sleep epochs to '?' (given end-wake=120 and end-sleep=5)
+```
+
+In the above example, `EDGER` identifies over 200 epochs to skip,
+setting `lights-on` to 5:14:35am.  As `HYPNO` is passed the `cache`
+option, it searches for `lights-on` (and also `lights-off`) values,
+and, if they exist, it will set epochs to `L` as appropriate.
+
+!!! warning "Recordings with very extended periods of artifact"
+    Note, in cases with very extended periods of artifact (e.g. at an extreme, could be longer than the sleep/clean period),
+    this approach (based on statistical outliers) may fail to flag those regions with default setting, or if not anchored on
+    pre-staged sleep epochs.  For example, this recording has more than 12 hours of artifact: 
+
+    ![img](../img/edger5.png)
+
+    With default settings, it correctly flags this period (as the default leverages sleep staging to normalize the metrics):
+    ```
+    lights-on=06.00.04 (skipping 1419 epochs from end)
+    ```
+    However, if applied to all epochs (adding `all`) as would be the case if staging were not available, then 
+    ```
+    no trimming indicated: did not alter lights-off or lights-on times
+    ```
+
 
 ## CHEP-MASK
 
@@ -61,8 +634,8 @@ Core parameters:
 | Parameter | Example | Description |
 | --- | --- | --- |
 | `sig`     | `sig=C3,F3` | Restrict analysis to these channels | 
-| `ep-th` | `ep-th=3,3` | SD-unit threshold(s) for Hjorth within-channel/between-epoch outlier detection |x
-| `ch-th` | `ch-th=2` | SD-unit threshold(s) for Hjorth between-channel/within-epoch outlier detection |x
+| `ep-th` | `ep-th=3,3` | SD-unit threshold(s) for Hjorth within-channel/between-epoch outlier detection |
+| `ch-th` | `ch-th=2` | SD-unit threshold(s) for Hjorth between-channel/within-epoch outlier detection |
 | `chep-th` | `chep-th=5` | SD-unit threshold(s) for Hjorth general outlier detection |
 
 
@@ -153,7 +726,7 @@ flagged epochs (with `RE`) is that it provides more flexibility to
 design artifact detection workflows that are suitable to different
 types of data/different modes of artifact.
 
-Finally, the see the underlying Hjorth statistics used in the outlier
+Finally, to see the underlying Hjorth statistics used in the outlier
 detection, you would need to use the
 [`SIGSTATS`](summaries.md#sigstats) command:
 
@@ -168,9 +741,11 @@ We first extract epoch-level output (i.e. stratified by `E` as well as
 destrat hjorth.db +SIGSTATS -r CH E > stats.txt
 ```
 
-We can also pull the epochs actually masked, from the above run: ```
-destrat out.db +DUMP-MASK -r E > masked.txt ``` Both these files have
-1364 rows (plus a header), corresponding to the number of epochs in
+We can also pull the epochs actually masked, from the above run:
+```
+destrat out.db +DUMP-MASK -r E > masked.txt
+```
+Both these files have 1364 rows (plus a header), corresponding to the number of epochs in
 the original data.  We can then use a package such as R to load and
 plot these data.  For example, from the R command line:
 
@@ -208,6 +783,7 @@ electrodes were removed from the scalp). As expected, these have been
 flagged as likely artifact.
 
 
+
 ## ARTIFACTS
 
 _Applies an artifact detection algorithm for EEG data_
@@ -215,7 +791,7 @@ _Applies an artifact detection algorithm for EEG data_
 This command applies the method described in [Buckelmueller et
 al](https://www.ncbi.nlm.nih.gov/pubmed/16388912), to detect likely
 artifacts in an EEG channel. Briefly, the method takes 10 4-second
-windows for each 30-second epoch to estimates delta (0.6 to 4.6 Hz)
+windows for each 30-second epoch to estimate delta (0.6 to 4.6 Hz)
 and beta (40-60Hz) spectral power, using 
 [Welch's method](https://en.wikipedia.org/wiki/Welch%27s_method).  Based
 on a sliding window of 15 epochs (i.e. seven either side of each
@@ -305,11 +881,112 @@ easier to spot by eye, and is flagged by `SIGSTATS`. In practice,
 running multiple artifact detection/correction routines is usually
 warranted.
 
+
+## POL
+
+_Signal polarity diagnostics_
+
+`POL` evaluates whether an EEG-like signal appears to have the
+expected polarity by comparing upward and downward half-waves after
+slow-band filtering. It is intended as a diagnostic command to flag
+channels whose sign may be inverted, or whose slow-wave morphology is
+atypical.
+
+The default method band-pass filters the signal, extracts candidate
+half-waves above a threshold, and compares the resulting upper and
+lower semi-signals using Hjorth summaries and relative spectral power.
+This is the same general heuristic described in the [polarity
+vignette](../vignettes/nsrr-polarity.md). In practice, `POL` is most
+useful on sleep EEG after restricting to NREM epochs and after basic
+artifact handling.
+
+<h3>Parameters</h3>
+
+Primary parameters:
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `sig` | `sig=C3,C4` | Signals to analyze |
+| `th` | `th=1` | SD threshold for selecting candidate half-waves |
+| `flim` | `flim=15` | Upper frequency limit for spectral summaries |
+| `f-lwr` | `f-lwr=0.5` | Lower band-pass frequency |
+| `f-upr` | `f-upr=4` | Upper band-pass frequency |
+
+Secondary parameters:
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `not-zc2zc` | `not-zc2zc` | Do not force extraction to span zero-crossing to zero-crossing |
+| `not-mirror` | `not-mirror` | Do not mirror opposite-polarity segments before comparison |
+| `double` | `double` | Use doubled upward segments instead of mirrored segments |
+| `raw` | `raw` | Use the raw signal rather than the band-passed signal for selected summaries |
+| `d-mode` | `d-mode` | Compare upward versus downward segments rather than positive versus negative signal portions |
+
+Notes:
+
+- By default, `POL` extracts thresholded half-waves from a 0.5 to 4 Hz band-passed signal and compares mirrored positive and negative segments.
+- `d-mode` changes the comparison from positive-versus-negative polarity to rising-versus-falling delta half-waves. In this mode, Luna also reports separate `UP_*` and `DOWN_*` summaries.
+- `double` and `d-mode` cannot be combined.
+
+<h3>Output</h3>
+
+Channel-level polarity summary (strata: `CH`)
+
+| Variable | Description |
+| --- | --- |
+| `UP_TIME` | Mean duration of upward half-waves |
+| `DOWN_TIME` | Mean duration of downward half-waves |
+| `MN` | Mean signal-level summary |
+| `MD` | Median signal-level summary |
+| `T_DIFF` | t-statistic comparing upward versus downward signal level |
+| `T_H1` | t-statistic comparing Hjorth activity |
+| `T_H2` | t-statistic comparing Hjorth mobility |
+| `T_H3` | t-statistic comparing Hjorth complexity |
+| `UP_H1` | Mean upward Hjorth activity (`d-mode` only) |
+| `UP_H2` | Mean upward Hjorth mobility (`d-mode` only) |
+| `UP_H3` | Mean upward Hjorth complexity (`d-mode` only) |
+| `DOWN_H1` | Mean downward Hjorth activity (`d-mode` only) |
+| `DOWN_H2` | Mean downward Hjorth mobility (`d-mode` only) |
+| `DOWN_H3` | Mean downward Hjorth complexity (`d-mode` only) |
+| `N_H` | Number of half-wave comparisons used for time-domain summaries |
+| `N_FFT` | Number of half-wave comparisons used for spectral summaries |
+
+Frequency-specific polarity summary (strata: `CH` x `F`)
+
+| Variable | Description |
+| --- | --- |
+| `T_RELPSD` | t-statistic comparing relative PSD |
+| `UP_PSD` | Mean upward PSD (`d-mode` only) |
+| `DOWN_PSD` | Mean downward PSD (`d-mode` only) |
+| `UP_RELPSD` | Mean upward relative PSD (`d-mode` only) |
+| `DOWN_RELPSD` | Mean downward relative PSD (`d-mode` only) |
+
+Implementation note:
+
+- `cmddefs.cpp` declares `T_PSD`, but the current `polarity.cpp` path does not emit it.
+
+<h3>Example</h3>
+
+After restricting to sleep EEG and setting epochs, a typical use is:
+
+```
+luna s.lst sig=C3,C4 -o out.db -s 'MASK ifnot=NREM & RE & EPOCH & POL sig=C3,C4 flim=15'
+```
+
+This runs the default polarity heuristic on the retained NREM data and
+reports channel-level and frequency-specific summary statistics. See
+the [polarity vignette](../vignettes/nsrr-polarity.md) for the
+underlying rationale and examples of how to interpret the resulting
+profiles.
+
+---
+
+
 ## LINE-DENOISE
 
 _Attempt to attenuate electrical line noise at fixed frequencies, via spectrum interpolation_
 
-This command implements a spectrum interpolation approch to correcting
+This command implements a spectrum interpolation approach to correcting
 certain types of line noise in EEG or other signals, following the
 approach described
 [here](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6456018/).
@@ -342,7 +1019,7 @@ No output, just modifies the internal signals.
 Here is one example recording with considerable line noise: the raw
 signal (left panel) for a single epoch, and the equivalent frequency
 spectrum up to 128 Hz (right panel).  As well as line noise at 60 Hz, there are
-clear sub-harmonics at 4 Hz intervals, from which extend down into the
+clear sub-harmonics at 4 Hz intervals, which extend down into the
 regions typically considered of high physiological relevance for the
 sleep EEG, i.e. < 20 Hz.
 
@@ -396,6 +1073,7 @@ some cases.
 
 
 
+
 ## SUPPRESS-ECG
 
 _Given an ECG channel, detect R peaks and subtract cardiac-related contamination from the EEG_
@@ -415,7 +1093,7 @@ similar sampling rates (to be set to the value of the parameter `sr`).
 | Parameter | Example | Description |
 | ---- | ----- | ----- |
 | `ecg` | `ecg=ECG` | Specify which channel is the ECG |
-| `sr` | `sr=125` | Set the sample rate that all channels should to resampled to |
+| `sr` | `sr=125` | Set the sample rate that all channels should be resampled to |
 | `no-suppress` | `no-suppress` | Run the command but do not alter any EEG channels |
 
 <h3>Output</h3>
@@ -520,11 +1198,12 @@ which is not a primary focus of Luna.  Other artifacts may well remain
 other datasets.  That is, as usual, your mileage may vary...
 
 !!! hint 
-    When comparing different individual or signals, the `ART_RMS`
+    When comparing different individuals or signals, the `ART_RMS`
     metric can be taken as an approximate guide to the relative extent
     of contamination.  The actual _signatures_ (i.e. the R-peak
     sync'ed averaged EEG) can be viewed by looking at the `ART`
     variable, which is a channel by sample-point (`CH` x `SP`) metric.
+
 
 
 ## ALTER
@@ -555,11 +1234,11 @@ All sample rates must be similar for `sig` and `corr` channels.
 
 !!! note
     This command is explicitly called _ALTER_ rather than _CORRECT_ or some such...   That is,
-    depending on the the nature of the signals and the artifact, there is no guarantee that this approach will
+    depending on the nature of the signals and the artifact, there is no guarantee that this approach will
     correctly remove the true, underlying sources of artifact.
 
 
-<h3>Paramters</h3>
+<h3>Parameters</h3>
 
 | Option | Example | Description |
 | ---- | ---- | ---- |
@@ -629,7 +1308,7 @@ original signal, `S1`.
 Looking at the coherence statistics from [`COH`](cc.md#coh), we see a
 _very_ strong source of contamination around 25 Hz, which is the
 frequency of the simulated `X1` artifact signal.  This has effectively
-been completely removed in the altered signal (cohernece between `S3`
+been completely removed in the altered signal (coherence between `S3`
 and `X1`).  Note that some coherence values are not defined here, as
 the power for the (artificial) `X1` signal (a simple sine wave) is
 effectively zero there, meaning that the coherence statistic is not
@@ -686,303 +1365,3 @@ luna tmp1/cfs-visit5-800002.edf -o out.db alias="S1|C3" \
        PSD spectrum max=50 dB '
 
 --->
-
-## EDGER
-
-_Utility to identify likely arfifactual leading/trailing intervals_
-
-Unattended PSGs often have considerable periods of noisy signal,
-especially at the start and/or end of recordings.  For example, 
-recording devices may be programmed to starts/stop recording
-at fixed times and may therefore continue recording even after electrodes
-have been removed.  Further, unattended recordings often do not
-contain accurate lights off/on markers, meaning that such regions
-cannot necessarily be excluded based _a priori_ (i.e. based
-on lights off/on annotations).
-
-As one example (from the NSRR), clearly just eyeballing these data, the last third of the
-recording (for this channel at least) is pure noise:
-
-![img](../img/edger1.png)
-
-If not excluded manually during staging/EDF export, etc, it can be
-cumbersome for these periods to be included in downstream datasets:
-
- - they unnecessarily increase file size/processing time
-
- - often, these leading/trailing regions contain signals with
-   excessively high (or low) amplitudes and/or variances, which 
-   can impact certain types of analysis, including automated sleep
-   staging approaches if they normalize inputs across 
-   the whole recording (as Luna's [`POPS`](pops.md) does): this can
-   adversely impact the "true" or _physiologic_ period of the recording,
-   e.g. artificially restricting the range 
-
-The `EDGER` command attempts to define such regions - with a
-particular focus on finding contiguous intervals of leading and
-trailing artifact, distinct from noise occurring within the main
-portion of the recording.  It also attempts to empirically define
-lights on/lights off times (or at least likely specific if not
-sensitive flagging of Lights On epochs).
-In principle, the behavior of `EDGER` would be very
-simple to do _by eye_ via manual analysis: the goal here
-is to have something automated and reproducible.
-
-<h4>Heuristic</h4>
-
-`EDGER` uses a simple heuristic based on epochwise [Hjorth
-parameters](summaries.md#sigstats).  For a single (EEG) channel, this plots
-the three parameters for a recording, showing a clear region at the end of the recording
-with excessively high amplitude (H1, on a log-scale) and low complexity (H3): 
-
-![img](../img/edger2.png)
-
-`EDGER` defines trailing/leading periods that are outliers as follows:
-if epochs are flagged as "good" or "bad" based on Hjorth-parameter
-thresholds, it defines a window that _maximizes both the mean and
-total number of bad epochs at the edge_:
-
-![img](../img/edger3.png)
-
-The above plot considers only the trailing window: a putative bad
-region is defined as that which maximizes the square of the count of
-bad epochs, divided by the number of epochs considered, moving out
-from the final epoch, to the last 2, then last 3, etc.  Applied to
-real data, the middle panel shows this statistic and the maximum (red
-line):
-
-![img](../img/edger4.png)
-
-In practice, `EDGER` performs the following steps:
-
- - smooths the epochwise `0/1` "artifact vector" before
-   selecting the cut-point, using a moving average with width +/-2mins
-   (i.e. a nine epoch window centered on each epoch).
-
- - it then flags epochs that are +/-3 SD units from the median
-   (`th=2`) for either H1 or H3. _If the recording has sleep staging
-   present_, the SD estimate is based only on sleep epochs. Otherwise,
-   otherwise (or the option `all` is given) it uses all epochs to
-   estimate the median/SD.
-
- - optionally, it can consider only leading or only trailing periods
-   (`only-start` or `only-end` flags)
-
- - if it encouters more than 10 minutes (20 epochs, which can be set
-   with `allow=20`) of "clean" data then do not flag any further
-   beyond that point; _the goal is to set lights off/on, rather than
-   flag generically "bad data"_
-   
- - if the maximum statistic implies fewer than 10 epochs (set with
-    `req=10`) it will not set lights off/on annotations; i.e. if only
-    a minor change would be made, it is not worth bothering, so leave as is
- 
- - if using multiple signals, it estimates statistics separately
-    for each, then picks the earliest `lights-off` and the latest
-    `lights-on` 
-
- - if `cache=<name>` is specified, this saves the estimates of
-  `lights-off` and `lights-on` to the cache, in such a way that
-  `HYPNO`, `STAGE`, `POPS` and `SOAP` will automatically use them to
-  set epochs to `L` as appropriate.
-
- - if the `mask` option is specified, then it will additionally set
-   the epoch `MASK` to flag lights-on epochs; running a subsequent `RE`
-   command would then mask out (remove from the in-memory EDF) those
-   epochs
-
-
-<h3>Parameters</h3>
-
-| Parameter | Example | Description |
-| --- | --- |----|
-| `sig` | `C3,C4`  |Restrict analysis to these channels | 
-| `mask` | | Set the epoch _mask_ based on detected edges (i.e. for subsequent `RE`) | 
-| `cache` | `c1` | Saves the estimates of “lights-off” and “lights-on” such that HYPNO/STAGE/POPS/SOAP can use them to define. |
-| | | 
-| `only-start` | | Only consider leading artifact |
-| `only-end` | | Only consider trailing artifact |
-| `allow` | `allow=20` | By default, do not allow more than 20 epochs of (10 mins) 'good' data at either end  |
-| `req` | `req=10` | By default, require equivalent of 10 epochs of bad data to be flagged | 
-| `w` | `w=9` | By default, smoothing window (total window, in epochs) - otherwise, 4 epochs either side (`w=9`) | 
-| `all` | | Use all epochs to norm metrics (default: sleep only) |
-| `wake` | | Use only wake epochs to norm metrics (default: sleep only) |
-| `h2` | | Include second Hjorth parameter (default is not to) |
-| `epoch` | | Given output level information (same as `verbose`) |
-
-<h3>Output</h3>
-
-Individual-level summaries (strata: _none_):
-
-| Variable | Description |
-| --- | --- |
-| `EOFF` | Epoch for lights off, if set (i.e. leading period trimming) |
-| `LOFF` | Clock-time for lights off, if set (i.e. leading period trimming) |
-| `EON` | Epoch for lights on, if set (i.e. trailing period trimming) |
-| `LON` | Clock-time for lights on, if set (i.e. trailing period trimming) |
-
-Channel-level summaries (strata: `CH`):
-
-| Variable | Description |
-| --- | --- |
-| `EOFF` | Epoch for lights off, if set, from this channel |
-| `EON` | Epoch for lights on, if set, from this channel |
-
-Epoch-level summaries (options: `epoch` or `verbose`; strata: `E` x `CH`):
-
-| Variable | Description |
-| --- | --- |
-| `H1` | First Hjorth statistic |
-| `H2` | Second Hjorth statistic (if `h2` set) |
-| `H3` | Third Hjorth statistic |
-| `FLAG` | Indicator of whether epoch is "bad" (0=good/1=bad) | 
-| `STAT` | Smoothed flag (0/1) indicator | 
-| `XON` | Primary statistic to determine lights on (trailing artifact) | 
-| `XOFF` | Primary statistic to determine lights off (leading artifact) | 
-| `TRIM` | Indicator (0/1) for whether this epoch should be trimmed | 
-
-<h3>Examples</h3>
-
-Based on the second individual from the [tutorial](../tut/tut1.md) dataset:
-
-```
-luna s.lst 2 -o out.db -s ' EDGER sig=EEG epoch cache=c1 & HYPNO cache=c1 '
-```
-```
- CMD #1: EDGER
-   options: cache=c1 epoch sig=EEG
-  set epochs to default 30 seconds, 1195 epochs
-  skipping... cache c1 not found for this individual...
-  set 0 leading/trailing sleep epochs to '?' (given end-wake=120 and end-sleep=5)
-  anchoring on sleep epochs only for normative ranges, using 715 of 1195 epochs
-  for EEG, flagged 279 epochs (H1=279, H3=0)
-  H(1) bounds: 3.58692 .. 7.11721
-  H(3) bounds: 0.411734 .. 2.39102
-  setting cache c1 to store times
-  lights-on=05.14.35 (skipping 241 epochs from end)
-
-..................................................................
- CMD #2: HYPNO
-   options: cache=c1 sig=*
-  from TRIM cache, setting lights_on = 28590 secs, 476.5 mins from start
-  set 242 final epochs to L based on a lights_on time of 28590 seconds from EDF start
-  set 0 leading/trailing sleep epochs to '?' (given end-wake=120 and end-sleep=5)
-```
-
-In the above example, `EDGER` identifies over 200 epochs to skip,
-setting `lights-on` to 5:14:35am.  As `HYPNO` is passed the `cache`
-option, it searches for `lights-on` (and also `lights-off`) values,
-and, if they exist, it will set epochs to `L` as appropriate.
-
-!!! warning "Recordings with very extended periods of artifact"
-    Note, in cases with very extended periods of artifact (e.g. at an extreme, could be longer than the sleep/clean period),
-    this approach (based on statistical outliers) may fail to flag those regions with default setting, or if not anchored on
-    pre-staged sleep epochs.  For example, this recording has more than 12 hours of artifact: 
-
-    ![img](../img/edger5.png)
-
-    With default settings, it correctly flags this period (as the default leverages sleep staging to normalize the metrics):
-    ```
-    lights-on=06.00.04 (skipping 1419 epochs from end)
-    ```
-    However, if applied to all epochs (adding `all`) as would be the case if staging were not available, then 
-    ```
-    no trimming indicated: did not alter lights-off or lights-on times
-    ```
-
-## POL
-
-_Signal polarity diagnostics_
-
-`POL` evaluates whether an EEG-like signal appears to have the
-expected polarity by comparing upward and downward half-waves after
-slow-band filtering. It is intended as a diagnostic command to flag
-channels whose sign may be inverted, or whose slow-wave morphology is
-atypical.
-
-The default method band-pass filters the signal, extracts candidate
-half-waves above a threshold, and compares the resulting upper and
-lower semi-signals using Hjorth summaries and relative spectral power.
-This is the same general heuristic described in the [polarity
-vignette](../vignettes/nsrr-polarity.md). In practice, `POL` is most
-useful on sleep EEG after restricting to NREM epochs and after basic
-artifact handling.
-
-<h3>Parameters</h3>
-
-Primary parameters:
-
-| Parameter | Example | Description |
-| --- | --- | --- |
-| `sig` | `sig=C3,C4` | Signals to analyze |
-| `th` | `th=1` | SD threshold for selecting candidate half-waves |
-| `flim` | `flim=15` | Upper frequency limit for spectral summaries |
-| `f-lwr` | `f-lwr=0.5` | Lower band-pass frequency |
-| `f-upr` | `f-upr=4` | Upper band-pass frequency |
-
-Secondary parameters:
-
-| Parameter | Example | Description |
-| --- | --- | --- |
-| `not-zc2zc` | `not-zc2zc` | Do not force extraction to span zero-crossing to zero-crossing |
-| `not-mirror` | `not-mirror` | Do not mirror opposite-polarity segments before comparison |
-| `double` | `double` | Use doubled upward segments instead of mirrored segments |
-| `raw` | `raw` | Use the raw signal rather than the band-passed signal for selected summaries |
-| `d-mode` | `d-mode` | Compare upward versus downward segments rather than positive versus negative signal portions |
-
-Notes:
-
-- By default, `POL` extracts thresholded half-waves from a 0.5 to 4 Hz band-passed signal and compares mirrored positive and negative segments.
-- `d-mode` changes the comparison from positive-versus-negative polarity to rising-versus-falling delta half-waves. In this mode, Luna also reports separate `UP_*` and `DOWN_*` summaries.
-- `double` and `d-mode` cannot be combined.
-
-<h3>Output</h3>
-
-Channel-level polarity summary (strata: `CH`)
-
-| Variable | Description |
-| --- | --- |
-| `UP_TIME` | Mean duration of upward half-waves |
-| `DOWN_TIME` | Mean duration of downward half-waves |
-| `MN` | Mean signal-level summary |
-| `MD` | Median signal-level summary |
-| `T_DIFF` | t-statistic comparing upward versus downward signal level |
-| `T_H1` | t-statistic comparing Hjorth activity |
-| `T_H2` | t-statistic comparing Hjorth mobility |
-| `T_H3` | t-statistic comparing Hjorth complexity |
-| `UP_H1` | Mean upward Hjorth activity (`d-mode` only) |
-| `UP_H2` | Mean upward Hjorth mobility (`d-mode` only) |
-| `UP_H3` | Mean upward Hjorth complexity (`d-mode` only) |
-| `DOWN_H1` | Mean downward Hjorth activity (`d-mode` only) |
-| `DOWN_H2` | Mean downward Hjorth mobility (`d-mode` only) |
-| `DOWN_H3` | Mean downward Hjorth complexity (`d-mode` only) |
-| `N_H` | Number of half-wave comparisons used for time-domain summaries |
-| `N_FFT` | Number of half-wave comparisons used for spectral summaries |
-
-Frequency-specific polarity summary (strata: `CH` x `F`)
-
-| Variable | Description |
-| --- | --- |
-| `T_RELPSD` | t-statistic comparing relative PSD |
-| `UP_PSD` | Mean upward PSD (`d-mode` only) |
-| `DOWN_PSD` | Mean downward PSD (`d-mode` only) |
-| `UP_RELPSD` | Mean upward relative PSD (`d-mode` only) |
-| `DOWN_RELPSD` | Mean downward relative PSD (`d-mode` only) |
-
-Implementation note:
-
-- `cmddefs.cpp` declares `T_PSD`, but the current `polarity.cpp` path does not emit it.
-
-<h3>Example</h3>
-
-After restricting to sleep EEG and setting epochs, a typical use is:
-
-```
-luna s.lst sig=C3,C4 -o out.db -s 'MASK ifnot=NREM & RE & EPOCH & POL sig=C3,C4 flim=15'
-```
-
-This runs the default polarity heuristic on the retained NREM data and
-reports channel-level and frequency-specific summary statistics. See
-the [polarity vignette](../vignettes/nsrr-polarity.md) for the
-underlying rationale and examples of how to interpret the resulting
-profiles.

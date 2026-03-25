@@ -2,25 +2,13 @@
 
 _Self-contained modelling and evaluation of sleep staging_
 
+SOAP (__Single Observation Accuracies and Probabilities__) fits a simple discriminant model to epoch-level EEG features and observed sleep stages, providing a self-contained check of signal and staging quality: a poor model fit (low kappa) is indicative of problems with the signal or the annotations. Beyond quality control, the SOAP framework supports two additional use cases: `REBASE` translates staging from one epoch length to another (e.g. 20- to 30-second epochs) and `PLACE` localizes stage annotations whose temporal alignment with the EDF is uncertain. See also [POPS](pops.md) for fully automated staging.
 
 | Command | Description | 
 | ---- | ------ | 
 | [`SOAP`](#soap)     | Single-observation accuracies and probabilities |
 | [`REBASE`](#rebase) | Use SOAP to translate between epoch lengths (e.g. 20 to 30 second manual staging) | 
 | [`PLACE`](#place)   | Use SOAP to localize "lost" stage annotations |
-
-This suite of commands are based around the _SOAP_ (__Single
-Observation Accuracies and Probabilities__) function in Luna.  In
-brief, SOAP generates a battery of epochwise features based on one or
-more channels, and then fits a simple model (e.g. linear discriminant
-analysis) to those data, with the observed stages (i.e. passed as
-annotations) as the outcomes.  If the signal is a) of sufficient
-quality, and b) is related to observed sleep stages via the computed
-features, then SOAP should be able to generate a model that explains
-the observed stages relatively well.  This can be assessed, for example,
-via the kappa coefficient between observed and predicted stages.
-Inability to derive a good-fitting model is therefore indicative of
-problems with the stages and/or signals.
 
 !!! info
     The SOAP command requires existing stage annotation,
@@ -47,7 +35,7 @@ Outputs of this model can indicate if there is gross inconsistency
 between stage labels and signal data (assuming a signal that would be
 expected to track strongly with sleep stage, i.e. typically an EEG).
 
-The standard typical usage is very simple, as it uses a default feature/model set, i.e. something like:
+The typical usage is very simple, as it uses a default feature/model set, i.e. something like:
 
 ```
 luna s.lst -o out.db -s SOAP sig=C3_M2 
@@ -232,7 +220,7 @@ Stage-transition metrics (strata: `SS` x `ETYPE`)
 | `ACC` | Accuracy |
 | `N` | Number of observed instances
 
-Above, the `SS` factor is is sleep stage (`N1`, `N2`, etc) as well as `ALL`.
+Above, the `SS` factor is sleep stage (`N1`, `N2`, etc) as well as `ALL`.
 The `ETYPE` factor is as follows: the epoch under consideration is the second
 of the three (here labelled `A`):
 
@@ -241,7 +229,7 @@ of the three (here labelled `A`):
 | `OAO`  | All epochs, i.e. `O` means _anything_ |
 | `AAA`  | Epochs flanked by similar epochs, i.e. also `A` |
 | `AAX`  | Epochs just prior to a stage transition, i.e. `X` implies not `A` |
-| `XAA`  | Epochs just after a stage transiton |
+| `XAA`  | Epochs just after a stage transition |
 | `XAX`  | _Singleton_ epochs, i.e. with different stages before and after |
 | `TRN`  | Epochs at any type of transition (`AAX`, `XAA` or `XAX`) | 
 
@@ -319,7 +307,7 @@ Followed by the 3-class one:
         Tot:  0.50   0.10   0.40    1.00
 ```
 
-Even with this simple model, the kappa coefficients are high here,
+Even with this simple model, the kappa coefficient is high here,
 meaning that stages and signals align well.  See the above-referenced
 vignette for examples of when this is not the case.
 
@@ -413,7 +401,7 @@ _Temporally align existing staging signal data_
 
 | Option | Value | Description | 
 | -----|-----|-----|
-| `stages` | `stage.txt` | `.eannot` stype file with stage data | 
+| `stages` | `stage.txt` | `.eannot`-style file with stage data | 
 | `edf-overlap` | 0.1 | Require that at least 10% of the EDF is spanned |
 | `stg-overlap` | 0.5 | Require that at least 50% of the staging data is spanned |
 | `out` | Output the best-aligned stages to an `.eannot` of this name |
@@ -445,7 +433,7 @@ Per-putative offset output (stratum: `OFFSET`)
 | `NS` | Number of unique stages for this alignment |
 | `OLAP_EDF` | Proportion of EDF spanned |
 | `OLAP_STG` | Proportion of staging data spanned |
-| `OLAP_N` | Nember of epochs spanned |
+| `OLAP_N` | Number of epochs spanned |
 | `S` | Kappa relative to best kappa (i.e. max = 1) |
 | `S3` | 3-class kappa relative to best (i.e. max = 1) |
 | `SS` | Stage count string, e.g. `?:782,N1:1,N2:108,N3:11,R:45,W:248` |

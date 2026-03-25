@@ -2,6 +2,8 @@
 
 _Generates canonical signals for harmonized EDFs, given a set of rules_
 
+`CANONICAL` helps harmonize EDF data from different sources by mapping site-specific channel labels and conventions onto a common set of canonical signals. Given one or more definition files, the command sequentially tries to create canonical signals from existing channels, checking that channel labels, units, transducer types and sample rates satisfy the specified requirements. It is most useful in multi-cohort contexts where channel naming is inconsistent, and is the basis of the [NSRR harmonization](https://gitlab-scm.partners.org/zzz-public/nsrr/-/blob/master/common/harm-principles.md) effort.
+
 The `CANONICAL` command is designed to help when harmonizing multiple
 sets of EDFs that have different labels and conventions.  We're
 currently using this in the context of the [NSRR
@@ -62,7 +64,7 @@ main elements (a few exceptions to this are noted below):
 Rules are the meat of canonical signal definitions.  A rule follows a
 specific syntax that defines certain _requirements_ for a canonical
 signal, and optionally, may also _set_ some values for the newly
-generated signal (primarily unit and or sample rate).
+generated signal (primarily unit and/or sample rate).
 
 Rules follow a strict _space-indentation_ format.  Lines that start with:
 
@@ -128,7 +130,7 @@ canonical signal previously defined above (i.e. the last line that
 started without any space indentation):
 
  - `group:` if this is a group-specific rule, list the groups here
- - `unless:` a list of other canonical signals - this rule with be ignored if this signal has already been made
+ - `unless:` a list of other canonical signals - this rule will be ignored if this signal has already been made
  - `req:` any _requirements_ for the signal (see below)
  - `set:` options to set the sample rate and/or units of the new canonical signal
 
@@ -165,7 +167,7 @@ actually change/rescale the data themselves, unlike the `set:` sub-section, whic
 case of converting between volts, milli-volts and micro-volts - i.e. actually changing the signal, not just
 the text label in the EDF header.)
 
-In the case of voltage units, using [_variables_ as descibed below](#variables) we can write:
+In the case of voltage units, using [_variables_ as described below](#variables) we can write:
 ```
 ${volt,V,volt}
 ${mvolt,mV,millivolt,milli-volt,mvolt,m-volt}
@@ -310,9 +312,7 @@ define: EEG_right_mastoid
   sr = 128
 ```
 
-and then apply both rules, e.g. 
-
-template label, followed by one or more labels, for example:
+and then apply both rules, e.g.
 
 ```
 apply: EEG_left_mastoid C4 F4 O2
@@ -344,7 +344,7 @@ ${left_mastoid=M1,A1,M1-Ref,A1-Ref}
 ```
 
 This means that if `${left_mastoid}` is used in any subsequent rules,
-it will be expanded into `M1,A1,M1-Ref,A2-Ref`, i.e.  as if that text
+it will be expanded into `M1,A1,M1-Ref,A1-Ref`, i.e.  as if that text
 had been typed in full instead of `${left_mastoid}`.
 
 <h5>Appending values</h5>
@@ -455,7 +455,7 @@ apply: EEG_template2 C3 F3 O1 ${ref=A2,M2}
 
 ```
 
-This will generate six rules, for C4-M1, F4-M1, O2-M1 and C3-M2, F4-M2 and O2-M2.
+This will generate six rules, for C4-M1, F4-M1, O2-M1 and C3-M2, F3-M2 and O1-M2.
 
 __TODO__: give C3 C4 etc but target labels are different, e.g. C3_M2 F4_M1 etc...  e.g. pass a target label when `define:` ?
 
@@ -487,7 +487,7 @@ For the `unit` and `trans` requirement fields only:
  - a period character (`.`) means to match an empty field (null, all spaces, or already a period character).
  - an asterisk (`*`) means to match any non-empty field
 
-In this way, on can provide defaults for missing or otherwise unrecognized values.   For example:
+In this way, one can provide defaults for missing or otherwise unrecognized values.   For example:
 ```
  req:
   unit = degrees
@@ -545,7 +545,7 @@ write the rule with this latter label:
 ```
 When writing out new unit/transducer fields, these will also be sanitized as needed.
 
-Note that Luna will match in a case-insenstive manner: therefore you can just write 
+Note that Luna will match in a case-insensitive manner: therefore you can just write 
 ```
   sig = airflow
 ```
@@ -563,7 +563,7 @@ first try to make those specific channels, e.g. where
 `thermistor_names` is a variable list of labels known to match to
 thermistor channels (in practice, the first two rules would specify
 other requirements, e.g. based on units), etc.  As both thermistor and
-cannuala are measures of airflow generally, you'd only want to make
+cannula are measures of airflow generally, you'd only want to make
 the last channel if it was not possible to make either of the first
 (which are more specific).  That is, here `airflow` acts as a catch
 all to describe _some type of airflow channel_ but where the precise
@@ -690,12 +690,12 @@ C3_M2
 Here, Luna would correctly make `C3_M2` (using the mislabelled
 channel) in this special case.  As it processes the group-specific
 rule first (based on the order of the `file=` option), when it comes
-to the second generic rule, it would already have been satisifed.
+to the second generic rule, it would already have been satisfied.
 
 In this context, it is often useful to tell Luna to stop trying to make a given
 channel - for example, if you know that only group-specific rules apply, and never
 want a generic rule to be attempted.    For example, we'd want to avoid generic rules
-involving `F3` from being run for this particular study (i.e. if we knew this was a mislablled channel).
+involving `F3` from being run for this particular study (i.e. if we knew this was a mislabelled channel).
 
 This can be achieved with the special keyword `closed:` at the start of a line, followed by one or more
 canonical labels, i.e. placed in a leading group-specific definition file:
@@ -747,7 +747,7 @@ operator:
 canon <<- canon1 canon2 canon3
 ```
 where we expect `canon1`, `canon2` and `canon3` to have been defined by previous rules.  In
-this case, Luna will relabel the channels as `canon`.  If more than one or these exists in
+this case, Luna will relabel the channels as `canon`.  If more than one of these exists in
 a given EDF, then would be relabelled following Luna's standard approach to making channel labels
 unique (i.e. adding `.1`, `.2` etc):  i.e. `canon`, `canon.1` and `canon.2`. 
 
@@ -759,7 +759,7 @@ unique (i.e. adding `.1`, `.2` etc):  i.e. `canon`, `canon.1` and `canon.2`.
     according to a set of rules.  A _channel type_ is simply a label
     or annotation that is given to all channels, based on their
     channel name.  The reason for the `CANONICAL` command is that
-    often datasets (such as those in the NSRR) can EDFs with mixtures
+    often datasets (such as those in the NSRR) can contain EDFs with mixtures
     of conventions and montages.  Thus, this command is designed to be
     able to more simply, e.g., "extract a central EEG" across multiple studies.
    
@@ -769,7 +769,7 @@ unique (i.e. adding `.1`, `.2` etc):  i.e. `canon`, `canon.1` and `canon.2`.
 _Apply a set of rules from one or more canonical signal definition files_
 
 See the logic of canonical signal definitions and rules above.  To process one
-ore more definition files on a set of PSGs, use the `CANONICAL` command as below.
+or more definition files on a set of PSGs, use the `CANONICAL` command as below.
 
 
 <h3>Parameters</h3>
@@ -780,8 +780,8 @@ ore more definition files on a set of PSGs, use the `CANONICAL` command as below
 | `group`   | `SHHS` | Optionally, specify a _group_ to use |
 | `verbose` |  | (optional) verbose output in the console log |
 | `drop-originals` | | (optional) original channels are dropped from the EDF on completion | 
-| `inc` | `C3_M2,C4_M1` | Only attempt to make these canonincal signals |
-| `exc` | `C3_M2,C4_M1` | Do not attempt to make these canonincal signals |
+| `inc` | `C3_M2,C4_M1` | Only attempt to make these canonical signals |
+| `exc` | `C3_M2,C4_M1` | Do not attempt to make these canonical signals |
 | `prefix` | `/path/to/files/` | Add this folder prefix to all `file` values |
 | `prefiltering` | | Retain pre-filtering field information; otherwise this EDF header is wiped |
 
@@ -800,8 +800,8 @@ Baseline output (strata: _none_)
 | --- | --- |
 | `CS_NOT`  | Number of canonical signals not defined |
 | `CS_SET`  | Number of canonical signals defined |
-| `UNUSED_CH` | Number of EDF channels not used in one or canonical signal |
-| `USED_CH` | Number of EDF channels used in one or canonical signal |
+| `UNUSED_CH` | Number of EDF channels not used in one or more canonical signals |
+| `USED_CH` | Number of EDF channels used in one or more canonical signals |
 
 EDF channel-specific information (stratum: `CH`)
 

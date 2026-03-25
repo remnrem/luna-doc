@@ -2,6 +2,8 @@
 
 _Commands for heart-rate, muscle-tone, and arousal analyses_
 
+These commands analyse non-EEG physiological channels commonly recorded in PSG. `HRV` detects R-peaks in an ECG channel and computes a standard set of time-domain and frequency-domain heart-rate variability metrics, optionally by epoch or by annotation class. `RAI` quantifies muscle tone suppression during REM sleep by computing the REM Atonia Index from a chin EMG channel. `AROUSALS` detects candidate sleep arousals from EEG spectral power and optional EMG signals, without requiring pre-scored annotations.
+
 | Command | Description |
 | ---- | ------ |
 | [`HRV`](#hrv) | Estimate heart-rate variability metrics from ECG |
@@ -12,9 +14,13 @@ _Commands for heart-rate, muscle-tone, and arousal analyses_
 
 _Estimate heart-rate variability metrics from ECG_
 
+!!! warning "Active development"
+    `HRV` is under active development and expansion. Defaults, derived metrics,
+    and output details may still evolve.
+
 `HRV` detects ECG R peaks, derives RR intervals, optionally annotates those peaks and intervals, and then reports time-domain and frequency-domain HRV metrics. It can be run on a whole recording, by epoch, and optionally within specified annotation classes.
 
-### Primary parameters
+<h3>Primary parameters</h3>
 
 | Parameter | Example | Description |
 | ---- | ---- | ---- |
@@ -29,7 +35,7 @@ _Estimate heart-rate variability metrics from ECG_
 | `w` | `5` | Median-filter width for RR cleaning; default `5` |
 | `ns` | `512` | Welch segment length for frequency-domain HRV; default `512` |
 
-### Secondary parameters
+<h3>Secondary parameters</h3>
 
 | Parameter | Example | Description |
 | ---- | ---- | ---- |
@@ -50,7 +56,7 @@ _Estimate heart-rate variability metrics from ECG_
 | `rp-fupr` | `25` | Upper ECG band-pass edge for R-peak detection |
 | `rp-w` | `0.02` | Median-filter window for the R-peak detector |
 
-### Outputs
+<h3>Outputs</h3>
 
 `HRV` can emit up to four tables:
 
@@ -85,14 +91,14 @@ The main output variables are:
 | `HF_PK` | Peak high-frequency HRV frequency |
 | `LF2HF` | Low-to-high frequency power ratio |
 
-### Notes
+<h3>Notes</h3>
 
 - `HRV` uses Luna's internal ECG R-peak detector before deriving RR intervals.
 - RR intervals outside the accepted range are excluded when estimating the mean valid RR, then mean-imputed before interpolation and spectral estimation.
 - Frequency-domain HRV is based on cubic-spline interpolation of RR intervals to a uniform 4 Hz grid followed by Welch estimation.
 - Annotation-stratified output currently reports the reduced time-domain set only.
 
-### Example
+<h3>Example</h3>
 
 ```bash
 luna s.lst -s 'HRV sig=ECG epoch annot=REM add-annot=RPK add-annot-rr=RRINT'
@@ -104,7 +110,7 @@ _Calculate the REM atonia index from chin EMG_
 
 `RAI` computes a simple REM atonia index from a chin-EMG-like signal using existing 1-second epochs. For each epoch, Luna averages the rectified signal, subtracts a moving-minimum baseline, and compares the corrected amplitude to lower and upper thresholds.
 
-### Parameters
+<h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | ---- | ---- | ---- |
@@ -113,7 +119,7 @@ _Calculate the REM atonia index from chin EMG_
 | `th2` | `2` | Upper exclusion threshold; default `2` |
 | `verbose` |  | Emit per-epoch baseline-corrected amplitudes |
 
-### Outputs
+<h3>Outputs</h3>
 
 | Table | Variable | Description |
 | ---- | ---- | ---- |
@@ -121,13 +127,13 @@ _Calculate the REM atonia index from chin EMG_
 | `CH` | `NE` | Number of epochs contributing to the index |
 | `CH,N` | `X` | Baseline-corrected mean rectified amplitude for that epoch |
 
-### Notes
+<h3>Notes</h3>
 
 - `RAI` requires epochs to exist and requires those epochs to be exactly 1 second long.
 - The implementation assumes a chin-EMG-like signal and was written with REM-focused analyses in mind.
 - Epochs with corrected amplitudes between `th` and `th2` are excluded from the main index.
 
-### Example
+<h3>Example</h3>
 
 ```bash
 luna s.lst -s 'EPOCH len=1 & RAI sig=EMG th=1 th2=2'
@@ -139,7 +145,7 @@ _Detect candidate sleep arousals from EEG and optional EMG_
 
 `AROUSALS` detects candidate arousals from EEG and optional EMG channels using short overlapping windows and a small set of derived features. In the current active implementation, Luna re-epochs the record into overlapping windows, derives EEG and EMG feature summaries, applies a heuristic event classifier, writes summary counts and feature means by class, adds annotation tracks for detected events, and can optionally add derived channels.
 
-### Primary parameters
+<h3>Primary parameters</h3>
 
 | Parameter | Example | Description |
 | ---- | ---- | ---- |
@@ -151,7 +157,7 @@ _Detect candidate sleep arousals from EEG and optional EMG_
 | `no-winsor` |  | Disable winsorization |
 | `add` | `a_` | Add derived feature channels using this prefix |
 
-### Secondary parameters
+<h3>Secondary parameters</h3>
 
 | Parameter | Example | Description |
 | ---- | ---- | ---- |
@@ -159,7 +165,7 @@ _Detect candidate sleep arousals from EEG and optional EMG_
 | `prefix` | `ar_` | Registered prefix for newly derived feature channels |
 | `per-channel` | `T` | Retain channel-specific feature metrics when adding channels |
 
-### Outputs
+<h3>Outputs</h3>
 
 | Table | Variable | Description |
 | ---- | ---- | ---- |
@@ -179,7 +185,7 @@ _Detect candidate sleep arousals from EEG and optional EMG_
 | `CLS` | `SIGMA` | Mean sigma-band feature for this class |
 | `CLS` | `CMPLX` | Mean complexity feature for this class |
 
-### Notes
+<h3>Notes</h3>
 
 - The current implementation resets epochs internally using `win` and `inc`, and requires EDF record durations that are a multiple of 1 second.
 - EEG sample rates must be sufficiently high and consistent across EEG channels; the current code rejects EEG sample rates below 60 Hz.
@@ -187,7 +193,7 @@ _Detect candidate sleep arousals from EEG and optional EMG_
 - In the active heuristic code path, annotations are written with fixed names such as `arousal_nrem`, `micro_arousal_nrem`, and `art_nrem`.
 - When `add` is used, Luna can write derived feature channels representing total power, beta, EMG, sigma, and complexity-like summaries.
 
-### Example
+<h3>Example</h3>
 
 ```bash
 luna s.lst -s 'AROUSALS eeg=C3,C4 emg=EMG add=a_'

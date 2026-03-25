@@ -2,10 +2,12 @@
 
 _Saving/reverting to snapshots of the dataset and derived metrics_
 
+These commands manage two mechanisms for preserving and restoring internal state during a Luna run. `FREEZE` takes a named snapshot of the current in-memory EDF; `THAW` reverts to that snapshot, effectively providing undo/rewind functionality without re-reading data from disk. `CLEAN-FREEZER` removes all stored snapshots to free memory. `CACHE` is a related but distinct mechanism that stores derived metrics (e.g. peak annotations from `SPINDLES`) for use by downstream commands such as `PREDICT`, without writing them to the output database.
+
 
 | Command | Description | 
 | ---- | ------ | 
-| [`FREEZE`](#freeze) | Make a named freeze of the current datatset |
+| [`FREEZE`](#freeze) | Make a named freeze of the current dataset |
 | [`THAW`](#thaw) | Revert to a previous data freeze |
 | [`CLEAN-FREEZER`](#clean-freezer) | Empty the freezer | 
 | [`CACHE`](#cache) | Cache operations |
@@ -33,8 +35,8 @@ _Caches_
 
 Although conceptually different, this page also describes _caches_, a
 second internal mechanism that tracks state inside a single Luna run.
-In this case case, the cache tracks either values generated internally
-by a particular command (e.g. `SPINDLE cache-peaks`) or generic Luna
+In this case, the cache tracks either values generated internally
+by a particular command (e.g. `SPINDLES cache-peaks`) or generic Luna
 outputs.  The most obvious use-case for working with the cache is the [`PREDICT`](predict.md#predict)
 command.
 
@@ -60,7 +62,7 @@ freezes are not saved after the last command has finished for that EDF.
 | Option | Example | Description |
 | ---- | ----- | ----- |
 | `tag` | `tag=f1`  | Make freeze called `f1` |
-| `preserve-cache` | Retain any caches from the current freeze when thawing an prior freeze | 
+| `preserve-cache` | Retain any caches from the current freeze when thawing a prior freeze | 
 
 Alternatively, `tag` can be dropped and the freeze name is specified directly after `FREEZE`.
 
@@ -343,7 +345,7 @@ None (other than changing the state of the current in-memory EDF).
 
 See the example above given for the `FREEZE` command.
 
-## CLEAN FREEZER
+## CLEAN-FREEZER
 
 _Empty the freezer_
 
@@ -487,7 +489,7 @@ id1  HRate  32767  -32768   bpm   120    40   28  0.00122   1024    Off   HR
 
 Note that only numeric values are included in the cache here.
 
-For the `SPINDLES` example, the `cache-peaks` option generates a integer cache:
+For the `SPINDLES` example, the `cache-peaks` option generates an integer cache:
 ```
 luna s.lst -o out.db -s 'MASK ifnot=N2 & RE & SPINDLES sig=C3 cache-peaks=p1 & CACHE dump int=p1 ' 
 ```
@@ -501,7 +503,7 @@ strata: F=13.5
 value: (695 element vector)
 ```
 
-The is not directly manipulated, but rather may be passed to other Luna commands, e.g. `TLOCK`.  
+This is not directly manipulated, but rather may be passed to other Luna commands, e.g. `TLOCK`.  
 
 
 !!! info "Preserving the cache"

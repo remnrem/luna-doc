@@ -1,7 +1,8 @@
 # Spectral and other time/frequency analyses
 
-_Methods for spectral and other time/frequency analyses, including
-power spectral density estimation_
+_Methods for spectral and other time/frequency analyses, including power spectral density estimation_
+
+This page covers a broad collection of spectral and time-frequency methods. `PSD` (Welch's method) and `MTM` (multi-taper) are the primary tools for power spectral density estimation. `FFT` provides a basic discrete Fourier transform; `IRASA` separates aperiodic (1/_f_) from oscillatory spectral components. `HILBERT` and `CWT` yield instantaneous amplitude and phase via the Hilbert transform and continuous wavelet transform, respectively. `EMD` applies empirical mode decomposition; `DFA` measures long-range temporal correlations; and `MSE` and `LZW` quantify signal complexity/entropy. `1FNORM` and `TV` are signal preprocessing steps; `PCOUPL` provides generic phase coupling; `ACF` computes the autocorrelation function.
 
 |Command |Description | 
 |---|---|
@@ -152,8 +153,27 @@ Epoch-level spectral band power (option: `epoch`, strata: `E` x `B` x `CH`)
 Epoch-level spectral power by frequency bin (option: `epoch-spectrum`, strata: `E` x `F` x `CH`)
 
 | Variable | Description |
-| ---- |----- | 
+| ---- |----- |
 | `PSD` | Absolute spectral power |
+
+EEG spectral slowing indices (option: `slowing`, strata: `CH`)
+
+The `slowing` option computes five band-ratio indices of EEG slowing. Each index is
+reported as three variants: mean of per-epoch ratios (`SOF`, `DAR`, etc.), ratio of
+mean band power across epochs (`SOF_T`, `DAR_T`, etc.), and median of per-epoch
+ratios (`SOF_MD`, `DAR_MD`, etc.). Setting `ratio1` adds 1 to the denominator of
+per-epoch ratios to avoid division-by-zero on sparse power bands.
+
+| Variable | Formula | Description |
+|---|---|---|
+| `SOF` | slow / (slow + delta) | Slow oscillation fraction — slow-wave content relative to low-frequency total |
+| `DAR` | delta / alpha | Delta/alpha ratio — see [Loddo et al. (2021)](https://pubmed.ncbi.nlm.nih.gov/26251106/) |
+| `TAR` | theta / alpha | Theta/alpha ratio — see [Mikulan et al. (2022)](https://www.nature.com/articles/s41598-022-21951-5) |
+| `TBR` | theta / beta | Theta/beta ratio |
+| `GSI` | (delta + theta) / (alpha + beta) | Global slowing index — see [Sopic et al. (2021)](https://link.springer.com/article/10.1007/s11517-020-02280-z) |
+
+Each variable also has `_T` (ratio of band-power means) and `_MD` (median of epoch ratios) variants.
+Per-epoch values are emitted under `E × CH` strata when `epoch` is also specified.
 
 
 <h3>Example</h3>
@@ -362,7 +382,7 @@ destrat out.db +PSD -r CH | behead
     SPK   0.747317003553891   
 ```
 
-And for the data with spikes introduced, we see these metics are much higher:
+And for the data with spikes introduced, we see these metrics are much higher:
 
 
 
@@ -372,26 +392,26 @@ And for the data with spikes introduced, we see these metics are much higher:
     SPK   5.39341010843361    
 ```
 
-Both measures are based on the folllowing heuristic:
+Both measures are based on the following heuristic:
 
   - take the log-scaled power spectrum (between the frequencies specified by `peaks-frq`) and scale it between 0.0 and 1.0
 
-  - detrend this spectrum (DT: detrended spectum) and then apply a smoothing median filter (with `peaks-window` sample points) to give a smoothed spectrum (SM)
+  - detrend this spectrum (DT: detrended spectrum) and then apply a smoothing median filter (with `peaks-window` sample points) to give a smoothed spectrum (SM)
 
-  - calculate the differece (DF) between DT and SM
+  - calculate the difference (DF) between DT and SM
 
   - estimate the kurtosis of DF (which is the `KURT` metric) and the `SPK` (spikiness) as the sum of absolute values of the derivative of DF (`sum( abs(diff(DF))`) 
 
 The kurtosis estimate is normalized to have an expected value of 0 for
 normal distributions (i.e. subtract 3.0); larger positive values
 indicate greater spikiness in the spectrum.  Likewise, greater values
-of `SPK` reflect higher spikiness.  The two metrics difference a
+of `SPK` reflect higher spikiness.  The two metrics differ a
 little, in that the latter is more sensitive to having many but
 smaller peaks (i.e. summing over all differences), whereas the `KURT`
 metric is more sensitive to a single, strong outlier.  These metrics
 do not have directly interpreted scales (e.g. they may depend on
 sample rate, etc) but are designed to provide rankings across multiple
-studies, to identifier outliers, with respect to the extent of spectral spikes.
+studies, to identify outliers, with respect to the extent of spectral spikes.
 
 Adding the `peaks-verbose` option gives additional output (stratified by both `CH` and `F`) that directly give the `DT`, `SM` and `DF` spectra
 as described above:   plotting these for the first instance: (black = DT, blue = SM):
@@ -406,7 +426,7 @@ Whereas, for the second instance (with the spikes introduced), we see greater va
 If this approach is including true _bumps_ as outliers/spikes here,
 you can try reducing `peaks-window` from the default of 11 (the number
 of bins in the spectrum over which to do median smoothing), which
-basically requires that sharper peaks by doing less smoothing.
+basically requires peaks to be sharper by doing less smoothing.
 
 
 <!----
@@ -463,11 +483,11 @@ looking at a 30-45 Hz (inclusive) slope with a spectral resolution of
 0.25 Hz, this gives an expected 61 points; the number may be lower is
 points were removed for being outliers.
 
-!!! info "Avoiding periodic acticvity that will bias spectral slope estimates" 
+!!! info "Avoiding periodic activity that will bias spectral slope estimates" 
     This simple implementation for estimating the spectral slope is not suitable for
     frequency ranges where one expects strong oscillatory activity, e.g. the sigma band
     during sleep, if it is to be interpreted as an index of the aperiodic component of the power spectrum.
-    The frequency range 30-45 Hz tends to be freely of such activity and also avoids frequencies with
+    The frequency range 30-45 Hz tends to be free of such activity and also avoids frequencies with
     common line noise (50/60 Hz) artifacts.   As such, it is not recommended that this be used as a general
     method (unless other procedures have first been applied to remove oscillatory components from the signal).
         
@@ -515,11 +535,11 @@ _segments_ as well as (optionally) _epochs_.  That is, the fundamental
 unit of spectral analysis is always a _segment_ (e.g. which may be
 different durations, say 4 seconds), but whether or not metrics are
 summarized and output at the per-epoch (e.g. 30-second interval) level
-depends on how `MTM` is run. Segments may often be be much smaller
+depends on how `MTM` is run. Segments may often be much smaller
 than a typical epoch (e.g. 1 second) and one may wish to have highly
 overlapping segments in a sliding-window style of analysis.
 
-Running without `epoch`, the data is treated as a continuous signal and split into segment:
+Running without `epoch`, the data is treated as a continuous signal and split into segments:
 
 ```
    whole recording -----------------------------|   overall stats                                                                      
@@ -563,7 +583,7 @@ based on the spectral analysis:
 | `t`     | `7` | Number of tapers (default 2*`nw`-1, i.e. 5) |
 | `segment-sec` | 30 | Segment size (default 30 seconds) |
 | `segment-inc` | 30 | Segment increment/step (default 30 seconds) |
-| `min`   | `0.5` | Maximum frequency for power spectra (default is 20Hz) |
+| `min`   | `0.5` | Minimum frequency for power spectra (default is 0 Hz) |
 | `max`   | `25` | Maximum frequency for power spectra (default is 20Hz) |
 | `dB`    |   | Report power in dB units |
 
@@ -571,7 +591,7 @@ Output control
 
 | Parameter | Description |
 | ----- | ------ |
-| `epoch-output` | Run in epoch mode and output epoch-wise statsistics (except the full spectra) |
+| `epoch-output` | Run in epoch mode and output epoch-wise statistics (except the full spectra) |
 | `epoch-strata` | If running in epoch mode, output full per-epoch power spectra |
 | `segment-output` | Output per-segment statistics (except the full spectra) |
 | `segment-spectra` | Output per-segment full power spectra | 
@@ -583,10 +603,11 @@ Misc analysis parameters
 | Parameter | Example | Description |
 | ----- | ------ | ------ |
 | `speckurt` |  | Report epoch-level kurtosis per band |
-| `speckurt3` |  | Use unadjusted kurtosis vales, i.e. N(0,3) has expected kurtosis of 3.0, not 0 |
+| `speckurt3` |  | Use unadjusted kurtosis values, i.e. N(0,3) has expected kurtosis of 3.0, not 0 |
 | `ratio` | `DELTA/ALPHA,DELTA/BETA` | Output band power ratios, e.g. delta/alpha and delta/beta |
-| `ratio1` | | Compute raw power ratios as _a/(1+b)_ | 
-| `mean-center` | | Mean center segments prior to analysis | 
+| `ratio1` | | Compute raw power ratios as _a/(1+b)_ |
+| `slowing` | | Compute EEG spectral slowing indices (SOF, DAR, TAR, TBR, GSI); see below |
+| `mean-center` | | Mean center segments prior to analysis |
 
 
 Spectral slope parameters
@@ -674,7 +695,7 @@ Epoch-level ratios of band power (options: `ratio`, `epoch-output`; strata: `CH`
 | `RATIO_MD` | With `epoch`, median ratio over epochs |
 | `RATIO_SD` | With `epoch`, SD of ratios over epochs |
 
-_Alternate statistcs (spectral skew, kurtosis and CV)_
+_Alternate statistics (spectral skew, kurtosis and CV)_
 
 Band-wise statistics (option: `speckurt`; strata: `CH` x `B`)
 
@@ -686,7 +707,7 @@ Band-wise statistics (option: `speckurt`; strata: `CH` x `B`)
 
 The above three metrics are also defined:
 
- - per epoch per channel per epoch (stata: `E` x `CH` x `B`)
+ - per epoch per channel (strata: `E` x `CH` x `B`)
  - averaged over channels per epoch (strata: `E` x `B`)
  - when using `speckurt3`
  
@@ -764,7 +785,7 @@ lattach( lsl( "s.lst" ) , 1 )
 k <- leval( "MTM sig=EEG tw=15 max=30 epoch dB" ) 
 ```
 
-Examing the output:
+Examining the output:
 
 ```
 lx(k)
@@ -805,7 +826,7 @@ depending on the goal of the analysis.)
 _Applies the basic discrete Fourier transform to a signal_
 
 In contrast to Welch ([`PSD`](#psd)) or multi-taper ([`MTM`](#mtm))
-approaches, the `FFT` performs that same function (for a single, real,
+approaches, the `FFT` performs the same function (for a single, real,
 1-dimensional signal) as the `fft()` function in R or Matlab, i.e.
 the DFT with no windowing or tapering, and which will have as many
 points as there are samples.  As such, this is intended for use with
@@ -996,7 +1017,7 @@ As nicely illustrated by [Gerster et al. (2021)](https://pubmed.ncbi.nlm.nih.gov
 is not infallible - for instance, if there are very broad oscillatory peaks and the maximum resampling
 factor is not sufficiently high, it can fail to properly separate out aperiodic and periodic components
 (see their Figure 6).  We can recapitulate this property by increasing the peak width (`w` in `SIMUL`)
-and reduced the resampling factor (`h-max` in `IRASA`):
+and reducing the resampling factor (`h-max` in `IRASA`):
 
 
 ```
@@ -1011,7 +1032,7 @@ luna . -o out.db --nr=3000 --rs=1 \
 This is of course an extreme example (i.e. with a very large
 amplitude, broad oscillatory peak), but nonetheless shows one failure
 mode of IRASA.  In practice, examining the shape of the aperiodic
-spectrum (i.e. which should be approximately striaght on a log-log or
+spectrum (i.e. which should be approximately straight on a log-log or
 semi-log plot) will indicate if resulting slope estimates are likely biased
 by oscillatory activity.
 
@@ -1037,8 +1058,20 @@ filtered) signal.
 <h3>Outputs</h3>
 
 No formal output, other than one or two new signals in the _in-memory_
-representation of the EDF, with `_hilbert_mag` and (optionally)
-`_hilbert_phase` suffixes.
+representation of the EDF. By default, the derived channels use `_ht_mag`
+for instantaneous magnitude (envelope) and, if `phase` is specified, `_ht_ph`
+for instantaneous phase. For example, `HILBERT sig=EEG f=11,15 phase`
+typically creates `EEG_ht_mag` and `EEG_ht_ph`.
+
+If `tag=` is specified, the tag is inserted before the suffixes, e.g.
+`HILBERT sig=EEG f=11,15 tag=sigma phase` creates `EEG_sigma_ht_mag` and
+`EEG_sigma_ht_ph`.
+
+Commands such as [`IPC`](cc.md#ipc) assume the fixed `_ht_mag` and `_ht_ph`
+suffixes are appended directly to the channel labels supplied to `IPC`. As a
+result, `HILBERT tag=...` output is not directly compatible with `IPC` unless
+the channels passed to `IPC` already include that inserted tag in their base
+label.
 
 <h3>Example</h3>
 
@@ -1051,7 +1084,7 @@ leval( "SIGNALS keep=EEG" )
 ```
 
 We then apply the filter-Hilbert method, which will generate two new
-channels, `EEG_hilbert_11_15_mag` and `EEG_hilbert_11_15_phase`:
+channels, `EEG_ht_mag` and `EEG_ht_ph`:
 
 ```
 leval( "HILBERT sig=EEG f=11,15 ripple=0.02 tw=0.5 phase" )
@@ -1144,11 +1177,11 @@ This command does not operate on EDFs _per se_; rather, it produces
 analytic output on the properties of a continuous wavelet transform
 (CWT) given the design parameters.
 
-Wavelet bandwidth can be specifed in one of two ways: by giving the
+Wavelet bandwidth can be specified in one of two ways: by giving the
 number of cycles (`cycles` option) _OR_ by specifying the time-domain
 full width at half maximum (FWHM) value (in seconds).  See [this
 manuscript](https://www.biorxiv.org/content/10.1101/397182v1.full.pdf)
-for a discussion of the advantages of this latter specificiation.
+for a discussion of the advantages of this latter specification.
 
 In both cases, the `CWT-DESIGN` will estimate the implied FWHM in the frequency domain,
 i.e. the tightness of the wavelet around the specified central frequency (`fc`). 
@@ -1190,7 +1223,7 @@ Wavelet coefficients (strata: `PARAM` x `SEC`)
 <h3>Example</h3>
 
 To display the properties of a wavelet with center frequency of 15 hz
-and 12 cycles, applied to a signal with sample rate of 12 Hz.
+and 12 cycles, applied to a signal with sample rate of 200 Hz.
 
 ```
 luna s.lst 1 -o out.db -s 'CWT-DESIGN fc=15 cycles=12 fs=200'
@@ -1243,7 +1276,7 @@ legend( 2 , 0.9 , c("11 Hz","15 Hz") , fill = c("blue","red") )
 ![img](../img/cwt-design.png){width="100%"}
 
 Looking at the estimated frequency domain FWHM values, we see these correspond to the _y=0.5_ (i.e. 50%)
-values for each wavelet, at lower and upper valeus respectively.
+values for each wavelet, at lower and upper values respectively.
 
 ```
 lx( k , "CWT_DESIGN" , "PARAM"  )
@@ -1258,7 +1291,7 @@ ID      PARAM    FWHM_F  FWHM_LWR  FWHM_UPR
 
 _Generic phase/event coupling analysis_
 
-This command implements that same functions used by
+This command implements the same functions used by
 [`SPINDLES`](spindles-so.md#spindles) when evaluating spindle/SO phase
 coupling and overlap.  Here, the functionality has been extracted out of the
 context of the `SPINDLES` command, to make it generically useful.  That is, given a set of [annotations](annotations.md)
@@ -1266,7 +1299,7 @@ and one or more signals, this will:
 
  - apply the filter-Hilbert method to determine instantaneous phase of the signal
 
- - given a defined _anchor_ for annotation events (e.g. start, middle or end) it assess whether or not the events occur randomly
+ - given a defined _anchor_ for annotation events (e.g. start, middle or end) it assesses whether or not the events occur randomly
    with respect to the phase of the signal, using randomization to generate surrogate time series
 
 For the purpose of calculating overlap statistics, phase bins are fixed in 18 20-degree bins.
@@ -1301,7 +1334,7 @@ Phase coupling statistics (strata: `ANNOT` x `CH`)
 | ----- | ----- |
 | `ANGLE` | Mean phase angle (degrees) |
 | `MAG` | Coupling magnitude (observed statistic) |
-| `MAG_Z` | Permutation-basewd Z-score for coupling magnitude |
+| `MAG_Z` | Permutation-based Z-score for coupling magnitude |
 | `MAG_NULL` | Mean coupling statistic under the null |
 | `MAG_EMP` | Empirical p-value |
 | `PV` | Asymptotic p-value |
@@ -1404,7 +1437,7 @@ generic) function, there may not be an equivalent, and so `PCOUPL`
 will use either the start, mid-point or end (i.e. based only on the start/stop times of the spindle).
 This slightly changes the mean angle and also reduces the magnitude of phase coupling a
 small amount.  So, for spindle/SO analysis it would still be
-preferrable to use `SPINDLES`, but for other types of (more generic)
+preferable to use `SPINDLES`, but for other types of (more generic)
 phase-coupling analysis, `PCOUPL` would be appropriate.
 
 Finally, we can also pull out the count of events per 20-degree bin of the slow phase (excluding some columns
@@ -1435,7 +1468,7 @@ PHASE   OVERLAP OVERLAP_EXP OVERLAP_EMP   OVERLAP_Z
 ```
 
 That is, for bins 290 (280-300) and 310 (300-320) we see more events
-than (`OVERLAP`) than we'd expect by chance (`OVELAP_EXP`), leading to positive
+(`OVERLAP`) than we'd expect by chance (`OVERLAP_EXP`), leading to positive
 Z scores and significant (1-sided) empirical p-values.
 
 
@@ -1482,7 +1515,7 @@ luna . --nr=300 --rs=1 -o out.db \
             MATRIX file=s1.txt'
 ```
 
-The `EMD` command by default takes requires the channel(s) (`sig`) to be
+The `EMD` command by default requires the channel(s) (`sig`) to be
 specified.  In this example, because we know there are only three
 components, we set `imf` to 3 (the default is to return 10
 components). Note that the first three components will be identical
@@ -1760,7 +1793,7 @@ plot( post$F[ post$ID == i ] , post$PSD[ post$ID == i ] ,
 
 ## TV
 
-_Applies of fast algorithm for 1D total variation denoising_
+_Applies a fast algorithm for 1D total variation denoising_
 
 The `TV` is a wrapper around the algorithm described
 [here](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.372.3867).
@@ -1844,7 +1877,7 @@ _Compute the autocorrelation function for a signal_
 | Parameter | Example | Description |
 | ---- | ---- | ---- |
 | `sig` | `sig=EEG` | Optional specification of signals (otherwise applied to all signals) |
-| `lag` | `lag=200` | Maxmimum lag (in sample units) |
+| `lag` | `lag=200` | Maximum lag (in sample units) |
 
 <h3>Output</h3>
 
@@ -1872,7 +1905,7 @@ rows (`-r LAG`):
 destrat out.db +ACF -c CH -r LAG > o.txt
 ```
 Plotting these ACF (e.g. from `o.txt`, `SEC.CH_EEG` on the _x_-axis, and `ACF.CH_EEG` on the _y_-axis), we see
-strong, regular autocorrelations, with peaks at periodically recuring intervals (top row of plots below).
+strong, regular autocorrelations, with peaks at periodically recurring intervals (top row of plots below).
 These would be indicative of artifact in EEG, ECG or EMG channels: indeed, in this particular case (which
 is the first [tutorial](../tut/tut1.md) EDF), there is considerable artifact at the end of the recording (i.e.
 with spectral peaks at 25 Hz and 12.5 Hz, reflecting harmonics of electrical noise artifacts). 

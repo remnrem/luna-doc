@@ -607,7 +607,7 @@ k <- leval( cmds )
 
 __Returns:__ a list of data-frames, in which list items are _commands_
 and sub-items are output _strata_, i.e. a similar organization to
-[_destrat_](../../luna/args.md#destrat) output (_lunout_) databases.  The
+[_destrat_](../../luna/args.md#destrat) output databases.  The
 [`lx()`](#lx) function is designed to facilitate working with these lists, as
 shown below.
 
@@ -1064,11 +1064,11 @@ and this should equal the vector of values calculated using the `literate()` app
 
 ### `ldb()`      
 
-_Imports the contents of a [_lunout_](../../luna/args.md#destrat) database_
+_Imports the contents of an [output](../../luna/args.md#output-databases) database_
 
 __Syntax:__ `k <- ldb( dbfilename , id = "" )`
 
-- `dbfilename` is the name of a [_lunout_](../../luna/args.md#destrat) database
+- `dbfilename` is the name of an [output](../../luna/args.md#output-databases) database
 
 - optionally, if `id` is a vector of individual/EDF IDs, then only these individuals will be extracted from the database
 
@@ -1414,7 +1414,7 @@ __Syntax:__ `ltxttab( root , f , ids = dir( root ) , silent = F )`
 __Returns:__ a `data.frame` containing row-concatenated data from the subfolders of `root`
 
 When using the text-table output form, say `-t out1`, Luna will
-generate a subfolder called `out1`, instead of a [_lunout_ database](../../luna/destrat.md).  In this folder, each individual/EDF
+generate a subfolder called `out1`, instead of an [output database](../../luna/destrat.md).  In this folder, each individual/EDF
 processed will have its own subfolder; the results of any commands
 will reside in each subfolder.  For example: 
 
@@ -1794,4 +1794,3 @@ This is a wrapper around the method implemented by the
 description of the method and parameters.
 
 ____
-

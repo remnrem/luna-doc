@@ -1,49 +1,8 @@
 # Principal Spectral Components (PSC) analysis
 
-_Fit principal spectral components (PSC) to sample-level power
-spectral and cross-channel connectivity metrics_
+_Fit principal spectral components (PSC) to sample-level power spectral and cross-channel connectivity metrics_
 
-Luna commands can produce a lot of output.  For example, estimates of
-spectral power at 0.5 to 30 Hz in 0.25 Hz bins, for 60 EEG channels,
-will give 7,140 metrics (e.g. from `PSD`).  Looking at cross-channel
-coherence for the same frequency range will give 210,630 more metrics
-per individual/sleep stage. This poses statistical and practical
-challenges if these measures are to be visualized or used in
-downstream statistical analyses.
-
-There is a great deal of redundancy between many of these measures,
-however, meaning that the _effective dimensionality_ will typically be
-order-of-magnitude lower.  This scenario suggests the use of  _data reduction_ as
-an intermediate step, to represent these types of spectral metrics
-more efficiently.
-
-Principal spectral components (PSC) is one method that provides a
-simple means of data reduction, essentially applying singular value
-decomposition (SVD) to the matrix of individuals/epochs (rows) by
-spectral measures (columns).  The spectral measures will typically be
-power for different frequency bins and channels; alternatively, these
-data may also include cross-channel metrics such as coherence or the
-phase slope index.
-
-In general, the idea is to take the high-dimensional (but also highly
-redundant) data from commands such as `PSD`, `MTM`, `COH` or `PSI` and
-extract a much smaller number of components that explain most of the
-original variance.  This has the potential to provide insights into
-the structure of individual differences across related sleep measures
-(although interpreting components can be challenging). More directly,
-it has the potential to provide a powerful set of independent measures
-for subsequent statistical analyses (or, in the context of the
-[`POPS`](pops.md) model, sleep staging), as well as a means to
-handle multiple-testing problems.
-
-Two commands provide support to 1) fit a PSC decomposition to existing
-spectral output data (either between individual, or within-individual)
-via [`--psc`](#-psc), and 2) to project new data into a previously
-defined lower dimensional space.  Although the computation behind
-these commands is very standard (e.g. the same output would be
-obtained via standard commands from any statistics package given the
-same input matrix), these commands are designed to work efficiently
-from a practical standpoint with Luna output and EDFs.
+Spectral analysis of multi-channel EEG can generate very high-dimensional output — thousands of frequency-by-channel metrics per individual — but with substantial redundancy, so the effective dimensionality is typically much lower. PSC addresses this by applying singular value decomposition (SVD) to a matrix of individuals-by-spectral-metrics, extracting a compact set of components that captures most of the variance. The resulting components can be used for visualization, as features for downstream statistical models (such as [`POPS`](pops.md)), or to reduce the multiple-testing burden. `--psc` fits a decomposition to a set of existing Luna spectral output files; `PSC` projects new data into a previously defined PSC space.
 
 
 | Command | Description | 
@@ -85,9 +44,9 @@ fully-specified (i.e. all measures are defined for all individuals)
 and then performs one or more case-wise outlier removal sweeps, based
 on a row having values beyond X standard deviation units from the
 mean for one or more variables.  The command then applies SVD and writes
-the U, and W and (optionally) V matrices out. 
+the U, W and (optionally) V matrices out. 
 
-For a toy example example (i.e. obviously _not_ real data - this is purely to illustrate the structure of the input data):
+For a toy example (i.e. obviously _not_ real data - this is purely to illustrate the structure of the input data):
 
 ```
 ID    CH   F   PSD
@@ -108,7 +67,7 @@ With the parameters `v=PSD` then the implied data matrix is a two-by-six as foll
 ```
 ID    PSD_C3_1 PSD_C3_2 PSD_C3_3 PSD_F3_1 PSD_F3_2 PSD_F3_3
 id01  1.11     1.12     1.13     1.21     1.22     1.23
-id01  2.11     2.12     2.13     2.21     2.22     2.23
+id02  2.11     2.12     2.13     2.21     2.22     2.23
 ```
 
 This command does not assume any EDFs for input, and so no sample list

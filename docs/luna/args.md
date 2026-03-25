@@ -34,7 +34,7 @@ Here, Luna expects a list of IDs, EDFs (and possibly [annotation
 files](#annotations)) in a [sample list](#sample-lists) file
 (`sample.lst`), reads a series of [commands](../ref/index.md)
 (`commands.txt`) to be applied to each EDF, and writes the output to a
-[_lunout_](destrat.md) database file (`out.db`).
+[database](destrat.md) file (`out.db`).
 
 !!!note "Types of command line arguments"
     _lunaC_ expects the first
@@ -77,32 +77,53 @@ files](#annotations)) in a [sample list](#sample-lists) file
 
 ## Help
 
-Luna has a help function that describes the available
-[_commands_](../ref/index.md), their parameters and their outputs.  Commands are organized by _domains_, listed by the following command:
+Luna has a built-in help system that describes available
+[_commands_](../ref/index.md), their parameters, outputs, and long-form descriptions.
+Commands are organized by _domains_. There are five modes:
 
-```
-luna -h 
-```
-```
-usage: luna [sample-list|EDF] [n1] [n2] [@parameter-file] [sig=s1,s2] [v1=val1] < command-file
+| Syntax | Description |
+|---|---|
+| `luna -h` | List all domains |
+| `luna -h <domain>` | List all commands in a domain |
+| `luna -h CMD` | Full parameters and outputs for a command |
+| `luna -hs term` | Search for a keyword across all domains and commands |
+| `luna -hv <domain>` | Verbose: full descriptions for every command in a domain |
 
+**List domains:**
+```
+luna -h
+```
+```
 List of domains
 ---------------
 
-annot      Annotations                 
-artifact   Artifacts                   
-cfc        Cross-frequency coupling    
-cmdline    Command-line options        
-epoch      Epochs                      
+actig      Actigraphy
+annot      Annotations
+artifact   Artifacts
+cc         Coupling/connectivity
+epoch      Epochs
 
 ...
+
+For commands within a domain, add the domain label after -h, e.g.
+  luna -h annot
+
+For options and output for a given command, add the (upper-case) command after -h, e.g.
+  luna -h SIGSTATS
+
+To search help text across domains and commands, use -hs, e.g.
+  luna -hs spindle
+
+For verbose help for all commands in one domain, use -hv, e.g.
+  luna -hv summ
 ```
-To view the commands within a domain:
+
+**List commands in a domain:**
 ```
 luna -h manip
 ```
 ```
-ANON         Strips EDF ID and Start Date headers
+ANON         Anonymize EDF headers
 COPY         Duplicate one or more EDF channels
 FLIP         Flips the polarity of a signal
 RECORD-SIZE  Alters the record size and writes a new EDF
@@ -112,7 +133,8 @@ SIGNALS      Retain/remove specific EDF channels
 mV           Converts a signal to mV units
 uV           Converts a signal to uV units
 ```
-To view the parameters and outputs for a given command:
+
+**Parameters and outputs for a specific command:**
 ```
 luna -h PSD
 ```
@@ -133,32 +155,55 @@ Parameters:
 Outputs:
 ========
 
-   CH                      Number of epochs
+   CH x F                  Whole-night, per-channel power spectra
    ------------------------------------------------------------
-     NE                    Number of epochs
+     PSD                   Power
 
    B x CH                  Whole-night, per-channel band power
    ------------------------------------------------------------
      PSD                   Power
      RELPSD                Relative power
+   ...
+```
 
-   CH x F                  Whole-night, per-channel power
-   ------------------------------------------------------------
-     PSD                   Power
+**Search help text by keyword** (`-hs`):
+```
+luna -hs spindle
+```
+This searches command names, domain labels, and long-form descriptions for the
+given term (case-insensitive), printing matching domains first then any
+individual commands that match:
+```
+Help search: spindle
+--------------------
 
-   B x CH x E              Whole-night, per-channel per-epoch band power
-   ------------------------------------------------------------
-     PSD                   Power
-     RELPSD                Relative power
+spindles : Spindle and slow oscillation analyses
+-------------------------------------------------
 
-   CH x E x F              Whole-night, per-channel per-epoch power
-   ------------------------------------------------------------
-   (compressed output)
-     PSD                   Power
+SPINDLES   Detect spindles
+SO         Detect slow oscillations
+```
+
+**Verbose domain help** (`-hv`):
+```
+luna -hv cc
+```
+Prints the full parameters, outputs _and_ long-form description for every command
+in the domain — useful for a quick overview of a whole section without opening the browser:
+```
+IPC : Instantaneous phase coherence (Coupling/connectivity)
+
+  Computes pairwise zero-lag phase coupling from Hilbert-based
+  analytic signals, i.e. narrowband channels that have already had
+  HILBERT run on them. For each sample, IPC forms the phase difference
+  between two channels and summarizes it as signed instantaneous phase
+  coherence, a weighted variant, phase-locking value, mean phase
+  offset, and the fraction of samples that are in phase.
+  ...
 ```
 
 !!! note
-    By convention, all Luna commands should be in _CAPITAL LETTERS_. 
+    By convention, all Luna commands should be in _CAPITAL LETTERS_.
 
 ## Options
 
@@ -171,7 +216,7 @@ Primary options:
 | Option | Description |
 |--------|----------|
 | `-s`   | Directly specify Luna commands after `-s`, rather than reading them from a command file; if specified, this option must come last |
-| `-o`   | Write all output to a [lunout](#lunout-databases) database; if it already exists, it will be overwritten |
+| `-o`   | Write all output to an [output](#output-databases) database; if it already exists, it will be overwritten |
 | `-a`   | Similar to `-o` except appends to an existing output database rather than overwriting it |
 | `-t`   | Write all output as [text tables](#text-tables) rather than to a database |
 | `@<file>` | Read (special) variables from a parameter file, e.g. `@param.txt` |
@@ -311,9 +356,9 @@ id003	test3.edf	test3.tsv,staging-id003.eannot
 !!! warning 
     Sample lists must be tab-delimited plain-text/ASCII files,
     i.e. not containing any special characters or
-    formatting.  Use a text-editor (not or word processor) or generate them programmatically (see [`--build`](#-build-opion)).
+    formatting.  Use a text-editor (not a word processor) or generate them programmatically (see [`--build`](#-build-option)).
     Also be aware of potential issues that [Windows-style
-    line-ending characters](../faq.md#line-endings) can cause.
+    line-ending characters](../faq.md#windows-line-endings) can cause.
 
 ### _--build_ option
 
@@ -365,7 +410,7 @@ to be the sample list ID, by adding the option:
  -edfid
 ```
 
-In general, we advise equating the EDF filenames with IDs is better,
+In general, equating EDF filenames with IDs is better,
 as this tends to encourage better alignment between the other files
 associated with that individual/recording.
 
@@ -391,8 +436,8 @@ subj2:
 night1.edf	night1.xml	night2.edf	night2.xml
 ```
 
-In this scenario, we would not not want to associate `subj1/night1.edf` with
-`subj2/night1.edf` or `sub2/night1.xml` (which `--build` would do by default, based
+In this scenario, we would not want to associate `subj1/night1.edf` with
+`subj2/night1.edf` or `subj2/night1.xml` (which `--build` would do by default, based
 on the root of the filenames). Here, adding the option `-nospan` instructs Luna not to
 _span_ folders when associating files:
 ```
@@ -407,7 +452,7 @@ s2night2	subj2/night2.edf	subj2/night2.xml
 
 In this example, the IDs (`s1night1`, etc) come from the EDF headers
 as we used the `-edfid` option.  If the IDs weren't unique, Luna will
-print a warning message about dulplicates.  That is, every row of a
+print a warning message about duplicates.  That is, every row of a
 sample-list should have a unique ID.
 
 <h5>Annotation extensions</h5>
@@ -470,29 +515,26 @@ can be more flexible, convenient (and reproducible) than placing all commands af
 the `-s` argument.
 
 Some conventions:
- 
- - new commands should start on a new line
- - lines that begin with one or more spaces are assumed to be continuations of the same command, meaning that 
-   commands can be spread over several lines
+
+ - commands are separated by a **new line** or by **`&`** — both work identically, whether in a command file or inline with `-s`
+ - continuation lines (options for the same command) should begin with `...`, e.g. `  ... sig=EEG`
  - blank lines are skipped
- - all text after a `%` character on a line is treated as a _comment_ and skipped 
+ - all text after a `%` character on a line is treated as a _comment_ and skipped
 
 Say we wished to [`EPOCH`](../ref/epochs.md#epoch) an
 EDF and apply power spectral density estimation via the
 [`PSD`](../ref/power-spectra.md#psd) command for a channel named
 `EEG`, outputting spectra for each epoch.  For a sample-list `s.lst`
-and [output file](#lunout-databases) `out.db`, we might write:
+and [output database](#output-databases) `out.db`, we might write:
 
 ```
 luna s.lst -o out.db -s ' EPOCH & PSD epoch sig=EEG '
 ```
 
-Note that we place the command string in single quotes, as otherwise
-the `&` character would be interpreted by most shells, to mean that
-the job should be run in the background.  In general, putting any
-command-line script after `-s` in single quotes is advised.  (Single
-versus double quotes has implications for how you want variables to be interpret,
-as shell variables versus Luna variables, as described [below](#variables).)
+Here `&` separates the two commands — it is exactly equivalent to putting them on separate lines, whether
+in a command file or inline with `-s`.  Note that `-s` scripts should be placed in single quotes, as
+otherwise the shell would interpret `&` as a background-job operator.  (Single versus double quotes also
+has implications for variable interpolation, as described [below](#variables).)
 
 Alternatively, we could place the following in a _plain-text_ file
 called `commands.txt` (or anything else, there are no limitations on
@@ -520,12 +562,11 @@ and options over multiple lines:
 EPOCH
 
 % Power spectral density estimation for the EEG channel
-% Note the we start lines after PSD with spaces (otherwise, they
-% would be interpreted as new commands)
+% Continuation lines use '...' to indicate they belong to the same command
 
 PSD
-  epoch     % produce per-epoch level output 
-  sig=EEG   % only apply this command to channels named EEG
+  ... epoch     % produce per-epoch level output
+  ... sig=EEG   % only apply this command to channels named EEG
 ```
 
 !!!info "Multi-line statements using `-s`"
@@ -550,7 +591,7 @@ PSD
     where `\` is the shell line-continuation character.  Note, it is not needed between HEADERS and SEGMENTS as the Luna script is quoted; also
     note that `&` is not needed as the commands are on different lines.
 
-    Second, a _single command command_ can be split onto multiple lines when using `-s`, by using
+    Second, a _single command_ can be split onto multiple lines when using `-s`, by using
     the `\` line continuation symbol (which, as with the shell, must be the _last_ character on that line, no trailing spaces):
     ```
       -s ' HEADERS \
@@ -674,15 +715,38 @@ definition:
 ```
 ${z=${var}_v2}
 ```
-would set `${z}` equal to `xyz_v2`.  Note, it is _not_ possible to use
-arithmetic expressions in variable definitions: in command scripts,
-all variables are treated as simple text strings.  The following would
-not work therefore:
+would set `${z}` equal to `xyz_v2`.
+
+<h4>Expression-based variable assignment</h4>
+
+Using `:=` instead of `=` instructs Luna to evaluate the right-hand
+side as a [Luna _eval_ expression](evals.md) before assigning it.  This
+allows arithmetic and logical operations in variable definitions:
 
 ```
-${a=2}          
-${b=${a}+1}  % NO!!  i.e. sets ${b} to string '2+1' rather than '3'
+${a=2}
+${b:=${a}+1}    % sets ${b} to 3
+${c:=${a}*10}   % sets ${c} to 20
 ```
+
+Without `:=`, the right-hand side is treated as a plain string:
+
+```
+${b=${a}+1}     % sets ${b} to the string '2+1', NOT 3
+```
+
+<h4>Summary of in-script variable forms</h4>
+
+| Form | Description |
+|---|---|
+| `${var}` | Substitute the value of `var` |
+| `${var=value}` | Define (or redefine) `var` as a literal string |
+| `${var:=expr}` | Define `var` by evaluating `expr` as a Luna eval expression (allows arithmetic, logic, etc.) |
+| `${var+=value}` | Append `value` to `var` as a comma-delimited item |
+| `?{var}` | Substitute `var` as a boolean (`1` if set and non-zero, `0` otherwise) |
+| `#{var}` | Substitute the current value of a [loop index](#loops) variable |
+
+The `#{}` syntax for loop indices is intentionally distinct from `${}` for regular variables: the two namespaces are separate, so `${i}` and `#{i}` can coexist independently. This means you can use a loop index `#{i}` without accidentally shadowing or overwriting a user-defined variable `${i}` of the same name.
 
 <h4>Using variables on the command-line</h4>
 
@@ -749,10 +813,7 @@ second `${l}` is the Luna variable `l`.
 
 ### Conditional blocks
 
-There are two ways to specify conditional blocks: the `IF` command,
-and `[[` blocks. The preferred mechanism is `IF` because it a) is
-clearer to read, and b) it is sensitive to variables that are defined
-dynamically (i.e. during execution of the script).
+Conditional blocks use the `IF`/`FI` commands.
 
 <h5>`IF`/`FI` commands</h5>
 
@@ -806,67 +867,6 @@ FI
 This can be useful if the variable is dynamically set by the script (e.g. from the [`CONTAINS`](../ref/summaries.md#contains) command). 
 
 
-<h5> `[[` blocks </h5>
-
-_This syntax is supported for historical reasons only: using the `IF` command is preferred._
-
-Within a command file, you can define blocks that are only executed if
-a [variable](#variables) is set to a non-null value, e.g. `1`.
-
-Importantly, these blocks are evaluated _when first reading the script_: this means they
-are not sensitive to variables defined on-the-fly (i.e. within a script, unlike the `IF` command.
-
-If the variable is null (undefined or `0`) those blocks are skipped. This
-uses the following double-bracket syntax:
-
-```
-EPOCH len=${l}
-
-[[var
-
-  SIGSTATS sig=${eeg} mask th=${thresholds}
-
-]]var
-
-PSD sig=${eeg}
-```
-
-If `${var}` is null, then _all text_ (i.e. including any other
-variable definitions and conditional statements as well as commands)
-will be skipped, up until the end of the block (here `]]var`).  In this
-example, the `SIGSTATS` command will only be executed if `${var}` has
-been set to a non-null value:
-
-```
-luna my.edf var=1 < cmd.txt
-```
-
-Note how the variable _var_ is referenced without the usual `${}`
-syntax when paired with `[[` or `]]`. Also note that every block
-opening (e.g. `[[var`) requires a matching block closing
-(e.g. `]]var`).  Luna will give an error if it encounters a block closing 
-without having first encountered a closing.  
-
-It is possible to set nested conditional blocks:
-
-```
-% commands here always executed
-
-[[a
- 
- % commands here only executed if ${a} is non-null
-
- [[b
-   % commands here only executed if both ${a} and ${b} are non-null
- ]]b
-
- % commands here only executed if ${a} is non-null
-
-]]a
-
-% commands here always executed
-```
-
 ### Loops
 
 Scripts can contain loops by adding the `LOOP` (and `END-LOOP`)
@@ -874,7 +874,7 @@ commands.  The `LOOP` command requires two arguments: `index` to name
 the index variable, and `vals` which specifies the values to be looped
 over, as a comma-delimited list. If `index=i` then the loop index is referenced
 within the body of the loop using the `#{i}` syntax (i.e. distinct from a typical variable
-`${i}`. Loops can be nested.
+`${i}`). Loops can be nested.
 
 Here we use a loop to iterate over different sleep stages, i.e. using `MASK` for a command that respects epoch masks.
 
@@ -886,8 +886,7 @@ LOOP index=stg vals=N1,N2,N3,R
 END-LOOP
 ```
 
-Note, if we need to apply `RE` or do other modifications of the signal data within a loop, you can use the freeze/thaw mechanism: i.e.
-to modify the above (as not all commands respect set masks 
+Note: if commands within a loop require `RE` or other dataset modifications, use the freeze/thaw mechanism (not all commands respect set masks without restructuring): 
 
 ```
 FREEZE F1
@@ -922,8 +921,7 @@ END-LOOP % for bands
 Luna scripts support a simple convenience feature to specify
 regularly-structured sequences of items, for places where Luna is
 expecting a comma-delimited list of entries (e.g. for `sig` or `annot`
-etc).  This is done using the form `[x][y]` where _x_ and _y_ are of
-the form:
+etc).  This is done using `[x][y]` where _x_ and _y_ are:
 
 
 
@@ -945,43 +943,13 @@ The two lists are expanded as follows:
 
  - `[][1:5]` = `1,2,3,4,5`
 
-These can also accept [variables](#variables). For example, the command:
+These can also accept [variables](#variables). For example, if `${eeg}` is `C3,C4`, then:
 
 ```
-HILBERT sig=${eeg} f=11,15
+sig=[${eeg}][_ht_mag]
 ```
 
-will add a new channel for every channel in `${eeg}` with a default
-suffix `_ht_mag`, e.g. `C3_ht_mag`, `C4_ht_mag`, etc, reflecting the
-instantaneous magnitude (envelope) from the filter-Hilbert transform.
-
-If one wants to subsequently refer to the whole group of these new
-channels, you can write `[${eeg}][_ht_mag]`, i.e. which expands to
-`C3_ht_mag,C4_ht_mag` etc.
-
-Similarly, it can sometimes be convenient to automatically specify a
-series of channels, e.g for the output of [ICA](../ref/ica.md#ica),
-where new channels are created as `ICA1`, `ICA2`, etc.  Use the form
-`[root][1:3]` to obtain a comma-delimited list `root1,root2,root3`. For example:
-
-```
-PSD sig=[ICA][1:5]
-```
-is identical to
-```
-PSD sig=ICA1,ICA2,ICA3,ICA4,ICA5
-```
-
-As above, this can be combined with a variables to specify the number
-of components:
-
-```
-PSD sig=[ICA][1:${k}]
-```
-
-```
-luna s.lst k=10 < cmd.txt
-```
+expands to `C3_ht_mag,C4_ht_mag`.
 
 
 ### Individual variables
@@ -1020,14 +988,14 @@ You can have multiple `vars` statements, or pass `vars` a comma-delimited list o
 
 If the command script contained references to `${var1}`, etc, they
 would be substituted as appropriate for each individual. For example,
-all the EDFs had channels `EEG1` and `EEG2`, the following command would
+if all the EDFs had channels `EEG1` and `EEG2`, the following command would
 run the `PSD` command 1) for both, 2) only for `EEG1`, and 3) neither, for
 the first, second and third individual respectively:
 ```
 PSD sig=${var2}
 ```
 
-The log summaizes any attached variables for each individual: e.g. for the first individual (`var1`, etc are
+The log summarizes any attached variables for each individual: e.g. for the first individual (`var1`, etc are
 listed at the end):
 ```
  variables:
@@ -1276,7 +1244,7 @@ hand.  For example:
 luna s.lst 7/20 -o out.7.db < commands.txt
 ```
 
-would run only slice 7 of 20 total slices.
+would run only slice 7 of 20 total slices.  See [_Using Luna at scale_](../vignettes/scale.md) for more on parallel and batch workflows.
 
 The special variables `id` and `skip` (also `include` and `exclude` ID
 list files) can alternatively be used to control which individuals are
@@ -1286,10 +1254,10 @@ analysed from a sample list.
     If a number is given after the sample list, it is always
     interpreted as the position in the sample list, not an ID.  In
     other words, best not to use pure numbers as IDs in the sample
-    list if possible.  If the IDs are numeric, you can always us `id`
+    list if possible.  If the IDs are numeric, you can always use `id`
 
     ```
-    lune s.lst id=22 -o out.db < cmd.txt
+    luna s.lst id=22 -o out.db < cmd.txt
     ```
     i.e. this will look for an EDF with the ID (first column in `s.lst`) that matches the ID `22` (nb. matching
     is for a string, so `022` != `22`) 
@@ -1495,7 +1463,7 @@ when using certain commands that do not require signal data, e.g. the
 To create an empty EDF, specify `.` (period character) as the
 sample-list/filename along with `--nr` and `--rs` to give the number
 of records (`nr`) and the EDF record size (`rs`) respectively. Luna
-will create an EDF of this duration (i.e. with headers speciying the
+will create an EDF of this duration (i.e. with headers specifying the
 length of the recording) but with no signals, i.e. a collection of
 empty records.
 
@@ -1534,7 +1502,7 @@ applications (matching the example file above).
 ## Special variables
 
 Special variables (options that control Luna's behavior) are tabulated
-below.   For command-line Luna, these should be placed after the samlpe-list/EDF (first argument)
+below.   For command-line Luna, these should be placed after the sample-list/EDF (first argument)
 but before any `-s` command;  otherwise, in general the order typically doesn't matter.
 __All special variables must be assigned (`=`) an explicit value.__  Often this will simply be `T` meaning _true_
 to turn on that option. 
@@ -2621,7 +2589,7 @@ the entire EDF, and so only occur once.
 
 This format is primarily used for debugging or in some other very
 focused cases.  Although it is relatively easy to parse, in general
-you'll want to use Luna's [text-tables](#text-tables) or [_lunout_ databases](#lunout-databases),
+you'll want to use Luna's [text-tables](#text-tables) or [output databases](#output-databases),
 described next.
 
 ### Text-tables 
@@ -2674,11 +2642,11 @@ Alternatively, to set _all_ output files to not be compressed, set
 !!! warning "Known issues"
     Please see [this page](destrat.md#text-tables) for some current known issues with the initial implementation of the `-t` flag.
 
-### _lunout_ databases
+### Output databases
 
 This is the primary mode of output for most Luna commands.
 Here we run the same command as in the [previous section](#default-text-output)
-but instead using a [_lunout_ database](destrat.md) to collect the
+but instead using an [output database](destrat.md) to collect the
 output, with `-o`:
 
 ```
@@ -2695,11 +2663,6 @@ information on how to work with output databases, using either
 
 By default, Luna will overwrite an existing database; use `-a` instead
 of `-o` to _append_ to an existing database.
-
-!!!note "Naming"
-    We don't actually use this name throughout most of the documentation as a) it is the implicit default
-    in most cases, and b) it is an ugly-sounding name, but we couldn't come up with anything better ;-).
-    So, when referring to an _output database_ generically, this means the same as a _lunout database_.
 
 !!! info "Which should I use: text-tables or data-bases?"  
     Advantages

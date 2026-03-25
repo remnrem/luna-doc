@@ -2,16 +2,7 @@
 
 _Prediction of sleep stages_
 
-This page describes Luna's automated sleep stager (POPS). This
-[vignette](../vignettes/soap-pops.md) also gives some details on POPS
-and its companion command, [SOAP](soap.md). POPS is generic in the
-sense that it can be trained on multiple different types of signals.
-
-The standalone [LunaScope](https://zzz.nyspi.org/lunascope/) application provides a simple
-point-and-click interface to POPS (in prediction mode only), which is
-appropriate for applying our pre-made single-EEG POPS model to small
-numbers of EDFs. If using command-line Luna, the easiest place to start is with
-the [RUN-POPS](#run-pops) command.
+POPS (POPulation-level Sleep Stager) is Luna's automated sleep staging system, designed to be flexible enough to be trained on different signal types and applied to diverse datasets. In prediction mode, POPS takes one or more channels, computes a feature set, and applies a pre-trained model to generate epoch-level stage predictions. Pre-made models are available for single-channel EEG and can be applied directly via [`RUN-POPS`](#run-pops). The standalone [LunaScope](https://zzz.nyspi.org/lunascope/) application provides a point-and-click interface to POPS for applying these models to small numbers of recordings. For quality control of existing staging, see also the companion [SOAP](soap.md) command; a [vignette](../vignettes/soap-pops.md) covers both in detail.
 
 | Command | Description | 
 | ---- | ------ | 
@@ -48,12 +39,12 @@ prediction.
 The core `s2` model requires the following:
 
  - a single central EEG, based on a contralateral mastoid reference,
-   i.e. C3-M2 or C4-M1.  In practice, similar EEGs channels can be
+   i.e. C3-M2 or C4-M1.  In practice, similar EEG channels can be
    swapped in and should still perform similarly, e.g. F3-M2
 
  - channels must be band-pass filtered 0.3 - 35 Hz and sampled at 128 Hz
 
- - as well as this primary channel (which is given the placehold label _CEN_
+ - as well as this primary channel (which is given the placeholder label _CEN_
    below), the `s2` model expects a parallel, standardized version
    (called _ZEN_ below), which can be obtained via the `ROBUST-NORM`
    Luna command
@@ -116,7 +107,7 @@ The basic workflow for _prediction_ using a previously created POPS model is a s
 ```
    POPS (or RUN-POPS)
     - inputs: signals (EDFs), feature, model files (.ftr,  .mod) & auxiliaries 
-    - output: posterior probabilties & most likely stages per epoch
+    - output: posterior probabilities & most likely stages per epoch
 ```
 
 That is, the _feature file_ (here `s2.ftr`) is a text file with a
@@ -137,7 +128,7 @@ files reside in the folder `pops/` then
 _Wrapper around POPS for prediction_
 
 If using the standard [POPS](#pops-prediction) for prediction, it is
-necesary to perform a few steps to align signals with the channels
+necessary to perform a few steps to align signals with the channels
 that the `s2` model is expecting, to mirror what was done during
 training:
 
@@ -167,7 +158,7 @@ luna s.lst -s ' FILTER sig=C3_M2 bandpass=0.3,35 tw=0.5 ripple=0.02
                 ROBUST-NORM sig=C3_M2_NORM epoch winsor=0.005 second-norm=T
                 POPS alias=CEN,ZEN|C3_M2,C3_M2_NORM path=pops lib=s2 '
 ```
-and this would become more involved if apply multiple _equivalance_ channels.
+and this would become more involved if applying multiple _equivalence_ channels.
 
 <h3>Parameters</h3>
 
@@ -176,9 +167,9 @@ Epoch-level confusion matrix (strata: `OBS` x `PRED`)
 | Parameter | Example | Description |
 | ---- | ---- | ----  |
 | `path` | `/home/user/data/pops/` | Path to POPS model folder (downloaded) |
-| `lib` | `m2` | Optionall, a POPS model (default `s2`) | 
+| `lib` | `m2` | Optionally, a POPS model (default `s2`) | 
 | `sig` | `C3` | One or more EEG signals |
-| `ref` | `M2` | Optionally, one of more references (matching `sig`) |
+| `ref` | `M2` | Optionally, one or more references (matching `sig`) |
 | `args` |  `args="op1=val1 op2=val2"` | Pass other arguments to POPS |
 | `ignore-obs` | `T` | Ignore any observed staging (default: `F`) | 
 | `filter` | `F` | Filter signals 0.3 - 35 Hz (default: `T` ) |
@@ -186,7 +177,7 @@ Epoch-level confusion matrix (strata: `OBS` x `PRED`)
 
 <h3>Outputs</h3>
 
-See the [POPS](#pops) command outputs below.
+See the [POPS](#pops-prediction) command outputs below.
 
 <h3>Example</h3>
 
@@ -369,10 +360,10 @@ The primary output of running POPS in prediction mode is a set of posterior prob
 
 If the dataset contained manual staging, Luna will also report a suite
 of accuracy measures and print confusion matrices to the console
-(i.e. on the __assumption__ that the original staging represent a
+(i.e. on the __assumption__ that the original staging represents a
 _gold standard_).
 
-In addition, POPS adds a set of [annotations](annotations.md) - labelled either `N1`, `N2`, `N3`, `R` and `W` (if no original staging present), or `pN1`, `pN2`, `pN3`,`pR` and `pW` if there was original staging.   In practice, one may there want to add a command such as 
+In addition, POPS adds a set of [annotations](annotations.md) - labelled either `N1`, `N2`, `N3`, `R` and `W` (if no original staging present), or `pN1`, `pN2`, `pN3`,`pR` and `pW` if there was original staging.   In practice, one may then want to add a command such as 
 ```
 WRITE-ANNOTS annot=pN1,pN2,pN3,pR,pW file=^-pops.annot hms '
 ```
@@ -415,7 +406,7 @@ Epoch-level outputs (stratum: `E`)
 | `CONF` | Confidence score (highest posterior) |
 | `FLAG` | Flagged if an issue/outlier (0/1) |
 | `START` | Start time of epoch |
-| `STOP` | Start time of epoch |
+| `STOP` | Stop time of epoch |
 | `PP_N1` | Posterior probability, N1 |
 | `PP_N2` | Posterior probability, N2 |
 | `PP_N3` | Posterior probability, N3 |
@@ -543,7 +534,7 @@ This gives some verbose information to the console, describing the creation of t
   read model from pops/s2.mod (1000 iterations)
 ```
 
-After making the predictions, POPS create the annotations, and outputs the kappa (if there are observed staging data);
+After making the predictions, POPS creates the annotations, and outputs the kappa (if there are observed staging data);
 
 ```
   adding POPS annotations (pN1, pN2, pN3, pR, pW)
@@ -585,7 +576,7 @@ data, the performance might not be as good.
 
 For example, applying the same model to the first tutorial individual,
 the initial kappa is much lower (<0.4).  However, this is in large
-part because of an extend period of artifact after the _lights-on_
+part because of an extended period of artifact after the _lights-on_
 period of the recording.  Setting the `lights-on` option to exclude
 that increases the accuracy of prediction quite a lot.  (This is
 because of the normalization step involved in pre-processing.)  We'll
@@ -697,7 +688,7 @@ luna --eval-stages --opt file=stages1.txt file2=stages2.txt
 
 _Flexibly specify and train new POPS models_
 
-This is an advanced section, that covers using POPS to generate one's own stager.  
+This is an advanced section that covers using POPS to generate one's own stager.  
 
 ### Feature files
 
@@ -720,7 +711,7 @@ _Level 1 features:_
 |`COH`| | Magnitude-squared coherence | 
 |`SLOPE`| | Spectral slope (30-45 Hz) | 
 |`SKEW`| | Skewness | 
-|`KURTOSIS`| | Kurstosis | 
+|`KURTOSIS`| | Kurtosis | 
 |`HJORTH`| | Hjorth parameters | 
 |`FD`| | Fractal dimension | 
 |`PE`| `from` `to` | Permutation entropy (order 3 to 7) | 

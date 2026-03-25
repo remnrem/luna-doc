@@ -42,6 +42,7 @@ extra_css:
 nav:
  - Home:
      - Overview: 'index.md'
+     - Path: 'path.md'
      - Updates: 'updates.md'
      - Tutorial: 'tut/tut1.md'
      - Concepts: 'luna/args.md'
@@ -55,6 +56,8 @@ nav:
      - Contact: 'contact.md'
      
  - Updates: 'updates.md'
+
+ - Path: 'path.md'
 
  - Tutorial: 
      - 'Quick start': 'tut/tut1.md'
@@ -101,6 +104,7 @@ nav:
     - 'Prediction' : 'ref/predict.md'
     - 'Simulation' : 'ref/simul.md'
     - 'Helpers' : 'ref/helpers.md'
+    - 'Actigraphy' : 'ref/actigraphy.md'
     - 'Experimental ': 'ref/exp.md'
  
  - Python:

@@ -99,7 +99,7 @@ d <- read.table( "res.txt" , header=F , sep="\t" , stringsAsFactors=F )
 ```
 
 !!! hint
-    As you'll see in the [next section](tut4.md) of this tutorial, it is now possible to read _lunout_ databases
+    As you'll see in the [next section](tut4.md) of this tutorial, it is now possible to read output databases
     directly into R
     
 After loading the data, it is convenient to relabel the 6 columns to

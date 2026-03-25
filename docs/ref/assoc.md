@@ -3,43 +3,13 @@
 
 _Efficient sample-level permutation-based association testing_
 
-Whereas most Luna commands operate on EDFs in a serial manner, these
-commands operate at the sample level, on derived metrics (e.g. the
-output of prior Luna commands, as well as any previously generated
-arbitrary datasets) and other clinical and demographic covariates.  As
-such, association analyses do not require a
-[sample-list](../luna/args.md#sample-lists) as input and are run via
-special command-line options.
-
-This page describes two related approaches:
-
- - [`GPA`](#gpa): general pairwise association between two sets of
-   variables (_dependent_ and _independent_ variables)
-
- - [`CPT`](#cpt): specialized variant of the general association model
- for a single independent variable, featuring _cluster-based testing_,
- i.e. pooling across _similar_ metrics, where similarity may be
- defined by spatial proximity of channels (e.g. Cz and PCz), or by
- metrics with similar associated frequencies (e.g. 13 Hz and 13.25
- Hz), etc.  Cluster-based approaches can be more powerful under some
- conditions.
-
-Both commands use permutation (randomly shuffling rows for some
-columns of the dataset) to correct for multiple-testing, using the
-Freedman-Lane approach to handle nuissance variables. Both options
-also allow for one or more covariates (nuissance variables).  The
-commands primarily differ in whether they allow for clustering of
-certain types of similar metrics (`CPT`), or whether they have a
-slightly more general, flexible specification of many pairwise
-(non-clustered) tests (`GPA`).  The `GPA` command should be the
-default option unless you are specifically interested in cluster-based
-analyses.
+Unlike most Luna commands that operate on EDFs serially, these commands operate at the sample level: they take derived metrics (e.g. the output of prior Luna commands) and test associations with clinical or demographic covariates across a cohort. Association analyses do not require a [sample-list](../luna/args.md#sample-lists) as input and are invoked via special command-line options. Both commands use permutation (Freedman-Lane approach) to correct for multiple testing and support nuisance covariates. `GPA` is the default choice, performing general pairwise association testing between two sets of variables. `CPT` is a specialized variant that adds cluster-based testing — pooling evidence across spatially or spectrally similar metrics (e.g. neighboring channels or adjacent frequency bins) — which can be more powerful when effects are expected to be distributed across related measures.
 
 
 | Command | Description | 
 | ---- | ------ | 
 | [`GPA`](#gpa) | General permutation-based association analysis for one or more sets of metrics |
-| [`CPT`](#cpt) | Cluster-based permutation to one or more sets of metrics |
+| [`CPT`](#cpt) | Cluster-based permutation for one or more sets of metrics |
 
 
 ## GPA
@@ -95,8 +65,8 @@ Secondary `--gpa-prep` options:
 | `n-prop` | 0.1 | Require each variable to have proportion of at least 0.1 non-missing values (default: 0) |
 | `vars`   | `A,B,C` | Only extract these variables from the inputs (default: read all) |
 | `xvars`  | `X,Y` | Do _not_ extract these variables from the inputs (default: read all) |
-| `facs`   | `F1,F2` | Only read files with these extact factors (default: read all) |
-| `xfacs`  | `F3` | Do _not_ read files with these extact factors (default: read all) |
+| `facs`   | `F1,F2` | Only read files with these exact factors (default: read all) |
+| `xfacs`  | `F3` | Do _not_ read files with these exact factors (default: read all) |
 | `grps`   | `grp1,grp2` | Only read files assigned to these groups (default: read all) |
 | `xgrps`   | `grp3` | Do _not_ read files assigned to these groups (default: read all) |
 
@@ -110,7 +80,7 @@ Primary analysis options:
 | `dat`   | `b.1` | Read data from this binary file (created by `--gpa-prep`) |
 | `nreps` | 10000 | Perform association tests, using 10,000 null permutations |
 | `X`     | `DIS,QT1` | Set one or more predictor variables |
-| `Z`     | `AGE,SEX,WAVE` | Set one or more nuissance variables (covariates) |
+| `Z`     | `AGE,SEX,WAVE` | Set one or more nuisance variables (covariates) |
 | `Xg`    | `preds` | Set predictors based on _groups_ |
 | `Zg`    | `covar,demo` | Set covariates based on _groups_ |
 | `n-req` | `10` | Require at least this many non-missing observations to retain a variable (default: 5) |
@@ -146,13 +116,12 @@ Secondary options: selecting subsets of individuals
 | `inc-ids` | `P1` | Only include individuals (rows) that match this list of `ID` values |
 | `ex-ids` | `P2,P3` | Exclude individuals (rows) that match this list of `ID` values |
 | `subset` | `+DIS`| Include only individuals (rows) that match for the variable `DIS` (any value other than `0`, `NaN` or missing, `NA`); alternatively, if `-DIS` then drop those individuals |
-inc-ids and ex-ids  
 
 Secondary options: analysis parameters
 
 | Option | Example | Description |
 | ---- | ---- | ---- |
-| `all-by-all` | | Set `X` to the same as all implied `Y` variables, i.e. test all pairwise combinations of a single set of variables
+| `all-by-all` | | Set `X` to the same as all implied `Y` variables, i.e. test all pairwise combinations of a single set of variables |
 
 
 Secondary options: output options
@@ -173,7 +142,7 @@ Secondary options: other summaries
 | `manifest` | | Dump the variable manifest (post-filtering & QC) to standard output text |
 | `dump` | | Dump the (post-filtered & QC'ed) data file to standard output text |
 | `stats` | | Output statistics to the output database |
-| `winsor` | 0.01 | Winsorize all _dependent (_Y_) variables |
+| `winsor` | 0.01 | Winsorize all dependent (`Y`) variables |
 | `qc` | `qc=F` | Accepts true/false value for whether to run QC (default: true) |
 | `p` | 0.05 | Only output tests with pointwise empirical p-value less than this value (default: output all) |
 | `padj` | 0.05 | Only output tests with _adjusted_ empirical p-value (i.e. corrected for multiple testing) less than this value (default: output all) |
@@ -254,7 +223,7 @@ the same metric for multiple channels or frequencies.  The
 `--gpa-prep` command compiles metrics across one or more files
 into a single, analysis-ready matrix (each row is one
 individual and the various features are the columns).  Here we give a series of toy examples
-to illustrate usauge:
+to illustrate usage:
 
 All files must have a single header row and a first column named `ID` (the ID for that observation).  Missing data
 can be encoded as non-numeric values (ideally `.` or `NA`).  Here we have three individuals, with two variables (`A` and `B`)
@@ -314,7 +283,7 @@ luna --gpa-prep --options dat=b.1 inputs='d1.txt|grp1|CH,d2.txt|grp2' > manifest
 The syntax for each input is `file|group|factor(s)` where the
 _factors_ are optional (if specified, they should exist as a column in
 the file, e.g. `CH`).   As above, we see we've generated a matrix `b.1` containing 7 variables for 3 individuals.
-By default, the `--gpa-prep` commands outputs a _manifest_ to the console, which we redirected here to a file `manifest`:
+By default, the `--gpa-prep` command outputs a _manifest_ to the console, which we redirected here to a file `manifest`:
 
 
 ```
@@ -477,7 +446,7 @@ the final binary dataset.  If the same variable _for the same
 individual_ is duplicated across files, then only the final value will
 be used (if the values differ, in which case GPA will issue a
 warning).  Here we have two extra individuals (`P4` and `P5`, neither
-of wheom are present in the other files).  Note that here we use the
+of whom are present in the other files).  Note that here we use the
 `+=` syntax to build up a comma-delimited argument:
 
 ```
@@ -525,7 +494,7 @@ P4       7     nan     nan     nan           nan          nan           nan     
 P5       8     nan     nan     nan           nan          nan           nan          nan  nan  nan  nan
 ```
 
-That is, `P4` and `P5` have a lot of missing data, as this they only
+That is, `P4` and `P5` have a lot of missing data, as they only
 had a single variable specified (`A` for `CH` = `F3`).
 
 
@@ -654,7 +623,7 @@ cat specs.json
 ```
 
 We could have generated this text file by hand, or using other tools,
-but `make-specs` os provided as a convenience function, as writing
+but `make-specs` is provided as a convenience function, as writing
 JSON by hand can be tedious.  Given a JSON specification file (that
 can be called anything, but we recommend a `.json` extension) we could
 create the binary file as follows:
@@ -726,7 +695,7 @@ be applied to any of the listed variables.
  - Second, we'll add an extra `"mappings"` entry to this file object.
 (Note that we also need to put an extra comma at the end of the line
 starting `"vars"` too, or else we'll get a JSON syntax error.)  The
-`mappings` entry take an array (`[ ]`) where each entry is an object
+`mappings` entry takes an array (`[ ]`) where each entry is an object
 in the form `{ var: { str: num } }`, meaning that the string `str`
 should be swapped to the number `num` for variable `var`.  As we've
 already specified an alias for `SEX`, we should use that term here
@@ -825,7 +794,7 @@ You'll see the log reported warnings:
 
 which means the data will not be correctly read in and that it is
 therefore necessary to disambiguate these metrics.
-(Note that the _group_ variable doesn't explcitily separate out these two variables:
+(Note that the _group_ variable doesn't explicitly separate out these two variables:
 groups are only used as a shorthand to refer to sets of variables,
 e.g. to include or exclude from analyses).
 
@@ -986,7 +955,7 @@ Other file attributes include:
  - `"xvars"` - an array of variables to exclude
 
  - `"facs"` - an array of factors (expected to be present in the
-   header of the file); these fields will not be read of _variables_,
+   header of the file); these fields will not be read as _variables_,
    but rather as stratifying factors, e.g. `[ "CH", "F" ]`
 
  - `"fixed"` - as above, specifying one or more _fixed_ factors for
@@ -1014,8 +983,8 @@ The format of the manifest is described in the section above.
 ### kNN imputation
 
 For applications with many dependent variables, but low or modest
-rates of missing data, one can request kNN imputation. Adding the,
-e.g., `knn=5` option to `--gpa` will attempt to impute missing missing
+rates of missing data, one can request kNN imputation. Adding, e.g., the
+`knn=5` option to `--gpa` will attempt to impute missing
 data based on _k_ nearest neighbors (i.e. here _k_ = 5).  This is
 performed only for the dependent (`Y`) variables, not for any
 predictors or covariates; further, only dependent variables are used
@@ -1053,7 +1022,7 @@ luna --gpa -o out.db \
 
 Instead of using `inc-ids` or `ex-ids` to include or explicitly
 exclude certain individuals, the `subset` option can include or
-exclude on the basis of variables values. For example, if a variable
+exclude on the basis of variable values. For example, if a variable
 `MALE` exists coded `0`/`1`, then `subset=MALE` (or `subset=+MALE`)
 will include only people with non-null values for `MALE` (i.e. _not_
 `0` but also not missing).  In contrast, `subset=-MALE` would exclude
@@ -1073,7 +1042,7 @@ Variable selection from a binary dataset operates on two levels:
    covariates (`Z`)
  
 We'll illustrate some of these steps with the toy dataset above (as above, adding options to ensure that
-non variables are dropped due to missing data in this toy example):
+no variables are dropped due to missing data in this toy example):
 
 ```
 luna --gpa --options dat=b.1 qc=F retain-cols desc 
@@ -1172,7 +1141,7 @@ There are various options to restrict which variables are extracted:
 
  - `facs` selects variables based on the presence of certain factors (e.g. having a `CH` factor)
 
- - `faclvls`selects variables based on matching certain strata (e.g. having `F3` for `CH`)
+ - `faclvls` selects variables based on matching certain strata (e.g. having `F3` for `CH`)
 
 Each of these _inclusion_ options has a complementary _exclusion_
 term: `xvars`, `xlvars`, `xnvars`, `xgrps`, `xfacs` and `xfaclvls`.
@@ -1221,7 +1190,7 @@ NV   VAR   NI   GRP    BASE
 1    C     3    grp2   C
 ```
 
-To select based on a long variable long:
+To select based on a long variable name:
 ```
 lvars=F_CH_F3_SS_NR,F_CH_F4_SS_R
 ```
@@ -1242,9 +1211,9 @@ NV   VAR            NI   GRP     BASE   CH    SS
 3    F_CH_F3_SS_NR  2    grp1    F      F3    NR
 4    F_CH_F3_SS_R   2    grp1    F      F3    R
 ```
-(Note: `NV` in the manifest always start from 1 and identify the slot for that variable in the _subsetted_ dataset, not the original.)
+(Note: `NV` in the manifest always starts from 1 and identifies the slot for that variable in the _subsetted_ dataset, not the original.)
 
-To select variables stratifed by `CH` only:
+To select variables stratified by `CH` only:
 ```
 facs=CH
 ```
@@ -1286,7 +1255,7 @@ NV  VAR            NI  GRP    BASE   CH   SS
 ```
 
 That is, this selects only variables that have the `CH` factor _and_
-the level `F3`.  You also combine multiple levels for a given factor
+the level `F3`. You can also combine multiple levels for a given factor
 (delimiting with `|`) as well as multiple factors: e.g. this selects
 variables with a `CH` factor that is `F3`, _or_ those with an `SS`
 factor that is `NR` _or_ `R`:
@@ -1640,7 +1609,7 @@ Variable-level output (strata: `VAR`):
 | `F` | Frequency (Hz) (for variables stratified by frequency) |
 | `T` | Time (e.g seconds) (for variables stratified by time) | 
 | `B` | Beta from linear regression |
-| `STAT` | The correspondong t-statistic | 
+| `STAT` | The corresponding t-statistic | 
 | `PU` | Uncorrected empirical significance value |
 | `PC` | Family-wise corrected empirical significance value |
 | `CLST` | For variables assigned to a nominally-significant cluster (P<0.05), the cluster number _K_ (else 0) |

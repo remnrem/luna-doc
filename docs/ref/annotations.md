@@ -1,7 +1,6 @@
 # Interval annotations
 
-_Here we describe the formats of annotation files, how to attach them
-to EDFs, and how to view and summarize their contents._
+Annotations are time-stamped labels attached to an EDF — sleep stages, arousals, events, or any user-defined interval — and are central to most Luna workflows. This page describes how Luna reads and stores annotations (in `.annot`, `.eannot`, and NSRR XML formats) and the commands used to view, create, and export them. `ANNOTS` tabulates all loaded annotations; `MAKE-ANNOTS` and `WRITE-ANNOTS` create and save new ones. `REMAP` relabels annotation classes after loading. `AXA` cross-tabulates pairs of annotation classes; `SPANNING` and `ESPAN` report temporal coverage statistics. `A2S` and `S2A` convert between annotations and signal data, and `META` attaches additional meta-data to annotation instances.
 
 
 | Command  | Description |
@@ -16,11 +15,11 @@ to EDFs, and how to view and summarize their contents._
 | [`MAKE-ANNOTS`](#make-annots) | Make new annotations |
 | [`WRITE-ANNOTS`](#write-annots) | Write annotations as `.annot` or `.xml` |
 | [`META`](#meta) | Add meta-data to annotations |
+| [`AXA`](#axa) | Pairwise annotation cross-tabulation |
 | [`SPANNING`](#spanning)   | Report on _coverage_ of annotations |
 | [`ESPAN`](#espan) | Epoch-based annotation coverage | 			    
 | [`A2S`](#a2s)  | Add a 0/1 signal based on an annotation |
 | [`S2A`](#s2a)  | Add an annotation based on ranged values of a signal |
-| [`ALIGN-ANNOTS`](#align-annots) | Align epochs (paired with `ALIGN-EPOCHS`) | 
 
 
 ## Luna annotations
@@ -55,7 +54,7 @@ This table summarizes these levels of annotation:
 Annotations can be represented in a number of different file formats, all described below:
 
 - [`.annot`](#annot-files) files, where each row describes an event/interval and any associated meta-data (including times, channels, etc)
-- [`.eannot`](#eannot-files) files containing simple per-epoch labels, where each distinct label is treated as a distinction annotation _class_ 
+- [`.eannot`](#eannot-files) files containing simple per-epoch labels, where each distinct label is treated as a distinct annotation _class_
 - [EDF+ Annotations](#edf-annotations-channel), where annotations are embedded in the EDF as separate channels
 - [Luna-format XML](#luna-xml-files) files 
 - [NSRR-format XML](#nsrr-xml-files) files, where each _ScoredEvent_ parent node in one XML is treated as a distinct annotation _class_
@@ -75,7 +74,7 @@ _Generic annotation files_
 
 This is the preferred (and most flexible) annotation format for
 generic event/interval-based annotations. These are text-based,
-tab-delimited files that containing _interval-level_ annotations.
+tab-delimited files containing _interval-level_ annotations.
 
 !!! note
     `.annot` files should be plain-text but need not have the
@@ -90,7 +89,7 @@ file.
 
 The standard `.annot` specification involves at least six
 tab-delimited fields (optionally allowing whitespace delimiters
-instead). There are numerous options and alternatives the supplement
+instead). There are numerous options and alternatives that supplement
 this basic format, as outlined below:
 
  - [Column formats](#columnformats) : full (six-column) versus reduced (3 or 4 column) formats
@@ -110,7 +109,7 @@ The full (internal) representation of annotation data as is follows:
 | `channel` | Channel(s) | If not applicable, specify `.` |
 | `start` | [Start time](#time-encoding) | Required: see [time-encoding specifications](#time-encoding) below |
 | `stop` | [Stop time](#time-encoding) |  See [time-encoding specifications](#time-encoding) below |
-| `meta` | [Meta-data](#meta-data) | Values or key-value pairs; if not present, specfiy `.` |
+| `meta` | [Meta-data](#meta-data) | Values or key-value pairs; if not present, specify `.` |
 
 This six-column format is the recommended format, and is what is
 written (by default) by `WRITE-ANNOTS`.
@@ -202,7 +201,7 @@ here we add three extra meta-data tags with keys `AMP`, `dur_sec` and `F1`:
 class  instance  channel  start  stop  meta   AMP   dur_sec   F1
 ```
 
-As noted above, It is advised that subsequent data rows adopt the same column format.
+As noted above, it is advised that subsequent data rows adopt the same column format.
 This then allows R (or other packages) to read the `.annot` file as a
 tab/whitespace-delimited table, with the columns given these variable
 names, e.g. using the `read.table()` function.  As, by default,
@@ -227,7 +226,7 @@ within a single `.annot` file.
    are assumed to be 24-hour clock-times. These can include fractions
    of a second, e.g. `23:03:01.524` (which is also the same as
    `23.03.01.524`, i.e. if the EDF `.` character is used to delimit
-   hours, minutes and seconds insted of the colon (`:`) character). It is also possible to
+   hours, minutes and seconds instead of the colon (`:`) character). It is also possible to
    specify dates as well as clock-times, i.e. as is necessary for long recordings, [see below](#date-encoding)
 
  - __Elapsed hh:mm:ss:__ any time starting `0+` is assumed to be an
@@ -239,7 +238,7 @@ within a single `.annot` file.
    possible to specify start and stop times in terms of epochs by
    starting entries with the `e` character: see below for more details
  
-Further, __stop times__ can take one of two additonal encodings: 
+Further, __stop times__ can take one of two additional encodings:
 
  - __Durations:__ if the stop time starts with `+` it is interpreted
    as the duration of the interval, rather than the end.  This can be
@@ -379,7 +378,7 @@ something in the form _dd-mm-yy-hh:mm:ss_, i.e. `31-12-99-23:59:59`.
 __Delimiters:__ Alternatively, one can use `/` for the date, and/or a space instead of
 `-` to separate the date and time, e.g. `31/12/99 23:59:59`.
 
-__Month labels:__ it also also allowed to use the following
+__Month labels:__ it is also allowed to use the following
 three-character codes (case-insensitive) instead of the numbers 1
 through 12: `Jan`, `Feb`, `Mar`, `Apr`, `May`, `Jun`, `Jul`, `Aug`,
 `Sep`, `Oct`, `Nov` and `Dec`.
@@ -429,7 +428,7 @@ defined classes `a1`, `a2`, and `a3`.
 
 - first column: _class name_ matches one of the header rows (i.e. `a1`, `a2` or `a3` in this example); if a new class is encountered, it is added on-the-fly
 - second column: _instance ID_ that can be unique or not with respect to its annotation class (or even missing, as for `a2`)
-- third column: _channel IDs_ can be optinally specified, if they are relevant. e.g. for events detected on a given channel(s).
+- third column: _channel IDs_ can be optionally specified, if they are relevant. e.g. for events detected on a given channel(s).
 - fourth and fifth column(s): these define the interval for this annotation instance, as described above
 - sixth column: either missing (period, `.`) or, if the header specified _meta-data_ for that annotation _class_ (as for `a3` above), then these must be listed in a pipe-delimited format, in
   the same order as they were declared in the header/preamble.  
@@ -461,7 +460,7 @@ beyond):
 
  - __key-value pairs:__ this is the default used by `WRITE-ANNOTS`, to specify meta-data as `key=value` pairs in the sixth `meta` field.
 
- - __values:__ if a full [header](#headers) has been specified with meta-data fields, then values in the sxith `meta` field are assumed to correspond to those tags, as shown below
+ - __values:__ if a full [header](#headers) has been specified with meta-data fields, then values in the sixth `meta` field are assumed to correspond to those tags, as shown below
 
  - __tabular meta-data:__ given a header row that specifies columns beyond the sixth, values in those columns are treated as meta-data
 
@@ -510,11 +509,11 @@ The following types are currently available in Luna:
 Types can be defined on a file-by-file basis in the header rows, as
 described above.
 
-You can also explicitly set meta-data keys to a given with the options
+You can also explicitly set meta-data keys to a given type with the options
 `num-atype`, `int-atype`, `txt-atype` and `bool-atype`, all of which
 take a comma-delimited list of key labels.  These apply to all files. 
 
-If no type if specified, all annotations are assumed to be
+If no type is specified, all annotations are assumed to be
 numeric. This behavior can be changed by setting the special variable
 `annot-meta-default-num` to `F`.
 
@@ -783,7 +782,7 @@ _class_ versus _instances_.
     luna edfplus.edf edf-annot-class=N1,N2,N3,R,W,? \
          -s ' WRITE-ANNOTS file=a.annot annot=N1,N2,N3,R,W,? '
     ```
-    Subsequently, one would likley then add `skip-edf-annots=T` as a special variable to ignore annotations from an EDF+ 
+    Subsequently, one would likely then add `skip-edf-annots=T` as a special variable to ignore annotations from an EDF+ 
     that have already been extracted to a separate file and attached (and linked via a sample-list to the original EDF+).  
     It can be slow to scan an entire EDF+ to pull out 
     annotations, and so performing these steps initially (i.e. to extract all desired annotations as an `.annot`) is 
@@ -821,7 +820,7 @@ the same information but in _hh:mm:ss_ format (`START_ELAPSED_HMS`) and as clock
 
 !!! note "Spaces in annotation labels"
     In the original EDF+, the annotation labels are actually `PAT IIB
-    EEG`, `REC START IIB CAL`, etc.  Note that Luna has autoamtically
+    EEG`, `REC START IIB CAL`, etc.  Note that Luna has automatically
     converted spaces to underscore characters (`_`), to make working
     with these annotations easier on the command line (i.e. `PAT_IIB_EEG`, etc).   If for some reason this was 
     not desired, set the special variable `keep-annot-spaces=T` (or `keep-spaces=T` to do
@@ -856,7 +855,7 @@ luna ma0844az_1-1+.edf -o out.db  -s  ' MASK mask-ifnot=edf_annot[HVT_00:30|HVT_
 
 
 !!! note "Using eval expressions instead"
-    This is a digression, but to illustrate a difference way to use Luna masks in this instance, 
+    This is a digression, but to illustrate a different way to use Luna masks in this instance,
     and to point to a common problem/solution.  Instead of the above form, to mask epochs based on these two labels, we could also use the following:
 
     ```
@@ -1023,6 +1022,73 @@ Per-epoch _instance-level_ annotation tabulation (strata: `E` x `INTERVAL` x `IN
 | `EPOCH_MASK` | `epoch` | Flag whether this epoch is included or excluded (`1` means _masked_ or excluded) 
 
 
+## AXA
+
+_Pairwise annotation cross-tabulation_
+
+`AXA` summarises the pairwise relationships between a set of _seed_ annotations and
+one or more _query_ annotations. For each seed × query pair it reports the mean
+proportion of seed events overlapped, the mean time spanned, the mean count of
+spanning events, and the mean signed time to the nearest query event.
+
+**Compared to [`OVERLAP`](#overlap) / [`--overlap`](#-overlap):** `OVERLAP` uses a
+permutation framework to assess statistical significance of enrichment across an
+entire dataset. `AXA` is a faster, lighter descriptive cross-tab — no resampling,
+no sample-list required. It is the right choice when you want simple numerical
+summaries of annotation co-occurrence or proximity within a single recording, or
+when building per-subject annotation tables at scale.
+
+<h3>Parameters</h3>
+
+| Parameter | Example | Description |
+|---|---|---|
+| `annot` | `annot=N2,N3,arousal,apnea` | All annotation classes to query (each class acts as both seed and query) |
+| `by-instance` | | Treat each class × instance ID as a distinct annotation |
+| `match-instance` | | Only compare annotations with matching instance IDs [`by-instance`] |
+| `flatten` | | Flatten overlapping events within each annotation class before comparisons |
+| `within-channel` | | Restrict comparisons to annotations sharing the same channel |
+| `start` | | Anchor nearest-distance comparisons to annotation starts |
+| `stop` | | Anchor nearest-distance comparisons to annotation stops |
+| `w` | `w=5` | Search window (seconds) for nearest-event distance; events beyond the window are excluded (unless `truncate`) |
+| `truncate` | | Truncate nearest distances to the window rather than excluding them |
+| `verbose` | | Write additional event-level detail to the console |
+
+<h3>Output</h3>
+
+Output strata: `SEED × ANNOT` (or `CH × SEED × ANNOT` with `within-channel`)
+
+| Variable | Description |
+|---|---|
+| `P` | Mean proportion of each seed event spanned by the query annotation |
+| `T` | Mean time (seconds) of query annotation overlapping each seed event |
+| `N` | Mean number of spanning query events per seed event |
+| `A` | Proportion of seed events with at least one spanning query event |
+| `D` | Mean signed distance to nearest query event (seconds; negative = query precedes seed) |
+| `DABS` | Mean absolute distance to nearest query event |
+| `D_N` | Number of seed events for which a nearest query event was found within the window |
+| `TOT_N` | Total number of (flattened) query annotation intervals spanning any seed |
+| `TOT_T` | Total duration (seconds) of query annotations spanning any seed |
+
+<h3>Example</h3>
+
+Summarise how arousals and apneas relate to N2 and N3 sleep epochs:
+
+```
+AXA annot=N2,N3,arousal,apnea w=10
+```
+
+Restrict to channel-specific spindle and slow oscillation annotations:
+```
+AXA annot=spindle,SO within-channel flatten
+```
+
+Extract results:
+```
+destrat out.db +AXA -r SEED ANNOT
+```
+
+---
+
 ## MAKE-ANNOTS
 
 _Create new annotations on-the-fly_
@@ -1087,7 +1153,7 @@ Misc. options for `epoch`
 
 _Pairwise operations_
 
-Staring with the four-column (headerless) annotation file `a.annot`:
+Starting with the four-column (headerless) annotation file `a.annot`:
 ```
 A	.	10	20
 A	.	30	40
@@ -1155,7 +1221,7 @@ C       60.000  180.000
 
 Conversely, if attaching annotation `C` (as above) and running `split` to generate `S`:
 ```
-MAKE-ANNOTS annot=S flatten=C
+MAKE-ANNOTS annot=S split=C
 ```
 ```
 class start    stop
@@ -1219,7 +1285,7 @@ E      2970.000  6000.000
 ```
 
 Considering a second scenario with more complex epoch structure:
-as a demonstation, we select the first 30 seconds of an EDF and then
+as a demonstration, we select the first 30 seconds of an EDF and then
 set 7-second epochs with 2-second increment, followed by `MAKE-ANNOTS epoch`: 
 ```
 MASK epoch=1 & RE & EPOCH len=7 inc=2 & RE & MAKE-ANNOTS epoch=E
@@ -1268,7 +1334,7 @@ E           570.000 900.000
 edge_right  895.000 900.000
 ```
 i.e. additional `edge` annotations are added to demarcate the edges of each
-`epoch` annotation - i.e. regions near the bounadaries of the currently included
+`epoch` annotation - i.e. regions near the boundaries of the currently included
 analytic interval.   The label `edge` can be changed with the `edge` option; left
 and right edges can be collapsed to one class with `collapse-edges`.
 
@@ -1290,7 +1356,7 @@ this, by making it easier to convert to .annot, for example:
 When writing `.annot` files, Luna adheres to a standard, full default: 
  
  - standard six-column format
- - extended eaders absent 
+ - extended headers absent
  - explicit start and stop times for annotations in elapsed seconds
  - ordered by time of occurrence 
  - multiple annotation combined into a single `.annot` file
@@ -1312,7 +1378,7 @@ default.
 
 |  Parameter | Example | Description |
 | --- | --- | --- |
-| `file` | `a.annot` | File name - should end if `.annot` (unless XML) | 
+| `file` | `a.annot` | File name - should end in `.annot` (unless XML) |
 | `annot` | `N1,N2,N3,R,W` | Only output these options (versus all), this accepts wildcard `*` |
 | `hms` | | Write in _hh:mm:ss_ output rather than elapsed seconds |
 | `dhms` | | Write in _dd-mm-yyyy-hh:mm:ss_ output rather than elapsed seconds |
@@ -1326,7 +1392,7 @@ Secondary parameters
 | --- | --- | --- |
 | `headers` | | Include verbose header rows in `.annot` |
 | `minimal` | | Do not include main `class...` header row ( or `min`) |
-| `specials` | | Add _special_ internal annotatons: e.g. `epoch_len`, etc | |
+| `specials` | | Add _special_ internal annotations: e.g. `epoch_len`, etc | |
 | `collapse` | | For a discontinuous EDF, collapse annotation times |
 | `add-ellipsis` | | For zero-duration annotations, add `...` as the second field, i.e. extend to the next annotation |
 | `min-dur` | 1 | Set a minimum duration of events (in seconds) for them to be output |  
@@ -1391,7 +1457,7 @@ This flexible command can add [meta-data](#meta-data) tags to existing
 other annotations.
 
 It operates in one of two primary modes: appending new values based on 1)
-other annotations (e.g. overlap or distinance to other annotation
+other annotations (e.g. overlap or distance to other annotation
 classes) or 2) the EDF signals that span those annotations (e.g. the
 mean value of a window around each annotation).  A further special mode
 can add meta-data based on the _duration_ of annotations.
@@ -1528,7 +1594,7 @@ Note that in this particular example the EDF field happens to be blank
 (`.`), meaning that Luna will create an _empty_ EDF; although this
 won't have any signal data, it allows working with annotation files,
 although we'll need to specify some start-times and dates below.  This
-is just to illustrate that is is possible to apply Luna to
+is just to illustrate that it is possible to apply Luna to
 annotation-only style datasets.
 
 Also consider we have a _remapping_ file `param` to give new annotation labels, which is necessary
@@ -1809,7 +1875,7 @@ destrat out.db +SPANNING | behead
 
 The above tells us that 99.93% (`SPANNED_PCT`) of the EDF is spanned
 by one of these annotations.  Furthermore, there is no overlap among
-this set of annotations (`ANNOT_OVERLAP` is 0).  See do we do see
+this set of annotations (`ANNOT_OVERLAP` is 0).  We do see
 there is 30 seconds (i.e. one epoch) not covered by any of these
 annotations (`UNSPANNED_SEC`, i.e. 0.07% as noted by `UNSPANNED_PCT`).
 
@@ -1823,7 +1889,7 @@ which is also present as a staging annotation in this case:
   [REM] 238 instance(s) (from edfs/learn-nsrr01-profusion.xml)
 ```
 
-Re-running with this included now shows that these annoations a)
+Re-running with this included now shows that these annotations a)
 completely span the EDF (`SPANNED_PCT` is 100%) without any overlap
 (`ANNOT_OVERLAP` is 0):
 
@@ -1931,7 +1997,7 @@ _Event-level_ annotation output (option: `verbose`; strata: `E` x `ANNOT` x `INS
 | `STOP` | Event stop (seconds) |
 | `XDUR` | Duration of event _within this epoch_ |
 | `XSTART` | Start of event _within this epoch_ |
-| `XTOP` | Stop of event _within this epoch_ |
+| `XSTOP` | Stop of event _within this epoch_ |
 
 
 <h3>Example</h3>
@@ -2298,7 +2364,7 @@ If `1` maps to `NS` and `3` maps to `R` as above, then by default the annotation
  R      3       4
  R      8       9
 ```
-However, with `span-gaps` addded, then we would see:
+However, with `span-gaps` added, then we would see:
 ```
  class  start   stop
  NS     1       2

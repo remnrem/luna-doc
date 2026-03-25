@@ -410,9 +410,9 @@ _Reads a sample-list from a file, or returns an existing sample-list_
 ```
 
 If the sample list uses relative paths that are not appropriate for your current directory,
-you can set the `path` argument to add a prefix to all relative paths in the sample list.  Alternatively 
-(and equivalently), you can set the project variable `path` before calling `sample_list(x)` to 
-acheve the same result: `proj.var( 'path' , '/path/to/data/' )`.   For example, if the current working folder
+you can set the `path` argument to add a prefix to all relative paths in the sample list.  Alternatively
+(and equivalently), you can set the project variable `path` before calling `sample_list(x)` to
+achieve the same result: `proj.var( 'path' , '/path/to/data/' )`.   For example, if the current working folder
 is `/home/joe/work1/` and the data are in `/data/proj1/`
 
 ```
@@ -896,7 +896,7 @@ _Clears all individual-specific variables (for all individuals)_
 This clears any previously attached individual-specific variables.  Typically, these will be
 attached through Luna's `vars` special variable, i.e. `proj.var( 'vars' , 'path/to/ivar.txt' )`.
 (Note that although the Luna variable is `vars` it would perhaps have been better called `ivars`,
-as `lunapi` uses the `vars`/`ivars` nomenclature to distinguish betwen project-wide and individual-specific
+as `lunapi` uses the `vars`/`ivars` nomenclature to distinguish between project-wide and individual-specific
 variables.
 
 ### proj.include()
@@ -1008,7 +1008,7 @@ _A project-level wrapper for the SUN2019 biological age model_
 the `remnrem/lunapi` Docker image). If `path` is `None`, then it is
 set to `resources.MODEL_PATH` instead (i.e. this is the default).
 
-For consistency across differnt lunapi commands, future releases will
+For consistency across different lunapi commands, future releases will
 allow Python lists as well as comma-delimited strings: i.e. `cen = [
 'C3' , 'C4' ]` as well as `cen = 'C3,C4'`.
 
@@ -1239,7 +1239,7 @@ _Returns information on the attached data_
       p.stat()
 ```
 
-The key values that are returned are described in the total below:
+The key values that are returned are described in the table below:
 
 | Variable | Description |
 |----|----|
@@ -1653,7 +1653,7 @@ _Returns an array of signal/annotation data_
 
      Args:
       chs (str or list[str] )               channel label(s) 
-      annots (str ot list[str], optional)   one or more annotation class labels
+      annots (str or list[str], optional)   one or more annotation class labels
       time (optional, default = False)      add a time column to the output (seconds)
 
      Returns:
@@ -1678,7 +1678,7 @@ _Returns an array of merged signal/annotation data based on selected intervals (
      Args:
       intervals                            list of (start,stop)-tuples in time-points
       chs (str or list[str] )              channel label(s)
-      annots (str ot list[str], optional)  one or more annotation class labels
+      annots (str or list[str], optional)  one or more annotation class labels
       time (optional, default = False)     add a time column to the output (seconds)
 
      Returns:
@@ -1704,7 +1704,7 @@ _Returns an array of individual signal/annotation data based on selected interva
      Args:
       intervals                            list of (start,stop)-tuples in time-points
       chs (str or list[str] )              channel label(s)
-      annots (str ot list[str], optional)  one or more annotation class labels
+      annots (str or list[str], optional)  one or more annotation class labels
       time (optional, default = False)     add a time column to the output (seconds)
 
      Returns:
@@ -1732,7 +1732,7 @@ _Helper function to convert epochs to intervals_
       epochs    int or list[int] of base-1 epochs
 
      Returns:
-      a list of (start,top)-tuples (time-points)
+      a list of (start,stop)-tuples (time-points)
 
     Examples:
       p.e2i( range(1,5) )
@@ -1753,7 +1753,7 @@ _Helper function to convert epochs to intervals_
       secs      list of (start,stop) float tuples (seconds)
 
      Returns:
-      a list of (start,top)-tuples (time-points)
+      a list of (start,stop)-tuples (time-points)
 
     Examples:
       p.s2i( range(1,5) )
@@ -1844,7 +1844,7 @@ _Inserts a new signal into the in-memory EDF_
 ```
 
 This returns an error if the size of the signal does not match the EDF exactly.  This is
-based on the _current_ size of the in-memroy representation, i.e. which may differ from
+based on the _current_ size of the in-memory representation, i.e. which may differ from
 the on-disk file.
 
 Also, the `label` must not already exist in the EDF.   
@@ -1869,7 +1869,7 @@ _Inserts a new signal into the in-memory EDF_
 ```
 
 This returns an	error if the size of the signal	does not match the EDF exactly.	 This is
-based on the _current_ size of the in-memroy representation, i.e. which	may differ from	
+based on the _current_ size of the in-memory representation, i.e. which	may differ from	
 the on-disk file.
 
 `label` must already exist in the EDF.
@@ -2064,7 +2064,7 @@ _Plot a hypnogram given sleep stage data_
       ss (list[str])      sleep stage annotations (per-epoch)
       e (list[float])     optional epoch times (seconds)
       xsize (float)       size of figure (horiz.)
-      ysize(float)        size if figure (vert.)
+      ysize(float)        size of figure (vert.)
       title (str)         plot title
 
     Returns:
@@ -2104,7 +2104,7 @@ _Make a hypno-density (posterior stage probabilites)_
 ```
 
 This function expects columns `PP_N1`, `PP_N2`, etc, as returned by
-`POPS` and `SOAP` commands ( in the output stratifed by `E` (epoch), 
+`POPS` and `SOAP` commands ( in the output stratified by `E` (epoch), 
 as above).
 
 ### inst.psd()
@@ -2446,7 +2446,7 @@ that most users can ignore):
      sigcols (dict)       optional, channel:color mappings
      anncols (dict)       optional, annotation:color mappings
      throttle1_sr (int)   optional, sample rate throttle (default: 100 Hz max)
-     throttle2_np (int)   optional, number of points throttle (defautl: 15,000 max)
+     throttle2_np (int)   optional, number of points throttle (default: 15,000 max)
      summary_mins (int)   optional, duration of summary stats (currently not used)
      height (int)         optional, height of viewer in pixels
      annot_height (float) optional, height of annotations as proportion (default: 0.15)

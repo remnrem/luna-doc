@@ -1,5 +1,7 @@
 # Time-series clustering
 
+Time-series clustering groups epochs or channels according to the similarity of their signal dynamics, independent of amplitude or spectral properties. Luna implements `EXE`, which uses permutation distribution clustering (PDC) to construct a pairwise distance matrix across epochs or channels within an individual, based on the ordinal pattern structure of the time series. The resulting matrix can be exported for downstream analysis or used directly within Luna for hierarchical complete-linkage clustering. `EXE` supports univariate (per-channel), multivariate (combined-channel), and concatenated modes.
+
 ## EXE
 
 _Epoch-by-epoch or channel-by-channel time-series clustering_
@@ -14,10 +16,10 @@ dimension reduction approaches.
 
 This command runs in one of four basic modes: for _K_ channels and _E_ epochs:
 
- - _univariate_ : _K_ different channel-specific (_ExE_) matrics [`uni`]
+ - _univariate_ : _K_ different channel-specific (_ExE_) matrices [`uni`]
  - _default_    : one combined multi-channel (_ExE_) matrix, i.e. a single distance metric for each pair of epochs is calculated based on the _multivariate_ profiles of the _K_ channels
  - _channel-wise_ : one channel-by-channel (_KxK_) matrix [`cat` with unepoched data ] 
- - _concantenated_ : one matrix concatenating epochs from different channels (_KExKE_) [`cat` with epoched data, i.e running `EPOCH` beforehand ]
+ - _concatenated_ : one matrix concatenating epochs from different channels (_KExKE_) [`cat` with epoched data, i.e running `EPOCH` beforehand ]
 
 ![img](../img/exe6.png){width="100%"}
 
@@ -34,7 +36,7 @@ can change the default embedding dimension (`m`) and whether to skip samples (`t
 | Parameter | Example | Description |
 |--- | --- | --- |
 | `sig` | `sig=C3,C4` | Specify channels |
-| `uni` | | Univariate (channel-by-channel) clstering of epochs |
+| `uni` | | Univariate (channel-by-channel) clustering of epochs |
 | `cat` | | Concatenate channels |
 | `mat` | `mat=f1` | Dump distance matrix in file `f1-{id}.mat` |
 | `sr` | `sr=100` | Change sample rate of signals prior to analysis |
@@ -69,7 +71,7 @@ In some conditions (with the `cat` option), there will be a
 corresponding `.idx` file, which describes the columns and rows of the
 distance matrix (in terms of which channels/epochs each reflects):
 i.e. containing an `ID` column and then `CH` (and optionally `E` also,
-if the data are epoched).)
+if the data are epoched).
 
 
 
@@ -85,7 +87,7 @@ Epoch-level cluster assignments (strata: `E`)
 
 If selecting _representative epochs_ was performed, the additional outputs will be generated:
 
-Epoch-level examplar assignments (strata: `E`)
+Epoch-level exemplar assignments (strata: `E`)
 
 | Variable | Description |
 | --- | --- |
@@ -130,7 +132,7 @@ The cluster each epoch is assigned to is in `c$CL`.
 Here we plot the epoch-by-epoch distance matrix as a heat map (left),
 with the diagonal going from bottom left to top right.  Second, we
 apply dimension reduction techniques such as multi-dimensional
-scaling, to produce metrics that might flag aberrent epochs (note: we
+scaling, to produce metrics that might flag aberrant epochs (note: we
 just use a quick-and-dirty way to assign colors to clusters here, and
 sometimes different clusters are assigned the same color):
 
@@ -201,7 +203,7 @@ lheatmap( d$E , d$F , d$PSD , col = jet.colors(100) )
 
 ![img](../img/exe4.png){width="100%"}
 
-This points to a a constant electrical line noise artifact (the horizontal streak across the top
+This points to a constant electrical line noise artifact (the horizontal streak across the top
 of the spectrogram) which is amplified during the window from epoch 200 to 300.  As a proof-of-principle,
 if we first band-pass filtered the signal prior to clustering:
 
@@ -211,7 +213,7 @@ luna s.lst 1 -o out.db -s 'EPOCH & FILTER sig=C3 bandpass=0.3,35 tw=0.5 ripple=0
 
 Now, we see a different structure in the data: the accentuated
 line-noise effect from epochs 200-300 has been removed; making two
-other feature of the data more visible: 1) a single small period of
+other features of the data more visible: 1) a single small period of
 unusual epochs (that are also evident in the spectrogram), and 2) a
 long-range banding of similarity, which maps onto different stages of
 sleep (e.g. N3 epochs are more similar to other N3 epochs than to REM
@@ -313,7 +315,7 @@ id01    14    4    40
 i.e. most of the initial epochs are assigned to class `4` (which has exemplar epoch 40).   The exemplar epochs can be plotted to show a _typical_ example of that class.
 
 
-Interactive viewer workflows such as [LunaScope](https://zzz.nyspi.org/lunascope/) can show the outputs of `EXE representative`: here it runs `representative=5` to select five examplars.  These are shown in the plots below (on the right - color-coded black, red, green, blue and cyan).  The raw signal plotted above each is the 30-seconds signal of the _exemplar_ epoch in each case.  (The left plot is a heatmap of the distance matrix - with colder colors for less similar epochs):
+Interactive viewer workflows such as [LunaScope](https://zzz.nyspi.org/lunascope/) can show the outputs of `EXE representative`: here it runs `representative=5` to select five exemplars. These are shown in the plots below (on the right - color-coded black, red, green, blue and cyan). The raw signal plotted above each is the 30-second signal of the _exemplar_ epoch in each case. (The left plot is a heatmap of the distance matrix - with colder colors for less similar epochs):
 
 ![img](../img/mlref/ml-ref32.png)
 

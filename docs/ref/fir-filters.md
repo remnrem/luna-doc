@@ -2,6 +2,8 @@
 
 _Linear-phase signal filters_
 
+Luna uses finite impulse response (FIR) filters, which provide linear-phase responses with no phase distortion. `FILTER` applies a low-pass, high-pass, band-pass or band-stop FIR filter to one or more channels; filter coefficients are derived using the Kaiser window method (specified via ripple and transition width), with alternatives including fixed-order window methods (Bartlett, Hann, Blackman) or coefficients read from a file. `FILTER-DESIGN` reports filter properties — order, transition widths, frequency response — without modifying any signal, and is useful for verifying filter parameters before applying them.
+
 | Command   | Description |
 |------|---|
 | [`FILTER`](#filter)  | Apply a FIR filter to one or more signals |
@@ -25,8 +27,8 @@ Core parameters are as follows:
 | `sig`     | `sig=C3,F3` | Restrict analysis to these channels | 
 | `bandpass` | `bandpass=0.3,35` | Band-pass filter between 0.3 and 35 Hz |
 | `lowpass`  | `lowpass=35` | Low-pass filter with cutoff of 35 Hz |
-| `highpass` | `highpass=0.3` | High-pass filter between 0.3 and 35 Hz |
-| `bandstop` | `bandstop=55,65` | Band-stop filter between 0.3 and 35 Hz |
+| `highpass` | `highpass=0.3` | High-pass filter with cutoff of 0.3 Hz |
+| `bandstop` | `bandstop=55,65` | Band-stop filter between 55 and 65 Hz |
 | `fft`      | Use FFT to implement the filter (this is now the default) |
 
 By default, the `FILTER` command uses the Kaiser window approach to
@@ -38,7 +40,7 @@ define the filter, which requires the two following parameters:
 | `tw`       | `tw=1` | Transition width (in Hz) | 
 | `tw`       | `tw=0.5,5` | Separate lower and upper transition widths for a bandpass filter (in Hz) | 
 
-Note that if using `bandpass tw=lwr,upr` then you need to specify two values for `ripple` also (althogh
+Note that if using `bandpass tw=lwr,upr` then you need to specify two values for `ripple` also (although
 these can be similar).
 
 !!! info "Ripple and stopband attenuation"
@@ -55,10 +57,10 @@ Alternatively, it is possible to
  - use the window method to design a FIR with a fixed filter order,
   using either a Bartlett, Hann, Blackman or rectangular window
 
- - use a narrow-band Gaussian filter, defined by a center frequecy and
+ - use a narrow-band Gaussian filter, defined by a center frequency and
    FWHM (full-width half-maximum) bandwidth, with `ngaus`
 
- - use an IIR Buttworth or Chebyshev filter
+ - use an IIR Butterworth or Chebyshev filter
 
 | Parameter | Example | Description |
 | --- | --- | --- |
@@ -83,7 +85,7 @@ parameter, the filter order; Chebyshev takes two: order and the ripple
 factor epsilon - see the above link for a definition of how the ripple
 factor relates to passband ripple in dB.  Chebyshev filters are
 sharper than the Butterworth filter, whereas Butterworth filters
-control passband ripple.  Note that both IIR introduce phase delays:
+control passband ripple.  Note that both IIR filters introduce phase delays:
 in general, FIR filters are probably preferable choices.
  
 <h3>Output</h3>
@@ -232,7 +234,7 @@ run without a sample-list or EDF (see the example below).
 | `highpass` | `highpass=0.3` | High-pass filter with cutoff of 0.3 Hz |
 | `bandstop` | `bandstop=55,65` | Band-stop filter between 0.3 and 35 Hz |
 
-The FIR design design approaches are as for the `FILTER` command: either through the window method
+The FIR design approaches are as for the `FILTER` command: either through the window method
 (with either a Kaiser window -- `tw` and `ripple` -- or fixing the FIR `order`) or reading from a file:
 
 | Parameter | Description |

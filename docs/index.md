@@ -9,7 +9,8 @@ including the [Python](http://python.org) module
 [_lunapi_](lunapi/index.md) and the [_lunaR_](ext/R/index.md) library
 for the [R](https://www.r-project.org/) statistical package. The
 __current release is v1.3.4__ (27-Feb-2026): see [here](updates.md) for
-a list of changes/additions. Please direct any questions to `luna.remnrem@gmail.com`.
+a list of changes/additions. Please direct any questions to `luna.remnrem@gmail.com`. For
+background on the project itself, see [About](about.md).
 
 !!! tip "LunaScope"
      <a href="https://zzz.nyspi.org/lunascope/">LunaScope</a> is a new interactive GUI for Luna,
@@ -26,6 +27,14 @@ implements all the [commands](ref/index.md) for working with sleep
 signal data. There are three main ways to use the library, all of which
 provide fundamentally the same basic functionality:
 
+ - via [_LunaScope_](https://zzz.nyspi.org/lunascope/), an interactive
+   point-and-click GUI built on top of _lunapi_: this is often the easiest
+   entry point for visual review and exploratory analysis
+
+ - via [_scope_](lunapi/scope.md), an interactive viewer for JupyterLab
+   using _lunapi_: this is a lighter-weight embedded viewing option inside
+   Python notebooks
+
  - via the [_lunaC_](luna/args.md) command-line tool: this is the
    _original_ interface, and is still the best approach for working with
    large datasets, ideally with scripted analyses and using a Unix-like
@@ -36,13 +45,8 @@ provide fundamentally the same basic functionality:
    Python
 
  - via the [_lunaR_](ext/R/index.md) R library: users more familiar
-   with R may prefer this option (_although note that although we plan to maintain this as is, in the future more effort will be put into developing the Python interface_)
-
-On top of these components, we have also developed a few interactive tools:
-
- - [_LunaScope_](https://zzz.nyspi.org/lunascope/), an interactive point-and-click GUI for Luna, built on top of _lunapi_ for visual review and exploratory analysis
-
- - [_scope_](lunapi/scope.md), an interactive viewer designed for the JupyterLab environment using _lunapi_
+   with R may prefer this option, although current development emphasis is on
+   the Python interface and related GUI tools
 
 These tools can either be [installed individually](download/index.md)
 or they can be accessed via prebuilt [Docker containers](download/docker.md)
@@ -58,24 +62,10 @@ or they can be accessed via prebuilt [Docker containers](download/docker.md)
 
 ## Getting started
 
-__1.__ After [__downloading__](download/index.md) one or more of the Luna
-interfaces, the best place to start is the
-[__tutorial__](tut/tut1.md). The tutorial is initially couched in terms of
-the command-line tool, but versions are available for both R and
-Python interfaces.
-
-__2.__ You might then want to step through the
-[__walk-through__](https://zzz.nyspi.org/luna-walkthrough/),
-referencing this main documentation throughout (although note that completing
-the multi-part walk-through may take several sessions).
-
-__3.__ Then work your way through the pages listed in the left-hand side
-menu.  (On devices with smaller screens this may be minimized: if so,
-click the top left three horizontal bars icon.) In particular, the
-[__Concepts__](luna/args.md) page describes many key ideas and
-conventions, that are relevant for all implementations of Luna.  The
-[__Commands__](ref/index.md) page tabulates all primary Luna commands
-(these are common across command-line, R and Python implementations).
+For the recommended newcomer route through the documentation, start with
+[__Path__](path.md). That page lays out the suggested order through the
+tutorial, concepts, walk-through, and reference pages for command-line Luna,
+_lunapi_, and _LunaScope_.
     
 ## Things Luna aims to do
 
@@ -92,11 +82,17 @@ The [Commands](ref/index.md) pages list all supported functionality; main areas 
     * Spectral analyses
     * Spindle and slow oscillation detection
     * Coherence and cross-frequency coupling 
-    * Multi-channnel, topographical analyses
+    * Multi-channel, topographical analyses
     * Interval-based analyses of event timing
     * Sample-level linear association models
     * Manipulating annotation data and meta-data
     * Visual data exploration via _LunaScope_ or _scope_
+
+!!! info "Areas of ongoing development"
+    * Multi-day recordings and actigraphy metrics
+    * HRV metrics
+    * Automated PSG QC
+    * Predictive modeling, including biological age
 
 ## Things Luna _doesn't_ aim to do
 

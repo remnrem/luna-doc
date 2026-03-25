@@ -1,154 +1,91 @@
-# FAQ and trouble-shooting
+# FAQ and Troubleshooting
 
-Although _not necessarily asked with respect to Luna_, 
-here are some frequently asked questions:
+Miscellaneous questions and practical troubleshooting notes for Luna.
 
-## What?
+For general background on what Luna is, who develops it, current versioning,
+and project context, see [About](about.md).
 
-Luna is a C/C++ library focused on the analysis of large numbers of
-sleep studies encoded as EDFs.  This is a free, open-source project.
-Currently, there is a command-line tool ([_lunaC_](luna/args.md)) and an
-extension library for R ([_lunaR_](ext/R/index.md)).
+## Where should I start?
 
-## Which? 
+Start with [Path](path.md), which gives the recommended newcomer route through
+the documentation for command-line Luna, [lunapi](lunapi/index.md), and
+[LunaScope](https://zzz.nyspi.org/lunascope/). In practice, the recommended
+sequence is: tutorial first, then concepts, then the walk-through, then the
+reference pages.
 
-The current version is __v1.3.4 (27-Feb-2026)__.
-Use `luna -v` to display the specific build date/time.
+## Which interface should I use?
 
-## Where?
+- Use [lunaC](luna/args.md) if you want explicit scripts, batch processing,
+  sample lists, and direct access to the full command language.
+- Use [lunapi](lunapi/index.md) if you want Python, notebooks, and interactive
+  downstream analysis.
+- Use [LunaScope](https://zzz.nyspi.org/lunascope/) if you want a GUI for
+  visual review and point-and-click exploration.
 
-Luna is developed at the [Brigham & Women's
-Hospital](https://www.brighamandwomens.org/) and [Harvard Medical
-School](https://hms.harvard.edu/), Boston, MA, United States.
+All three sit on top of the same core library and largely the same concepts.
 
-## Who?
+## What is a sample list?
 
-Luna was primarily developed by Shaun Purcell, with input from
-a number of colleagues:
+A sample list is the main project-level input format for command-line Luna. It
+maps IDs to EDFs and, optionally, associated annotation files and metadata. See
+[sample lists](luna/args.md#sample-lists) on the concepts page.
 
-- Senthil Pananivelu for maintaining distributions and work on Moonlight
-- Nataliia Kozhemiako for input into multiple EEG analytic components and the revised artifact detection workflows
-- Shyamal Agarwal for work on automating the build distribution and NSRR's Automated Pipeline (NAP) built around Luna
-- Michael Rueschman for input on Moonlight
-- Alexander Kent for testing and feedback
-- Susan Redline and her team developing the [National Sleep Research Resource](http://sleepdata.org)
-- Dennis Dean for sharing his original SpectralTrainFig code-base
-- Sara Mariani and Charmaine Demanuele for input on several EEG and ECG analysis components
+In practical terms, it is a plain-text ASCII file. You can create one manually
+with a text editor, edit an existing one directly, or build one automatically
+using Luna helper commands such as [`--build`](ref/helpers.md#-build).
 
-Interested to contribute (either as a colleague or as a job)? Please
-[contact me](http://zzz.nyspi.org/index.html#contact).
+## How do I inspect a file before running a larger analysis?
 
-## How?
+The usual first step is to look at headers and signal descriptions. See:
 
-Luna development is indirectly supported via a number of NIH grants: NHLBI
-R01HL146339 (PI Purcell), NHLBI R21HL145492 (PI Purcell), NIMH R03
-MH108908 (PI Purcell), as well as NHLBI R35HL135818 (PI
-Redline) and NHLBI R24HL114473 (PI Redline).
+- [HEADERS](ref/summaries.md#headers)
+- [DESC](luna/args.md#signal-selection)
+- [Quick start](tut/tut1.md)
 
+## How do I get results out of Luna?
 
-## Why?
+The main options are:
 
-This is a good question and deserves a longer answer...  The primary
-aim of Luna was to provide a platform for 1) adopting some of the
-elegant methods and models that have emerged from animal and lab-based
-cognitive neuroscience studies over the past decade or so, and 2) for
-applying them in the context of large (albeit sometimes noisy)
-epidemiological studies with polysomnography.
+- write to a database with `-o`, then extract with [destrat](luna/destrat.md)
+- write text tables directly with `-t`
+- work directly through [lunapi](lunapi/index.md) in Python
 
-As a relative newcomer to sleep research (my personal background is
-primarily in [psychiatric
-genetics](http://zzz.nyspi.org/publications.html)), the
-development of Luna has tracked with my (still steep) learning curve,
-in how to think about sleep signal data.  Because of this, I adopted
-the tools I was most familiar with (namely
-[C/C++](https://en.wikipedia.org/wiki/C%2B%2B) and
-[R](http://www.r-project.org)), rather than the ubiquitous "in-house
-[Matlab](https://www.mathworks.com/products/matlab.html) script". In
-developing Luna though, I've been constantly reminded of how powerful Matlab
-and its associated toolboxes are for working with electrophysiological
-signal data.  I can also appreciate that working with Luna's
-particular instantiations of specific methods may be unnecessarily
-restrictive for some.
+See [output and destratification](luna/destrat.md) for the core model.
 
-So, _why wouldn't I just use Matlab?_ There was, from my perspective,
-still an unmet need for tools to work with sleep data in 
-[thousands of individuals](https://www.ncbi.nlm.nih.gov/pubmed/28649997), such as
-from the [NSRR](http://sleepdata.org).  In my (limited) experience of
-seeing how others approached sleep data, it seemed clear that although
-the substantive _core_ of a particular analysis (e.g. power spectral
-density estimation) could be efficiently and flexibly implemented in a
-single Matlab command (i.e. `pwelch()` or similar), a lot of the
-_scaffolding_ around these one or two central functions (i.e. most of
-the "work" from a practical perspective) was more often than not a
-tangle of brittle, error-prone and undocumented scripting.  Although
-not a perfect solution even for our own work, Luna represents a modest
-step in the direction of building more robust and scalable analysis
-tools.
+## Why did Luna change my channel or annotation labels?
 
-I had originally conceived of Luna just as my own personal library of
-functions that would assist me in my sleep research. However, I 
-decided to document and distribute this code for a number of reasons:
+By default, Luna sanitizes labels to make command-line and downstream processing
+easier. Spaces are usually converted to underscores, and some other special
+characters are also normalized. See [spaces in channel and annotation names](luna/args.md#spaces-in-channel-names).
 
-- _to make the tool better:_ documenting and distributing code has
-  _intrinsic value_, as this process tends to make the underlying tool better,
-  even if it will only ever be used by yourself or a very small number of people.
+If you want more control, see:
 
-- _accessibility and transparency:_ the sleep field is unfortunately
-  replete with black box proprietary software and file formats which
-  can be limiting; making things open-source lets others see what you've done, and use it without restriction.
+- [`sanitize`](luna/args.md#spaces-in-channel-names)
+- [`keep-spaces`](luna/args.md#spaces-in-channel-names)
+- [`alias`](luna/args.md#aliases)
+- [`remap`](luna/args.md#remapping-annotations)
 
-- _community:_ others can build upon your work; in
-genetics, for example, I developed a tool PLINK, which has been quite
-[widely-used](https://scholar.google.com/citations?user=t5o90hCxVMkC&hl=en&oi=sra).
-Since it was first developed (in 2007), however, there have been considerable
-advances in the scale of data, and in the types of analytic approaches taken.
-Being an open-source tool, others were able to very significantly
-augment and even [rewrite](https://www.cog-genomics.org/plink/1.9/)
-it, to produce an order-of-magnitude more powerful tool, whilst at the
-same time maintaining the pipelines and community experience that had
-been built over more than a decade with PLINK.
+## Why does `-s` sometimes behave strangely?
 
-For both larger and smaller projects, I'd strongly recommend the
-document/distribute model whenever practically possible.
+Usually because the shell is interpreting characters such as `&`, `|`, `*`, or
+`$` before Luna sees them. In most cases, wrap the full Luna expression in
+single quotes when using `-s`.
 
-## Acknowledgments
+See [Variables and special characters when using `-s`](#variables-and-special-characters-when-using--s).
 
-Luna uses a number of excellent open-source components, in particular:
+## Can I use Luna without the command line?
 
-- [FFTW](http://www.fftw.org) library
+Yes. The main alternatives are [lunapi](lunapi/index.md) for Python and
+[LunaScope](https://zzz.nyspi.org/lunascope/) for GUI-based interactive work.
+The same core documentation is still relevant, especially the tutorial,
+concepts, and reference pages.
 
-- [SQLite](https://www.sqlite.org/index.html) embedded database
-
-- [R Project for Statistical Computing](http://www.r-project.org)
-
-- [Python](http://python.org) and the [JupyterLab](http://jupyter.org) framework
-
-- [Eigen](https://eigen.tuxfamily.org/index.php?title=Main_Page) C/C++ matrix/linear algebra library
-
-- [LightGBM](https://lightgbm.readthedocs.io/en/v3.3.5/index.html) gradient boosting, tree-based learning algorithm library
-
-- Chapters and example code from [Mike X
-  Cohen](http://mikexcohen.com)'s fabulously clear and practical book:
-  _Analyzing neural time series data_
-
-- Lees, J. M. and J. Park (1995): Multiple-taper spectral analysis: A
-  stand-alone C-subroutine: Computers & Geology: 21, 199
-
-- Laurent Condat (2013) A Direct Algorithm for 1-D Total Variation
-  Denoising .  IEEE Signal Processing Letters, 20:11.
-
-- [Multi-scale entropy (MSE)
-  algorithm](https://physionet.org/physiotools/mse/) by Madalena Costa
-  et al. (Costa M., Goldberger A.L., Peng C.-K. Multiscale entropy
-  analysis of biological signals. Phys Rev E 2005;71:021906.)
-
-
-## Trouble-shooting
+## Troubleshooting
 
 ### Windows line endings
 
-MS Windows uses carriage return (CR) and line feed (LF) characters to
-denote the end of a line, whereas UNIX-like systems (including Mac)
+Windows uses carriage return (CR) and line feed (LF) characters to
+denote the end of a line, whereas Unix-like systems (including macOS)
 use LF alone.   The `file` command on UNIX-like systems will indicate if this is the case.
 
 ```

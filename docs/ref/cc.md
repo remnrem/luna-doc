@@ -1,15 +1,23 @@
 # Cross-signal analyses
 
-| Command | Description |
-| ----- | ----- | 
-| [`COH`](#coh) | Pairwise channel coherence | 
-| [`CORREL`](#correl) | Pairwise channel correlation | 
-| [`CC`](#cc) | Coupling (dPAC) and connectivity (wPLI) | 
-| [`PSI`](#psi) | Phase slope index (PSI) connectivity metric |
-| [`XCORR`](#xcorr) | Cross-correlation | 
-| [`MI`](#mi) | Mutual information |
-| [`TSYNC`](#tsync) | Cross-correlation and phase delay (alternate implementation) |
-| [`GP`](#gp) | Granger prediction |
+These commands span several levels of cross-signal analysis: simple time-domain
+similarity (`CORREL`, `XCORR`), frequency-domain dependence (`COH`, `PSI`),
+Hilbert-phase synchrony and lag profiling (`IPC`), wavelet-based coupling and
+connectivity (`CC`), and more general nonlinear or directional models (`MI`,
+`GP`). In practice, the right choice depends on whether you want overall
+similarity, spectral coupling, phase synchrony, time lag, or a more explicitly
+directed model.
+
+| Command | Type | Description |
+| ----- | ----- | ----- |
+| [`CORREL`](#correl) | Time-domain linear dependence | Pairwise channel correlation |
+| [`XCORR`](#xcorr) | Time-domain lag / alignment | Cross-correlation |
+| [`COH`](#coh) | Frequency-domain linear dependence | Pairwise channel coherence |
+| [`PSI`](#psi) | Directed spectral connectivity | Phase slope index (PSI) connectivity metric |
+| [`IPC`](#ipc) | Hilbert-phase synchrony / lag profile | Instantaneous phase coherence |
+| [`CC`](#cc) | Wavelet coupling / connectivity | Coupling (dPAC) and connectivity (wPLI) |
+| [`MI`](#mi) | Nonlinear dependence | Mutual information |
+| [`GP`](#gp) | Directed autoregressive model | Granger prediction |
 
 ## COH
 
@@ -24,21 +32,21 @@ for pairs of signals with similar sampling rates.
 | Parameter | Example | Description |
 | --- | --- | --- |
 |`sig`|`sig=C3,C4` | An optional parameter, to specify which channels to calculate  pairwise coherence between |
-|`sig1`|`sig1=C3,C3` | In stead of `sig`, specify all `sig1` by `sig2` channel pairs |
+|`sig1`|`sig1=C3,C3` | Instead of `sig`, specify all `sig1` by `sig2` channel pairs |
 |`sig2`|`sig2=F3,F4` | As above |
-|`sr` | `sr=125` | Optionally, set sample rates to `sr` if different for a particular channel (i.e. to ensure that all signals have similar sampling rates |
+|`sr` | `sr=125` | Optionally, set sample rates to `sr` if different for a particular channel (i.e. to ensure that all signals have similar sampling rates) |
 |`spectrum` | `spectrum` | Output full cross-spectra coherence rather than just in frequency bands (delta, theta, etc) |
 |`epoch` | `epoch` |  A flag to output coherence statistics for per epoch as well as the whole signal |
 |`epoch-spectrum` | `epoch-spectrum` |  A flag to output full cross-spectra coherence statistics for each epoch/channel pair |
 
 !!! warning
     If requesting the full `spectrum` and `epoch`-level analyses for a large number of channels, the output database may be __very large...__  In this case, you should use 
-    [text-table](../luna/args.md#text-tables) mode output (with `-t`) for better performance when working with the output (as _destrat_ can be slow othewise, for datasets with 
+    [text-table](../luna/args.md#text-tables) mode output (with `-t`) for better performance when working with the output (as _destrat_ can be slow otherwise, for datasets with 
     very large numbers of strata).
 
 Using `sig1` and `sig2` instead of `sig` can be more efficient, if you
 are only interested in particular combinations of pairs.  For example,
-to see the pairwsie coherences between one channel and four others: 
+to see the pairwise coherences between one channel and four others: 
 ```
  sig1=C3 sig2=F3,F4,O1,O2
 ```
@@ -145,7 +153,7 @@ for the EEG/MEG context) of channels, and to find disjoint sets of highly correl
 <h6>Epoch-level correlations</h6>
 
 By default, the correlations from `CORREL` are based on the entire signal. 
-To instead estimate of channel-pair correlations based on
+To instead estimate channel-pair correlations based on
 aggregating epoch-level correlations, use the `ch-epoch` option.  This is often likely
 more robust to artifacts.  In particular, if you also use `ch-median`
 then the final correlation is the median of epoch-level correlations
@@ -160,13 +168,13 @@ advisable to always add `ch-epoch ch-median`.
 <h6>Including EEG channel topographies</h6>
 
 For high-density EEG/MEG studies, `CORREL` can produce some simple
-metrics that flag pairs of channels that are more correlated by might
+metrics that flag pairs of channels that are more correlated than might
 be expected given their topographical similarity.  This may be indicative
 of artifact or bridging, etc.
 
 To include spatial distances in correlations, it is first necessary to
 have previously attached a set of channel locations via the
-[`CLOCS`]() command) prior to running `CORREL`.  An example map (for a
+[`CLOCS`](signals.md#clocs) command prior to running `CORREL`.  An example map (for a
 64-channel EEG) can be found
 [here](http://zzz.nyspi.org/dist/luna/clocs/clocs64): e.g. 
 
@@ -180,16 +188,16 @@ most similar) and are output as the `S` variables from the `CORREL` command:
    destrat out.db +CORREL -r CH1 CH2
 ```
 This allows easy plotting of correlation against spatial proximity, e.g. to spot extreme outliers. 
-(Note: assuming the same map has been used, `S` will obviously be the same of all individuals.)
+(Note: assuming the same map has been used, `S` will obviously be the same for all individuals.)
 
 
-`ch-spatial-threshold` `ch-spatial-weight` to `CORREL`,
+`CORREL` also supports `ch-spatial-threshold` and `ch-spatial-weight`.
 
 
 <h6>Disjoint sets of highly correlated channels</h6>
 
-CORREL now prints disjoint sets of highly-correlated channels (as
-defined by the `ch-high` option) channels, with `CHS` stratifier, if
+CORREL now prints disjoint sets of highly correlated channels (as
+defined by the `ch-high` option), with `CHS` stratifier, if
 the `ch-high` option is given.
 
 
@@ -217,18 +225,18 @@ Channel-level summaries (strata: `CH`)
 | ---- | ---- |
 | `SUMM_MEAN` | Mean correlation with all other channels |
 | `SUMM_N`    | Number of other channels this is correlated with |
-| `SUMM_MIN`  | Minimim correlation for this channel |
+| `SUMM_MIN`  | Minimum correlation for this channel |
 | `SUMM_MAX`  | Maximum correlation for this channel |
 | `SUMM_HIGH` | Number of correlations (i.e. channels) above `ch-high` |
 | `SUMM_LOW`  | Number of correlations (i.e. channels) below `ch-low` |
 
 
-Disjoint sets of highly correlated channels (potion: `ch-high`, strata: _none_ )
+Disjoint sets of highly correlated channels (option: `ch-high`, strata: _none_ )
 
 | Variable | Description |
 | ---- | ---- |
 | `SUMM_HIGH_N` | Total number of disjoint sets in the data |
-| `SUMM_HIGH_CHS` | Comma-delimited list of channnels in this highly-correlated set |
+| `SUMM_HIGH_CHS` | Comma-delimited list of channels in this highly-correlated set |
 
 
 Disjoint sets of highly correlated channels (option: `ch-high`, strata: `CHS`)
@@ -346,7 +354,7 @@ i.e. here we have 8 groups (`CHS`), where `N` is the number of channels in
 that group.
  
 
-The baseline CORREL output will list the total # of channels with a highly-correlated partners: 
+The baseline CORREL output will list the total number of channels with highly correlated partners: 
 ``` 
 destrat out.db +CORREL
 ```
@@ -375,7 +383,7 @@ ID12  AF4,FC4,P4,TP8                    4
 Note that these statistics/sets are optionally influenced by
 `ch-spatial-threshold`, which only includes channel pairs that are
 _below_ a certain similarity (i.e. not neighbouring).  You can look at
-the distribution of `S` from the output of `+COREEL -r CH1 CH2` (see
+the distribution of `S` from the output of `+CORREL -r CH1 CH2` (see
 above).  Based on the above example map with 57 channels present in
 the EDF, something like 0.8 excludes ~222 out of the ~1600 pairs,
 i.e. on average, this will exclude the closest ~4 channels for each
@@ -383,7 +391,7 @@ channel (4 * 57 = 228).  Valid arguments are between -1 and +1.
  
 With spatial thresholding, channel pairs with a spatial similarity above threshold
 are excluded from all correlational analyses.   The column `SUMM_N` gives the number of
-included channels after these step.
+included channels after this step.
 
 ```
   CORREL  sig=${eeg} ch-epoch ch-spatial-threshold=0.8 ch-high=0.98 '
@@ -411,7 +419,7 @@ the mean/median of those) or on whole-recording signals.  In addition,
 `SUMM_MEAN` is only based on below threshold channel pairs, if
 `ch-spatial-threshold` has been set.  Setting `ch-spatial-weight` will
 weight the correlation, multiplying each absolute correlation by a
-weight factor determine by the cosine similarity between the channel
+weight factor determined by the cosine similarity between the channel
 pairs, before summing for that channel.   The weight is set such that
 more nearby channels have less weight -- i.e. if one is trying to pick 
 up on more distal channel pairs that still have high correlations in the signals.
@@ -422,7 +430,7 @@ Luna defines the weight as:
 ```
 
 i.e. we scale similarity `S` from ( -1 , +1 ) to ( 0 , 1 ) and then we
-optionally take the `X`^th power, i.e.  so that higher `X` values more
+optionally take the `X`^th power, i.e. so that with higher `X` values
 we put even less weight on nearby channel pairs.  The default is 2.
 e.g. for a linear effect, use:
  
@@ -455,7 +463,7 @@ frequencies of `fc` and `fc2` for phase and amplitude components
 respectively, where `fc` is expected to be of lower frequency than
 `fc2`.  Multiple frequencies for either the phase (`fc`) or amplitude
 (`fc2`) can be specified with a comma-delimited list, e.g. `fc=1,2,4`.
-Alternatively, a grid of frequencies cab be specified by using
+Alternatively, a grid of frequencies can be specified by using
 `fc-range=1,20` instead of `fc`; here, it is also required to specify
 `num`, e.g. `num=20`, which generates 20 `fc` values evenly spaced on
 a log scale, between 1Hz and 20Hz. The `linear` option will force the grid
@@ -549,7 +557,7 @@ Epoch-level metrics (strata: `E` x `CH1` x `CH2` x `F1` x `F2`)
 
 See this [vignette](../vignettes/rcox.md) for an application of both dPAC and wPLI metrics.
 
-Here, using two EEG channels from the second individual in the [tutorial](../tut/tut1.md) dataset, we extract only N2 sleep at consider
+Here, using two EEG channels from the second individual in the [tutorial](../tut/tut1.md) dataset, we extract only N2 sleep and consider
 wPLI between the two channels at a grid of 50 frequencies, linearly spaced between 1 and 25 Hz:
 ```
 luna s.lst 2 -o out.db
@@ -563,7 +571,7 @@ Extracting the output as follows:
 destrat out.db +CC -r F1 F2 CH1 CH2
 ```
 
-We can plot the wPLI (left) and correspondong Z-score (the empirical value derived from randomization, right):
+We can plot the wPLI (left) and corresponding Z-score (the empirical value derived from randomization, right):
 
 ![img](../img/cc_wpli.png){width="100%"}
 
@@ -581,7 +589,7 @@ That is, we see significant connectivity between these two central channels in t
 
 _Calculates the phase slope index across channels_
 
-Estimates the [phase slop
+Estimates the [phase slope
 index](http://doc.ml.tu-berlin.de/causality/) between pairs of
 channels, and provides a single-channel summary of net PSI (i.e.  net
 sender versus recipient).
@@ -623,7 +631,7 @@ Secondary parameters are:
 
 | Parameter | Example | Description |
 | --- | --- | --- |
-|`cache-metrics` | `cache-metrics=c1`  | Cache net and pairwsie `PSC` (e.g. for `PSC`) |
+|`cache-metrics` | `cache-metrics=c1`  | Cache net and pairwise `PSC` (e.g. for `PSC`) |
 
 <h3>Output</h3>
 
@@ -657,7 +665,7 @@ Channel-level output (option: `epoch`, strata: `E` x `CH` )
 | ---- | ---- |
 | `PSI` | Net PSI (standardized) for this channel |
 
-Channel pair output (olption: `epoch`, strata: `E` x `CH1` x `CH2`)
+Channel pair output (option: `epoch`, strata: `E` x `CH1` x `CH2`)
 
 | Variable | Description |
 | ---- | ---- |
@@ -716,19 +724,26 @@ Pairwise cross-correlations for a given sample delay `D` (option:
 
 _Calculates pairwise mutual information metrics across channels_
  
-Estimates [mutual information](https://en.wikipedia.org/wiki/Mutual_information), a
-measure of dependence between two signals, based on methods described
-in _Analyzing Neural Time Series Data_ by MX Cohen. [Total correlation](https://en.wikipedia.org/wiki/Total_correlation)
-and [dual total correlation](https://en.wikipedia.org/wiki/Dual_total_correlation)
-are two normalized
-variants of the mutual information statistic: _MI / min[ H(X), H(Y) ]_
-and _MI/H(X,Y)_ respectively, where _MI_ is mutual information, _H(X)_
-and _H(Y)_ are the marginal entropies, and _H(X,Y)_ is the joint
-entropy.
+`MI` estimates [mutual information](https://en.wikipedia.org/wiki/Mutual_information), a
+measure of statistical dependence between two signals, using a simple
+histogram-based estimator as described in _Analyzing Neural Time Series Data_
+by Mike X Cohen. For each channel pair, Luna discretizes the sample values of
+the two signals into bins, estimates the marginal entropies _H(X)_ and _H(Y)_
+and the joint entropy _H(X,Y)_, and then reports the corresponding mutual
+information statistic.
 
-Signals are first coarse-grained: the number of bins is determined
-by one of three rules: Freedman-Diaconis (default), Scott or Sturges
-rule, as described in Cohen. 
+In addition to raw `MI`, Luna reports two normalized pairwise variants:
+
+- `TOTCORR` = _MI / min[ H(X), H(Y) ]_
+- `DTOTCORR` = _MI / H(X,Y)_
+
+These provide bounded, scale-adjusted summaries of dependence for a channel
+pair. `JINF`, `INFA`, and `INFB` give the underlying joint and marginal
+entropies used to derive these statistics.
+
+Signals are first discretized into histogram bins. The number of bins is chosen
+using one of three rules: Freedman-Diaconis (default), Scott, or Sturges, as
+described in Cohen.
 
 <h3>Parameters</h3>
 
@@ -741,7 +756,8 @@ rule, as described in Cohen.
 | `permute` | `permute=1000` | Estimate empirical significance via permutation, e.g. with 1000 null replicates |
 
 !!! alert
-    Permutation and epoch-level analyses with the `MI` command can be relatively slow .
+    `MI` can be slow when run with `permute` and/or `epoch`, because the
+    histogram-based MI estimation is repeated for each permutation and/or epoch.
 
 <h3>Output</h3>
 
@@ -757,7 +773,7 @@ Output for the whole signal (strata: `CH1` x `CH2`)
 | `INFB` | Marginal entropy of second signal |
 | `NBINS` | Number of bins |
 
-Output per-epoch, with `epoch` (option: `epoch`, strata: `CH1` x `CH2`)
+Output per-epoch, with `epoch` (option: `epoch`, strata: `E` x `CH1` x `CH2`)
 
 | Variable | Description |
 | ---- | ---- |
@@ -777,6 +793,7 @@ Output for permutation test (option: `permute`)
 
 
 
+<!--
 ## TSYNC
 
 _Cross-correlation and phase delay_
@@ -816,31 +833,229 @@ Epoch-level channel-pair output (option: `epoch`, strata: `CH1` x `CH2`)
 | Variable | Description |
 | ---- | ---- |
 | `S` | Phase delay based on cross-correlation |
+-->
 
 
 
 
 ## GP
 
-_Applies Granger prediction_
+_Granger-style directed predictability analysis_
 
-(this section is a placeholder: the `GP` command is currently not fully tested/supported in the current Luna release)
+`GP` estimates asymmetric, autoregressive predictability between pairs of
+signals. For each channel pair, Luna fits two univariate AR models and one
+bivariate AR model, then compares prediction error variances to quantify
+directional influence in the time domain:
+
+```
+Y2X = log( var(X | X past) / var(X | X past, Y past) )
+X2Y = log( var(Y | Y past) / var(Y | Y past, X past) )
+```
+
+Positive values indicate that including the other channel improves prediction.
+For a pair reported as `CH1` and `CH2`, `Y2X` means predictability from `CH2`
+to `CH1`, and `X2Y` means predictability from `CH1` to `CH2`.
+
+Internally, `GP` works epoch-by-epoch. Within each epoch, Luna splits the data
+into non-overlapping windows of length `w`, detrends and rescales each window,
+fits the AR models, writes epoch-level results, and then reports cross-epoch
+means at the end. If a frequency grid is requested, Luna also decomposes the
+directed influence over frequency using the fitted bivariate AR model.
+
+The implementation is adapted from the BSMART toolbox `armorf.m` and
+`pwcausal.m` routines in [Cui et al. 2008](https://pubmed.ncbi.nlm.nih.gov/18599267/),
+with the multichannel AR fitting itself based on the recursive method of
+[Morf et al. 1978](https://ieeexplore.ieee.org/document/1454870). The
+frequency-resolved output is therefore a **spectral Granger profile** evaluated
+at the requested frequency grid, not a separate band-averaged estimator. In
+practice, `f=` and `f-log=` define a lower bound, upper bound, and number of
+frequency points; Luna then reports `X2Y` and `Y2X` at each individual
+frequency `F`, and the non-epoch output is the mean of those epoch-level
+spectral estimates rather than a single model fit over the entire recording.
+
+As with other Granger-style approaches, these outputs should be interpreted as
+directed **predictability** under the fitted AR model, not as proof of direct
+physiological causation.
 
 <h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | ---- | ----- | ----- |
-| `sig` | `sig=C3,C4,F3,F4` | Optionally specify channels (default is to include all) |
+| `sig` | `sig=C3,C4,F3,F4` | Required list of signals to analyse, all pairwise |
+| `w` | `w=500` | Analysis window length in milliseconds within each epoch |
+| `order` | `order=50` | Autoregressive model order in milliseconds |
+| `bic` | `bic=20` | Evaluate BIC for AR orders `1..bic` and report the best score |
+| `f` | `f=1,25,20` | Linear frequency grid as lower,upper,count |
+| `f-log` | `f-log=1,25,20` | Log-spaced frequency grid as lower,upper,count |
+
+!!! note
+    `GP` requires that all analysed channels have the same sampling rate.
+
+!!! note
+    `w` and `order` are specified in milliseconds but converted to whole sample
+    counts internally using the current sampling rate.
+
+!!! warning
+    The `bic` option only reports the minimum BIC score across candidate model
+    orders. It does **not** automatically refit the main `Y2X` / `X2Y`
+    estimates using that best order; the main estimates always use the `order`
+    value you supplied.
+
+!!! warning
+    `GP` assumes that each epoch can be partitioned into one or more complete
+    windows of length `w`. Any partial remainder at the end of an epoch is not
+    used. Also, Luna currently does not apply an explicit stationarity test.
 
 
 <h3>Output</h3>
 
-Channel-pair output (strata: `CH1` x `CH2`)
+Epoch-level time-domain output (strata: `CH1 × CH2 × E`)
 
 | Variable | Description |
 | ---- | ---- |
+| `Y2X` | Directed predictability from `CH2` to `CH1` |
+| `X2Y` | Directed predictability from `CH1` to `CH2` |
+| `BIC` | Best BIC score over candidate orders `1..bic` if `bic` was requested |
 
+Epoch-level frequency-resolved output with `f` or `f-log` (strata: `CH1 × CH2 × E × F`)
+
+| Variable | Description |
+| ---- | ---- |
+| `Y2X` | Frequency-domain predictability from `CH2` to `CH1` at frequency `F` |
+| `X2Y` | Frequency-domain predictability from `CH1` to `CH2` at frequency `F` |
+
+Cross-epoch mean time-domain output (strata: `CH1 × CH2`)
+
+| Variable | Description |
+| ---- | ---- |
+| `Y2X` | Mean epoch-level directed predictability from `CH2` to `CH1` |
+| `X2Y` | Mean epoch-level directed predictability from `CH1` to `CH2` |
+
+Cross-epoch mean frequency-resolved output with `f` or `f-log` (strata: `CH1 × CH2 × F`)
+
+| Variable | Description |
+| ---- | ---- |
+| `Y2X` | Mean epoch-level frequency-domain predictability from `CH2` to `CH1` |
+| `X2Y` | Mean epoch-level frequency-domain predictability from `CH1` to `CH2` |
 
 <h3>Example</h3>
 
-_to be added_
+Time-domain GP between four EEG channels, using 500 ms windows and a 50 ms AR order:
+
+```bash
+luna s.lst -o out.db -s 'GP sig=C3,C4,F3,F4 w=500 order=50'
+```
+
+Frequency-resolved GP on a linear 1-25 Hz grid:
+
+```bash
+luna s.lst -o out.db -s 'GP sig=C3,C4 w=500 order=50 f=1,25,20'
+```
+
+Inspect the mean directional estimates:
+
+```bash
+destrat out.db +GP -r CH1 CH2
+```
+
+Inspect the frequency-resolved results:
+
+```bash
+destrat out.db +GP -r CH1 CH2 F
+```
+
+---
+
+## IPC
+
+_Pairwise instantaneous phase coherence_
+
+`IPC` computes phase coupling between all pairs of channels from
+Hilbert-based analytic signals. For each sample point it forms the instantaneous
+phase difference Δφ between the two channels and summarises it across the recording
+with several metrics: signed IPC, weighted IPC, phase-locking value, circular mean
+phase offset, and the fraction of samples that are in-phase. With `w`, `IPC` also
+emits the same summaries over a lag window, replacing the old time-lag Hilbert
+role of `TSYNC`.
+
+`IPC` is intended for narrowband analytic signals, not raw broadband data. In
+practice this means running [`HILBERT`](power-spectra.md#hilbert) first on the
+channels of interest, typically with a band-pass specified via `f=` and with the
+`phase` option set so that Luna creates both magnitude and phase channels.
+
+`IPC` does **not** take the Hilbert-derived phase channels directly. Instead, it
+takes the original/base channel labels in `sig`, `sig1`, and `sig2`, and then
+internally looks for matching Hilbert-derived channels by appending the fixed
+suffixes `_ht_mag` and `_ht_ph`. For example, `IPC sig=C3,C4` expects to find
+`C3_ht_mag`, `C3_ht_ph`, `C4_ht_mag`, and `C4_ht_ph`.
+
+This means the `HILBERT` output labels must match that convention exactly. In
+particular, if `HILBERT tag=...` has been used to create labels such as
+`C3_sigma_ht_mag` and `C3_sigma_ht_ph`, then `IPC sig=C3` will not find them.
+To use `IPC`, the channels named in `sig` must be the base labels to which
+`_ht_mag` and `_ht_ph` can be appended directly.
+
+By default `IPC` reports zero-lag synchrony only, which makes it suitable for
+screening large multi-channel datasets quickly. If `w` is specified, Luna also
+evaluates lagged phase synchrony over `-w` to `+w` seconds and writes those
+results in a `D` stratum with lag in seconds reported as `T`.
+
+<h3>Parameters</h3>
+
+| Parameter | Example | Description |
+|---|---|---|
+| `sig` | `sig=C3,C4,F3,F4` | Channels to analyse (default: all channels) |
+| `sig1` | `sig1=C3` | Alternatively, specify seed channels |
+| `sig2` | `sig2=C4,F3,F4` | Non-seed channels to pair with `sig1` |
+| `w` | `w=0.5` | Also emit lag-resolved IPC summaries from `-w` to `+w` seconds |
+| `add-channels` | | Write new IPC waveform channels to the EDF; optionally set to `seed` to limit to seed-pair channels |
+| `prefix` | `prefix=IPC_` | Label prefix for new channels (default `IPC_`) |
+
+!!! note
+    Internally, `IPC` uses amplitude weighting based on the minimum
+    instantaneous amplitude of the two analytic signals and suppresses very
+    low-amplitude samples before forming weighted summaries.
+
+<h3>Output</h3>
+
+Output strata: `CH1 × CH2`
+
+| Variable | Description |
+|---|---|
+| `N_TOT` | Total number of sample points examined for the channel pair |
+| `N_USED` | Number of valid sample points contributing to the summaries after excluding unusable points |
+| `IPC` | Mean signed zero-lag coherence, i.e. the average of `cos(Δφ)` across samples; ranges from `+1` (consistently in-phase) to `-1` (consistently anti-phase), with values near `0` indicating no stable zero-lag alignment |
+| `WIPC` | Weighted version of `IPC` in which the per-sample weight is the minimum of the two instantaneous amplitudes; by default, very low-amplitude samples are also excluded before the summary is formed |
+| `PLV` | Weighted phase-locking value, i.e. the magnitude of the weighted circular mean of `exp(iΔφ)`; ranges from `0` to `1` and reflects consistency of the phase difference irrespective of whether the preferred offset is `0`, `π`, or another fixed angle |
+| `PHASE` | Circular mean phase difference (radians), indicating the preferred phase offset between the two channels |
+| `P_INPHASE` | Fraction of used samples with `|Δφ| < π/6`, i.e. phase differences within 30 degrees of zero |
+
+Lag-profile output with `w` (strata: `CH1 × CH2 × D`)
+
+| Variable | Description |
+|---|---|
+| `T` | Lag in seconds corresponding to the integer sample lag `D` |
+| `N_TOT` | Total number of sample points examined at this lag |
+| `N_USED` | Number of usable sample points at this lag |
+| `IPC` | Mean signed phase coherence at this lag |
+| `WIPC` | Weighted mean signed phase coherence at this lag |
+| `PLV` | Phase-locking value at this lag |
+| `PHASE` | Circular mean phase offset at this lag |
+| `P_INPHASE` | Fraction of used samples within ±30 degrees of zero phase at this lag |
+
+<h3>Example</h3>
+
+```
+% First create narrowband analytic signals and phase estimates
+HILBERT sig=C3,C4,F3,F4 f=60,90 phase
+
+% IPC is given the base channel labels; it will look for *_ht_mag and *_ht_ph
+IPC sig=C3,C4,F3,F4
+
+% Extract pairwise results
+destrat out.db +IPC -r CH1 CH2
+
+% Optional: lag-resolved phase synchrony profile over +/- 0.5 seconds
+IPC sig=C3,C4 w=0.5
+destrat out.db +IPC -r CH1 CH2 D
+```

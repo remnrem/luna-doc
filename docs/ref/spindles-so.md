@@ -1,5 +1,7 @@
 # Spindles and slow oscillations (SO)
 
+Sleep spindles and slow oscillations (SO) are the two canonical NREM sleep oscillations most studied in sleep EEG research. `SPINDLES` uses a Morlet wavelet approach to detect spindles at user-specified center frequencies, with extensive options for threshold tuning, multi-channel collation, and morphological characterization. `SO` detects slow oscillations using a filtered-signal peak/trough approach. Both commands can be run jointly to assess spindle–SO coupling, and outputs from either can be passed to `TLOCK` (in the [interval-based](intervals.md) section) for time-locked averaging.
+
 |Command |Description | 
 |---|---|
 | [`SPINDLES`](#spindles) | Wavelet-based spindle detection |
@@ -328,7 +330,7 @@ head(d)
 6 nsrr02 EEG 98 15 1
 ```
 
-Not that it is particularly informative in itself, but we can plot the
+Not that this is particularly informative in itself, but we can plot the
 number of spindles per epoch for fast and slow spindles:
 
 ```
@@ -360,7 +362,7 @@ nsrr02  EEG  15   1.243        0.038
 
 In practice, we take values of `DISPERSION` above 2.0 to reflect
 potentially problematic recordings/patterns of spindle detection, so these
-don't look too bad.  Potentially the epochs with more than five spindles may 
+don't look too bad.  Potentially the epochs with more than five spindles may be
 questionable (especially as we did not apply any type of artifact correction prior 
 to detecting spindles):
 
@@ -414,7 +416,7 @@ should easily find a threshold that effectively splits the two peaks.
 In the context of spindles, where things are likely to be a bit
 messier, we consider the distribution of wavelet coefficients to be a
 mixture of two classes: the null distribution of noise, i.e. where
-there is no true spindle, and a second, less frequency class
+there is no true spindle, and a second, less frequent class
 representing points where a spindle is present (and where we will
 expect higher values of the wavelet coefficient). 
 
@@ -525,7 +527,7 @@ luna s.lst sig=EEG -o out2.db -s 'MASK ifnot=NREM2 & RE \
 
 This appears to normalize the "optimal" thresholds somewhat, in that
 the area under the curve (i.e. roughly corresponding to the portion
-of time in "spindle" versus "non-spindle" states) are ball-park what
+of time in "spindle" versus "non-spindle" states) are in the ballpark of what
 we may expect to observe in a typical individual who has around 2 or
 so spindles per minute detected at a central scalp EEG channel, with each spindle lasting 
 approximately 1 second (i.e. 2/60 = 0.033):
@@ -770,15 +772,15 @@ frequencies:
   represent physiologically distinct events depending on the montage
   and channels being collated.
 
-These commands essentially take a list of spindles and generate
+These options essentially take a list of spindles and generate
 another list of so-called _m_-spindles: groups of spindles that, on
 some definition, "overlap", i.e. represent the same underlying event.
 
 The primary output from this analysis is an estimate of _m_-spindle
 density (`MSP_DENS`), i.e. which is taken to reflect the total number
 of unique spindles (i.e. allowing for potentially overlapping
-definitions).  For each _m_-spindle (set a spindles), Luna also
-calculates an mean frequency (a weighted mean of the constituent
+definitions).  For each _m_-spindle (set of spindles), Luna also
+calculates a mean frequency (a weighted mean of the constituent
 spindle frequencies, with weights given by the ISA of each spindle).
 This is output for each spindle and also used to generate a
 frequency-conditioned estimate of _m_-spindle density. 
@@ -845,7 +847,7 @@ Spindle to _m_-spindle mappings (option: `list-all-spindles`, strata: `SPINDLE` 
 | `START` | Spindle start time (elapsed seconds from EDF start) |
 | `STOP` | Spindle stop time (elapsed seconds from EDF start) |
 
-Additional output (option: `hms`, strata: `MSPINDLE` or `CH` x `MSPINDLE`))
+Additional output (option: `hms`, strata: `MSPINDLE` or `CH` x `MSPINDLE`)
 
 | Variable | Description |
 | ---- | ---- |
@@ -861,7 +863,7 @@ luna s.lst 2 sig=EEG -o out.db -s 'MASK ifnot=NREM2 & RE & \
                                             collate list-all-spindles'
 ```
 
-The total _m_-spindle density is 4.89 spindles per second, i.e. this
+The total _m_-spindle density is 4.89 spindles per minute, i.e. this
 estimates the total unique number of spindles over this broad frequency
 range ( with target frequencies of 10-16 Hz and each wavelet spanning approximately 
 plus/minus 2 Hz):
@@ -876,7 +878,7 @@ nsrr02   4.8972     199.5       977
 We can also view the _m_-spindle density as a function of the
 estimated _m_-spindle frequency: i.e. these numbers will sum to the
 total `MSP_DENS` estimate (or close to it, as we only consider the
-fixed range of 8 to 16 Hz in 0.5 Hz bins, by default, when outputing
+fixed range of 8 to 16 Hz in 0.5 Hz bins, by default, when outputting
 this): 
 
 ```
@@ -1285,7 +1287,7 @@ luna s.lst nsrr02 -o out.db \
 ```
 
 We now see some additional metrics in the output.  For example,
-whereas as observed 140 spindles overlapping a SO (`COUPL_OVERLAP`),
+whereas we observed 140 spindles overlapping a SO (`COUPL_OVERLAP`),
 we see that on average, in each null replicate, only 104.2 spindles
 overlapped a SO (`COUPL_OVERLAP_NULL`).  Based on these statistics,
 this gives an empirical p-value of 0.028 (`COUPL_OVERLAP_EMP`),
@@ -1324,7 +1326,7 @@ specified, i.e. 1/(1+100000).
 
 Note that `COUPL_SIGPV_NULL` shows that over 20% of null-replicates
 had an _asymptotic_ ITPC p-value significant at the p<0.05 level.
-That this is approximately four times greater than we'd expect by
+That this is approximately four times greater than we would expect by
 chance suggests that the asymptotic p-values are, in this situation,
 anti-conservative (i.e. we'd expect a 5% rate to be p<0.05 under the
 null).  The observed 2e-13 asymptotic p-value is therefore likely to
@@ -1362,7 +1364,7 @@ Here we see an attenuated but still significant spindle/SO coupling
 (i.e. `COUPL_MAG_EMP` is 0.01).  In this example, however, using the
 larger number of spindles (i.e. all 393 here, rather than only the 140
 SO-overlapping ones) does not appear to give stronger results
-(although, not the asymptotic p-values are high in each case).
+(although, note the asymptotic p-values are high in each case).
 
 
 <h3>Verbose coupling output</h3>
@@ -1470,7 +1472,7 @@ abline( h=-log10( 0.05) , lty=2)
 
 
 That is, we see the above-chance rate of spindle/SO overlap is not
-uniformly distributed across the entire, but is concentrated around
+uniformly distributed across the cycle, but is concentrated around
 250-290 degrees (consistent with the significant `COUPL_MAG` which is
 another way to tell us the same thing).  
 
@@ -1508,7 +1510,7 @@ luna s.lst 1 < cmd.txt \
 
 _Detects slow oscillations via a simple, heuristic approach_
 
-The `SO` command uses an heuristic approach to detect slow
+The `SO` command uses a heuristic approach to detect slow
 oscillations (SO) in the sleep EEG, combined with filter-Hilbert estimation
 of SO phase.  This command can also be invoked through the `so` parameter of
 [`SPINDLES`](#spindleso-coupling) command, in which case additional metrics
@@ -1841,4 +1843,3 @@ abline(v=270,lty=2)
 Here we see, for both R1 and R2 definitions, an increased fast spindle
 wavelet power around the negative peak of the SO (270 degrees) for
 this individual.
-

@@ -2,16 +2,16 @@
 
 After [downloading](../download/index.md) and installing Luna, this
 tutorial should provide a good starting point to familiarize yourself
-with working with Luna.  There are four sections that should be
+with working with Luna. There are five sections that should be
 followed in order. This first section jumps straight in, demonstrating
 a handful of commands quickly. The [second section](tut2.md) loops
-back over the same material, but aiming to give more context and
-detail.  The [third section](tut3.md) extends the range of commands
-towards some more genuinely useful analyses of the sleep EEG.  The
-[fourth section](tut4.md) performs the same steps but using
-[_lunaR_](../ext/R/index.md) instead of [_lunaC_](../luna/args.md).
-The [final section](https://github.com/remnrem/luna-api-notebooks/blob/main/tutorial.ipynb)
+back over the same material with more context and detail. The
+[third section](tut3.md) extends the range of commands
+towards some more genuinely useful analyses of the sleep EEG. The
+[fourth section](https://github.com/remnrem/luna-api-notebooks/blob/main/tutorial.ipynb)
 traces the same steps but using the newer Python-based interface to Luna.
+The [fifth section](tut4.md) performs the same steps but using
+[_lunaR_](../ext/R/index.md) instead of [_lunaC_](../luna/args.md).
 
 !!! note "Data used in this tutorial"
     This tutorial, based on data from 
@@ -46,21 +46,24 @@ need to grab them from the web, from the link below:
 
 | ZIP archive (67Mb) containing 3 EDFs, XML annotation files and 'sample list' |
 |----|
-| <http://zzz.nyspi.org/dist/luna/tutorial.zip> |
+| <http://zzz-luna.org/dist/luna/tutorial.zip> |
 
-After downloading, move the ZIP file to your working directory, and
-using the terminal, unzip the contents:
+After downloading, move the ZIP file to your working directory and
+unzip the contents:
 
 ```
 unzip tutorial.zip 
 ```
 
-This should create a folder named `tutorial` which contains: a folder named
-`edfs` with six files (`learn-nsrr01.edf`, `learn-nsrr01-profusion.xml`, etc), a second
-folder named `cmd` (which contains some text files we'll use later in
-this tutorial, given here purely to save you copying and pasting or
-typing things in) and a _sample-list_ file named `s.lst` which defines
-a _project_ for these three individuals:
+This should create a folder named `tutorial` containing:
+
+- a folder named `edfs` with six files (`learn-nsrr01.edf`,
+  `learn-nsrr01-profusion.xml`, etc.)
+- a folder named `cmd` with text files used later in the tutorial
+- a _sample-list_ file named `s.lst` that defines a _project_ for these
+  three individuals
+
+For example:
 
 ```
 cat s.lst
@@ -78,26 +81,26 @@ nsrr03 edfs/learn-nsrr03.edf	edfs/learn-nsrr03-profusion.xml
     may not be available however. For example, instead of `unzip` you may need to use the GUI, etc.
     We do stress that, as a command-line program, _lunaC_ is fundamentally 
     better suited to macOS and Linux platforms.   The experience with _lunaR_ should be
-    similar across platforms however. 
+    similar across platforms however. See also [Luna for Windows users](../vignettes/windows.md).
 
 
 !!! hint "Using `--build` to generate new sample lists automatically"
 
-    If the file `s.lst` didn't exist, you could use the [`--build`](../luna/args.md#-build-option) command to generate it.  Assuming you are in the folder that contains `edfs/`:
+    If the file `s.lst` did not exist, you could use the [`--build`](../luna/args.md#-build-option) command to generate it. Assuming you are in the folder that contains `edfs/`:
     ```
     luna --build edfs > s2.lst
     ```
-    This will generate a sample list, with IDs based on file names (the actual EDFs do not contain IDs):
+    This will generate a sample list with IDs based on file names (the actual EDFs do not contain IDs):
     ```
     learn-nsrr01	edfs/learn-nsrr01.edf
     learn-nsrr02	edfs/learn-nsrr02.edf
     learn-nsrr03	edfs/learn-nsrr03.edf
     ```
-    To automatically match each EDF to the correspinding annotation file (that ends with `-profusion.xml` instead of `.edf` appended to the filename) we can run:
+    To automatically match each EDF to the corresponding annotation file, we can run:
     ```
     luna --build edfs -ext=-profusion.xml > s2.lst
     ```
-    Luna lets us know what it has found: 
+    Luna reports the following summary:
     ```
     wrote 3 EDFs to the sample list
       3 of which had 1 linked annotation files
@@ -108,13 +111,13 @@ nsrr03 edfs/learn-nsrr03.edf	edfs/learn-nsrr03-profusion.xml
     learn-nsrr02   edfs/learn-nsrr02.edf	edfs/learn-nsrr02-profusion.xml
     learn-nsrr03   edfs/learn-nsrr03.edf	edfs/learn-nsrr03-profusion.xml
     ```
-    (note: the supplied sample list, `s.lst` wasn't build with `--build` and has the shorter IDs, e.g. `nsrr01`)
+    (Note: the supplied sample list, `s.lst`, was not built with `--build` and has shorter IDs, e.g. `nsrr01`.)
 
 ## Displaying EDF files
 
-To test that Luna is properly installed, and that the EDFs
-downloaded correctly, run the following to apply the `DESC` _command_
-to each EDF specified in the `s.lst` _project_:
+To test that Luna is properly installed, and that the EDFs downloaded
+correctly, run the following to apply the `DESC` _command_ to each EDF
+specified in the `s.lst` _project_:
 
 ```
 luna s.lst -s DESC > res.txt
@@ -350,7 +353,7 @@ destrat res.db +STATS -c CH/ECG,EMG,SaO2 -p 3 -v MEAN | behead
 
 More complicated than it needs to be?  For this simple example,
 certainly.  However, the value of _destrat_ and its _stratified
-output_ (called [_lunout_](../luna/destrat.md)) databases will become more apparent when
+output_ databases will become more apparent when
 working with larger and more complex result sets.  That is, in real
 analyses results may be stratified by multiple factors (such as
 channel, sleep stage, frequency or power band, epoch, event or class

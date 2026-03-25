@@ -61,7 +61,7 @@ Luna expects the following arguments:
   convenience feature, and is equivalent to entering the same
   `variable=value` pairs on the command line.
 
-- optionally, a _lunout_ output database following the `-o` ( or `-a`)
+- optionally, an output database following the `-o` ( or `-a`)
   argument.  If it doesn't exist it will be created; with `-o` it will
   overwrite any existing data, whereas `-a` appends on any existing
   data.
@@ -134,7 +134,7 @@ and then the original file `command.txt`, and pass both to `luna` which will see
 
 By default, all output goes to _standard out_, i.e. the
 console/terminal by default.  When outputting plain text (instead of
-using a _lunout_ database, see below), most Luna commands generate
+using an output database, see below), most Luna commands generate
 output in a fixed format.  (The initial `DESC` command is in fact an
 exception, as one of the few commands that generate a simple,
 "human-readable" text file.)  The standard format comprises 6
@@ -186,7 +186,7 @@ nsrr01    CH/AIRFLOW    0.0664418
 ## Using destrat
 
 If the `-o` argument is given to Luna, instead of the column-based
-text output format described above, all output is sent to a _lunout_
+text output format described above, all output is sent to an output
 database, which is designed for handling _stratified output_.  The
 tool [`destrat`](../luna/destrat.md) is designed to extract
 information from such databases, and _de-stratify_ it, to produce

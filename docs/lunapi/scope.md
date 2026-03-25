@@ -74,7 +74,7 @@ it can be useful to show the gap-structure of recordings.
 ### Annotations
 
 In the example below, we've selected a subset of channels as well as
-selecting some annotations (obstructure apnea).  The top annotation box selects
+selecting some annotations (obstructive apnea).  The top annotation box selects
 which are displayed in the main window.   The lower annotation box provides a list
 of events: selecting those events shifts the window to that position.   Here we see the canonical disturbance
 in breathing and respiratory effort:
@@ -126,7 +126,7 @@ similar) makes the ultradian structure of the recording clearer:
 ![img](../img/scope11.png)
 
 The band-power summaries provide a simple reflection of the fuller
-spectrogram: in this case can can obtain it (separately from _scope_)
+spectrogram: in this case can obtain it (separately from _scope_)
 via the `p.sec( 'EEG_sec' )` command:
 
 ![img](../img/scope12.png)

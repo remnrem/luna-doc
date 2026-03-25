@@ -4,7 +4,7 @@ This vignette gives a few practical hints for running Luna on larger
 sample lists, especially on shared servers or compute clusters.
 The main topics are:
 
- - choosing between [`-o`](../luna/args.md#lunout-databases) output databases and [`-t`](../luna/args.md#text-tables)
+ - choosing between [`-o`](../luna/args.md#output-databases) output databases and [`-t`](../luna/args.md#text-tables)
 
  - combining output across multiple Luna runs
 
@@ -17,7 +17,7 @@ The main topics are:
 
 Luna has two main output modes for larger analyses:
 
- - [`-o`](../luna/args.md#lunout-databases): write output to a SQLite database
+ - [`-o`](../luna/args.md#output-databases): write output to a SQLite database
 
  - [`-t`](../luna/destrat.md#text-tables): write output as one rectangular text file per table, per individual
 

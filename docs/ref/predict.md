@@ -90,11 +90,11 @@ That is, this feature is a ratio between two band powers (delta and
 theta) from N3 sleep, averaged across all central channels listed in
 the variable `${cen}` (note, this variable does not need to be
 labelled `${cen}`, it could be any valid Luna variable name,
-e.g. `${s}`).  The label name (`delta_theta_mean_C_N3`) is aribitrary,
+e.g. `${s}`).  The label name (`delta_theta_mean_C_N3`) is arbitrary,
 used only to identify the feature, i.e. it could equally be `ftr01`
 etc. (It should not contain spaces or an equals sign, however.)  Here,
 the feature is described across multiple lines, although it is also
-permissable to use a single line.  The label must come first; all other attributes,
+permissible to use a single line.  The label must come first; all other attributes,
 that will be in the form of `key=value` pairs, can be in any order.
 
 ### Using the cache
@@ -173,7 +173,7 @@ estimates of N3 delta/theta power ratio from both channels and then
 take the average.  The `CH` keyword can handle one or multiple
 channels, but will always emit a single (averaged) value.
 
-<h4>Restructing/freezing with caches</h4>
+<h4>Restructuring/freezing with caches</h4>
 
 In the above example, note that the [`RE`](masks.md#restructure)
 command had the special option `preserve-cache`.  By default,
@@ -290,7 +290,7 @@ The primary special variables are
 |------|----------|
 | `observed` | If known, the observed value (e.g. chronological age) to be used in output, and bias-adjustment | 
 | `intercept` | The model intercept |
-| `data` | The filename of the feature matrix data file (for kNN imputation) - can also be given as `data` as a option to `PREDICT` | 
+| `data` | The filename of the feature matrix data file (for kNN imputation) - can also be given as `data` as an option to `PREDICT` | 
 | `knn` | The number of nearest neighbours to consider when running kNN imputation |
 | `minf` | The minimum number of non-missing features required to run the model |
 | `softplus` | Apply the `softplus` function to the output (0/1=N/Y) |
@@ -385,7 +385,7 @@ Internally, the steps are:
    specified by `REQ` or `minf` in the model file
 
  - it then standardizes all features based on population mean/SD
- values (which are always included in a model  file)
+ values (which are always included in a model file)
 
  - `PREDICT` uses a simple _k_-nearest neighbour (kNN) approach to
    impute missing values, based on `knn=10` neighbours by default; kNN
@@ -486,7 +486,7 @@ current working folder) in the folder `models/`.
 
 The Luna script a) sets up the cache, b) does some pre-processing, c)
 extracts metrics for N1, then N2, then N3 sleep, using the freeze/thaw
-mechanism to swap between stages, and then d) runs `PREDICT` to make a predicton.
+mechanism to swap between stages, and then d) runs `PREDICT` to make a prediction.
 
 If `p1.lst` is a sample list pointing to the EDF and staging
 annotations for one 69 year-old individual, then we could run:
@@ -513,7 +513,7 @@ be specified via a [vars file](../luna/args.md#individual-variables).
     ```
     luna p1.lst ... < m-luna.txt
     ```
-    but if we had editted the first lines of `m-luna.txt` to include the extra `REFERENCE` commands. The above is equivalent to:
+    but if we had edited the first lines of `m-luna.txt` to include the extra `REFERENCE` commands. The above is equivalent to:
     ```
     cat m-luna.txt | luna p1.lst ...
     ```
@@ -525,7 +525,7 @@ be specified via a [vars file](../luna/args.md#individual-variables).
 
 
 This script contains multiple commands and generates a lot of console
-output.  It is always worth reviewing in test cases that the script it
+output.  It is always worth reviewing in test cases that the script is
 performing as expected.  The final `PREDICT` command gives the
 following messages to the console:
 
@@ -553,7 +553,7 @@ ID     NF    NF_OBS   OKAY    Y       Y1      YOBS
 id01   13    13       1       59.879  70.613  69
 ```
 
-where `NF` is the number of feautres used in the model.  Depending on
+where `NF` is the number of features used in the model.  Depending on
 the model used, either `Y` or `Y1` should be considered as the primary
 output.
 
@@ -587,7 +587,7 @@ The order of columns has been changed (default is alphabetical) for easier viewi
    feature based on kNN imputation based on all non-missing features but
    excluding this one
 
- - `Z` is the normalized (potentially imputed) final version used in the prediction equation (i.e. multipled by `B`)
+ - `Z` is the normalized (potentially imputed) final version used in the prediction equation (i.e. multiplied by `B`)
 
  - `IMP` and `REIMP` indicate whether the final `Z` value was imputed,
  either because it was missing (`IMP`) or an outlier based on `D`
@@ -615,7 +615,7 @@ One adjustment needs to be made so that the column headers then line up exactly 
 ID      X.FTR_COUPL_OVERLAP_C	X.FTR_DENS_C          ...
 id01 	270                     3.48598130841121      ...
 ```
-The above file has 13 columns (plus an `ID` field) but the labels (following default destrat output practices have the variable/factor name `X.FTR_` at the front of each column label.   We can strip these, either manually, as using something as follows:
+The above file has 13 columns (plus an `ID` field) but the labels, following default destrat output practices, have the variable/factor name `X.FTR_` at the front of each column label. We can strip these, either manually, or using something as follows:
 ```
 sed 's/X\.FTR_//g' < ftr.txt > ftr2.txt
 ```
@@ -624,7 +624,7 @@ ID      COUPL_OVERLAP_C   DENS_C          ...
 id01    270               3.48598130841121      ...
 ```
 In practice, you'd want to be _very careful_ that the IDs or other
-values don't values that match `X.FTR_` etc, but this works for now.
+values don't match `X.FTR_` etc, but this works for now.
 We can then re-run the single `PREDICT` step as follows:
 ```
 luna p1.lst vars=ftr2.txt age=69 cen=C3,C4 -o out2.db -s PREDICT model=models/m-features.txt data=models/m-data.txt th=3 

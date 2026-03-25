@@ -1,6 +1,8 @@
 # Spatial/topographical commands
 
-_Commands to apply spatial filtering and interpolation to dense EEG data_
+_Commands to apply spatial filtering and interpolation to high-density EEG data_
+
+These commands support spatial analysis and filtering for high-density EEG montages. `CLOCS` loads channel locations (spherical or Cartesian coordinates), which are required by subsequent spatial commands. `SL` applies the surface Laplacian (current source density) transformation, which enhances spatial resolution by emphasizing local relative to distal sources. `INTERPOLATE` performs epoch-wise spherical spline interpolation of bad channels, typically applied after `CHEP-MASK` has identified outlying channel/epoch pairs. Built-in variables such as `${frontal}`, `${left}`, and `${posterior}` are also defined here for use with standard 64-channel layouts.
 
 | Command | Description | 
 | ---- | ------ | 
@@ -60,7 +62,7 @@ used by commands such as [`SL`](#sl).
 In _verbose_ mode, as well as attaching the coordinates, the command writes
 the polar and spherical coordinates to the output stream.
 
-<h3>Parametes</h3>
+<h3>Parameters</h3>
 
 | Option | Description | 
 | ---- | ---- | 
@@ -77,8 +79,8 @@ Verbose channel location information (option: `verbose`, strata: `CH`)
 | `Y`    | Original Y coordinate (Cartesian) |
 | `Z`    | Original Z coordinate (Cartesian) |
 | `SPH_R`  | Radius (Spherical) |
-| `SPH_AZ`  | Azimuth (Sperhical) |
-| `SPH_E` | Elevation (Sperhical) |
+| `SPH_AZ`  | Azimuth (Spherical) |
+| `SPH_E` | Elevation (Spherical) |
 | `POLAR_ANGLE` | Angle (Polar) |
 | `POLAR_RAD` | Radius (Polar) |
 
@@ -142,7 +144,7 @@ previously flagged by the [`CHEP-MASK`](artifacts.md#chep-mask) or
 [`CHEP`](masks.md#chep) commands as "bad".  As well as interpolating
 whole channels, this command can interpolate different patterns of
 missing channels on an epoch-by-epoch basis.  That is, as sleep
-recordings can be long, one does not necessarily want to refject an
+recordings can be long, one does not necessarily want to reject an
 entire channel if it has hours of clean data.
 
 This command requires channel locations; Luna contains default locations
@@ -150,7 +152,7 @@ for typical 64-channel montages; otherwise, special maps can be attached
 using the [`CLOCS`](#clocs) command. All signals are assumed
 to have similar sampling rates, and signals are assumed to be epoched.
 
-<h3>Parametes</h3>
+<h3>Parameters</h3>
 
 | Option | Description | 
 | ---- | ---- | 
@@ -168,8 +170,8 @@ mask](masks.md#chep).
 
 <h3>Example</h3>
 
-As we illustrate in this [vignette](../vignettes/chep.md), here we use the `INTERPOLATE` command to clean up hdEEG data.  See the vignette
-and the documentation for  [`CHEP-MASK`](artifacts.md#chep-mask)  and [`CHEP`](masks.md#chep) for more details.[
+As we illustrate in this [vignette](../vignettes/chep.md), here we use the `INTERPOLATE` command to clean up hdEEG data. See the vignette
+and the documentation for [`CHEP-MASK`](artifacts.md#chep-mask) and [`CHEP`](masks.md#chep) for more details.
 
 ```
 luna Subj1.edf -o ss_psd3.db -s ' CHEP-MASK ch-th=2

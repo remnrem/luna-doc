@@ -1,5 +1,7 @@
 # Interval-based analyses
 
+This page covers commands for event-locked and interval-based analyses. `OVERLAP` and `--overlap` evaluate the statistical enrichment of one set of annotations relative to another using randomization to generate empirical null distributions. `MEANS` computes signal averages stratified by annotation class. `PEAKS` and `Z-PEAKS` detect and cache local signal peaks for use by downstream commands. `TLOCK` performs time-locked signal averaging around cached peaks or annotation events — the standard approach for characterizing spindle, SO or other event morphology. `S2C` segments an oscillatory signal into individual cycle annotations.
+
 | Command | Description |
 | ----- | ----- | 
 | [`OVERLAP`](#overlap) | Annotation overlap/enrichment (single-sample) |
@@ -7,7 +9,8 @@
 | [`MEANS`](#means) | Signal means by annotation |
 | [`PEAKS`](#peaks) | Detect and cache signal peaks |
 | [`Z-PEAKS`](#z-peaks) | Detect and cache signal peaks, alternative method | 
-| [`TLOCK`](#tlock) | Time-locked (e.g. peak-locked) signal averaging | 
+| [`TLOCK`](#tlock) | Time-locked (e.g. peak-locked) signal averaging |
+| [`S2C`](#s2c) | Signal-to-cycle: segment oscillatory activity into cycle annotations |
 
 ## OVERLAP
 
@@ -168,7 +171,7 @@ likely to occur _after_).  By default, annotations that actually
 overlap directly are still included in these proximity/distance
 metrics, just with a distance of 0 (this behaviour can be changed by
 the option `dist-excludes-overlapping`).  By default, only pairs that
-occur within 10 seconds or each other are included in these analyses
+occur within 10 seconds of each other are included in these analyses
 (can be changed by the `w` option).
 
 
@@ -435,7 +438,7 @@ subsequent commands, primarily [`TLOCK`](#tlock).
 <h3>Output</h3>
 
 No output; this command only stores peaks in a subject-specific cache object internally (i.e. they are available for this individual
-in subsequent Luna commands.
+in subsequent Luna commands).
 
 <h3>Example</h3>
 
@@ -484,7 +487,7 @@ _Main parameters_
 | Parameter | Example | Description |
 | --- | --- | --- |
 | `sig` | `H1,H2` | Signals to process (if absent, do all) |
-| `w` | 2 | Window (seconds) - i.e. the _lag_ parameter above)
+| `w` | 2 | Window (seconds) — i.e. the _lag_ parameter above |
 | `influence` | 0.1 | Influence parameter between 0 and 1 (default 0.01) |
 | `th` | 3.5 | Threshold parameter (in SD units) | 
 
@@ -681,3 +684,151 @@ for (f in 1:20 ) {
 ```
 
 ![img](../img/tlock2.png)
+
+---
+
+## S2C
+
+_Segment oscillatory activity into cycle annotations and compute cycle-locked summaries_
+
+`S2C` (Signal-to-Cycle) detects oscillatory cycles in a filtered signal by tracking
+positive-to-negative zero-crossings. Each detected cycle spans a full positive and
+negative half-wave; cycles are filtered by duration and magnitude and written back
+as interval annotations. Optional outputs include per-cycle morphological metrics,
+cross-channel summaries, cycle-locked waveforms, and phase/time density grids.
+
+`S2C` is conceptually similar to [`SPINDLES`](spindles-so.md#spindles) and
+[`SO`](spindles-so.md#so) but is generalisable to any oscillatory signal and
+frequency range.
+
+<h3>Parameters</h3>
+
+<h4>Core inputs</h4>
+
+| Parameter | Example | Description |
+|---|---|---|
+| `sig` | `sig=C3,C4` | Signal(s) to analyse (and, by default, to segment) |
+| `seed` | `seed=C3` | Seed signal(s) used for cycle detection; defaults to `sig` |
+| `all-by-all` | | Compare every `sig` channel against every `seed` channel |
+| `waves` | `waves=SW` | Base label for written cycle annotations (default `waves`) |
+| `half-waves` | `half-waves=HW` | Also write positive/negative half-wave annotations; optional value sets the base label |
+| `peak-points` | `peak-points=PK` | Write zero-duration peak-point annotations for positive and negative peaks |
+| `waves-bins` | | Write 12 phase-bin annotations (B01–B12) warped from the cycle |
+
+<h4>Cycle duration filters</h4>
+
+| Parameter | Default | Description |
+|---|---|---|
+| `t-min` | `2.0` | Minimum total cycle duration (seconds) |
+| `t-max` | `20.0` | Maximum total cycle duration (seconds) |
+| `t-min-neg` | `1.0` | Minimum negative half-wave duration (seconds) |
+| `t-max-neg` | `10.0` | Maximum negative half-wave duration (seconds) |
+| `t-min-pos` | `1.0` | Minimum positive half-wave duration (seconds) |
+| `t-max-pos` | `10.0` | Maximum positive half-wave duration (seconds) |
+| `no-halfwave-t` | | Disable automatic half-wave duration defaults |
+
+<h4>Magnitude filters</h4>
+
+| Parameter | Default | Description |
+|---|---|---|
+| `mag-percentile` | `0.8` | Retain cycles above this within-recording magnitude percentile (0–1) |
+| `mag-z` | `0.5` | Retain cycles above this within-recording magnitude z-score |
+
+<h4>Output control</h4>
+
+| Parameter | Default | Description |
+|---|---|---|
+| `emit-seed` | | Emit seed-level summary statistics (SEED stratum) |
+| `emit-per-cycle` | | Emit per-cycle metrics (SEED × CYCLE stratum) |
+| `emit-sig` | | Emit cross-channel seed-by-signal summaries (SEED × SIG stratum) |
+| `emit-ph-grid` | | Emit 360° phase-bin mean waveform (SEED × SIG × PH) |
+| `emit-ph-amp` | | Emit phase × amplitude density matrix |
+| `emit-td-grid` | | Emit time-domain waveform grid (SEED × SIG × SEC) |
+| `emit-td-summary` | | Emit time-domain window summary metrics (TD_*) |
+| `emit-asym` | | Emit positive/negative half-wave asymmetry metrics |
+| `emit-mad` | | Emit MAD in addition to mean and median for continuous outputs |
+| `emit-se` | | Emit bootstrap SE and CI for mean grids |
+| `amp-bins` | `10` | Number of amplitude bins for density matrices |
+| `time-window` | `100` | Time-domain window half-width in seconds |
+| `time-bin` | `1` | Time-bin size in seconds |
+| `time-lock` | `pos` | Time-lock anchor: `pos` (positive peak) or `neg` |
+| `bootstrap` | | Enable bootstrap SE/CI for mean grids |
+| `bootstrap-n` | `1000` | Number of bootstrap resamples |
+| `bootstrap-ci` | `0.95` | Bootstrap CI level |
+
+<h3>Output</h3>
+
+<h4>SEED — seed-level summary</h4>
+
+Output strata: `SEED` (with `emit-seed`)
+
+| Variable | Description |
+|---|---|
+| `N_PRE` | Cycles detected before magnitude filtering |
+| `N_POST` | Cycles retained after magnitude filtering |
+| `DUR_POS` | Mean positive half-wave duration (seconds) |
+| `DUR_NEG` | Mean negative half-wave duration (seconds) |
+| `DUR` | Mean total cycle duration (seconds) |
+| `DUR_ZC_NEG` | Mean zero-crossing → negative peak duration |
+| `DUR_NEG_ZC` | Mean negative peak → zero-crossing duration |
+| `DUR_ZC_POS` | Mean zero-crossing → positive peak duration |
+| `DUR_POS_ZC` | Mean positive peak → zero-crossing duration |
+| `AMP_POS` | Mean positive-peak amplitude (from baseline) |
+| `AMP_NEG` | Mean absolute negative-peak amplitude |
+| `AMP_P2P` | Mean peak-to-peak amplitude |
+| `SLOPE_POS` / `SLOPE_NEG` | Mean absolute half-wave slopes |
+| `SHARP_POS` / `SHARP_NEG` | Mean peak sharpness |
+| `DUR_RATIO` | Mean pos/neg half-wave duration ratio [`emit-asym`] |
+| `AMP_ASYM` / `SLOPE_ASYM` / `SHARP_ASYM` | Half-wave asymmetry metrics [`emit-asym`] |
+
+All continuous variables also have `_MD` (median) variants; add `emit-mad` for `_MAD`.
+
+<h4>SEED × BIN — cycle-locked seed waveform (12 bins)</h4>
+
+| Variable | Description |
+|---|---|
+| `MEAN` | Mean seed value in each phase bin (B01–B12) |
+
+<h4>SEED × CYCLE — per-cycle metrics</h4>
+
+Output strata: `SEED × CYCLE` (with `emit-per-cycle`). Includes all morphological
+metrics (durations, amplitudes, slopes, sharpness) per cycle, plus `T0_S`/`T1_S`
+(start/stop times in seconds).
+
+<h4>SEED × SIG — cross-channel summary</h4>
+
+Output strata: `SEED × SIG` (with `emit-sig`)
+
+| Variable | Description |
+|---|---|
+| `D` | Mean waveform peak-to-peak amplitude |
+| `TAU_MAX_DEG` | Phase (degrees) of mean waveform peak |
+| `SINFIT_OVER_P2P` | Sinusoidal fit amplitude / peak-to-peak amplitude |
+| `CIRC_MEAN_DEG` | Circular mean phase of per-cycle peaks |
+| `R` | Resultant vector length of per-cycle peak phases |
+| `CC_LAG` | Cross-correlation lag (seconds) |
+| `CC_R` | Cross-correlation at lag |
+| `DT` | Mean lag to nearest local extremum (seconds) |
+
+<h3>Example</h3>
+
+Detect slow oscillations in EEG, annotate cycles and compute cross-channel coupling
+to spindle-band power:
+
+```
+% Filter to 0.5-4 Hz slow oscillation band
+FILTER sig=EEG bandpass=0.5,4
+
+% Segment into cycles, emit summaries
+S2C sig=EEG,spindle_power seed=EEG
+    waves=SO half-waves peak-points=SO_PEAK
+    emit-seed emit-sig
+    t-min=0.8 t-max=2.5
+    emit-ph-grid emit-td-grid
+```
+
+Extract seed-level results and per-channel coupling:
+```
+destrat out.db +S2C -r SEED
+destrat out.db +S2C -r SEED SIG
+```

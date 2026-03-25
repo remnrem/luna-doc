@@ -5,23 +5,28 @@ list of command [domains](#domains), and 2) a full list of [all
 commands](#all-commands).
 
 The pages that are linked to describe the Luna command language, which can be used
-either via the terminal-based [_lunaC_](../luna/args.md) tool or the R
-extension library [_lunaR_](../ext/R/index.md).  Under each section,
-we tabulate the relevant _commands_, along with their input
-_parameters_ and output _variables_.  We give examples using a mixture
-of [_lunaC_](../luna/args.md) and [_lunaR_](../ext/R/index.md); also
-see _lunaC_'s [help function](../luna/args.md#help).
+via the terminal-based [_lunaC_](../luna/args.md) tool, the Python
+[_lunapi_](../lunapi/index.md) package, or the R extension library
+[_lunaR_](../ext/R/index.md). There is also
+[_LunaScope_](https://zzz.nyspi.org/lunascope/), an interactive
+point-and-click GUI built on top of _lunapi_. Importantly, the Luna
+command language (script syntax) is the same across all these
+interfaces. Under each section, we tabulate the relevant _commands_,
+along with their input _parameters_ and output _variables_. We give
+examples using a mixture of [_lunaC_](../luna/args.md) and
+[_lunapi_](../lunapi/index.md); also see _lunaC_'s [help
+function](../luna/args.md#help).
 
 ## Domains
 
 | Domain/Section | Description |
-| -----  | ----- | 
-|[Summaries](summaries.md)         | Basic summary commands | 
+| -----  | ----- |
+|[Summaries](summaries.md)         | Basic summary commands |
 |[Annotations](annotations.md)     | Adding and displaying annotations |
 |[Expressions](evals.md)           | Evaluating more advanced annotation-based expressions |
 |[Epochs](epochs.md)               | Epoching signals and epoch-level annotations |
 |[Masks](masks.md)                 | Masking epochs based on annotations and other criteria |
-|[Freezes](freezes.md)             | Working with dataset freezes (snaphots) | 
+|[Freezes](freezes.md)             | Working with dataset freezes (snapshots) | 
 |[Canonical signals](canonical.md) | Harmonizing EDFs through _canonical signal_ specification |
 |[Manipulations](manipulations.md) | Manipulating signal data |
 |[Outputs](outputs.md)             | Commands to output signals in different formats |
@@ -44,6 +49,7 @@ see _lunaC_'s [help function](../luna/args.md#help).
 |[Prediction](predict.md)       | Prediction models | 
 |[Simulation](simul.md)            | Simulation of time-series data |
 |[Helpers](helpers.md)             | Auxiliary helper commands |
+|[Actigraphy](actigraphy.md)       | Multi-day actigraphy: circadian metrics and wake/sleep scoring |
 |[Experimental](exp.md)            | Experimental features, under heavy development / for internal use only |
 
 ## All commands 
@@ -66,19 +72,19 @@ __Annotations:__
 [`--xml` & `--xml2`](annotations.md#-xml): _view NSRR XMLs,_
 [`REMAP`](annotations.md#remap): _remap annotations,_
 [`ANNOTS`](annotations.md#annots): _tabulate annotations,_
+[`AXA`](annotations.md#axa): _pairwise annotation cross-tabulation,_
 [`MAKE-ANNOTS`](annotations.md#make-annots): _make new annotations,_
 [`WRITE-ANNOTS`](annotations.md#write-annots): _write annotation files,_
 [`SPANNING`](annotations.md#spanning): _annotation coverage stats,_
 [`ESPAN`](annotations.md#espan): _epoch-based annotation coverage,_
-[`META`](annotations.md#meta): _add meta-data to annotatons,_
+[`META`](annotations.md#meta): _add meta-data to annotations,_
 [`A2S`](annotations.md#a2s): _make signal from annotation,_
 [`S2A`](annotations.md#s2a): _make annotation from signal,_
-[`ALIGN-ANNOTS`](annotations.md#align-annots): _align annotation timelines._ 
 __Expressions:__
 [Expressions](evals.md): _overview of expressions,_
 [`EVAL`](evals.md#eval): _annotation-based expressions,_
 [`TRANS`](evals.md#trans): _channel-based expressions,_
-[`DERIVE`](evals.md#derive): _derive summary summaries from annotation meta-data._
+[`DERIVE`](evals.md#derive): _derive summaries from annotation meta-data._
 __Epochs:__
 [`EPOCH`](epochs.md#epoch): _specify epochs,_
 [`EPOCH-ANNOT`](epochs.md#epoch-annot): _attach epoch annotations._
@@ -134,13 +140,14 @@ __Filters:__
 [`FILTER`](fir-filters.md#filter): _apply FIR,_
 [`FILTER-DESIGN`](fir-filters.md#filter-design): _FIR properties._
 __Artifacts:__
+[`QC`](artifacts.md#qc): _multi-domain PSG signal quality control,_
+[`EDGER`](artifacts.md#edger): _identify leading/trailing noise,_
 [`CHEP-MASK`](artifacts.md#chep-mask): _CHannel/EPoch masking,_
 [`ARTIFACTS`](artifacts.md#artifacts): _bad EEG epochs,_
+[`POL`](artifacts.md#pol): _signal polarity diagnostics,_
 [`LINE-DENOISE`](artifacts.md#line-denoise): _line denoising,_
 [`SUPPRESS-ECG`](artifacts.md#suppress-ecg): _correct ECG artifact,_
-[`ALTER`](artifacts.md#alter): _correct artifacts,_
-[`POL`](artifacts.md#pol): _signal polarity diagnostics,_
-[`EDGER`](artifacts.md#edger): _identify leading/trailing noise._
+[`ALTER`](artifacts.md#alter): _correct artifacts._
 __Physiological signal analysis:__
 [`HRV`](physio.md#hrv): _estimate heart-rate variability metrics from ECG,_
 [`RAI`](physio.md#rai): _calculate the REM atonia index from chin EMG,_
@@ -169,7 +176,7 @@ __Time/frequency analysis:__
 [`CWT`](power-spectra.md#cwt): _wavelet transform,_
 [`CWT-DESIGN`](power-spectra.md#cwt-design): _CWT properties,_
 [`PCOUPL`](power-spectra.md#pcoupl): _generic phase coupling,_
-[`EMD`](power-spectra.md#emd): _Empirical mode decompositon,_
+[`EMD`](power-spectra.md#emd): _Empirical mode decomposition,_
 [`MSE`](power-spectra.md#mse): _Multi-scale entropy,_
 [`LZW`](power-spectra.md#lzw): _LZW compression,_
 [`1FNORM`](power-spectra.md#1fnorm): _remove the 1/f trend,_
@@ -180,13 +187,13 @@ __Spindles and SO:__
 [`SPINDLES`](spindles-so.md#spindles): _spindles,_
 [`SO`](spindles-so.md#so): _slow oscillations._
 __Coupling/connectivity:__
-[`COH`](cc.md#coh): _coherence,_
 [`CORREL`](cc.md#correl): _correlation,_
-[`CC`](cc.md#cc): _phase-amplitude coupling & phase lag,_
-[`PSI`](cc.md#psi): _phase slope index,_
-[`MI`](cc.md#mi): _mutual information,_
 [`XCORR`](cc.md#xcorr): _cross-correlation,_
-[`TSYNC`](cc.md#tsync): _cross-correlation & phase delay,_
+[`COH`](cc.md#coh): _coherence,_
+[`PSI`](cc.md#psi): _phase slope index,_
+[`IPC`](cc.md#ipc): _instantaneous phase coherence,_
+[`CC`](cc.md#cc): _phase-amplitude coupling & phase lag,_
+[`MI`](cc.md#mi): _mutual information,_
 [`GP`](cc.md#gp): _Granger prediction._
 __Interval-based:__
 [`OVERLAP`](intervals.md#overlap): _single-sample overlap analysis,_
@@ -194,7 +201,8 @@ __Interval-based:__
 [`MEANS`](intervals.md#means): _signal mean by annotation,_
 [`PEAKS`](intervals.md#peaks): _detect/cache peaks,_
 [`Z-PEAKS`](intervals.md#z-peaks): _detect/cache peaks (Z method),_
-[`TLOCK`](intervals.md#tlock): _time-locked averaging._
+[`TLOCK`](intervals.md#tlock): _time-locked averaging,_
+[`S2C`](intervals.md#s2c): _signal-to-cycle annotation and summaries._
 __PSC:__
 [`--psc`](psc.md#-psc): _estimate components,_
 [`PSC`](psc.md#psc): _project new samples._
@@ -223,6 +231,9 @@ __Prediction:__
 __Simulation:__
 [`SIMUL`](simul.md#simul): _simulate signals,_
 [`SIGGEN`](simul.md#siggen): _basic signal simulation._
+__Actigraphy:__
+[`DAYS`](actigraphy.md#days): _day and clock-time annotations,_
+[`ACTIG`](actigraphy.md#actig): _circadian metrics and wake/sleep scoring._
 __Helpers:__
 [`--build`](helpers.md#-build): _build sample-lists,_
 [`--validate`](helpers.md#-validate): _validate files,_
@@ -234,7 +245,10 @@ __Helpers:__
 [`--otsu`](helpers.md#-otsu): _Otsu thresholding (file),_
 [`OTSU`](helpers.md#otsu): _Otsu thresholding (EDF)._
 __Experimental:__
-[Various](exp.md): _misc. experimental commands._
+[Various](exp.md): _misc. experimental commands,_
+[`ALIGN-EPOCHS`](exp.md#align-epochs): _align epochs between files,_
+[`ALIGN-ANNOTS`](exp.md#align-annots): _realign annotations given an ALIGN-EPOCHS solution,_
+[`INSERT`](exp.md#insert): _estimate lags and insert channels from another EDF._
 
 
 <!--

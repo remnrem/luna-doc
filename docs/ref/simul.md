@@ -1,7 +1,8 @@
-
-# Simulation 
+# Simulation
 
 _Simulation of new data_
+
+These commands generate synthetic signal data for testing methods, producing examples, or augmenting recordings. `SIMUL` generates random stationary time-series with a specified power spectrum using a simple spectral approach; it does not model realistic EEG phase or distributional properties, but provides a convenient way to create signals with known spectral content. `SIGGEN` generates structured deterministic signals — sine waves, chirps and related waveforms — either as new channels or added on top of existing ones.
 
 | Command | Description | 
 | ---- | ------ | 
@@ -80,11 +81,11 @@ into subsequent commands such as `PSD`.
     the sample-list/file-name along with `--nr` and `--rs` on the
     command line, to give the number of records (`nr`) and the EDF
     record size (`rs`) respectively.  Luna will then create an EDF of
-    this duration (i.e. with headers speciying the length of the
+    this duration (i.e. with headers specifying the length of the
     recording) but with 0 signals, i.e. a collection of empty records.
     The `SIMUL` command will then create a new channel that will be of
     the desired duration (and sample rate given by the `sr` option).
-    
+
 
 <h3>Parameters</h3>
 
@@ -137,7 +138,7 @@ to Luna that this is an empty EDF (which requires that `--nr` and
 Here we use both the spectral slope and peak formulation: an `alpha`
 value of 2, and a Gaussian bump at 15 Hz (with a SD of `w` = 1 Hz).
 As noted above, the simple simulation approach here will generate a
-time-domain signal that this PSD in the frequency-domain, but
+time-domain signal that has this PSD in the frequency-domain, but
 otherwise it does not meaningfully replicate other time-domain
 features of signals.
 
@@ -217,7 +218,7 @@ We see the estimated value is close to the expected ( _b_ = minus alpha ~ -2 ).
 
 In the above example we specified that the slope be estimated only
 over the region 30 to 45 Hz (as we and others have shown to be a
-robust choice, being relatively free from stronger oscillatoary
+robust choice, being relatively free from stronger oscillatory
 activity and/or line noise
 ([Kozhemiako et al, 2021](https://www.biorxiv.org/content/10.1101/2021.11.08.467763v1)).
 
@@ -319,7 +320,7 @@ The second signal adds the `pulses` option to make the output consist of 3 segme
 within the overall 10-second window.  As noted above, this is constrained to ensure that the segments do not overlap:
 
 ```
-luna . -o out.db --nr=10 --rs=1
+luna . -o out.db --nr=10 --rs=1 \
        -s ' EPOCH len=10
             SIMUL sr=100 frq=4 psd=1 sig=S1 pulses=3,1.5
             FFT

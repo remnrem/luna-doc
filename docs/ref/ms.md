@@ -1,7 +1,8 @@
 # EEG microstates
 
-
 _Implementation of the modified K-means approach to EEG microstate analysis_
+
+EEG microstates are quasi-stable topographic patterns of scalp electrical activity, lasting tens to hundreds of milliseconds, that recur across the recording. `MS` is the primary command: it extracts global field power (GFP) peaks, clusters their scalp maps into _K_ prototype states using a polarity-invariant modified k-means algorithm, back-fits the prototypes to all time points, and reports per-individual statistics (duration, occurrence, coverage, transitions). The auxiliary commands `--kmer`, `--cmp-maps`, `--label-maps`, and `--correl-maps` support group-level analyses of microstate sequences, spatial comparisons between maps, and template-based label assignment.
 
 | Command | Description | 
 | ---- | ------ | 
@@ -23,7 +24,7 @@ a guide and code by [Poulsen et al](https://www.biorxiv.org/content/10.1101/2898
 Briefly, the `MS` workflow follows these steps:
 
  - extracts global field power (GFP) __peaks__ from EEG signals (that must previously have been average-referenced)
- - cluster GFP maps (__segmentation__) to a small number of prototypes, e.g. _K_ = 2,3,4, etc, using a polarity-invariant (modified _k_-means clustering, in which prototypes are based on the first eigenvector of the class-specific covariance)
+ - cluster GFP maps (__segmentation__) to a small number of prototypes, e.g. _K_ = 2,3,4, etc, using a polarity-invariant (modified _k_-means clustering), in which prototypes are based on the first eigenvector of the class-specific covariance
  - __backfit__ the prototype maps to all original sample points
  - perform temporal smoothing (relabelling short segments)
  - calculate various statistics per individual
@@ -35,7 +36,7 @@ Luna operates one EDF at a time, although often one wants to apply EEG
 microstate clustering across multiple individuals.  To achieve this,
 Luna splits out the core functions of the `MS` command (GFP peak
 extraction, segmentation, backfitting and kmer/sequence enrichment)
-into sub-commands that can be run individually to faciliate
+into sub-commands that can be run individually to facilitate
 group-level analysis.
 
 ![img](../img/ms/flow.png){width="100%"}
@@ -104,19 +105,19 @@ Sequence analysis parameters:
 
 | Option | Example | Description | 
 | ---- | ---- | ---- |
-| `kmers` | `3,6,1000` | Ssequence enrichment analysis (per individual) <br>3 args = 1) min, 2) max kmer length, 3) number of permututations |
+| `kmers` | `3,6,1000` | Sequence enrichment analysis (per individual) <br>3 args = 1) min, 2) max kmer length, 3) number of permutations |
 
 
 <h3>Outputs</h3>
 
-Individual-level outputs for the best-fit solution (strats: _none_)
+Individual-level outputs for the best-fit solution (strata: _none_)
 
 | Variable | Description |
 | --- | --- |
 | `GEV`  | Global variance explained |
 | `OPT_K` | Optimal K (based on GEV) |
 | `LZW` | Lev-Zimpel-Welch complexity of state sequences |
-| `SE1` | Sample entropy statistics `SE1, `SE2`, etc |
+| `SE1` | Sample entropy statistics `SE1`, `SE2`, etc |
 
 Per-cluster statistics (for the best-fit model) (strata: `K`)
 
@@ -124,7 +125,7 @@ Per-cluster statistics (for the best-fit model) (strata: `K`)
 | --- | --- |
 | `COV` | Coverage (proportion of points spanned) |
 | `DUR` | Mean state duration (msec) |
-| `OCC` | Cccurrences per second |
+| `OCC` | Occurrences per second |
 | `SPC` | Spatial correlation |
 | `GEV` | Global explained variance |
 | `GFP` | Global field power |
@@ -139,7 +140,7 @@ Per-solution statistics, i.e. for a given value of _K_  (strata: `NK`)
 | `SIG2` | | 
 | `SIG2_MCV` |  
 
-Prototype map (for best-fit soluition) (strata: `CH` x `K`)
+Prototype map (for best-fit solution) (strata: `CH` x `K`)
 
 | Variable | Description |
 | --- | --- |
@@ -169,7 +170,7 @@ Sequence enrichment (within individual) ( strata: `L` x `S` )
 | `NG` | Number of sequences in the sequence's equivalence group (`SG`) |
 | `W_OBS` | Within-equivalence group observed rate |
 | `W_EXP` | Within-equivalence group expected rate |
-| `W_P` | Within-equivalence group rate enrichment signifiance |
+| `W_P` | Within-equivalence group rate enrichment significance |
 | `W_Z` | Within-equivalence group rate enrichment Z score |
 
 
@@ -192,13 +193,13 @@ For a single individual/EDF, apply microstate analysis.
 luna file.edf –o out.db –s MS sig=${eeg} k=2,3,4,5 
 ```
 
-Note, prior to to above command, we require that the EEG signals have already been average-referenced.
+Note, prior to the above command, we require that the EEG signals have already been average-referenced.
 
 
 ```
 CMD #1: MS
  options: k=2,3,4 kmers=2,4,100 sig=*
- find GPF peaks
+ find GFP peaks
  calculating GFP for sample
  extracted 15997 peaks from 90000 samples (18%)
  segmenting peaks to microstates
@@ -257,7 +258,7 @@ ID0001 D 0.291 119.325
 ```
 
 
-<h3>Multi-subject clusterig</h3>
+<h3>Multi-subject clustering</h3>
 
 The first step is to extract all GFP peaks, by creating an aggregated EDF which contains only a fixed number of peaks per individual:
 
@@ -277,9 +278,9 @@ peaks to extract with `npeaks` (here 5000), and an optional threshold whereby ve
 luna  s.lst -s MS peaks=peaks.edf gfp-th=1 npeaks=5000 pmin=-200 pmax=200
 ```
 
-The aggregated EDF `peaks.edf` is therefore a temporary that contains data (peaks) from multiple individuals (in this case, 130 individuals
+The aggregated EDF `peaks.edf` is therefore a temporary file that contains data (peaks) from multiple individuals (in this case, 130 individuals
 from `s.lst`).  Because it is only used in the `MS` analysis, we set the sample rate (arbitrarily) to 1 Hz.  As a sanity check, as we
-extracted 5000 peaks for each of 130 individuals, we expect a total of 650,000 observations for the subequent EEG microstate clustering. Indeed,
+extracted 5000 peaks for each of 130 individuals, we expect a total of 650,000 observations for the subsequent EEG microstate clustering. Indeed,
 this is what we observe (i.e. assuming a
 
 ```
@@ -344,12 +345,12 @@ literature).
 
 ## --kmer
 
-_Apply state sequence permutation analysis across multiple individiuals and assess group differences_
+_Apply state sequence permutation analysis across multiple individuals and assess group differences_
 
 As well as applied within individual, the `kmer` option can be run
 "stand-alone", on the output from `write-states` from the `MS`
 command, if they are concatenated into a single file.  The permutation
-occurs within individual, but the statistics (i.e. enrochment of
+occurs within individual, but the statistics (i.e. enrichment of
 specific k-mers) are aggregated across all people.  In addition, if a
 binary phenotype is specified (via `phe`), then these statistics are
 calculated separately for _CASES_ (phenotype == 1) and _CONTROLS_
@@ -383,7 +384,7 @@ Sequence enrichment (group-level) ( strata: `L` x `S` )
 | `NG` | Number of sequences in the sequence's equivalence group (`SG`) |
 | `W_OBS` | Within-equivalence group observed rate |
 | `W_EXP` | Within-equivalence group expected rate |
-| `W_P` | Within-equivalence group rate enrichment signifiance |
+| `W_P` | Within-equivalence group rate enrichment significance |
 | `W_Z` | Within-equivalence group rate enrichment Z score |
 
 
@@ -410,7 +411,7 @@ Sequence enrichment (by phenotype) ( strata: `PHE` x `L` x `S` )
 | `NG` | Number of sequences in the sequence's equivalence group (`SG`) |
 | `W_OBS` | Within-equivalence group observed rate |
 | `W_EXP` | Within-equivalence group expected rate |
-| `W_P` | Within-equivalence group rate enrichment signifiance |
+| `W_P` | Within-equivalence group rate enrichment significance |
 | `W_Z` | Within-equivalence group rate enrichment Z score |
 
 
@@ -461,7 +462,7 @@ _Note that this function does not require or accept an EDF or sample list._
 
 This command takes a set of microstate maps, along with an optional
 group/phenotype file (two groups only) and evaluates the topographical
-simiarity / dissimilarity of maps between groups/people, based on the
+similarity / dissimilarity of maps between groups/people, based on the
 summed spatial correlation between maps.
 
 The starting point for this command is always running
@@ -507,7 +508,7 @@ All four above statistics are evaluated empirically.  There is
 likely some redundancy here: the primary ones are #3 and #4.
 (Arguably, #1 and #2 just help interpret a significant result from #3.).
 
-From top to bottom, these statistics reflect the following questions::
+From top to bottom, these statistics reflect the following questions:
 
   - _are cases more similar to each other than we’d expect by chance_ (1-sided)
 
@@ -632,7 +633,7 @@ _Label maps given a template_
 This function takes a microstate map file for _K_ classes, and a _template_ file (that should have
 at least _K_ states) with specified labels.  Based on the set of assignments (of states in the first
 file to the template file) that optimize the sum of spatial correlations, it generates a new map file
-with the appopriate labels (i.e. based on the template).  Further, for plotting/visualization purposes,
+with the appropriate labels (i.e. based on the template).  Further, for plotting/visualization purposes,
 it will flip a map if needed to make it more (visually) similar to the template.  (Note that spatial correlations
 themselves are polarity invariant.)
 
@@ -737,7 +738,7 @@ for (i in 1:4) ltopo.rb( c = n4$CH , z = n4[,1+i] , mt = names(n4)[1+i])
 ![img](../img/ms-labels3.png)
 
 Note that if we had required a more stringent matching, e.g. with
-`th=0.9 we'd see the following:
+`th=0.9` we'd see the following:
 
 ```
  mapping [1] --> template [D] with R = 0.803188 *** below threshold corr. -- assigning '?'
@@ -812,4 +813,3 @@ D       0.892096  0.79893    0.401007    1
 ```
 
 Note the columns are kept in the same order as found in the input data.
-

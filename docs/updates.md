@@ -1,7 +1,68 @@
 
 # Updates, additions and fixes
 
-Current stable version: __v1.3.4__ (main [downloads](download/index.md) page)
+Current stable version: __v1.3.5__ (main [downloads](download/index.md) page)
+
+## v1.3.5 (19-Mar-2026)
+
+_New commands_
+
+- added [`ACTIG`](ref/actigraphy.md#actig) — a new actigraphy domain for multi-day
+  recordings: non-parametric circadian metrics (IS, IV, RA, L5/M10), epoch-level
+  wake/sleep scoring (luna, Cole–Kripke, and threshold methods), fragmentation
+  metrics (SFI, transition probabilities, conditional and run-length entropy,
+  bout duration statistics), per-day summaries with day-level QC, and optional
+  sleep-debt analysis
+
+- added [`DAYS`](ref/actigraphy.md#days) — creates day, hourly, and AM/PM
+  annotations for multi-day recordings; designed to work alongside `ACTIG`
+
+- added [`QC`](ref/artifacts.md#qc) — automated multi-domain PSG signal quality
+  control covering respiratory effort (RESP), SpO2 (OXY), EEG, EMG, ECG, and
+  EOG; produces per-epoch flags and channel-level `FLAGGED` designations, with
+  line noise tracked separately from structural artifacts
+
+- added [`S2C`](ref/annotations.md#s2c) — signal-to-cycle: segments oscillatory
+  activity into cycle annotations, with outputs ranging from seed-level summaries
+  to per-cycle and phase/time-binned metrics (half-wave durations, peak amplitudes,
+  transition probabilities, cycle-locked signal averages)
+
+- added [`IPC`](ref/cc.md#ipc) — instantaneous phase coherence: pairwise zero-lag
+  phase coupling from Hilbert-based analytic signals; reports signed IPC, weighted
+  IPC, phase-locking value, mean phase offset, and in-phase fraction for each
+  channel pair
+
+- added [`AXA`](ref/annotations.md#axa) — annotation cross-tabs: pairwise
+  relationships between seed and query annotations, reporting overlap, distance-to-
+  nearest, counts and total spanned duration, optionally stratified by channel or
+  annotation instance
+
+_Other changes_
+
+- significantly improved the `-h` help system: added `-hs <term>` to search
+  across all domain labels and command descriptions by keyword, and `-hv <domain>`
+  to print full long-form descriptions alongside parameters and outputs for every
+  command in a domain; all commands now carry verbose descriptions that appear in
+  these two modes
+
+- [`PSD`](ref/power-spectra.md#psd) now supports sub-1 Hz frequency analysis
+
+_Actigraphy details_
+
+- `ACTIG` supports a recommended two-run workflow: `score-period` first (coarse
+  period-window annotations SP/WP) then `score` (granular S/W epoch scoring),
+  with fragmentation metrics computed separately within each window
+
+- the default `luna` scoring method is device- and epoch-size-agnostic, using
+  log transform → robust normalisation → moving-median smoothing → burst density
+  → candidate sleep → three post-processing passes
+
+- day-level QC (`qc-day=T`) distinguishes technical exclusions (flatline, low
+  variability, near-floor) from plausibility warnings (high sleep fraction, very
+  long sleep bouts), only auto-excluding days with ≥ 2 technical flags
+
+- diagnostic intermediate channels (`_Z`, `_L`, `_D`, `_CS`, `_SW`) can be
+  written back to the EDF with `channels` for step-by-step visualisation
 
 ## v1.3.4 (27-Feb-2026)
 
@@ -711,13 +772,8 @@ _Artifact and alignment utilities_
  - new [`EDGER`](ref/artifacts.md#edger) command, designed to identify
    leading/trailing portions of recordings likely to be artifactual
  
- - new [`ALIGN-EPOCHS`](ref/alignment.md#align-epochs) command
-
- - new [`ALIGN-ANNOTS`](ref/alignment.md#align-annots) command
-
- - new [`INSERT`](ref/alignment.md#insert) command, with
-   new FFT-based cross-correlation analysis to align signals from
-   different EDFs and insert them, optionally adjusting timings
+ - new alignment utilities for epoch matching, annotation realignment,
+   and cross-EDF signal insertion with FFT-based cross-correlation
 
 
 _Filters:_
@@ -880,7 +936,7 @@ _Minor additions and fixes_
  
  - added `min` and `max` options to `MINMAX`, to clip EDF physical
    min/max values; can specify both or either; other wise `MINMAX`
-   sets all `sig` channels to the be same PMIN/PMAX and DMIN/DMAX.  If
+   sets all `sig` channels to the same PMIN/PMAX and DMIN/DMAX.  If
    `force` is specified with `min` or `max` then that value is always
    set; otherwise, the physical min/max values are only changed if
    they are smaller, i.e. clipping, not expanding the min/max range
@@ -1649,7 +1705,7 @@ _New commands_
 
  - [`TYPES`](ref/summaries.md#types) command and accompanying options `ch-match`, `ch-exact` and
    `ch-clear`, which groups channels by [_types_](luna/args.md#channel-types) (e.g. EEG, EMG,
-   respiratory effort, etc) and defines correspondong automatic
+   respiratory effort, etc) and defines corresponding automatic
    variables (e.g. `${eeg}` and `${emg}`); the `HEADERS` command
    now also outputs a `TYPE` field
 
