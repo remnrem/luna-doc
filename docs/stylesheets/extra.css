@@ -42,6 +42,15 @@ h4 {
   opacity: 0.85;
 }
 
+.luna-site-links a:first-of-type {
+  font-weight: 700;
+}
+
+.luna-site-links a:not(:first-of-type) {
+  font-weight: 400;
+  opacity: 0.85;
+}
+
 .luna-site-links a:hover {
   text-decoration: underline;
 }
