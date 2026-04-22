@@ -1,6 +1,8 @@
 
 # Analyzing human sleep EEG: a methodological primer with code implementation
 
+_Authors: Shaun Purcell and Roy Cox_
+
 Drs. Roy Cox and Juergen Fell recently published an excellent
 review/tutorial
 [manuscript](https://doi.org/10.1016/j.smrv.2020.101353) in _Sleep
@@ -119,10 +121,10 @@ Note that this vignette is structured for didactic purposes --
 exposing some of the underlying methods implemented in Luna including
 FFT, filter-Hilbert and wavelet methods -- rather than for showing typical
 _best practices_ in how to use Luna.  That is, below we'll write signals
-to files on disk, and use fairly 'low level' commands such as `CWT`
-and `HILBERT`, which would not typically be done in practice.  Rather,
+to files on disk, and use fairly 'low level' commands such as [`CWT`](../ref/power-spectra.md#cwt)
+and [`HILBERT`](../ref/power-spectra.md#hilbert), which would not typically be done in practice.  Rather,
 those types of commands are wrapped into higher-level commands (such as
-`SPINDLES` or `CC`, etc).  _That is, if this is your first exposure to
+[`SPINDLES`](../ref/spindles-so.md#spindles) or [`CC`](../ref/cc.md#cc), etc).  _That is, if this is your first exposure to
 Luna, you'll get a better sense of the general workflows by following
 the [tutorials](../tut/tut1.md)_.  Also note that version Luna __v0.24__
 is required to be able to follow all of the examples below.
@@ -135,7 +137,7 @@ To generate a Luna [_sample-list_](../luna/args.md#sample-lists), use the [`--bu
 luna --build edfs/ > s.lst
 ```
 
-The file `s.lst` is a simple text file, with six rows corresponding to the six EDFs.  We can examine the contents of the EDFs via the `DESC` command,
+The file `s.lst` is a simple text file, with six rows corresponding to the six EDFs.  We can examine the contents of the EDFs via the [`DESC`](../ref/summaries.md#desc) command,
 here applied just to the first EDF (row of `s.lst`):
 
 ```
@@ -189,9 +191,9 @@ as below:
     ![img](../img/cf/cf1.png){width="100%"}
 
 Using Luna to achieve the same goal, we will first extract the raw
-signal to a text file (`cz.txt`) and then use R to plot it.  Here we a) set 20-second `EPOCH`s, b)
-`MASK` all epochs that do not span the interval 1660-1680 seconds, and then c) write this signal to a file,
-using the `MATRIX` command:
+signal to a text file (`cz.txt`) and then use R to plot it.  Here we a) set 20-second [`EPOCH`](../ref/epochs.md#epoch)s, b)
+[`MASK`](../ref/masks.md#mask) all epochs that do not span the interval 1660-1680 seconds, and then c) write this signal to a file,
+using the [`MATRIX`](../ref/outputs.md#matrix) command:
 ```
 luna s.lst pp3_N3_mast -s 'EPOCH dur=20 & 
                            MASK sec=1660-1680 & 
@@ -432,7 +434,7 @@ resolution, but reduced variance of the estimates.   [This](../img/cf/matlab.htm
 20-second segment; and [this](../img/cf/matlab.html#welch_all) for
 the entire Cz channel (all N3 for this individual).
 
-Here we'll apply Luna's default `PSD` command (which implements Welch's method) on the
+Here we'll apply Luna's default [`PSD`](../ref/power-spectra.md#psd) command (which implements Welch's method) on the
 same 20-second segment, working directly with the EDF and saving the output in a Luna-format [database](../luna/args.md#output) (with
 the `-o` option):
 ```
@@ -457,7 +459,7 @@ distinct strata group(s):
                 :                   :               : 
 ----------------:-------------------:---------------:---------------------------
 ```
-That is, amongst other things, the output database contains a variable `PSD` stratified by both frequency `F` and channel `CH`, which corresponds to
+That is, amongst other things, the output database contains a variable [`PSD`](../ref/power-spectra.md#psd) stratified by both frequency `F` and channel `CH`, which corresponds to
 the spectrum for Cz.  We can view this output as follows:
 ```
 destrat out/welch.db +PSD -r F CH 
@@ -481,7 +483,7 @@ this 20-second segment, plotting the log-scaled PSD:
 ![img](../img/cf/luna.welch.1.png){width="100%"}
 
 That is, the gray line is the original Matlab output from `pwelch()`, whereas
-the red is the output from Luna's default `PSD` command.  We can see
+the red is the output from Luna's default [`PSD`](../ref/power-spectra.md#psd) command.  We can see
 pretty close alignment between the two sets of estimates, but not
 complete.  These differences reflect differences in how the two methods
 are parameterized/fine-tuned: for didactic purposes, we'll step through these
@@ -539,7 +541,7 @@ will not fundamentally change the analysis, but it will change the
 spectral resolution and therefore the size of the frequency bins of the transform.
 In this instance, we have 400 / 2048 = 0.1953 Hz.  For comparability,
 we can force Luna to also zero-pad up to the next power of 2, by
-adding the `pow2` option to `PSD`.
+adding the `pow2` option to [`PSD`](../ref/power-spectra.md#psd).
 
 So, let's try again, repeating the above command but with these additional options:
 
@@ -608,7 +610,7 @@ we might use something like:
     ```
 
 Running this second version of the `pwelch()` gives identical
-results to the original Luna `PSD` command with default options.
+results to the original Luna [`PSD`](../ref/power-spectra.md#psd) command with default options.
 
 So, we've seen how segment length and overlap, size of the FFT and
 windowing choices can impact the results of spectral analysis.  Do
@@ -761,7 +763,7 @@ sineTime <- seq( 0 , sineLength-sPeriod , by = sPeriod )
 sineWave <- sineAmp*sin(2 * pi * sineFreq * sineTime)
 write( format( sineWave , digits=20 ) , file="sine.txt" , ncolumns = 1 ) 
 ```
-We can then use Luna's `HILBERT` command, coupled with reading in the `sine.txt` file directly, to estimate the phase of the signal:
+We can then use Luna's [`HILBERT`](../ref/power-spectra.md#hilbert) command, coupled with reading in the `sine.txt` file directly, to estimate the phase of the signal:
 
 ```
 luna sine.txt --fs=400 epoch-len=4 \
@@ -769,8 +771,8 @@ luna sine.txt --fs=400 epoch-len=4 \
          MATRIX file=out/ht.txt'
 ```
 
-The `HILBERT` command effectively adds two new channels to the
-internal/in-memory 'EDF'; the `MATRIX` command dumps all signals out
+The [`HILBERT`](../ref/power-spectra.md#hilbert) command effectively adds two new channels to the
+internal/in-memory 'EDF'; the [`MATRIX`](../ref/outputs.md#matrix) command dumps all signals out
 to a text file.  The input signal is assigned a label `S1` automatically (if read from a text file
 rather than an EDF);  the new channels are labelled `S1_hilbert_mag` and `S1_hilbert_phase` by default.
 We can use R to plot these values:
@@ -874,7 +876,7 @@ filter, 1 second / order 400, rather than the longer (5 second/ order
 
 ![img](../img/cf/filt-resp.png){width="100%"}
 
-We can then use the `HILBERT` command also specifying a filter (here with `f` and `order`, which
+We can then use the [`HILBERT`](../ref/power-spectra.md#hilbert) command also specifying a filter (here with `f` and `order`, which
 by default uses a Hamming-window FIR of the specified order, with transition frequencies (-3dB) at, e.g. 0.35 and 2.25 Hz, for the
 slow component:
 
@@ -910,7 +912,7 @@ the simulated signal, here saved in the file `wave2.txt`:
 
 The key result is in Figure 5C panel i, which shows how for the correct phase estimates, one needs to wrap the wavelet (see _C&F_ for details):
 
-We can use the `CWT` command in Luna, which is parallel to `HILBERT`, in that it provides low-level access to complex Morlet wavelets. 
+We can use the [`CWT`](../ref/power-spectra.md#cwt) command in Luna, which is parallel to [`HILBERT`](../ref/power-spectra.md#hilbert), in that it provides low-level access to complex Morlet wavelets. 
 
 Here we can specify a wavelet using the same notation as _C&F_, by giving a center frequency (`fc`) and FWHM in the time domain (here 0.25 seconds):
 ```
@@ -940,12 +942,12 @@ the wavelet (with the horizontal line pointing to the two FWHM values):
 
 ![img](../img/cf/luna.cwt.prop.png){width="100%"}
 
-The `CWT` command generates two new signals (`S1_cwt_mag` and `S1_cwt_phase`) in the in-memory EDF, which are then dumped to a file (via `MATRIX`).  
+The [`CWT`](../ref/power-spectra.md#cwt) command generates two new signals (`S1_cwt_mag` and `S1_cwt_phase`) in the in-memory EDF, which are then dumped to a file (via [`MATRIX`](../ref/outputs.md#matrix)).  
 
 We can plot these along with the (filtered) signal, and the estimates from the filter-Hilbert method above, to see how the amplitude
 and phase estimates from each method compare.
 
-However, the default implementation of the `CWT` uses a standard wavelet, rather than a _wrapped_ wavelet, as _C&F_ note.  Although
+However, the default implementation of the [`CWT`](../ref/power-spectra.md#cwt) uses a standard wavelet, rather than a _wrapped_ wavelet, as _C&F_ note.  Although
 this has no impact on the typical usage of wavelets (e.g for spindle detection, which is based on the amplitude of these signals),
 it will have an impact on the direct interpretation of the phase values, again, as _C&F_ note.   You can use a wrapped wavelet instead
 by adding the option `wrapped`.   This then produces output that corresponds closely with the filter-Hilbert approach, and matches
@@ -956,7 +958,7 @@ luna wave2.txt --fs=400 epoch-len=20 \
      -s 'CWT fc=13 fwhm=0.25 phase wrapped & MATRIX file=out/cwt.spindle'
 ```
 Plotting the spindle-band filtered signal, with the magnitude from filter-Hilbert (left) and CWT (right), we see broadly comparable results.
-(Note that the `CWT` command actually outputs power, so we plot the square root here):
+(Note that the [`CWT`](../ref/power-spectra.md#cwt) command actually outputs power, so we plot the square root here):
 ![img](../img/cf/luna.ht.cwt.png){width="100%"}
 
 As _C&F_ note, some of the quirks in the filter-Hilbert plot reflect the imprecisions due to filtering -- this is an issue we'll revisit in the
@@ -978,7 +980,7 @@ components to generate an empirical null distribution for each metric:
 !!! Example "C&F Figure 6 (E,F) : slow oscillation-spindle coupling"
     ![img](../img/cf/cf10.png){width="100%"}
 
-Their example considers a single 30-second epoch epoch from the EDF `pp2_N3_mast`.  We can recreate those results here, with the `CC` command.
+Their example considers a single 30-second epoch epoch from the EDF `pp2_N3_mast`.  We can recreate those results here, with the [`CC`](../ref/cc.md#cc) command.
 
 ```
 luna s.lst pp2_N3_mast  -o out/pac1.db  \
@@ -987,9 +989,9 @@ luna s.lst pp2_N3_mast  -o out/pac1.db  \
 ```
 
 The `nreps` option specifies the number of time-shifted surrogates to use (per epoch) in order to estiamte the normalized _dPAC_ metric (`dPAC_Z`).
-The `CC` command (described in more detail [here]()) uses (by default) wavelets to estimate the amplitude and phase.
+The [`CC`](../ref/cc.md#cc) command (described in more detail [here]()) uses (by default) wavelets to estimate the amplitude and phase.
 
-Note that the `CC` command includes cross-channel options also, and so all output is stratified in terms of two frequencies and two channels, even if (as in this instance)
+Note that the [`CC`](../ref/cc.md#cc) command includes cross-channel options also, and so all output is stratified in terms of two frequencies and two channels, even if (as in this instance)
 `CH1` and `CH2` are the same (i.e. dPAC is an intra-channel, but cross-frequency analysis).   Looking at the relevant lines of output:
 
 ```
@@ -1019,13 +1021,13 @@ They use the code [here](../img/cf/matlab.html#dPAC) to create these plots:
     ![img](../img/cf/cf11.png){width="100%"}
 
 Note, in this analysis they use 20 epochs from the EDF `pp3_N3_mast`.  They consider two spindle frequencies also (_slow_ and _fast_)
-to be coupled with the slow (<1 Hz) activity.  We'll recreate this here using Luna and the `CC` command (restricted to the first 20 epochs, as per _C&F_):
+to be coupled with the slow (<1 Hz) activity.  We'll recreate this here using Luna and the [`CC`](../ref/cc.md#cc) command (restricted to the first 20 epochs, as per _C&F_):
 ```
 luna s.lst pp3_N3_mast -o out/pac2.db \
      -s 'MASK epoch=1-20 & RE &
          CC sig=${eeg} nreps=200 pac fc=0.8094 fwhm=3.5149 fc2=11.4481,14.5656 fwhm2=0.5059,0.4242 '
 ```
-i.e. note how `fc2` and `fwhm2` take multiple comma-delimited values.   The `CC` command considers all pairs of `fc` by `fc2` frequencies in this CFC/PAC analyses (with
+i.e. note how `fc2` and `fwhm2` take multiple comma-delimited values.   The [`CC`](../ref/cc.md#cc) command considers all pairs of `fc` by `fc2` frequencies in this CFC/PAC analyses (with
 wavelets specified by the corresponding FWHM values in `fwhm` and `fwhm2`).  Extracting the output:
 ```
 destrat out/pac2.db +CC -r CH1 CH2 F1 F2 > out/pac2.txt
@@ -1059,7 +1061,7 @@ via time-shifting surrogate analysis however, only the spindle spike remains sig
 !!! Example "C&F Figure 7 (B) : weighted Phase Lag Index (wPLI) and surrogate-based normalization"
     ![img](../img/cf/cf12.png){width="100%"}
 
-The `CC` command, introduced above, performs cross-channel
+The [`CC`](../ref/cc.md#cc) command, introduced above, performs cross-channel
 intra-frequency connectivity (i.e. wPLI) as well as intra-channel,
 cross-frequency coupling (i.e. dPAC), by adding the `xch`
 (cross-channel) option instead of `pac`.

@@ -1,6 +1,6 @@
 # Interval-based analyses
 
-This page covers commands for event-locked and interval-based analyses. `OVERLAP` and `--overlap` evaluate the statistical enrichment of one set of annotations relative to another using randomization to generate empirical null distributions. `MEANS` computes signal averages stratified by annotation class. `PEAKS` and `Z-PEAKS` detect and cache local signal peaks for use by downstream commands. `TLOCK` performs time-locked signal averaging around cached peaks or annotation events — the standard approach for characterizing spindle, SO or other event morphology. `S2C` segments an oscillatory signal into individual cycle annotations.
+This page covers commands for event-locked and interval-based analyses. [`OVERLAP`](intervals.md#overlap) and `--overlap` evaluate the statistical enrichment of one set of annotations relative to another using randomization to generate empirical null distributions. [`MEANS`](intervals.md#means) computes signal averages stratified by annotation class. [`PEAKS`](intervals.md#peaks) and `Z-PEAKS` detect and cache local signal peaks for use by downstream commands. [`TLOCK`](intervals.md#tlock) performs time-locked signal averaging around cached peaks or annotation events — the standard approach for characterizing spindle, SO or other event morphology. [`S2C`](intervals.md#s2c) segments an oscillatory signal into individual cycle annotations.
 
 | Command | Description |
 | ----- | ----- | 
@@ -26,6 +26,10 @@ distributions for evaluated metrics.  Shuffling all events together
 largely preserves the inter-event time distribution (one exception is that annotations will "wrap"
 around if shuffled past the end of the analysed region (i.e. they will
 appear near the start of the analysis region).
+
+<h3>Methods</h3>
+
+Annotation co-occurrence and proximity are assessed within a permutation framework. Observed overlap and distance metrics are computed between seed and query annotation classes using the original event timings. Seeds are then repeatedly shuffled — by applying a random temporal offset to each seed event relative to its background interval — to generate an empirical null distribution of each metric under the assumption of independence. Shuffling preserves the inter-event spacing and is constrained to occur within defined background regions (e.g., NREM sleep epochs). Statistical significance is reported as a one-sided empirical p-value (proportion of permutations exceeding the observed value) and a z-score relative to the permutation mean and standard deviation. Proximity metrics quantify the mean signed and absolute distance from each seed event to the nearest query event within a specified time window, with optional modification of overlap definition to use annotation midpoints or fixed flanking margins.
 
 _Background intervals and shuffling_
 
@@ -100,13 +104,13 @@ the `within-channel` option.
 
 !!! info "Annotations and channels"
     Not all annotations need be associated with a channel, either in general or with
-    the `OVERLAP` command in particular. An annotation is associated with a channel if
+    the [`OVERLAP`](intervals.md#overlap) command in particular. An annotation is associated with a channel if
     a channel label appears in the third column of a full-format `.annot` file. If
     this is a period (`.`), then no channel is associated.
 
 _Unsuitable inputs_
 
-`OVERLAP` keeps randomising until it finds a valid shuffle.  However,
+[`OVERLAP`](intervals.md#overlap) keeps randomising until it finds a valid shuffle.  However,
 if more than a certain number of unsuccessful attempts are made, Luna
 will give a warning.  This typically means that the data are not
 suitable for this method.  For example, if a single seed event
@@ -116,7 +120,7 @@ shuffle it.
 
 _Seed metrics_
 
-`OVERLAP` assesses the _pile-up_ among seeds, by enumerating the
+[`OVERLAP`](intervals.md#overlap) assesses the _pile-up_ among seeds, by enumerating the
 observed and expected counts of all combinations of overlapping
 annotations. It also tracks the number of overlapping events
 irrespective of their particular labels/channels. Depending on
@@ -145,7 +149,7 @@ are estimated:
  - counts of particular _combinations_ of
    overlapping _other_ annotations (`SEED OTHERS` strata).  For example, if the _seed_ class
    include sleep spindles (`SP`) and two _other_ classes were
-   specified: slow oscillations (`SO`) and hippocampal ripples
+   specified: slow oscillations ([`SO`](spindles-so.md#so)) and hippocampal ripples
    (`RIP`), then this command would tabulate up to four classes of
    spindle:
    ```
@@ -162,7 +166,7 @@ are estimated:
 
 _Proximity to nearest neighbours_
 
-In addition to overlap, `OVERLAP` reports metrics to evaluate whether
+In addition to overlap, [`OVERLAP`](intervals.md#overlap) reports metrics to evaluate whether
 events are, on average, _closer to the nearest other class of event_
 than expected by chance, either in absolute terms (`D1`) or "signed"
 (e.g. if the _seed_ tends to occur _before_ some _other_ annotation,
@@ -188,7 +192,7 @@ extent of (non-random) overlap/coupling.  The number of replicates is set by `nr
 _Generation of new annotations_
 
 Finally, as well as evaluating overlap metrics by randomisation, the
-`OVERLAP` command can be used in a different mode, to generate new
+[`OVERLAP`](intervals.md#overlap) command can be used in a different mode, to generate new
 versions of seed annotations, based on whether they overlap
 (`matched`) _other_ annotations or not (`unmatched`, i.e. which only
 outputs seed events that are _not_ overlapped). 
@@ -302,7 +306,7 @@ Seed - _any other_ overlap (strata: `SEED`)
 <h3>Example</h3>
 
 
-Note, the `OVERLAP` command does not look at, or require, any signal data present in the EDF.
+Note, the [`OVERLAP`](intervals.md#overlap) command does not look at, or require, any signal data present in the EDF.
 As such, it can be run based on annotation (`.annot`) files alone - either via the [`--overlap`](#-overlap)
 command described below (but for a single sample), or by specifying an empty sample list (`.`) to make
 Luna generate a dummy/empty EDF in memory, as described [here](../luna/args.md#empty-edfs):
@@ -333,7 +337,7 @@ Recent changes in v0.99:
 
 ## --overlap
 
-_Multi-sample wrapper for `OVERLAP`_
+_Multi-sample wrapper for [`OVERLAP`](intervals.md#overlap)_
 
 This command reads in multiple annotation files, saves a single combined
 annotation file, creates a dummy EDF in memory, then reads in the combined annotations
@@ -341,6 +345,10 @@ and performs an enrichment analysis, as described [above](#overlap).
 
 All annotation files must be in `.annot` format; they can be reduced
 and must contain a `duration_sec` special value.
+
+<h3>Methods</h3>
+
+Annotation files from multiple recordings are pooled into a single combined annotation set, which is then attached to a synthetic in-memory EDF spanning the total duration required. The enrichment analysis described for the single-sample command is then applied to this merged dataset. A background annotation demarcating the total observable time is required, as it defines the reference interval against which seed and query co-occurrence is evaluated. Results reflect population-level co-occurrence patterns across all contributing recordings.
 
 <h3>Parameters</h3>
 
@@ -350,7 +358,7 @@ and must contain a `duration_sec` special value.
 | `a-list` | `list.txt` | Text file with IDs and annotation files |
 | `merged` | `m` | Root name for temporary combined annotation file, e.g. `m.annot` |
 
-All other parameters are as described [above](#overlap) for the `OVERLAP` command.
+All other parameters are as described [above](#overlap) for the [`OVERLAP`](intervals.md#overlap) command.
 
 
 ## MEANS
@@ -362,6 +370,10 @@ optionally the mean values in the flanking regions just before and
 just after those annotations.
 
 This command requires the signals to have similar sampling rates.
+
+<h3>Methods</h3>
+
+For each annotation class, all sample points falling within annotated intervals are identified and their mean amplitude is computed. When a flanking window is requested, the same mean is additionally computed over the equal-duration interval immediately preceding and following each annotation event. All signal samples are used directly without further normalization; if per-instance stratification is requested, means are computed separately for each individual annotation instance rather than pooled across the class.
 
 <h3>Parameters</h3>
 
@@ -409,7 +421,7 @@ Means by channel and annotation class/instance (option: `by-instance`, strata: `
 
 This command will typically be performed for a channel in which the mean value is interpretable, i.e. not raw EEG channels.
 
-For example, using `MEANS` to get the mean 15-Hz wavelet power per sleep stage:
+For example, using [`MEANS`](intervals.md#means) to get the mean 15-Hz wavelet power per sleep stage:
 
 ```
 luna s.lst -o out -s 'CWT sig=C3 fc=15 cycles=7 & MEANS sig=C3_cwt_mag annot=N1,N2,N3,R,W'
@@ -422,6 +434,10 @@ _Find peaks in signals_
 
 The command identifies peaks (local minima and maxima) in signals, and caches those sample-points for use in
 subsequent commands, primarily [`TLOCK`](#tlock).
+
+<h3>Methods</h3>
+
+Local maxima are identified as sample points whose amplitude exceeds that of both neighboring samples. Optionally, local minima are detected by the same criterion applied to the negated signal. Candidate peaks may be restricted to a top percentile by amplitude, retaining only those above the specified quantile threshold within the recording. Regions of signal clipping — defined as runs of three or more consecutive equal-valued samples — are excluded from peak detection. Accepted peak positions are stored in a named cache for use by subsequent time-locked averaging commands.
 
 <h3>Parameters</h3>
 
@@ -479,6 +495,9 @@ duration thresholds on detected peaks, for both a "core" peak region,
 and for flanking regions.  Also, it allows detected peaks to be saved
 as [annotations](annotations.md).
 
+<h3>Methods</h3>
+
+`Z-PEAKS` applies the smoothed z-score algorithm of Brakel (2014) to detect peaks in a signal. A running mean and standard deviation are maintained over a sliding window of `w` seconds. At each sample point, the signal value is expressed in units of the current window's standard deviation relative to its mean; if this z-score magnitude exceeds the `th` threshold, the sample is flagged as belonging to a peak region. The `influence` parameter controls how much a detected peak modifies the adaptive baseline: a value of 0 excludes peak samples from updating the running mean and SD entirely, while a value of 1 incorporates peak samples fully, allowing the baseline to track abrupt level shifts. A global interquartile-range-based robust SD is substituted whenever the local window SD falls below a numerical epsilon. Contiguous flagged regions may be required to meet minimum duration thresholds (`sec` for the core peak region, `sec2` for an optional flanking region at a lower threshold `th2`), and any region whose z-score exceeds an upper ceiling (`max`) is discarded. Within each accepted peak region, the sample with the highest absolute amplitude is identified as the peak apex and may be stored in a named cache for use by [`TLOCK`](intervals.md#tlock), or written as an annotation.
 
 <h3>Parameters</h3>
 
@@ -529,12 +548,16 @@ Given a set of points in a _cache_ (e.g. as constructed by the
 [`PEAKS` command](#peaks) or similar, calculate signal means that are
 synced to those points, plus/minus a fixed number of seconds.
 
+<h3>Methods</h3>
+
+[`TLOCK`](intervals.md#tlock) constructs a time-locked signal average by extracting fixed-width windows of a signal centred on a set of reference time-points held in a named cache (e.g. peak apices stored by [`PEAKS`](intervals.md#peaks), `Z-PEAKS`, or [`SPINDLES`](spindles-so.md#spindles)). All specified signals must share the same sampling rate. For each cached sample-point index, a symmetric window of ±`w` seconds is defined; windows extending beyond recording boundaries or spanning a discontinuity are excluded. The retained windows are assembled into a matrix and the element-wise mean (and median) across windows is computed at each time offset, yielding the average event-locked waveform. An optional normalisation step (`np`) divides the mean trace by the average value computed over the leading and trailing `np` fraction of the window, providing a baseline-relative representation. If `tolog` is set, signal values are log-transformed before averaging. If `phase` is specified, values are interpreted as circular angles in radians and binned into the requested number of phase bins rather than producing a linear average.
+
 <h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | --- | --- | --- |
 |`sig`|`sig=C3,C4` | Optional, one or more signals |
-|`cache`|`cache=p1` | Cache name to use, e.g. generated by `PEAKS` or similar |
+|`cache`|`cache=p1` | Cache name to use, e.g. generated by [`PEAKS`](intervals.md#peaks) or similar |
 |`w` | `w=1.5` | Window size (seconds) |
 |`tolog`| | Take the log of the signal |
 |`phase` | `phase=20` | Assume signal is a phase (circular) and use this many bins to summarize |
@@ -572,7 +595,7 @@ Channel values by interval and time-point (option: `verbose`, strata: `CH` x `N`
 <h3>Example</h3>
 
 Here we detect N2 spindles, using the `cache-peaks` option to save the spindle _peak_ (largest central negative peak) under a cache called `p1`.  We
-then use those defined positions in `TLOCK` (i.e. via the `cache=p1` option) and request an average window of +/- 0.5 seconds, to plot the raw EEG signals:
+then use those defined positions in [`TLOCK`](intervals.md#tlock) (i.e. via the `cache=p1` option) and request an average window of +/- 0.5 seconds, to plot the raw EEG signals:
 
 ```
 luna s.lst -o out.db -s 'MASK ifnot=N2 & RE &
@@ -599,7 +622,7 @@ luna s.lst -o out.db -s 'MASK ifnot=N2 & RE &
 ```
 
 
-Looking at the `TLOCK` output in `out.db`:
+Looking at the [`TLOCK`](intervals.md#tlock) output in `out.db`:
 
 ```
   [TLOCK]       : CH sCH sF         : 1 level(s)    : N N_ALL
@@ -609,15 +632,15 @@ Looking at the `TLOCK` output in `out.db`:
 
 We see two extra strata: `sCH` and `sF` modify the `CH` and `CH` x
 `SEC` strata.  These represent the _seed_ strata (thus the `s` prefix)
-and reflect the different conditions under which `SPINDLES` gives
+and reflect the different conditions under which [`SPINDLES`](spindles-so.md#spindles) gives
 output.  In this particular case, `sCH` is simply `EEG` (as is `CH`),
 and `sF` is 15 (i.e. from `fc=15`).  Here, the seed factors refer to
-which set(s) of points were generated by `SPINDLES` and are being used
+which set(s) of points were generated by [`SPINDLES`](spindles-so.md#spindles) and are being used
 from the cache; in contrast, `CH` represent which signal we are
 currently averaging.  These need not be the same (as below).
 
-We can force them to be the same by adding the `TLOCK` option
-`same-channel`. i.e. if we had 64 channels of EEG, then `SPINDLES`
+We can force them to be the same by adding the [`TLOCK`](intervals.md#tlock) option
+`same-channel`. i.e. if we had 64 channels of EEG, then [`SPINDLES`](spindles-so.md#spindles)
 would save 64 levels of `sCH` for each frequency; we would not
 necessarily want all 64 x 64 = 4096 combinations of `CH` and `sCH` to
 be output (e.g. including the time-locked average of `F3` synchronized
@@ -651,8 +674,8 @@ i.e. here we see the characteristic spindle waveform.
 In the second example, we'll create a second set of channels to plot
 against the 400 spindle peaks.  Note, these can be completely
 arbitrary other channels, but in this instance we'll generate wavelet
-coefficients (via `CWT`) for wavelets with central frequency values of
-1 Hz to 20 Hz in 1 Hz increments.  Then we'll ask `TLOCK` to plot the time-locked
+coefficients (via [`CWT`](power-spectra.md#cwt)) for wavelets with central frequency values of
+1 Hz to 20 Hz in 1 Hz increments.  Then we'll ask [`TLOCK`](intervals.md#tlock) to plot the time-locked
 average of each wavelet coefficient, but all time-locked to the fast spindle peaks.
 i.e. as a proof-of-principle, we'd expect to see sigma-frequency wavelets increase in
 power in this interval. 
@@ -691,15 +714,19 @@ for (f in 1:20 ) {
 
 _Segment oscillatory activity into cycle annotations and compute cycle-locked summaries_
 
-`S2C` (Signal-to-Cycle) detects oscillatory cycles in a filtered signal by tracking
+[`S2C`](intervals.md#s2c) (Signal-to-Cycle) detects oscillatory cycles in a filtered signal by tracking
 positive-to-negative zero-crossings. Each detected cycle spans a full positive and
 negative half-wave; cycles are filtered by duration and magnitude and written back
 as interval annotations. Optional outputs include per-cycle morphological metrics,
 cross-channel summaries, cycle-locked waveforms, and phase/time density grids.
 
-`S2C` is conceptually similar to [`SPINDLES`](spindles-so.md#spindles) and
+[`S2C`](intervals.md#s2c) is conceptually similar to [`SPINDLES`](spindles-so.md#spindles) and
 [`SO`](spindles-so.md#so) but is generalisable to any oscillatory signal and
 frequency range.
+
+<h3>Methods</h3>
+
+[`S2C`](intervals.md#s2c) segments an oscillatory signal into individual cycles by tracking zero-crossings of a (typically band-pass filtered) seed signal. By default, cycle boundaries are defined at positive-to-negative zero-crossings; each cycle therefore spans one complete positive half-wave followed by one negative half-wave. Sub-sample crossing times are obtained by linear interpolation between adjacent samples. Within each putative cycle, the positive and negative peak apices are located by searching for the global maximum and minimum in the respective half-waves. Morphological metrics — half-wave durations, peak amplitudes measured from the zero baseline, peak-to-peak amplitude, half-wave slopes (amplitude change per unit time), and peak sharpness — are computed for each cycle. Duration and amplitude filters are applied to retain only cycles meeting specified thresholds. Accepted cycles are written back to the EDF as interval annotations, with optional separate positive and negative half-wave annotations, zero-duration peak-point annotations, and twelve uniformly spaced phase-bin annotations generated by piecewise-linear time-warping of the cycle onto a canonical phase grid. Cross-channel outputs are computed by warping each secondary signal onto the same 12-bin phase grid for each detected cycle, yielding mean phase-aligned waveforms and circular statistics.
 
 <h3>Parameters</h3>
 

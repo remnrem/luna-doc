@@ -360,7 +360,7 @@ a99  .   31708920   31708950
 
 
 !!! hint "Analysis of multi-day recordings"
-    Although Luna can represent multi-day recordings, please remember that certain commands (most notably `HYPNO`)
+    Although Luna can represent multi-day recordings, please remember that certain commands (most notably [`HYPNO`](../ref/hypnograms.md#hypno))
     are not explicitly tailored to this context, and so it would be desirable to create multiple single-day EDFs
     prior to running such analyses. 
 

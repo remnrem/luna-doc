@@ -276,7 +276,7 @@ EDF.
 
  - The _in-memory_ EDF may differ from the _on-disk_ version, for
    example, if channels and/or epochs have been dropped or added by
-   `SIGNALS`, `MASK`, `RESTRUCTURE` and other commands.  As noted,
+   [`SIGNALS`](../ref/manipulations.md#signals), [`MASK`](../ref/masks.md#mask), [`RESTRUCTURE`](../ref/masks.md#restructure) and other commands.  As noted,
    all Luna commands report on the current, _in-memory_ representation:
    for example, the original EDF may have 64 channels, but 
    [`DESC`](../ref/summaries.md#desc) may report fewer (or more) depending if
@@ -288,7 +288,7 @@ EDF.
     ```
     luna my.edf -s DESC 
     ```
-    One could subsequently run a command that drops two channels and then calls `DESC`: 
+    One could subsequently run a command that drops two channels and then calls [`DESC`](../ref/summaries.md#desc): 
     ```
     luna my.edf -s 'SIGNALS drop=ECG,EMG & DESC'
     ```
@@ -769,7 +769,7 @@ shell from expanding the variable will achieve the desired effect:
 ```
 
 That is, in the second scenario, Luna "sees" `${eeg}` as the `sig`
-option for `STATS`, and so figures out what replacement is desired
+option for [`STATS`](../ref/summaries.md#stats), and so figures out what replacement is desired
 (e.g. that might be based on data from a [vars](#individual-variables)
 file, or from a default built-in definition, as is the case for
 `${eeg}`).  In contrast, in the first (double-quote) scenario, the
@@ -876,7 +876,7 @@ over, as a comma-delimited list. If `index=i` then the loop index is referenced
 within the body of the loop using the `#{i}` syntax (i.e. distinct from a typical variable
 `${i}`). Loops can be nested.
 
-Here we use a loop to iterate over different sleep stages, i.e. using `MASK` for a command that respects epoch masks.
+Here we use a loop to iterate over different sleep stages, i.e. using [`MASK`](../ref/masks.md#mask) for a command that respects epoch masks.
 
 ```
 LOOP index=stg vals=N1,N2,N3,R
@@ -989,7 +989,7 @@ You can have multiple `vars` statements, or pass `vars` a comma-delimited list o
 If the command script contained references to `${var1}`, etc, they
 would be substituted as appropriate for each individual. For example,
 if all the EDFs had channels `EEG1` and `EEG2`, the following command would
-run the `PSD` command 1) for both, 2) only for `EEG1`, and 3) neither, for
+run the [`PSD`](../ref/power-spectra.md#psd) command 1) for both, 2) only for `EEG1`, and 3) neither, for
 the first, second and third individual respectively:
 ```
 PSD sig=${var2}
@@ -1757,7 +1757,7 @@ in the `sig` statement:
 ```
 luna s.lst sig="EEG,EMG,ECG" alias="EEG|CH_X001" -s DESC
 ```
-That is, we've relabeled `CH_X001` as `EEG` and used `sig` to select it; the output from `DESC` reads:
+That is, we've relabeled `CH_X001` as `EEG` and used `sig` to select it; the output from [`DESC`](../ref/summaries.md#desc) reads:
 ```
 Signals           : EEG EMG ECG
 ```
@@ -1811,7 +1811,7 @@ Signals           : A1[128] A2[128] ABDO_EFFORT[32] AIRFLOW[32] C3[128] C4[128]
 ```
 
 This can be useful when wanting to harmonize EDFs, i.e. to ensure that
-the `SIGNALS` output of `HEADERS` is not trivially different due only
+the [`SIGNALS`](../ref/manipulations.md#signals) output of [`HEADERS`](../ref/summaries.md#headers) is not trivially different due only
 to different ordering.  One other context where this can matter is for
 commands that output pairwise channel combinations: typically this is
 done according to the order of the EDF header, and so whereas one EDF
@@ -1956,7 +1956,7 @@ This will remap any of the three forms listed to the primary label: `REM`.
 !!! warning "Automatic annotation remappings"
     Note that Luna by default
     adds some _default_ annotation remappings for sleep stages, e.g.
-    turning `Stage NREM1` to `N1`, etc, so that the `HYPNO`, `SOAP` and `POPS` commands
+    turning `Stage NREM1` to `N1`, etc, so that the [`HYPNO`](../ref/hypnograms.md#hypno), [`SOAP`](../ref/soap.md#soap) and [`POPS`](../ref/pops.md#pops-prediction) commands
     know which labels to expect.  This can be disabled by setting `annot-remap=F`. It is also possible to turn on some more
     mappings for common NSRR labels (e.g. arousals, apnea, etc) by adding `nsrr-remap=T`.  Note that the order
     of `annot-remap` and `nsrr-remap` will matter, as `annot-remap` turns off _all_ annotation remappings.
@@ -2049,8 +2049,8 @@ matches first, and then partial matches.  Furthermore, within each
 class of match, Luna will try to match types in the order as listed in
 the table above (i.e. `IGNORE` first, then `EOG`, etc, until `EEG`).
 
-Whenever new channels are added within a Luna run (e.g. via `ICA` or
-`COPY`), a new type label will be assigned as appropriate, and the
+Whenever new channels are added within a Luna run (e.g. via [`ICA`](../ref/ica.md#ica) or
+[`COPY`](../ref/manipulations.md#copy)), a new type label will be assigned as appropriate, and the
 corresponding variables (e.g. `${ic}` or `${eeg}`) will be updated.
 
 
@@ -2093,7 +2093,7 @@ Adding `anon=T` will wipe the EDF headers (the EDF header _Patient
 ID_, _Recording Information_ and _Start date_ fields will be set to
 their default _null_ values as per the EDF spec.)  This is similar to the [`ANON`](../ref/manipulations.md#anon) command
 except this is performed _before_ any annotations are attached.  This will influence how dates are interpreted in
-any annotation files that use dates, therefore.  In contrast, the `ANON` command allows a greater degree of flexibility
+any annotation files that use dates, therefore.  In contrast, the [`ANON`](../ref/manipulations.md#anon) command allows a greater degree of flexibility
 in terms of which fields are wiped.
 
 ### Set EDF start time
@@ -2247,7 +2247,7 @@ If working with other sets of stage labels (e.g. from manual scoring as well as 
   pN1  pN2  pN3  pR  pW 
 ```
 
-Commands such as `HYPNO` that depend on these labels will then use
+Commands such as [`HYPNO`](../ref/hypnograms.md#hypno) that depend on these labels will then use
 those values if they exist, instead of the standard ones.
 
 Also, when reading stage labels from an annotation file, the
@@ -2526,14 +2526,14 @@ separate file, say `out.txt`:
 luna s.lst < commands.txt > out.txt 
 ``` 
 
-Whilst a few commands such as `DESC` or `SUMMARY` produce their own
+Whilst a few commands such as [`DESC`](../ref/summaries.md#desc) or [`SUMMARY`](../ref/summaries.md#summary) produce their own
 format of output (simple text formatted for human reading), most
 commands adopt the same output framework, such that the same
 information can be channeled to either a text file (described here), a
 database (described [next](destrat.md)) or even an object in R if
 using the Luna [R extension library](../ext/R/index.md).
 
-Using the `HEADERS` command as an example on the first EDF in the [tutorial](../tut/tut1.md) dataset: 
+Using the [`HEADERS`](../ref/summaries.md#headers) command as an example on the first EDF in the [tutorial](../tut/tut1.md) dataset: 
 
 ```
 luna s.lst nsrr01 sig=ECG,EMG  -s HEADERS > out.txt
@@ -2567,7 +2567,7 @@ nsrr01	HEADERS	CH/EMG	.	DMAX		127
 ```
 
 Each row is one value for one variable from one command.  In this
-case, only the `HEADERS` command was performed.  The six tab-delimited
+case, only the [`HEADERS`](../ref/summaries.md#headers) command was performed.  The six tab-delimited
 columns are:
 
 - Individual/EDF ID

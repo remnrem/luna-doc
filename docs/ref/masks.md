@@ -2,7 +2,7 @@
 
 _Commands to mask certain epochs in or out of analyses, and to drop or retain certain channels/signals_
 
-Masks are the primary mechanism by which Luna includes or excludes data from subsequent analyses without permanently altering the underlying EDF. `MASK` sets per-epoch inclusion/exclusion flags based on annotations, expressions, or signal statistics; `DUMP-MASK` outputs the current mask state; and `RESTRUCTURE` (or `RE`) permanently removes masked-out epochs and optionally channels from the in-memory dataset. `CHEP` provides a finer-grained channel/epoch mask system, most commonly used with high-density EEG when particular channels are bad in particular epochs but not others.
+Masks are the primary mechanism by which Luna includes or excludes data from subsequent analyses without permanently altering the underlying EDF. [`MASK`](masks.md#mask) sets per-epoch inclusion/exclusion flags based on annotations, expressions, or signal statistics; `DUMP-MASK` outputs the current mask state; and [`RESTRUCTURE`](masks.md#restructure) (or `RE`) permanently removes masked-out epochs and optionally channels from the in-memory dataset. [`CHEP`](masks.md#chep) provides a finer-grained channel/epoch mask system, most commonly used with high-density EEG when particular channels are bad in particular epochs but not others.
 
 | Command   | Description |
 |------|---|
@@ -37,9 +37,9 @@ is a flag for each epoch that says whether it should be "in" or "out"
 for a subsequent [restructuring](#restructure) of the dataset.
 
 Once a _mask_ has been set, it can be modified (or cleared) by
-subsequent `MASK` commands.  The behavior of the `MASK` command can be
+subsequent [`MASK`](masks.md#mask) commands.  The behavior of the [`MASK`](masks.md#mask) command can be
 changed to alter how it is merged with any previous masks that may
-have been set.  Having applied one or more `MASK` or `CHEP` commands, the
+have been set.  Having applied one or more [`MASK`](masks.md#mask) or [`CHEP`](masks.md#chep) commands, the
 resultant mask can be output (using the [`DUMP-MASK`](#dump-mask)
 command) or used to select particular records of the EDF (using the
 [`RESTRUCTURE`](#restructure) command).
@@ -67,12 +67,15 @@ either state B or C, and would give identical results.  This
 [table](epochs.md#command-epoch-types) details which commands can be used
 in which contexts.
 
+<h3>Methods</h3>
+
+Epoch masking assigns a binary include/exclude flag to each epoch without altering the underlying signal data. Masks are set according to annotation-based criteria (e.g., retaining only epochs labeled with specific sleep stages or excluding epochs with artifact annotations), epoch-number ranges, random subsampling, signal-level thresholds, or epoch-level expression evaluation. Multiple mask operations are applied sequentially; each new operation is combined with the existing mask using one of three merge modes — set, intersect, or union — depending on whether the goal is to refine, expand, or replace the current selection. The mask state is temporary until a restructuring operation permanently removes flagged epochs from the in-memory representation.
 
 <h3>Parameters</h3>
 
-The `MASK` command takes a variety of parameters to modify its
+The [`MASK`](masks.md#mask) command takes a variety of parameters to modify its
 behavior.  You should only specify _one_ of these options for any one
-`MASK` command however; multiple `MASK` commands can be specified sequentially.
+[`MASK`](masks.md#mask) command however; multiple [`MASK`](masks.md#mask) commands can be specified sequentially.
 
 There are three general types of mask:
 
@@ -182,7 +185,7 @@ _Other miscellaneous mask options_
 | `flanked` | `MASK flanked=N2,2` | Include only N2 epochs flanked by at least 2 other N2 epochs | 
 
 
-As noted above, a single `MASK` command can only have a single option.  Mask commands can be specified sequentially to
+As noted above, a single [`MASK`](masks.md#mask) command can only have a single option.  Mask commands can be specified sequentially to
 build up more complex filters: e.g. to select N2 epochs between 10pm and midnight:
 
 ```
@@ -258,11 +261,11 @@ context and general principles, along with examples of using masks.
 - Masking, by itself, doesn't actually remove any epochs: it only
   flags those to be removed.
 
-- Masking (i.e. the _consequence_ of the `MASK` command) is always at
+- Masking (i.e. the _consequence_ of the [`MASK`](masks.md#mask) command) is always at
   the level of the whole epoch.  That is, an entire epoch is either
   masked or unmasked.
 
-- Annotations used in masking (i.e. the _input_ of the `MASK` command)
+- Annotations used in masking (i.e. the _input_ of the [`MASK`](masks.md#mask) command)
  can still be scored with fraction-of-a-second resolution, however,
  such as arousal events.  In this case, by default Luna evaluates epochs as
  _containing at least one_ arousal event versus _not containing any_
@@ -273,7 +276,7 @@ context and general principles, along with examples of using masks.
     To achieve a mask with a finer temporal resolution, you can always
     set the epoch size to be smaller (e.g. `EPOCH len=1`) before
     applying the mask (and it can be reset back to `len=30` or another
-    value after `RESTRUCTURE`-ing the data).
+    value after [`RESTRUCTURE`](masks.md#restructure)-ing the data).
 
 
 ### Mask modes
@@ -325,14 +328,14 @@ annotations spans the epochs.  If the `-all` suffix is added
 are present.
 
 Alternatively, you can mask based on multiple annotations or features
-by specifying a series of `MASK` commands - although, take care to
+by specifying a series of [`MASK`](masks.md#mask) commands - although, take care to
 note the _mask mode_ as above (some masks will wipe out the effects of
 prior masks).
 
 Another alternative is to use the
 [`MAKE-ANNOTS`](annotations.md#make-annots) command to generate new
 annotations on-the-fly, as functions of pairs of existing annotations.
-The resulting new annotation can then be given to a `MASK` command.
+The resulting new annotation can then be given to a [`MASK`](masks.md#mask) command.
 
 Finally, yet another option is to use the more flexible but more complex [_eval_](evals.md) masks.  For example, 
 to mask epochs that either 1) contain _both_ `A` and `B` or 2) only `C`, and _neither_ `A` or `B`:
@@ -431,7 +434,7 @@ the behavior of each mask type:
 
 ### Other options
 
-As indicated in the parameter tables above, the `MASK` command has a
+As indicated in the parameter tables above, the [`MASK`](masks.md#mask) command has a
 number of other convenience functions, including some that do not
 operate on annotations _per se_.
 
@@ -455,7 +458,7 @@ will overwrite any previously specified mask.
 !!! alert "Epoch numbering for `MASK epoch`"
     The `epoch` specification refers to the current, _in-memory_
     epochs rather than the original file-based epochs.  _If there has
-    been a `RESTRUCTURE` command, these can be different._ For
+    been a [`RESTRUCTURE`](masks.md#restructure) command, these can be different._ For
     example, the following series of masks
     ```
     MASK epoch=10-20
@@ -522,7 +525,7 @@ single `dhms` mask selects a single contiguous window; to extract the
 same clock-time window across _all_ days of a multi-day recording, use
 the [`DAYS`](actigraphy.md#days) command first to create
 per-day (and per-hour) annotations, and then use those annotations
-with standard annotation-based `MASK` commands.  For example:
+with standard annotation-based [`MASK`](masks.md#mask) commands.  For example:
 
 ```
 DAYS
@@ -533,7 +536,7 @@ would include only epochs falling in the 8–9am window across every
 calendar day of the recording.
 
 !!! note
-    As is always the case for the `MASK` command, these options
+    As is always the case for the [`MASK`](masks.md#mask) command, these options
     operate only on entire epochs, in this case selecting all epochs
     that overlap with the specified time intervals.  Thus, the
     following yields a 30-second dataset in memory, not a 15-second one:
@@ -543,12 +546,12 @@ calendar day of the recording.
     RESTRUCTURE
     DESC
     ```
-    as indicated (in the output of `DESC`, which describes the in-memory data-set rather than what is on disk): 
+    as indicated (in the output of [`DESC`](summaries.md#desc), which describes the in-memory data-set rather than what is on disk): 
     ```
     Duration          : 00:00:30
     ```
     To select intervals at a finer temporal resolution, you can always
-    set the `EPOCH` duration to be smaller.
+    set the [`EPOCH`](epochs.md#epoch) duration to be smaller.
 
     Re-running with a shorter epoch size:
     ```
@@ -557,13 +560,13 @@ calendar day of the recording.
     RESTRUCTURE
     DESC
     ```
-    we now see in the log that the `MASK` command selects the appropriate number of 1-second long epochs
+    we now see in the log that the [`MASK`](masks.md#mask) command selects the appropriate number of 1-second long epochs
     ```
     CMD #2: MASK
     selecting epochs from 46 to 60;  masked 30649 epochs; unmasked 0 and left 0 unchanged
     total of 15 of 30664 retained for analysis
     ```
-    and the `DESC` command indicates the in-memory dataset is now 15-seconds in duration
+    and the [`DESC`](summaries.md#desc) command indicates the in-memory dataset is now 15-seconds in duration
     ```
     Duration          : 00:00:15
     ```
@@ -574,7 +577,7 @@ calendar day of the recording.
     exactly.  To obtain an EDF that cleanly lines up with a start time
     of `11:00:00`, you would a) select those first 
     22 seconds with `sec`, b) `flip` the mask (thereby excluding those 22 seconds and including everything else),
-    c) use `RESTRUCTURE` to permanently alter the in-memory dataset, and d) use `WRITE` to make a 
+    c) use [`RESTRUCTURE`](masks.md#restructure) to permanently alter the in-memory dataset, and d) use [`WRITE`](outputs.md#write) to make a 
     new EDF:
     ```
     EPOCH len=1
@@ -642,35 +645,35 @@ few important points about how masks and restructuring EDFs work in
 Luna:
 
 - You can set one or more masks, but nothing is fundamentally changed
-  until a `RESTRUCTURE` (or, equivalently, `RE`) command is issued.
+  until a [`RESTRUCTURE`](masks.md#restructure) (or, equivalently, `RE`) command is issued.
   Prior to that command, the mask could be cleared and you would be
   working with the same version of the data as before.
 
-- Once the `RESTRUCTURE` command has been issued, all masked epochs
+- Once the [`RESTRUCTURE`](masks.md#restructure) command has been issued, all masked epochs
   are permanently removed from the in-memory representation of the
   EDF. Any dropped epochs or channels cannot be restored without
   reloading the original EDF by running Luna a second time on that
   EDF.
 
-- The `RESTRUCTURE` command only alters the in-memory representation
+- The [`RESTRUCTURE`](masks.md#restructure) command only alters the in-memory representation
   of the EDF, not the original on-disk EDF itself.  In fact, no Luna
-  commands will ever alter the original EDF.  The `WRITE` command can
-  be used to generate a _new_ EDF after `MASK`-ing and
-  `RESTRUCTURE`-ing the data.
+  commands will ever alter the original EDF.  The [`WRITE`](outputs.md#write) command can
+  be used to generate a _new_ EDF after [`MASK`](masks.md#mask)-ing and
+  [`RESTRUCTURE`](masks.md#restructure)-ing the data.
 
 - Some commands will automatically skip masked epochs
   (e.g. `CHEP-MASK`).  Other commands have options for including or
-  excluding masked epochs (e.g. `ANNOTS`).  Many commands will operate
+  excluding masked epochs (e.g. [`ANNOTS`](annotations.md#annots)).  Many commands will operate
   on the entire signal however, _whether or not epochs are masked_.
   For example, the [`FILTER`](fir-filters.md#filter) command applies a
   FIR filter (e.g. bandpass) to a signal, and replaces the original
   signal with the filtered version.  Here, it would not make sense to
   only filter and modify the unmasked epochs, leaving the contiguous
   masked epochs with the unfiltered, raw signal.  Thus, if the goal is
-  to apply a `FILTER` to a subset of unmasked epochs, one should use
-  the `RESTRUCTURE` (or short form `RE`) command after setting the `MASK` and before
-  running the `FILTER`.  In general, if you are unsure, it is safer to
-  `RESTRUCTURE` the data once the desired `MASK` has been set.  As of v0.28,
+  to apply a [`FILTER`](fir-filters.md#filter) to a subset of unmasked epochs, one should use
+  the [`RESTRUCTURE`](masks.md#restructure) (or short form `RE`) command after setting the [`MASK`](masks.md#mask) and before
+  running the [`FILTER`](fir-filters.md#filter).  In general, if you are unsure, it is safer to
+  [`RESTRUCTURE`](masks.md#restructure) the data once the desired [`MASK`](masks.md#mask) has been set.  As of v0.28,
   Luna will give a warning to the console if it ever finds itself being asked
   to perform any _whole signal_ analysis when some epochs are masked:
   ```
@@ -707,11 +710,11 @@ E       MASK                     E       MASK
 10      0
 ``` 
 
-After issuing a `RESTRUCTURE` command, the data will contain only five
+After issuing a [`RESTRUCTURE`](masks.md#restructure) command, the data will contain only five
 epochs, and the mask will be effectively cleared (i.e. only unmasked
 epochs are left).  However, `E`, the original epoch numbering (as well as
 any time-interval output, e.g. of individual spindles from the
-`SPINDLES` command) will still be given with respect to the original
+[`SPINDLES`](spindles-so.md#spindles) command) will still be given with respect to the original
 EDF, and so are more interpretable in subsequent analyses or
 visualizations.  This temporal information is retained even if
 subsequent `MASK/RESTRUCTURE` commands are applied during the same run of Luna.
@@ -732,7 +735,7 @@ E       MASK                     E       MASK
 
 Epoch encoding and the internal _time-track_ information is retained,
 respecting potential _discontinuities_ in the data, until another
-`EPOCH` command is issued.  At that point, the data are assumed to
+[`EPOCH`](epochs.md#epoch) command is issued.  At that point, the data are assumed to
 represent a _continuous_ EDF.
 
 
@@ -740,6 +743,10 @@ represent a _continuous_ EDF.
 ## DUMP-MASK
 
 _Produces an epoch-by-epoch tabulation of the current mask_
+
+<h3>Methods</h3>
+
+The current epoch-level mask is read and written out as a per-epoch binary indicator, where zero denotes an included (unmasked) epoch and one denotes an excluded (masked) epoch. Optionally, mask status is also written as an epoch-spanning annotation to the in-memory annotation store, enabling downstream commands to access or export the mask state as an annotation file.
 
 <h3>Options</h3>
 
@@ -785,11 +792,15 @@ id00001   9   1
 ```
 
 That is, epochs 5 through 8 are unmasked (set to be included, e.g. if
-a `RESTRUCTURE` command were subsequently to be run).
+a [`RESTRUCTURE`](masks.md#restructure) command were subsequently to be run).
 
 ## RESTRUCTURE
 
 _Restructures the in-memory dataset after a mask has been set_ 
+
+<h3>Methods</h3>
+
+Restructuring permanently removes all epochs flagged as masked from the in-memory representation of the EDF. If the retained epochs form a contiguous block, the result is a standard EDF; if gaps remain between retained epoch runs, the result is a discontinuous EDF+ file with timing annotations preserving the original clock times of each retained segment. This operation is irreversible within a session unless a prior data freeze exists.
 
 <h3>Options</h3>
 
@@ -800,7 +811,7 @@ _Restructures the in-memory dataset after a mask has been set_
 
 <h3>Outputs</h3>
 
-Summary of data duration/record count before and after `RESTRUCTURE`-ing (strata: none)
+Summary of data duration/record count before and after [`RESTRUCTURE`](masks.md#restructure)-ing (strata: none)
 
 | Variable | Description |
 | ----   | ---- | 
@@ -818,8 +829,8 @@ Record-level information (strata: `REC`, options: `verbose`)
 | Variable | Description |
 | ----   | ---- |
 | `EPOCH ` | Epoch(s) spanning this record |
-| `MASK`   | Mask status for this record, given epoch-level mask |
-| `RETAINED` | Whether this record was retained prior to this `RESTRUCTURE` |
+| [`MASK`](masks.md#mask)   | Mask status for this record, given epoch-level mask |
+| `RETAINED` | Whether this record was retained prior to this [`RESTRUCTURE`](masks.md#restructure) |
 | `START` | Start time of this record ( seconds from  start) |
 | `STOP` | Stop time of this record (seconds from start) | 
 
@@ -843,7 +854,7 @@ The mask should select 4 epochs (from 5 to 8), which is confirmed in the log
  total of 4 of 1022 retained for analysis
 ```
 
-The final `RESTRUCTURE` command keeps only these four epochs (or 120
+The final [`RESTRUCTURE`](masks.md#restructure) command keeps only these four epochs (or 120
 records, given that one record is 1 second and 1 epoch is 30 seconds):
 ```
  CMD #3: RESTRUCTURE
@@ -859,7 +870,7 @@ ID        DUR1    DUR2    NR1      NR2
 id00001   30664   120     30664    120
 ```
 
-!!! hint "Using `TAG` to track repeated analyses" 
+!!! hint "Using [`TAG`](summaries.md#tag) to track repeated analyses" 
     
     Luna's output mechanism is intended to automatically pull together
     the results of different commands run on different individuals in
@@ -873,7 +884,7 @@ id00001   30664   120     30664    120
     luna s.lst -o out.db -s 'EPOCH & MASK epoch=5-8 & RESTRUCTURE & MASK epoch=2 & RESTRUCTURE'
     ```
     When looking at `out.db`, however with the same `destrat` command as above, only the second 
-    `RESTRUCTURE` would be represented:
+    [`RESTRUCTURE`](masks.md#restructure) would be represented:
     ```
     ID        DUR1    DUR2    NR1      NR2
     id00001   120     30      120      30
@@ -884,8 +895,8 @@ id00001   30664   120     30664    120
 
     A solution is to use the [`TAG`](summaries.md#tag) command to keep
     track of the results of similar commands.    Here we've
-    just added two `TAG` statements prior to the `RESTRUCTURE`
-    statements. After a `TAG` has been set, the output from all
+    just added two [`TAG`](summaries.md#tag) statements prior to the [`RESTRUCTURE`](masks.md#restructure)
+    statements. After a [`TAG`](summaries.md#tag) has been set, the output from all
     subsequent commands will have that tag information as an output
     stratifier.  For example:
     ```
@@ -920,11 +931,11 @@ id00001   30664   120     30664    120
 
     ```
 
-    That is, the output from `RESTRUCTURE` is now under the `STG`
+    That is, the output from [`RESTRUCTURE`](masks.md#restructure) is now under the `STG`
     strata, rather than baseline.  Further, the output from
     `DUMP-MASK`, which was previously stratified by epoch-number `E`
     alone is now under `STG` as well as `E`, because we've added the
-    `STG` factor with the `TAG` command.   
+    `STG` factor with the [`TAG`](summaries.md#tag) command.   
     
     We expect the `STG` factor to have two levels: `s1` and `s2`,
     which is indeed what we see:
@@ -947,14 +958,14 @@ id00001   30664   120     30664    120
     ```
 
     In this way, we can now see both sets of output from the
-    `RESTRUCTURE` command: `s1` tracks the first round of
+    [`RESTRUCTURE`](masks.md#restructure) command: `s1` tracks the first round of
     restructuring; `s2` tracks the second round.
 
     Similarly, the output from `DUMP-MASK` is also stratified by
-    `STG`. As we ran `DUMP-MASK` _after_ `RESTRUCTURE`-ing in each
+    `STG`. As we ran `DUMP-MASK` _after_ [`RESTRUCTURE`](masks.md#restructure)-ing in each
     case, we expect in the first instance, four unmasked epochs only,
     and in the second instance, a single (unmasked) epoch (i.e. as
-    `RESTRUCTURE` only retains unmasked epochs).  This is indeed what
+    [`RESTRUCTURE`](masks.md#restructure) only retains unmasked epochs).  This is indeed what
     we observe -- here using the ability of `destrat` to extract only
     particular levels of factors:
 
@@ -998,7 +1009,7 @@ given channel/epoch combination is _masked_ (i.e. bad) or _unmasked_
 
 Although _CHEP_ masks can be set manually (or read from a file),
 currently the main way to set a CHEP mask is via the [`CHEP-MASK` command](artifacts.md#chep-mask).
-The `CHEP` command, described here, can be used to output the CHEP mask (a
+The [`CHEP`](masks.md#chep) command, described here, can be used to output the CHEP mask (a
 channel-by-epoch matrix), or to specify bad channels and/or epochs as
 those that have above a certain number/proportion of bad
 epochs/channels respectively.
@@ -1008,8 +1019,12 @@ information to restructure an EDF still only consider the standard (i.e. epoch-l
 mask.
 
 !!! note "CHEP masks and interpolation"
-    Currently, CHEP masks (as set by `SIGSTATS`) are only considered by the `CHEP-MASK`, `CHEP` and
+    Currently, CHEP masks (as set by [`SIGSTATS`](summaries.md#sigstats)) are only considered by the `CHEP-MASK`, [`CHEP`](masks.md#chep) and
     [`INTERPOLATE`](spatial.md#interpolate) commands.
+
+<h3>Methods</h3>
+
+The channel–epoch (CHEP) mask is a two-dimensional binary matrix indicating whether each channel–epoch combination is considered good or bad. Epoch-level masks can be derived from the CHEP mask by applying a threshold on either the proportion or count of bad channels within each epoch; symmetrically, channel-level masks can be derived by thresholding the proportion or count of bad epochs within each channel. This hierarchical aggregation allows selective exclusion that respects both channel-specific and epoch-specific quality, enabling spatial interpolation of bad channels in epochs where the majority of channels remain clean.
 
 <h3>Options</h3>
 
@@ -1031,20 +1046,20 @@ Epoch-level summaries (option: `dump`, strata: `E`)
 
 | Variable | Description |
 | --- | --- |
-| `CHEP`  | Number _CHEP_ masked channels for that epoch |
+| [`CHEP`](masks.md#chep)  | Number _CHEP_ masked channels for that epoch |
 
 
 Channel-level summaries (option: `dump`, strata: `CH`)
 
 | Variable | Description |
 | --- | --- |
-| `CHEP`  | Number _CHEP_ masked epochs for that channel |
+| [`CHEP`](masks.md#chep)  | Number _CHEP_ masked epochs for that channel |
 
 Epoch/channel-level CHEP matrix (option: `dump`, strata: `CH` x `E`)
 
 | Variable | Description |
 | --- | --- |
-| `CHEP`  | Is that channel/epoch masked (0/1) |
+| [`CHEP`](masks.md#chep)  | Is that channel/epoch masked (0/1) |
 
 
 <h3>Example</h3>
@@ -1080,10 +1095,10 @@ nsrr02	OX_STAT	0
 
 That is, in this toy example, `EEG` has 46 bad epochs, whereas `EEG(sec)` had 102.  To set
 the _standard mask_ to flag epochs where _both_ channels are bad, we
-can use the `CHEP` command and the `epochs` option. The `epochs` option can take 0, 1 or 2 arguments:
+can use the [`CHEP`](masks.md#chep) command and the `epochs` option. The `epochs` option can take 0, 1 or 2 arguments:
 
  - `epochs` by itself will mask any epoch with 1 or more flagged channel (i.e. _any_ bad channels, equals `epochs=0` )
- - `epochs=0.5` will mask any epoch for which _more than_ 50% of channels are flagged (note: an additional `sig` option can be given to `CHEP` which is used to determine the denominator in the proportion calculations)
+ - `epochs=0.5` will mask any epoch for which _more than_ 50% of channels are flagged (note: an additional `sig` option can be given to [`CHEP`](masks.md#chep) which is used to determine the denominator in the proportion calculations)
  - `epochs=0.5,10` will mask any epoch for which more than 50%, _or_ at least 10 or more channels are bad.
 
 Therefore, to mask epochs in which both EEG are bad here, we would use

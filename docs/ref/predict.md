@@ -2,15 +2,15 @@
 
 _Feature-based prediction models_
 
-The `PREDICT` command is designed to take a _pre-existing_ linear
+The [`PREDICT`](predict.md#predict) command is designed to take a _pre-existing_ linear
 model with predictors (features) corresponding to metrics that Luna emits
 (e.g. spectral power, etc).  In conjunction
-with a suitable script to estimate those metrics, `PREDICT` combines
+with a suitable script to estimate those metrics, [`PREDICT`](predict.md#predict) combines
 model and data to make a prediction. Essentially, this framework aims
 to provide a one-step procedure for going from (raw) PSG/EEG data as
 input, to a model-based prediction as output.
 
-For example, one `PREDICT` model supports the prediction of the
+For example, one [`PREDICT`](predict.md#predict) model supports the prediction of the
 so-called _brain age index_ using the NREM EEG, based on a model from
 [Sun et al (2019)](https://pubmed.ncbi.nlm.nih.gov/30448611/).  This
 model has also been incorporated into [LunaScope](https://zzz.nyspi.org/lunascope/).  Over time, different models as well as
@@ -25,7 +25,7 @@ support for model classes beyond linear models will be compiled here.
 
 ## Overview
 
-The `PREDICT` command assumes the following components:
+The [`PREDICT`](predict.md#predict) command assumes the following components:
 
  * a _model specification_ that defines a set of features, along with
    their weights and population means/standard deviations,
@@ -33,7 +33,7 @@ The `PREDICT` command assumes the following components:
 
  * a paired Luna script that generates the required features, using
    the `CACHE record` mechanism to pass those feature values
-   to the `PREDICT` command
+   to the [`PREDICT`](predict.md#predict) command
 
  * optionally, a dataset of normalized values from the training
    dataset, to support kNN-based imputation of missing data
@@ -44,7 +44,7 @@ The primary workflow is as follows:
 
 
 !!! info
-    As a downstream _user_ of the `PREDICT` command (i.e. when using _pre-defined_ models to make predictions)
+    As a downstream _user_ of the [`PREDICT`](predict.md#predict) command (i.e. when using _pre-defined_ models to make predictions)
     most of the details on this page are unnecessary and you can skip ahead to the documentation on the main [`PREDICT`](#predict)
     command itself.
     The details below are for reference, aimed at individuals who want to use this framework to bring their own models into this framework.  
@@ -69,7 +69,7 @@ Each feature definition has the following terms:
 | `m` | `m=0.52` | Population mean for this feature |
 | `sd` | `sd=0.23` | Population standard deviation for this feature |
 | `b` | `b=-0.7` | Coefficient for this feature (for a _standardized_ metric) |
-| `LOG` | `LOG=1` | Use the natural log of this feature, `Z = sign(X) * log1p(|X|)` |
+| [`LOG`](manipulations.md#log) | `LOG=1` | Use the natural log of this feature, `Z = sign(X) * log1p(|X|)` |
 | `REQ` | `REQ=1` | Set to 1/0 to indicate if a feature is required to be non-missing |
 | `CHS` | `CHS=C3+F3,C4+F4` | Specifies pairwise channels, e.g. for metrics such as coherence (here two pairs: _C3-F3_ and _C4-F4_) |
 | `DIR` | `DIR=1` | Set to 1/0 to indicate if a pairwise statistic is _directional_, i.e. if _m(A,B) = -m(B,A)_ versus _m(A,B) = m(B,A)_ | 
@@ -103,14 +103,14 @@ The _cache_ is a mechanism whereby one Luna command can pass
 information to another Luna command during the processing of a single
 recording - i.e. a temporary store specific to an individual.
 
-When used with `PREDICT`, there are three primary points 
+When used with [`PREDICT`](predict.md#predict), there are three primary points 
 at which the cache is invoked:
 
  - via the `CACHE record` statement, to tell Luna which metrics to track
 
  - when a tracked command is run, any tracked values will be cached
 
- - when `PREDICT` runs, based on the model specification file details,
+ - when [`PREDICT`](predict.md#predict) runs, based on the model specification file details,
  values will be pulled from the cache and used to build the vector of predictors
  for that individual
 
@@ -121,8 +121,8 @@ CACHE cache=c1 record=MTM,RATIO,B1,B2,CH,STG
 
 The `record` argument expects values in the form/order: _command_,
 _variable_, _one or more strata_.  This names a cache `c1` (i.e. the
-same cache will be passed to `PREDICT`) and instructs Luna to cache
-any `RATIO` values emitted by the `MTM` command that have the
+same cache will be passed to [`PREDICT`](predict.md#predict)) and instructs Luna to cache
+any `RATIO` values emitted by the [`MTM`](power-spectra.md#mtm) command that have the
 associated strata of `B1`, `B2`, `CH` and (in this particular case)
 `STG`.  Here, `RATIO` is the ratio of two band powers (`B1` / `B2` ),
 which will be defined for a given channel `CH`.  By default, any
@@ -132,10 +132,10 @@ strata, `B1`, `B2` and `CH`: e.g. `B1=DELTA`, `B2=ALPHA` and
 `STG`, corresponding to sleep stage. This is a user-defined strata
 specified via the [`TAG` command](../summaries.md#tag), used to track
 N2 versus N3 metrics calculated in the same script.  The tag makes N2
-and N3 metrics distinct, otherwise new calls to `MTM` would overwrite
+and N3 metrics distinct, otherwise new calls to [`MTM`](power-spectra.md#mtm) would overwrite
 the output associated with previous ones in the same run.
 
-Given the above `CACHE` command, Luna will cache those values from any
+Given the above [`CACHE`](freezes.md#cache) command, Luna will cache those values from any
 outputs that match all these conditions (i.e. for that command,
 variables and strata combination):
 ```
@@ -145,7 +145,7 @@ TAG STG/N3
 MTM sig=C3,C4 ratio1 ratio=DELTA/THETA,DELTA/ALPHA 
 ```
 
-After running the `MTM` command above, Luna will cache the four
+After running the [`MTM`](power-spectra.md#mtm) command above, Luna will cache the four
 following strata, each defined for four _factor/level_ pairs, for the
 `RATIO` variable (that is, a single number representing the power
 ratio for that channel and pair of bands for N3 sleep):
@@ -155,7 +155,7 @@ ratio for that channel and pair of bands for N3 sleep):
  - `CH/C3`  `B1/DELTA`  `B2/ALPHA`  `STG/N3`
  - `CH/C4`  `B1/DELTA`  `B2/ALPHA`  `STG/N3`
 
-The final step involving the cache is when `PREDICT` retrieves
+The final step involving the cache is when [`PREDICT`](predict.md#predict) retrieves
 cached values for that recording, given a set of feature definitions, e.g.: 
 
 ```
@@ -180,12 +180,12 @@ command had the special option `preserve-cache`.  By default,
 [`RE`](masks.md#restructure) and [`THAW`](freezes.md#thaw) would
 otherwise wipe the cache.  When using a cache, this is typically not
 what one wants, i.e.  if we wish to retain the cached values until a
-subsequent `PREDICT` command.
+subsequent [`PREDICT`](predict.md#predict) command.
 
 Consider the following example (given here not as a full working
 example, but just a skeletal script): if we wished to use sigma band
 power from both N2 and N3 (from the Welch [`PSD`](power-spectra.md#psd) command, which emits a
-variable also called `PSD` with strata defined by band `B` and channel `CH` alongside
+variable also called [`PSD`](power-spectra.md#psd) with strata defined by band `B` and channel `CH` alongside
 a further `STG` stratum that aligns with the [`TAG`](summaries.md#tag) commands below):
 
 ```
@@ -222,8 +222,8 @@ the previous `F1` freeze (i.e. as that freeze did not contain the cached
 values).  That is, the `preserve-cache` option decouples the cache
 from the typical snapshot mechanism for returning to a former state.
 A similar logic applies with the restructure command.  The simple rule
-is: if building a script that uses `PREDICT` and a cache, 
-add `preserve-cache` to `THAW` and `RE`.
+is: if building a script that uses [`PREDICT`](predict.md#predict) and a cache, 
+add `preserve-cache` to [`THAW`](freezes.md#thaw) and `RE`.
 
 ### Using variables
 
@@ -290,7 +290,7 @@ The primary special variables are
 |------|----------|
 | `observed` | If known, the observed value (e.g. chronological age) to be used in output, and bias-adjustment | 
 | `intercept` | The model intercept |
-| `data` | The filename of the feature matrix data file (for kNN imputation) - can also be given as `data` as an option to `PREDICT` | 
+| `data` | The filename of the feature matrix data file (for kNN imputation) - can also be given as `data` as an option to [`PREDICT`](predict.md#predict) | 
 | `knn` | The number of nearest neighbours to consider when running kNN imputation |
 | `minf` | The minimum number of non-missing features required to run the model |
 | `softplus` | Apply the `softplus` function to the output (0/1=N/Y) |
@@ -336,7 +336,7 @@ the bias-adjusted value _y1_ is simply defined as
  Y1 = Y - ( B * A + C ) 
 ```
 
-If `PREDICT` is given the above terms in the model file (along with
+If [`PREDICT`](predict.md#predict) is given the above terms in the model file (along with
 the observed value `A`), it will automaticall calculate and output
 `Y1` as well as `Y`.
 
@@ -363,14 +363,14 @@ _Make a prediction based on a specified model and cached Luna metrics_
 
 See the [overview](#overview) above for a high-level description of
 this command, and how it fits into a broader paradigm of using Luna
-to support model-based prediction.  `PREDICT` is typically not used alone, but
+to support model-based prediction.  [`PREDICT`](predict.md#predict) is typically not used alone, but
 rather needs to be paired with a) a model specification
 and b) a Luna script with upstream commands to compute and cache
 the features (predictors) used in the model.
 
 Internally, the steps are:
 
- - `PREDICT` reads the model specification file and swaps in
+ - [`PREDICT`](predict.md#predict) reads the model specification file and swaps in
    any variables (similarly to how Luna parses command
    scripts); this is done separately for each individual, i.e. meaning
    that model files can contain variables that vary between different individuals
@@ -379,7 +379,7 @@ Internally, the steps are:
    typically these will be from the cache, but if a variable exists
    with (exactly) the same name (i.e from a [vars
    file](../luna/args.md#individual-variables)) then it will be used;
-   otherwise, the default is for `PREDICT` to search the cache
+   otherwise, the default is for [`PREDICT`](predict.md#predict) to search the cache
 
  - next, it checks there are enough non-missing features, as
    specified by `REQ` or `minf` in the model file
@@ -387,27 +387,29 @@ Internally, the steps are:
  - it then standardizes all features based on population mean/SD
  values (which are always included in a model file)
 
- - `PREDICT` uses a simple _k_-nearest neighbour (kNN) approach to
+ - [`PREDICT`](predict.md#predict) uses a simple _k_-nearest neighbour (kNN) approach to
    impute missing values, based on `knn=10` neighbours by default; kNN
    imputation is only performed if a reference `data` file has been attached
 
- - if a reference dataset is available, `PREDICT` also uses it to
+ - if a reference dataset is available, [`PREDICT`](predict.md#predict) also uses it to
    identify outlier features, by dropping each non-missing feature in
    turn, re-imputing it, and then calculating the difference (observed - imputed)
    in SD units. If the distance exceeds the `th` threshold
    set, the observed values are taken to be outliers, and replaced
    with their imputed values
 
- - using standardized features, `PREDICT` then makes a prediction
+ - using standardized features, [`PREDICT`](predict.md#predict) then makes a prediction
    based on the implied linear model; if the model file specifies it, a
    subsequent bias-adjustment procedure is applied (see above)
 
+<h3>Methods</h3>
 
+Prediction is based on a pre-specified linear model applied to a set of epoch- or recording-level features previously computed and stored in the Luna cache. Features are retrieved from the cache by name, checked for minimum completeness (as specified in the model file), and standardized using the population mean and standard deviation stored in the model. Missing features are imputed using a _k_-nearest-neighbour approach, where neighbours are identified from a reference dataset by Euclidean distance in the standardized feature space. Features deviating from their kNN-imputed value by more than a threshold number of standard deviations are flagged as outliers and replaced with their imputed values prior to prediction. The scalar prediction is computed as the dot product of the standardized feature vector with the model coefficient vector, with an optional bias-adjustment step that corrects for systematic prediction error as a function of the predicted value. Age-related bias adjustment can also be applied for models predicting biological age.
 
 !!!hint "Cacheless mode"
-    If features have been pre-computed and are all available in a simple text file, `PREDICT` can run
+    If features have been pre-computed and are all available in a simple text file, [`PREDICT`](predict.md#predict) can run
     quickly in _cacheless_ mode, i.e. directly taking feature values as variables rather than running
-    Luna commands on the raw data. In this way, you could use `PREDICT` as a standalone command (on
+    Luna commands on the raw data. In this way, you could use [`PREDICT`](predict.md#predict) as a standalone command (on
     the assumption that `features.txt` has columns defined to match each defined term in `model.txt`):
     ```
     luna s.lst vars=features.txt -o out.db -s PREDICT model=model.txt
@@ -473,7 +475,7 @@ trained on 2,532 individuals to predict an individual's age.
  - The model specification file is available
    [here](https://raw.githubusercontent.com/remnrem/moonlight/main/models/m1-adult-age-features.txt).
    
- - The Luna script used to extract the features and run the `PREDICT`
+ - The Luna script used to extract the features and run the [`PREDICT`](predict.md#predict)
 command is available
 [here](https://raw.githubusercontent.com/remnrem/moonlight/main/models/m1-adult-age-luna.txt).
 
@@ -486,7 +488,7 @@ current working folder) in the folder `models/`.
 
 The Luna script a) sets up the cache, b) does some pre-processing, c)
 extracts metrics for N1, then N2, then N3 sleep, using the freeze/thaw
-mechanism to swap between stages, and then d) runs `PREDICT` to make a prediction.
+mechanism to swap between stages, and then d) runs [`PREDICT`](predict.md#predict) to make a prediction.
 
 If `p1.lst` is a sample list pointing to the EDF and staging
 annotations for one 69 year-old individual, then we could run:
@@ -495,7 +497,7 @@ luna p1.lst age=69 cen=C3,C4 th=3 mpath=models/ -o out.db < m-luna.txt
 ```
 
 The Luna script expects the variables `${th}` and `${mpath}` to be
-defined, as these are passed as parameters to the `PREDICT` command,
+defined, as these are passed as parameters to the [`PREDICT`](predict.md#predict) command,
 as well as `${cen}`, to indicate which (central mastoid-referenced
 EEG) channels to derive metrics from.  The model specification file
 further expects the variables `${age}` and `${cen}` to be defined.  In
@@ -513,7 +515,7 @@ be specified via a [vars file](../luna/args.md#individual-variables).
     ```
     luna p1.lst ... < m-luna.txt
     ```
-    but if we had edited the first lines of `m-luna.txt` to include the extra `REFERENCE` commands. The above is equivalent to:
+    but if we had edited the first lines of `m-luna.txt` to include the extra [`REFERENCE`](manipulations.md#reference) commands. The above is equivalent to:
     ```
     cat m-luna.txt | luna p1.lst ...
     ```
@@ -526,7 +528,7 @@ be specified via a [vars file](../luna/args.md#individual-variables).
 
 This script contains multiple commands and generates a lot of console
 output.  It is always worth reviewing in test cases that the script is
-performing as expected.  The final `PREDICT` command gives the
+performing as expected.  The final [`PREDICT`](predict.md#predict) command gives the
 following messages to the console:
 
 ```
@@ -625,7 +627,7 @@ id01    270               3.48598130841121      ...
 ```
 In practice, you'd want to be _very careful_ that the IDs or other
 values don't match `X.FTR_` etc, but this works for now.
-We can then re-run the single `PREDICT` step as follows:
+We can then re-run the single [`PREDICT`](predict.md#predict) step as follows:
 ```
 luna p1.lst vars=ftr2.txt age=69 cen=C3,C4 -o out2.db -s PREDICT model=models/m-features.txt data=models/m-data.txt th=3 
 ```
@@ -650,7 +652,7 @@ luna p1.lst vars=ftr2.txt,covar.txt -o out2.db -s PREDICT model=models/m-feature
 which, again, will give the same output.  
 
 Now we can easily change parameters, e.g. varying `th` or dropping particular terms.  For example, here we might drop both spindle-related
-metrics: running the same command as above but adding to `PREDICT` 
+metrics: running the same command as above but adding to [`PREDICT`](predict.md#predict) 
 ```
 drop=DENS_C,COUPL_OVERLAP_C
 ```
@@ -691,9 +693,9 @@ decrease noise in predictions significantly.
 <h4>Viewing the original channel-level features</h4>
 
 Finally, just to connect the _features_ (internally cached metrics
-passed to `PREDICT`) with the "standard" Luna outputs, we can look at
+passed to [`PREDICT`](predict.md#predict)) with the "standard" Luna outputs, we can look at
 the rest of the `out.db` file, which will contain the same values that
-were cached.  The one difference is that `PREDICT` internally averaged
+were cached.  The one difference is that [`PREDICT`](predict.md#predict) internally averaged
 over multiple channels, and so we'll need to do that here to check
 that things line up.
 
@@ -706,7 +708,7 @@ ID    FTR      X
 id01  DENS_C   3.48598
 ```
 
-From the main `SPINDLES` output, we know it was stratified by `F` and
+From the main [`SPINDLES`](spindles-so.md#spindles) output, we know it was stratified by `F` and
 `CH` (as always for spindle density) but also `STG` (because this was
 added in the script via `TAG STG/N2` before the spindles command):
 
@@ -720,7 +722,7 @@ id01   C4  13.5   N2  3.31776
 ```
 
 As expected, the mean of these two values equals the value of `X` from
-`PREDICT`, i.e.  (3.65421 + 3.31776)/2 = 3.48598.
+[`PREDICT`](predict.md#predict), i.e.  (3.65421 + 3.31776)/2 = 3.48598.
 
 To consider a second example: the delta/alpha N3 power ratio: `delta_alpha_mean_C_N3`.  From the model file,
 we can see the definition:
@@ -728,7 +730,7 @@ we can see the definition:
 delta_alpha_mean_C_N3
   CMD=MTM  VAR=RATIO  STRATA=STG/N3,B1/DELTA,B2/ALPHA  CH=${cen}
 ```
-i.e. from the `RATIO` variable of the `MTM` command, and based on a stratum defined by the two power bands, a stage and channels:
+i.e. from the `RATIO` variable of the [`MTM`](power-spectra.md#mtm) command, and based on a stratum defined by the two power bands, a stage and channels:
 ```
 destrat out.db +MTM -r B1/DELTA B2/ALPHA STG/N3 CH -v RATIO 
 ```
@@ -738,7 +740,7 @@ id01  DELTA  ALPHA  C3    N3   0.78152
 id01  DELTA  ALPHA  C4    N3   0.83614
 ```
 We are therefore expecting `X` to be the mean of these, namely
-(0.78152+0.83614)/2 = 0.80883.  From `PREDICT` itself, the averaged
+(0.78152+0.83614)/2 = 0.80883.  From [`PREDICT`](predict.md#predict) itself, the averaged
 value was:
 
 ```

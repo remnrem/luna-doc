@@ -158,7 +158,7 @@ other Luna variable, and so does not alter how annotations are read in
 or stored: there are still two potential distinct annotations,
 `plm_left` and `plm_right`.  Rather, it is just that writing `${plm}`
 is the same as writing `plm_left,plm_right` which means _any_ PLM
-(left or right leg).  (Note: in `MASK` statements, a comma-delimited
+(left or right leg).  (Note: in [`MASK`](ref/masks.md#mask) statements, a comma-delimited
 list `a,b` typically means `a` OR `b`.)
 
 For example, to exclude epochs with a mixed apnea, one might write:

@@ -123,6 +123,7 @@ nav:
 
  - Vignettes: 
     - 'Index' : 'vignettes/index.md'
+    - 'INSERT alignment' : 'vignettes/insert.md'
     - 'Using Luna at scale' : 'vignettes/scale.md'
     - 'Windows users' : 'vignettes/windows.md'
     - 'About time' : 'vignettes/times.md'

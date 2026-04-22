@@ -74,6 +74,7 @@ __Annotations:__
 [`ANNOTS`](annotations.md#annots): _tabulate annotations,_
 [`AXA`](annotations.md#axa): _pairwise annotation cross-tabulation,_
 [`MAKE-ANNOTS`](annotations.md#make-annots): _make new annotations,_
+[`DROP-ANNOTS`](annotations.md#drop-annots): _drop loaded annotation classes,_
 [`WRITE-ANNOTS`](annotations.md#write-annots): _write annotation files,_
 [`SPANNING`](annotations.md#spanning): _annotation coverage stats,_
 [`ESPAN`](annotations.md#espan): _epoch-based annotation coverage,_
@@ -114,12 +115,15 @@ __Manipulations:__
 [`TIME-TRACK`](manipulations.md#time-track): _add time-track,_
 [`FLIP`](manipulations.md#flip): _flip signal,_
 [`SCALE`](manipulations.md#scale): _scale a signal,_
+[`LOG`](manipulations.md#log): _log-transform one or more signals,_
 [`CLIP`](manipulations.md#clip): _clip a signal,_
 [`COMBINE`](manipulations.md#combine): _combine multiple signals,_
 [`ZC`](manipulations.md#zc): _zero-center signal,_
 [`ROBUST-NORM`](manipulations.md#robust-norm): _robust normalization,_
+[`ROLLING-NORM`](manipulations.md#rolling-norm): _rolling-window normalization,_
 [`RECORD-SIZE`](manipulations.md#record-size): _change record size,_
 [`ALIGN`](manipulations.md#align): _align channels/records,_
+[`INSERT`](manipulations.md#insert): _align and splice signals from a secondary EDF, with clock-drift estimation,_
 [`EDF-MINUS`](manipulations.md#edf-minus): _convert EDF+ to EDF,_
 [`ANON`](manipulations.md#anon): _anonymize EDF,_
 [`SET-HEADERS`](manipulations.md#set-headers): _set EDF headers,_
@@ -135,6 +139,7 @@ __Outputs:__
 [`DUMP-RECORDS`](outputs.md#dump-records): _dump by record,_
 [`RECS`](outputs.md#recs): _info on EDF record structure,_
 [`SEGMENTS`](outputs.md#segments): _continuous intervals,_
+[`ALIGN-SCAN`](outputs.md#align-scan): _epoch/record/stage alignment diagnostics,_
 [`SEDF`](outputs.md#sedf): _write summary EDF,_
 __Filters:__
 [`FILTER`](fir-filters.md#filter): _apply FIR,_
@@ -151,7 +156,9 @@ __Artifacts:__
 __Physiological signal analysis:__
 [`HRV`](physio.md#hrv): _estimate heart-rate variability metrics from ECG,_
 [`RAI`](physio.md#rai): _calculate the REM atonia index from chin EMG,_
-[`AROUSALS`](physio.md#arousals): _detect candidate sleep arousals from EEG and optional EMG._
+[`AROUSALS`](physio.md#arousals): _detect candidate sleep arousals from EEG and optional EMG,_
+[`DESAT`](physio.md#desat): _oxygen desaturation (SpO2) event detection,_
+[`RESPBREATH`](physio.md#respbreath): _respiratory breath segmentation._
 __Hypnograms:__
 [`HYPNO`](hypnograms.md#hypno): _stage summaries,_
 [`STAGE`](hypnograms.md#stage): _dump stages,_
@@ -162,6 +169,7 @@ __SOAP:__
 [`PLACE`](soap.md#place): _align stages,_
 __POPS:__
 [`RUN-POPS`](pops.md#run-pops): _predict sleep stages,_
+[`HDSTATS`](pops.md#hdstats): _analyse hypnodensity signals,_
 [`POPS`](pops.md#pops-prediction): _lower-level POPS command,_
 [`EVAL-STAGES`](pops.md#eval-stages): _evaluate external stages,_
 [`--eval-stages`](pops.md#eval-stages): _evaluate external stages,_
@@ -243,12 +251,13 @@ __Helpers:__
 [`--xml`](helpers.md#-xml): _view XMLs,_
 [`--xml2`](helpers.md#-xml2): _dump EDFs (raw),_
 [`--otsu`](helpers.md#-otsu): _Otsu thresholding (file),_
-[`OTSU`](helpers.md#otsu): _Otsu thresholding (EDF)._
+[`OTSU`](helpers.md#otsu): _Otsu thresholding (EDF),_
+[`REPORT`](helpers.md#report): _control output visibility and emitted variables,_
+[`REQUIRES`](helpers.md#requires): _require a minimum Luna version._
 __Experimental:__
 [Various](exp.md): _misc. experimental commands,_
 [`ALIGN-EPOCHS`](exp.md#align-epochs): _align epochs between files,_
 [`ALIGN-ANNOTS`](exp.md#align-annots): _realign annotations given an ALIGN-EPOCHS solution,_
-[`INSERT`](exp.md#insert): _estimate lags and insert channels from another EDF._
 
 
 <!--

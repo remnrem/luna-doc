@@ -2,7 +2,7 @@
 
 _Methods for spectral and other time/frequency analyses, including power spectral density estimation_
 
-This page covers a broad collection of spectral and time-frequency methods. `PSD` (Welch's method) and `MTM` (multi-taper) are the primary tools for power spectral density estimation. `FFT` provides a basic discrete Fourier transform; `IRASA` separates aperiodic (1/_f_) from oscillatory spectral components. `HILBERT` and `CWT` yield instantaneous amplitude and phase via the Hilbert transform and continuous wavelet transform, respectively. `EMD` applies empirical mode decomposition; `DFA` measures long-range temporal correlations; and `MSE` and `LZW` quantify signal complexity/entropy. `1FNORM` and `TV` are signal preprocessing steps; `PCOUPL` provides generic phase coupling; `ACF` computes the autocorrelation function.
+This page covers a broad collection of spectral and time-frequency methods. [`PSD`](power-spectra.md#psd) (Welch's method) and [`MTM`](power-spectra.md#mtm) (multi-taper) are the primary tools for power spectral density estimation. [`FFT`](power-spectra.md#fft) provides a basic discrete Fourier transform; [`IRASA`](power-spectra.md#irasa) separates aperiodic (1/_f_) from oscillatory spectral components. [`HILBERT`](power-spectra.md#hilbert) and [`CWT`](power-spectra.md#cwt) yield instantaneous amplitude and phase via the Hilbert transform and continuous wavelet transform, respectively. [`EMD`](power-spectra.md#emd) applies empirical mode decomposition; [`DFA`](power-spectra.md#dfa) measures long-range temporal correlations; and [`MSE`](power-spectra.md#mse) and [`LZW`](power-spectra.md#lzw) quantify signal complexity/entropy. [`1FNORM`](power-spectra.md#1fnorm) and [`TV`](power-spectra.md#tv) are signal preprocessing steps; [`PCOUPL`](power-spectra.md#pcoupl) provides generic phase coupling; [`ACF`](power-spectra.md#acf) computes the autocorrelation function.
 
 |Command |Description | 
 |---|---|
@@ -44,6 +44,11 @@ e.g. with the `epoch` option, then these spectra are also written to
 the output database.  The _overall_ estimate of the PSD is the average
 of the epoch-level estimates.
 
+<h3>Methods</h3>
+
+Power spectral density is estimated using Welch's overlapping-segment averaging method. The signal is divided into fixed-length, overlapping windows; each window is tapered with a 50% Tukey (cosine-bell) window by default, though Hann or Hamming windows may be substituted. The discrete Fourier transform is applied to each windowed segment, and the resulting periodogram estimates are averaged across segments to yield a single power spectrum per epoch. The overall PSD estimate is the mean of epoch-level spectra, providing a stable, low-variance estimate of the power spectral density. Band-limited power is obtained by integrating the PSD over canonical frequency bands (slow, delta, theta, alpha, sigma, beta, gamma). Relative band power is expressed as the fraction of total power within the analysed frequency range.
+
+Epoch-level outlier rejection may optionally be applied by excluding epochs whose band power deviates by more than a user-specified number of standard deviations from the cross-epoch mean or median before computing the overall summary statistics. Spectral slope is estimated as the log–log linear regression of power on frequency within a user-specified frequency range; after an initial fit, frequency bins with residuals exceeding a robust threshold are removed and the model is refit. Spectral peakedness — a diagnostic for non-physiological spectral spikes — is quantified using two complementary metrics: the excess kurtosis and a spike-summation index, both derived from the difference between the detrended and smoothed (median-filtered) log-scaled spectrum.
 
 <h3>Parameters</h3>
 
@@ -87,7 +92,7 @@ users), as described in this table:
 
 
 !!! warn 
-    If the `EPOCH` size is set to a small value (i.e. under 4
+    If the [`EPOCH`](epochs.md#epoch) size is set to a small value (i.e. under 4
     seconds) you will need to adjust the parameters of Welch's method
     accordingly.
 
@@ -95,7 +100,7 @@ users), as described in this table:
 
 | Parameter | Example | Description |
 | --- | --- | --- |
-| `cache-metrics` | `cache-metrics=c1`  | Cache `PSD` by `F` and `CH` (e.g. for `PSC`) |
+| `cache-metrics` | `cache-metrics=c1`  | Cache [`PSD`](power-spectra.md#psd) by `F` and `CH` (e.g. for [`PSC`](psc.md#psc)) |
 
 
 <h3>Band definitions</h3>
@@ -132,14 +137,14 @@ Spectral band power (strata: `B` x `CH`)
 
 | Variable | Description |
 | ---- |----- | 
-| `PSD` | Absolute spectral power |
+| [`PSD`](power-spectra.md#psd) | Absolute spectral power |
 | `RELPSD` | Relative spectral power |
 
 Spectral power by frequency bin (option: `spectrum`, strata: `F` x `CH`)
 
 | Variable | Description |
 | ---- |----- | 
-| `PSD` | Absolute spectral power |
+| [`PSD`](power-spectra.md#psd) | Absolute spectral power |
 | `PSD_SD` | Standard deviation (within epoch) of absolute spectral power |
 | `PSD_CV` | (if `dB` and `sd` specified: coefficient of variation assuming log-normal data, CV=sqrt(exp(s^2)-1) where s^2 is the natural log-scaled variance | 
 
@@ -147,14 +152,14 @@ Epoch-level spectral band power (option: `epoch`, strata: `E` x `B` x `CH`)
 
 | Variable | Description |
 | ---- |----- | 
-| `PSD` | Absolute spectral power |
+| [`PSD`](power-spectra.md#psd) | Absolute spectral power |
 | `RELPSD` | Relative spectral power |
 
 Epoch-level spectral power by frequency bin (option: `epoch-spectrum`, strata: `E` x `F` x `CH`)
 
 | Variable | Description |
 | ---- |----- |
-| `PSD` | Absolute spectral power |
+| [`PSD`](power-spectra.md#psd) | Absolute spectral power |
 
 EEG spectral slowing indices (option: `slowing`, strata: `CH`)
 
@@ -182,14 +187,14 @@ Here we calculate band power and the PSD for
 [tutorial](../tut/tut1.md) individual `nsrr01`, for all N2 and all N3
 sleep separately.  Note, here we run Luna twice but put all output in
 the same `out.db` database, by using `-a` to append for the second
-command, rather than `-o`.  We also add a `TAG` command to
+command, rather than `-o`.  We also add a [`TAG`](summaries.md#tag) command to
 disambiguate the output:
 
 ```
 luna s.lst 2 sig=EEG -o out.db -s 'EPOCH & MASK ifnot=NREM2 & RE & TAG SS/N2 & PSD spectrum'
 luna s.lst 2 sig=EEG -a out.db -s 'EPOCH & MASK ifnot=NREM3 & RE & TAG SS/N3 & PSD spectrum'
 ```
-Here we see that all output for `PSD` has an additional `SS` (sleep stage) stratifier:
+Here we see that all output for [`PSD`](power-spectra.md#psd) has an additional `SS` (sleep stage) stratifier:
 ```
 destrat out.db
 ```
@@ -307,7 +312,7 @@ sample estimates:
 ### Peaks/spikes
 
 Here we review two options that perform post-processing of power
-spectra derived from `PSD`: `peaks` and `slope`.
+spectra derived from [`PSD`](power-spectra.md#psd): `peaks` and `slope`.
 
 The `peaks` option gives diagnostics that indicate likely sharp
 _peaks_ in the power spectra, e.g. as caused by line noise rather than
@@ -343,7 +348,7 @@ luna s.lst -o out2.db
                 SIMUL frq=15,20,25,30,35,40,45 psd=500,500,500,500,500,500,500 add sig=C3
                 PSD  sig=C3 max=50 spectrum dB'
 ```
-Note that the `add` option for `SIMUL` adds the simulated signal onto the existing (real) `C3` signal.
+Note that the `add` option for [`SIMUL`](simul.md#simul) adds the simulated signal onto the existing (real) `C3` signal.
 
 Plotting the resulting power spectra from both runs, we can clearly see the super-imposed artifact resulting in a more _spiky_ or _peaked_ spectrum:
 
@@ -362,10 +367,10 @@ frame()
 --->
 
 
-We can use the `peaks` option to provide one simple way of quantifying the extent of _peakedness_, by adding `peaks` to the `PSD` command.
+We can use the `peaks` option to provide one simple way of quantifying the extent of _peakedness_, by adding `peaks` to the [`PSD`](power-spectra.md#psd) command.
 By default, this would use the full spectrum to derive peak statistics: for this particular metric, it can be a good idea to avoid the lower frequenies that often contain
 true bumps/peaks, e.g. resulting from oscillatory activity at those frequencies, and so we'll use the `peaks-frq` option instead to explicitly set the frequency range
-used for the assessment of peaks: in this case 20 to 50 Hz.   We'll also add the `peaks-verbose` option to get additional output to make the plots below.  The `PSD` command
+used for the assessment of peaks: in this case 20 to 50 Hz.   We'll also add the `peaks-verbose` option to get additional output to make the plots below.  The [`PSD`](power-spectra.md#psd) command
 now reads as follows:
 
 ```
@@ -454,7 +459,7 @@ log-log linear regression of power on frequency.  For an example of
 using Luna to estimate the spectral slope, see
 [Kozhemiako et al (2021)](https://www.biorxiv.org/content/10.1101/2021.11.08.467763v1).
 
-This is achieved by adding `slope` to the `PSD` command, and giving
+This is achieved by adding `slope` to the [`PSD`](power-spectra.md#psd) command, and giving
 the frequency interval over which the slope should be estimated.  See
 the references in the abovementioned pre-print to see other
 applications of the spectral slope to sleep data, and justification
@@ -528,14 +533,14 @@ question at hand. [This manuscript](https://www.ncbi.nlm.nih.gov/pubmed/27927806
 provides a nice review of the use of multitaper spectral analysis in the sleep
 domain, along with considerations for specifying the time half
 bandwidth product (`nw`) and the number of tapers (`t`). (By default,
-`MTM` will use `2nw-1` tapers.)
+[`MTM`](power-spectra.md#mtm) will use `2nw-1` tapers.)
 
-As per the `PSD` command, the `MTM` command uses a concept of
+As per the [`PSD`](power-spectra.md#psd) command, the [`MTM`](power-spectra.md#mtm) command uses a concept of
 _segments_ as well as (optionally) _epochs_.  That is, the fundamental
 unit of spectral analysis is always a _segment_ (e.g. which may be
 different durations, say 4 seconds), but whether or not metrics are
 summarized and output at the per-epoch (e.g. 30-second interval) level
-depends on how `MTM` is run. Segments may often be much smaller
+depends on how [`MTM`](power-spectra.md#mtm) is run. Segments may often be much smaller
 than a typical epoch (e.g. 1 second) and one may wish to have highly
 overlapping segments in a sliding-window style of analysis.
 
@@ -572,6 +577,10 @@ based on the spectral analysis:
  - so-called _spectral skew, kurtosis and CV_ (coefficient of
    variation) based on the distribution of segments (within each
    epoch)
+
+<h3>Methods</h3>
+
+Power spectral density is estimated using the multitaper method (MTM). Each analysis segment is simultaneously tapered by a set of orthogonal Slepian (discrete prolate spheroidal) sequences, and the resulting eigenspectra are averaged with adaptive weighting to yield a single spectral estimate per segment. The time–half-bandwidth product _nw_ controls the fundamental tradeoff between spectral resolution and variance reduction: larger values produce smoother but spectrally broader estimates, while smaller values preserve sharper spectral features at the cost of greater variability. By default, 2_nw_ − 1 tapers are applied. Segments may be defined either on a whole-recording basis or within each epoch, and both segment-level and epoch-level summaries are produced. Band-limited power and inter-band power ratios are derived from the resulting spectra. Epoch-level distributional statistics — spectral skewness, kurtosis, and coefficient of variation across segments — are also computed. Spectral slopes are estimated by log–log linear regression of power on frequency over a user-specified band, with robust outlier removal prior to the final fit.
 
 <h3>Parameters</h3>
 
@@ -628,7 +637,7 @@ Whole-signal power spectra (strata: `CH` x `F`)
 
 | Variable | Description |
 | ----- | ----- | 
-| `MTM` | Absolute spectral power via the multitaper method |
+| [`MTM`](power-spectra.md#mtm) | Absolute spectral power via the multitaper method |
 | `MTM_MD` | With `epoch`, median power over epochs |
 | `MTM_SD` | With `epoch`, SD of power over epochs |
 
@@ -636,7 +645,7 @@ Whole-signal band power (strata: `CH` x `B`)
 
 | Variable | Description |
 | ----- | ----- | 
-| `MTM` | Absolute spectral band power via the multitaper method |
+| [`MTM`](power-spectra.md#mtm) | Absolute spectral band power via the multitaper method |
 | `MTM_MD` | With `epoch`, median power	over epochs |
 | `MTM_SD` | With `epoch`, SD of power over epochs |
 | `REL` | Relative spectral band power via the multitaper method (denom = total power) |
@@ -655,20 +664,20 @@ Epoch-level power spectra (option: `epoch`, strata: `E` x `CH` x `F`)
 
 | Variable | Description |
 | ----- | ----- | 
-| `MTM` | Spectral power via the multitaper method |
+| [`MTM`](power-spectra.md#mtm) | Spectral power via the multitaper method |
 
 Epoch-level band power (option: `epoch`, strata: `E` x `CH` x `B`)
 
 | Variable | Description |
 | ----- | ----- | 
-| `MTM` | Spectral power via the multitaper method |
+| [`MTM`](power-spectra.md#mtm) | Spectral power via the multitaper method |
 | `REL` | Relative spectral power via the multitaper method |
 
 Epoch-wise segment-level band power (option: `epoch`, `segment-output`; strata: `CH` x `E` x `SEG` x `B`)
 
 | Variable | Description |
 | ----- | ----- |
-| `MTM` | Spectral power via the multitaper method |
+| [`MTM`](power-spectra.md#mtm) | Spectral power via the multitaper method |
 | `REL` | Relative spectral power via the multitaper method |
 
 Segment-level output (option: `segment-output`; strata: `CH` x `SEG`)
@@ -722,7 +731,7 @@ added per bin/channel.
 
 <h3>Example</h3>
 
-To compare results for the N2 power spectra up to 20 Hz, from `PSD` and `MTM`
+To compare results for the N2 power spectra up to 20 Hz, from [`PSD`](power-spectra.md#psd) and [`MTM`](power-spectra.md#mtm)
 for the three tutorial individuals:
 
 ```
@@ -826,19 +835,23 @@ depending on the goal of the analysis.)
 _Applies the basic discrete Fourier transform to a signal_
 
 In contrast to Welch ([`PSD`](#psd)) or multi-taper ([`MTM`](#mtm))
-approaches, the `FFT` performs the same function (for a single, real,
+approaches, the [`FFT`](power-spectra.md#fft) performs the same function (for a single, real,
 1-dimensional signal) as the `fft()` function in R or Matlab, i.e.
 the DFT with no windowing or tapering, and which will have as many
 points as there are samples.  As such, this is intended for use with
 simple/short signals, where one wants this exact quantity, e.g. if
 validating a computation, as we did [here](simul.md#simul).  For real
-data (especially long, whole night recordings), `PSD` and `MTM` will
+data (especially long, whole night recordings), [`PSD`](power-spectra.md#psd) and [`MTM`](power-spectra.md#mtm) will
 provide better estimates of the power spectrum.
 
 !!! info
-    Practically, for very long signals, `FFT` will return a very large/dense spectrum, which
+    Practically, for very long signals, [`FFT`](power-spectra.md#fft) will return a very large/dense spectrum, which
     might make the `destrat` output mechanism struggle;  if you really want this, run with the `-t` command-line option
     to produce [text table outputs](../luna/args.md#text-tables).
+
+<h3>Methods</h3>
+
+The discrete Fourier transform (DFT) is applied to the signal via the fast Fourier transform (FFT) algorithm, without windowing or spectral averaging. This yields a complex-valued spectrum whose length equals the number of samples; the squared magnitude of the FFT coefficients provides the raw periodogram. Because no segment-averaging or tapering is applied, the frequency resolution is determined solely by the signal duration, and the variance of each spectral estimate is not reduced relative to a single periodogram. This approach is appropriate for short, controlled signals where an exact, unmodified DFT is required.
 
 <h3>Parameters</h3>
 
@@ -853,7 +866,7 @@ Whole-signal power spectra (strata: `CH` x `F`)
 
 | Variable | Description |
 | ----- | ----- |
-| `PSD` | Raw power spectral density |
+| [`PSD`](power-spectra.md#psd) | Raw power spectral density |
 | `DB` | 10log10(PSD) |
 
 Optional output (option: `verbose`, strata: `CH` x `F`)
@@ -874,7 +887,7 @@ luna -d fft 100 < data.txt
 ```
 
 See [this vignette](../../vignettes/rcox/#spectral-analyses) for a description of the outputs, and an example of usage (i.e. here, the
-only difference is that `FFT` command operates on EDF channels, whereas the example above is based on reading a text file.)
+only difference is that [`FFT`](power-spectra.md#fft) command operates on EDF channels, whereas the example above is based on reading a text file.)
 
 
 ## IRASA
@@ -885,6 +898,10 @@ Implements the IRASA method as described
 [here](https://pubmed.ncbi.nlm.nih.gov/26318848/), which seeks to
 partition power spectra into periodic (oscillatory) and aperiodic
 (fractal) components.
+
+<h3>Methods</h3>
+
+The irregular-resampling auto-spectral analysis (IRASA) method is applied to decompose the power spectrum into its aperiodic (fractal) and periodic (oscillatory) components (Wen & Liu, 2016). For a set of non-integer resampling factors _h_ distributed around 1.0, the signal is independently upsampled and downsampled by each factor pair _(h, 1/h)_; the geometric mean of the resulting pair of power spectra is computed, yielding a spectrum from which periodic components (which are shifted by the resampling) are suppressed. The median across all resampling factors is taken as the aperiodic component, and the periodic component is obtained as the difference between the original spectrum and this aperiodic estimate. Spectral slope is estimated by fitting a log–log linear regression of the aperiodic power spectrum on frequency, with robust outlier removal, providing an estimate of the fractal exponent that is uncontaminated by narrowband oscillatory activity. IRASA spectra are computed on a segment-by-segment basis using Welch's method, with the median taken across segments within each epoch to reduce sensitivity to outliers.
 
 <h3>Parameters</h3>
 
@@ -964,14 +981,14 @@ luna . -o out.db --nr=3000 --rs=1 \
             IRASA sig=S1 dB h-max=4'
 ```
 As shown above, we then analyse the simulated channel `S1` using first [`PSD`](#psd) (Welch method)
-and then `IRASA`.  For `PSD`, we have to explicitly request that the spectral slope be estimated (`slope=1,30`)
+and then [`IRASA`](power-spectra.md#irasa).  For [`PSD`](power-spectra.md#psd), we have to explicitly request that the spectral slope be estimated (`slope=1,30`)
 which indicates a log-log regression of power on frequency (after removing outlier points).  We expect this
 estimate of slope to be biased by the oscillatory peak at 15 Hz.  In contrast, IRASA will generate
-two spectra, the aperiodic and periodic components, and estimate the slope (using the same approach as `PSD`)
+two spectra, the aperiodic and periodic components, and estimate the slope (using the same approach as [`PSD`](power-spectra.md#psd))
 only on the aperiodic component.
 
 To compare like-with-like, we use a range of 1 to 30 Hz in both cases
-(this is the default for `IRASA`). We set the resampling factor _h_ to
+(this is the default for [`IRASA`](power-spectra.md#irasa)). We set the resampling factor _h_ to
 have a maximum value of 4, which implies an evaluated range of 1/4 =
 0.25 Hz to 30 * 4 = 120 Hz.
 
@@ -1016,8 +1033,8 @@ plot( i$F, i$PER, type="l", lwd=3, col="purple", xlab="Frequency (Hz)", ylab="lo
 As nicely illustrated by [Gerster et al. (2021)](https://pubmed.ncbi.nlm.nih.gov/35389160/), IRASA
 is not infallible - for instance, if there are very broad oscillatory peaks and the maximum resampling
 factor is not sufficiently high, it can fail to properly separate out aperiodic and periodic components
-(see their Figure 6).  We can recapitulate this property by increasing the peak width (`w` in `SIMUL`)
-and reducing the resampling factor (`h-max` in `IRASA`):
+(see their Figure 6).  We can recapitulate this property by increasing the peak width (`w` in [`SIMUL`](simul.md#simul))
+and reducing the resampling factor (`h-max` in [`IRASA`](power-spectra.md#irasa)):
 
 
 ```
@@ -1044,6 +1061,10 @@ _Applies filter-Hilbert transform to a signal, to estimate envelope and instanta
 This function can be used to generate the envelope of a (band-pass
 filtered) signal.
 
+<h3>Methods</h3>
+
+Instantaneous amplitude (envelope) and instantaneous phase are estimated using the filter–Hilbert method. The signal is first bandpass-filtered to the frequency range of interest using a linear-phase finite impulse response (FIR) filter designed with a Kaiser window, attenuating out-of-band content while preserving phase relationships within the passband. The Hilbert transform is then applied to the filtered signal, yielding a complex analytic signal whose modulus gives the instantaneous amplitude (envelope) and whose argument gives the instantaneous phase. Both quantities are written as new signal channels for downstream analysis. This approach is preferred over direct Hilbert transformation of the broadband signal because pre-filtering restricts the analytic signal to a physiologically meaningful frequency band.
+
 <h3>Parameters</h3>
 
 | Parameter | Example | Description |
@@ -1068,9 +1089,9 @@ If `tag=` is specified, the tag is inserted before the suffixes, e.g.
 `EEG_sigma_ht_ph`.
 
 Commands such as [`IPC`](cc.md#ipc) assume the fixed `_ht_mag` and `_ht_ph`
-suffixes are appended directly to the channel labels supplied to `IPC`. As a
-result, `HILBERT tag=...` output is not directly compatible with `IPC` unless
-the channels passed to `IPC` already include that inserted tag in their base
+suffixes are appended directly to the channel labels supplied to [`IPC`](cc.md#ipc). As a
+result, `HILBERT tag=...` output is not directly compatible with [`IPC`](cc.md#ipc) unless
+the channels passed to [`IPC`](cc.md#ipc) already include that inserted tag in their base
 label.
 
 <h3>Example</h3>
@@ -1103,8 +1124,8 @@ leval( "FILTER sig=EEG_SIGMA bandpass=11,15 ripple=0.02 tw=0.5" )
 ```
 
 !!! note
-    Unlike `HILBERT`, `FILTER` modifies the source channel,
-    which is why we `COPY`-ed the original channel first.
+    Unlike [`HILBERT`](power-spectra.md#hilbert), [`FILTER`](fir-filters.md#filter) modifies the source channel,
+    which is why we [`COPY`](manipulations.md#copy)-ed the original channel first.
 
 We now have four signals in the _in-memory_ representation of the
 EDF:
@@ -1148,9 +1169,12 @@ _Applies a continuous wavelet transform by convolution with a complex Morlet wav
 The CWT is the basis of the [`SPINDLE`](spindles-so.md#spindles)
 command.  This command allows you to generate new signals in the EDF
 that correspond to the underlying CWT, e.g. for plotting, or getting
-insight into the performance of `SPINDLES` under different
+insight into the performance of [`SPINDLES`](spindles-so.md#spindles) under different
 circumstances.
 
+<h3>Methods</h3>
+
+The continuous wavelet transform (CWT) is computed by convolving the signal with a complex Morlet wavelet centered at the specified frequency. The Morlet wavelet is a sinusoidal carrier modulated by a Gaussian envelope; its bandwidth, specified as the number of cycles, determines the time–frequency resolution tradeoff: more cycles provide better frequency resolution but poorer temporal resolution. The convolution is implemented in the frequency domain for efficiency. The resulting complex-valued time series carries instantaneous amplitude (the modulus) and instantaneous phase (the argument) at the center frequency, and these are written as new signal channels. This representation is the basis for the wavelet-based spindle detection procedure.
 
 <h3>Parameters</h3>
 
@@ -1185,6 +1209,10 @@ for a discussion of the advantages of this latter specification.
 
 In both cases, the `CWT-DESIGN` will estimate the implied FWHM in the frequency domain,
 i.e. the tightness of the wavelet around the specified central frequency (`fc`). 
+
+<h3>Methods</h3>
+
+This utility computes the theoretical time–frequency properties of a complex Morlet wavelet given its design parameters. Wavelet bandwidth is specified either as the number of cycles (which determines the temporal extent of the Gaussian envelope relative to the carrier frequency) or as the time-domain full width at half maximum (FWHM) of the Gaussian envelope. From these parameters, the implied frequency-domain FWHM and the upper and lower half-maximum frequency bounds are derived analytically, characterizing the frequency selectivity of the wavelet. This is a design diagnostic intended to guide the selection of wavelet parameters before applying the transform to data.
 
 <h3>Parameters</h3>
 
@@ -1294,7 +1322,7 @@ _Generic phase/event coupling analysis_
 This command implements the same functions used by
 [`SPINDLES`](spindles-so.md#spindles) when evaluating spindle/SO phase
 coupling and overlap.  Here, the functionality has been extracted out of the
-context of the `SPINDLES` command, to make it generically useful.  That is, given a set of [annotations](annotations.md)
+context of the [`SPINDLES`](spindles-so.md#spindles) command, to make it generically useful.  That is, given a set of [annotations](annotations.md)
 and one or more signals, this will:
 
  - apply the filter-Hilbert method to determine instantaneous phase of the signal
@@ -1303,6 +1331,10 @@ and one or more signals, this will:
    with respect to the phase of the signal, using randomization to generate surrogate time series
 
 For the purpose of calculating overlap statistics, phase bins are fixed in 18 20-degree bins.
+
+<h3>Methods</h3>
+
+Phase coupling between discrete events and a continuous oscillatory signal is assessed using the filter–Hilbert method. The signal is bandpass-filtered to the frequency range of the target oscillation using a Kaiser-windowed FIR filter, and the Hilbert transform is applied to extract instantaneous phase. The phase at each event's anchor point (start, midpoint, or end of the annotated interval) is extracted and the mean resultant vector length is computed as the coupling magnitude — a measure bounded between 0 (uniform phase distribution) and 1 (perfect phase locking). The mean phase angle is calculated from the complex mean of the unit-length phase vectors. Statistical significance is evaluated by a permutation procedure in which event times are randomly shuffled within epochs (or across the whole recording), generating a null distribution of coupling magnitudes; an empirical p-value is derived by comparing the observed magnitude to this distribution, and an asymptotic p-value based on the Rayleigh test is also reported. Phase-binned event counts are tabulated in 20-degree bins and compared against permutation-derived expected counts to assess the significance of preferential phase alignment in each bin.
 
 <h3>Parameters</h3>
 
@@ -1345,7 +1377,7 @@ Phase-bin overlap statistics (strata: `ANNOT` x `CH` x `PHASE`)
 
 | Variable | Description |
 | ----- | ----- |
-| `OVERLAP` | Observed count of event anchors per signal phase bin |
+| [`OVERLAP`](intervals.md#overlap) | Observed count of event anchors per signal phase bin |
 | `OVERLAP_EXP` | Expected count based on permutations |
 | `OVERLAP_EMP` | Empirical p-value based on permutations |
 | `OVERLAP_Z` | Z-score based on permutations |
@@ -1353,7 +1385,7 @@ Phase-bin overlap statistics (strata: `ANNOT` x `CH` x `PHASE`)
 
 <h3>Example</h3>
 
-Here we use `SPINDLES` to assess spindle/SO coupling:
+Here we use [`SPINDLES`](spindles-so.md#spindles) to assess spindle/SO coupling:
 
 ```
 luna s.lst 2 -o out.db \
@@ -1378,15 +1410,15 @@ destrat out.db +SPINDLES -r F CH -v COUPL_ALL_MAG COUPL_ALL_MAG_Z COUPL_ALL_PV C
 
 (Note the `COUPL_ALL` statistics are based on _all_ spindles, not just
 those that overlap a detected SO; we focus on this, as this will be
-more comparable with the application of `PCOUPL` below.)
+more comparable with the application of [`PCOUPL`](power-spectra.md#pcoupl) below.)
 
 Now, imagine instead that we'd used another method to determine
 spindles, outside of Luna.  Or, indeed, that "spindles" here may
 instead reflect _any_ type of event, e.g. arousals, apnea, etc (and
 instead of the EEG, the `sig` here could be _any_ type of rhythmic
-signal, e.g. airflow, etc).  Here we can use `PCOUPL` to
-(_approximately_ - see below) recapitulate the internals of `SPINDLES` (again, noting
-that `PCOUPL` can be used generically).  We attach the previous spindle calls with `annot-file`,
+signal, e.g. airflow, etc).  Here we can use [`PCOUPL`](power-spectra.md#pcoupl) to
+(_approximately_ - see below) recapitulate the internals of [`SPINDLES`](spindles-so.md#spindles) (again, noting
+that [`PCOUPL`](power-spectra.md#pcoupl) can be used generically).  We attach the previous spindle calls with `annot-file`,
 and then specify these with `events`:
 
 ```
@@ -1429,16 +1461,16 @@ destrat out.db +PCOUPL -r ANNOT CH | behead
 
 That is, both asymptotic (`PV`) and empirical (`MAG_EMP`) p-values are significant, and the mean angle is near 270 degrees.
 
-Why aren't these _identical_ to the above (given that `SPINDLES` also uses
+Why aren't these _identical_ to the above (given that [`SPINDLES`](spindles-so.md#spindles) also uses
 a filter-Hilbert band of 0.5 - 4 Hz by default)?  This primarily
-relates to the _anchor_ used.  Internally, `SPINDLES` actually uses the
+relates to the _anchor_ used.  Internally, [`SPINDLES`](spindles-so.md#spindles) actually uses the
 point of maximal wavelet coefficient as the "anchor".  In this (more
-generic) function, there may not be an equivalent, and so `PCOUPL`
+generic) function, there may not be an equivalent, and so [`PCOUPL`](power-spectra.md#pcoupl)
 will use either the start, mid-point or end (i.e. based only on the start/stop times of the spindle).
 This slightly changes the mean angle and also reduces the magnitude of phase coupling a
 small amount.  So, for spindle/SO analysis it would still be
-preferable to use `SPINDLES`, but for other types of (more generic)
-phase-coupling analysis, `PCOUPL` would be appropriate.
+preferable to use [`SPINDLES`](spindles-so.md#spindles), but for other types of (more generic)
+phase-coupling analysis, [`PCOUPL`](power-spectra.md#pcoupl) would be appropriate.
 
 Finally, we can also pull out the count of events per 20-degree bin of the slow phase (excluding some columns
 from the output for clarity):
@@ -1468,7 +1500,7 @@ PHASE   OVERLAP OVERLAP_EXP OVERLAP_EMP   OVERLAP_Z
 ```
 
 That is, for bins 290 (280-300) and 310 (300-320) we see more events
-(`OVERLAP`) than we'd expect by chance (`OVERLAP_EXP`), leading to positive
+([`OVERLAP`](intervals.md#overlap)) than we'd expect by chance (`OVERLAP_EXP`), leading to positive
 Z scores and significant (1-sided) empirical p-values.
 
 
@@ -1482,12 +1514,16 @@ Empirical mode decomposition, or the Hilbert-Huang transform
 EMD is applied to the entire duration of the recording (i.e. it does
 not work epoch-wise).
 
+<h3>Methods</h3>
+
+Empirical mode decomposition (EMD) decomposes the signal into a set of intrinsic mode functions (IMFs) using the standard sifting algorithm. At each sifting iteration, the local maxima and minima of the residual signal are identified and interpolated with cubic splines to form upper and lower envelopes; the mean envelope is subtracted from the signal. This process repeats until the resulting component satisfies the IMF criteria (the number of extrema and zero crossings differing by at most one, and the mean envelope being approximately zero). Each extracted IMF is removed from the signal before sifting the next component, proceeding from highest to lowest frequency. The final residual (after extracting all specified IMFs) captures the slowly varying trend of the signal. Because EMD is a fully data-driven decomposition that makes no assumptions about spectral stationarity or linearity, it is particularly suited to nonlinear and non-stationary physiological signals, though boundary effects and mode mixing can affect the resulting components.
+
 <h3>Parameters</h3>
 
 | Option | Example | Description |
 | ---- | ---- | --- |
 | `sig` | `C3` | Specify the channels to which EMD will be applied |
-| `tag` | `EMD` | Change the default `_IMF_N` tag, e.g. `C3_IMF_1` to `C3_EMD_1` | 
+| `tag` | [`EMD`](power-spectra.md#emd) | Change the default `_IMF_N` tag, e.g. `C3_IMF_1` to `C3_EMD_1` | 
 | `sift` | 20 | Maximum number of sifting iterations (default: 20) | 
 | `imf` | 10 | Number of intrinsic mode functions to extract (default: 10) |
 
@@ -1515,17 +1551,17 @@ luna . --nr=300 --rs=1 -o out.db \
             MATRIX file=s1.txt'
 ```
 
-The `EMD` command by default requires the channel(s) (`sig`) to be
+The [`EMD`](power-spectra.md#emd) command by default requires the channel(s) (`sig`) to be
 specified.  In this example, because we know there are only three
 components, we set `imf` to 3 (the default is to return 10
 components). Note that the first three components will be identical
 whether or not `imf` is specified, as this option only impacts what
 is output (and the residual component).
 
-The `FFT` command performs a
+The [`FFT`](power-spectra.md#fft) command performs a
 DFT, for the original signal `S1` but also the new
-signals attached by `EMD`: namely, `S1_IMF_1`, `S1_IMF_2` and
-`S1_IMF_3`.  Finally, the `MATRIX` command dumps the raw signals to a
+signals attached by [`EMD`](power-spectra.md#emd): namely, `S1_IMF_1`, `S1_IMF_2` and
+`S1_IMF_3`.  Finally, the [`MATRIX`](outputs.md#matrix) command dumps the raw signals to a
 file `s1.txt` (for plotting).
 
 After running the above, we can first look at the raw signals (in `s1.txt`), for the original simulated signal `S1` (here
@@ -1533,11 +1569,11 @@ showing just two seconds of the recording):
 
 ![img](../img/emd1.png){width="100%"}
 
-and likewise for the three components extracted by `EMD`:
+and likewise for the three components extracted by [`EMD`](power-spectra.md#emd):
 
 ![img](../img/emd2.png){width="100%"}
 
-It does indeed look as though `EMD` has extracted three sine waves,
+It does indeed look as though [`EMD`](power-spectra.md#emd) has extracted three sine waves,
 with the first being the fastest (as expected given the sifting/EMD
 algorithm) and also of greater amplitude (as expected given the
 simulation).
@@ -1613,6 +1649,10 @@ criterion respectively, with default values of 2 and 0.15
 respectively. Smaller values of (multi-scale) entropy indicate more
 self-similarity and less noise in a signal.
 
+<h3>Methods</h3>
+
+Signal complexity is quantified using multi-scale entropy (MSE), as described by Costa et al. At each of a range of temporal scales, the signal is first coarse-grained by averaging non-overlapping windows of length equal to the scale factor, yielding a shorter time series. Sample entropy is then estimated for each coarse-grained series: for a given embedding dimension _m_ and tolerance _r_ (expressed as a fraction of the signal's standard deviation), sample entropy measures the conditional probability that two sequences of _m_ consecutive samples that match within tolerance _r_ also match at the next sample, with lower values indicating greater self-similarity. Across scales, the profile of sample entropy values provides a multi-resolution characterization of signal regularity: signals that maintain high entropy across coarse scales are considered more complex than those that show entropy declining at longer time scales. Standard parameter values of _m_ = 2 and _r_ = 0.15 are used unless otherwise specified.
+
 <h3>Parameters</h3>
 
 | Parameter | Example | Description |
@@ -1625,17 +1665,17 @@ self-similarity and less noise in a signal.
 
 <h3>Outputs</h3>
 
-MSE per channel and scale (strata: `CH` x `SCALE`)
+MSE per channel and scale (strata: `CH` x [`SCALE`](manipulations.md#scale))
 
 | Variable | Description |
 | ----- | ------ |
-| `MSE` | Multi-scale entropy |
+| [`MSE`](power-spectra.md#mse) | Multi-scale entropy |
 
-Epoch-level MSE per channel and scale (option: `verbose`, strata: `E` x `CH` x `SCALE`)
+Epoch-level MSE per channel and scale (option: `verbose`, strata: `E` x `CH` x [`SCALE`](manipulations.md#scale))
 
 | Variable | Description |
 | ----- | ------ |
-| `MSE` | Multi-scale entropy |
+| [`MSE`](power-spectra.md#mse) | Multi-scale entropy |
 
 
 
@@ -1649,11 +1689,15 @@ quantitative metric (the ratio of the size of the compressed signal
 versus the original signal) of the amount of non-redundant information
 in a signal.
 
+<h3>Methods</h3>
+
+Signal information content is estimated using the Lempel–Ziv–Welch (LZW) compression ratio. The continuous signal is first coarse-grained by smoothing with a sliding window and then discretized into a finite number of amplitude bins. The LZW algorithm is applied to the resulting symbol sequence, and the compression ratio — defined as the length of the compressed representation divided by the length of the original symbol sequence — serves as the complexity index. Signals with greater regularity and predictability are compressed more efficiently and therefore yield lower LZW values, whereas highly irregular signals approach a compression ratio of 1. This measure provides a computationally inexpensive, model-free index of signal complexity that is sensitive to the temporal structure of the symbol sequence rather than solely to its amplitude distribution.
+
 <h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | ---- | ----- | ----- | 
-| `nsmooth` | `nsmooth=2` | Coarse-graining parameter (similar to scale `s` in `MSE`) |
+| `nsmooth` | `nsmooth=2` | Coarse-graining parameter (similar to scale `s` in [`MSE`](power-spectra.md#mse)) |
 | `nbins` | `nbins=5` | Matching tolerance in standard deviation units (default 10) |
 | `epoch` | `epoch` | Emit epoch-level LZW statistics |
 
@@ -1663,13 +1707,13 @@ LZW per channel (strata: `CH`)
 
 | Variable | Description |
 | ----- | ------ |
-| `LZW` | Compression index |
+| [`LZW`](power-spectra.md#lzw) | Compression index |
 
 Epoch-level LZW per channel and scale (option: `epoch`, strata: `E` x `CH`)
 
 | Variable | Description |
 | ----- | ------ |
-| `LZW` | Compression index |
+| [`LZW`](power-spectra.md#lzw) | Compression index |
 
 
 ## 1FNORM
@@ -1681,10 +1725,14 @@ frequency distribution, meaning that slower frequencies tend to have
 exponentially greater power than faster frequencies.  It may sometimes
 be useful to normalize signals in such a way that removes this
 trend (e.g. in visualization, or detecting peaks against a background
-of a roughly flat baseline). The `1FNORM` command is an implementation
+of a roughly flat baseline). The [`1FNORM`](power-spectra.md#1fnorm) command is an implementation
 of [this method](https://www.ncbi.nlm.nih.gov/pubmed/18070337) to
 normalize power spectra, by passing the signal through a
 differentiator prior to spectral analysis.
+
+<h3>Methods</h3>
+
+The 1/_f_ spectral trend is removed from the signal by applying a first-difference differentiator filter. In the frequency domain, differentiation multiplies each spectral component by its frequency, effectively imposing a +20 dB/decade spectral tilt that counteracts the characteristic 1/_f_ roll-off of broadband biological signals such as the EEG. After this transformation, the modified signal exhibits a flatter baseline spectrum, against which narrowband oscillatory components appear as more prominent peaks. This preprocessing step facilitates visual inspection of the power spectrum and can improve the sensitivity of peak-detection procedures in frequency ranges where the original 1/_f_ background would otherwise dominate.
 
 <h3>Parameters</h3>
 
@@ -1718,7 +1766,7 @@ k <- ldb( "out.db" )
 ```
 
 Looking at the contents of `out.db`, we are interested in the results
-of `PSD` stratified by `F` (for power spectra), `CH` and `NORM` (the
+of [`PSD`](power-spectra.md#psd) stratified by `F` (for power spectra), `CH` and `NORM` (the
 [`TAG`](summaries.md#tag) that tracks in the output whether we have
 applied the normalization or not):
 
@@ -1795,7 +1843,7 @@ plot( post$F[ post$ID == i ] , post$PSD[ post$ID == i ] ,
 
 _Applies a fast algorithm for 1D total variation denoising_
 
-The `TV` is a wrapper around the algorithm described
+The [`TV`](power-spectra.md#tv) is a wrapper around the algorithm described
 [here](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.372.3867).
 In [_lunaC_](../luna/args.md) it operates on EDF channels, modifying
 the _in-memory_ representation of the signal.  
@@ -1806,6 +1854,10 @@ the _in-memory_ representation of the signal.
     be via [_lunaR_](../ext/R/index.md) however, where the `ldenoise()`
     function provides a simple interface for _any_ time series.  
     It is mentioned here only for completeness.
+
+<h3>Methods</h3>
+
+Signal denoising is performed using the total variation (TV) minimization algorithm (Condat, 2013). The method seeks a piecewise-constant approximation to the input signal by minimizing the sum of squared deviations from the original signal subject to a penalty on the total variation — the sum of absolute differences between adjacent samples. The regularization parameter λ controls the tradeoff between fidelity to the original signal and smoothness of the output: larger values produce a more heavily smoothed, step-like result, while smaller values allow finer-scale variation to be preserved. This approach is well suited to extracting slowly varying trends from signals that contain abrupt transitions, such as envelopes of neural oscillations or overnight trajectories of spectral power.
 
 <h3>Parameters</h3>
 
@@ -1828,7 +1880,7 @@ No output other than modifying the _in-memory_ representation of the signal.
 <h3>Example</h3>
 
 Using [_lunaR_](../ext/R/index.md) to plot delta power across sleep epochs
-and fit a de-noised line using `ldenoise()` (which invokes `TV`), to the 
+and fit a de-noised line using `ldenoise()` (which invokes [`TV`](power-spectra.md#tv)), to the 
 `nsrr02` individual from the [tutorial](../tut/tut1.md) dataset:
 
 ```
@@ -1871,6 +1923,9 @@ lines( d1 , lwd=5 , col="orange" )
 
 _Compute the autocorrelation function for a signal_
 
+<h3>Methods</h3>
+
+The autocorrelation function (ACF) is computed for each signal as the normalized cross-correlation of the signal with itself at a series of time lags. At each lag _k_, the ACF value is the Pearson correlation between the signal and its version shifted by _k_ samples, providing a measure of the linear temporal dependence structure of the signal. ACF values near 1 at short lags reflect strong short-term persistence (e.g., smoothly varying physiological signals), whereas periodic peaks at longer lags indicate rhythmic structure (e.g., regular artifact or oscillatory activity). Rapid decay toward zero indicates a signal whose past values are weakly predictive of future values.
 
 <h3>Parameters</h3>
 
@@ -1886,7 +1941,7 @@ ACF per channel (strata: `CH` x `LAG`)
 | Variable | Description |
 | ----- | ------ |
 | `SEC` | Lag in seconds |
-| `ACF` | Autocorrelation |
+| [`ACF`](power-spectra.md#acf) | Autocorrelation |
 
 
 <h3>Example</h3>
@@ -1897,7 +1952,7 @@ To estimate the ACF for an example EEG, ECG and EMG channel, for up to 3 seconds
 ```
 luna s.lst 1 -o out.db -s 'ACF sig=EEG,ECG,EMG lag=300'
 ```
-We can extract the output from the `ACF` function, conditional on `CH` and `LAG` strata
+We can extract the output from the [`ACF`](power-spectra.md#acf) function, conditional on `CH` and `LAG` strata
 (here putting different channels in different columns (`-c CH`) and different lags in different
 rows (`-r LAG`):
 
@@ -1928,7 +1983,7 @@ The output from this second run are plotted in the lower panel of the above figu
 
 _Implements detrended fluctuation analysis (DFA)_
 
-`DFA` runs a Fourier-domain detrended fluctuation analysis following
+[`DFA`](power-spectra.md#dfa) runs a Fourier-domain detrended fluctuation analysis following
 the implementation of [Nolte et al.
 (2019)](https://pubmed.ncbi.nlm.nih.gov/31004085/). Rather than
 returning only a single exponent, it evaluates the fluctuation
@@ -1940,6 +1995,10 @@ can also first apply a narrowband filter plus Hilbert transform, and
 then run DFA either on the filtered waveform or on its amplitude
 envelope. This makes it useful for both broadband and band-limited
 scaling analyses.
+
+<h3>Methods</h3>
+
+Long-range temporal correlations are quantified using detrended fluctuation analysis (DFA), following the Fourier-domain implementation of Nolte et al. (2019). The signal is segmented into non-overlapping windows spanning a logarithmically spaced grid of time scales. Within each window, a local polynomial trend is estimated and removed, and the root-mean-square residual — the fluctuation function — is computed. The scaling exponent α is estimated as the slope of the log–log regression of the fluctuation function against window size over a user-specified range of time scales; α ≈ 0.5 indicates uncorrelated noise, α > 0.5 indicates persistent long-range correlations, and α < 0.5 indicates anti-persistent behaviour. Rather than returning a single global exponent, the local slope at each scale is also reported, allowing detection of scale-dependent changes in temporal correlation structure. Optionally, prior to DFA the signal can be bandpass-filtered and the Hilbert envelope extracted, restricting the scaling analysis to amplitude fluctuations within a specific frequency band.
 
 <h3>Parameters</h3>
 

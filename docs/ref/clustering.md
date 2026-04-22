@@ -1,6 +1,6 @@
 # Time-series clustering
 
-Time-series clustering groups epochs or channels according to the similarity of their signal dynamics, independent of amplitude or spectral properties. Luna implements `EXE`, which uses permutation distribution clustering (PDC) to construct a pairwise distance matrix across epochs or channels within an individual, based on the ordinal pattern structure of the time series. The resulting matrix can be exported for downstream analysis or used directly within Luna for hierarchical complete-linkage clustering. `EXE` supports univariate (per-channel), multivariate (combined-channel), and concatenated modes.
+Time-series clustering groups epochs or channels according to the similarity of their signal dynamics, independent of amplitude or spectral properties. Luna implements [`EXE`](clustering.md#exe), which uses permutation distribution clustering (PDC) to construct a pairwise distance matrix across epochs or channels within an individual, based on the ordinal pattern structure of the time series. The resulting matrix can be exported for downstream analysis or used directly within Luna for hierarchical complete-linkage clustering. [`EXE`](clustering.md#exe) supports univariate (per-channel), multivariate (combined-channel), and concatenated modes.
 
 ## EXE
 
@@ -8,7 +8,7 @@ _Epoch-by-epoch or channel-by-channel time-series clustering_
 
 This command provides an implementation of permutation distribution
 clustering, following Andreas Brandmaier's [`pdc` R
-package](https://rdrr.io/cran/pdc/). Within an individual, the `EXE`
+package](https://rdrr.io/cran/pdc/). Within an individual, the [`EXE`](clustering.md#exe)
 command can be applied to signal data, either within or between channels and/or epochs,
 to create a distance matrix
 that may likely be the _starting point_ for subsequent clustering or
@@ -19,18 +19,22 @@ This command runs in one of four basic modes: for _K_ channels and _E_ epochs:
  - _univariate_ : _K_ different channel-specific (_ExE_) matrices [`uni`]
  - _default_    : one combined multi-channel (_ExE_) matrix, i.e. a single distance metric for each pair of epochs is calculated based on the _multivariate_ profiles of the _K_ channels
  - _channel-wise_ : one channel-by-channel (_KxK_) matrix [`cat` with unepoched data ] 
- - _concatenated_ : one matrix concatenating epochs from different channels (_KExKE_) [`cat` with epoched data, i.e running `EPOCH` beforehand ]
+ - _concatenated_ : one matrix concatenating epochs from different channels (_KExKE_) [`cat` with epoched data, i.e running [`EPOCH`](epochs.md#epoch) beforehand ]
 
 ![img](../img/exe6.png){width="100%"}
 
 After forming one of these distance matrices, it can be output to a
 file for subsequent processing outside of Luna.  Additionally, the
-`EXE` command can run hierarchical complete linkage clustering on this
+[`EXE`](clustering.md#exe) command can run hierarchical complete linkage clustering on this
 distance matrix.
+
+<h3>Methods</h3>
+
+[`EXE`](clustering.md#exe) implements permutation distribution clustering (PDC) as described by Brandmaier (2015). For each epoch (or channel), a time series is encoded as a permutation distribution (PD): sliding windows of _m_ consecutive samples, spaced _t_ samples apart, are examined; the ordinal rank pattern of each window is one of _m_! possible permutations, and the PD is the normalized frequency histogram of these patterns across the full time series. The distance between two observations is the symmetric alpha-divergence between their PDs, equal to 4(1 − Σᵢ√(pᵢqᵢ)), which is proportional to the squared Hellinger distance. For multivariate data (_K_ > 1 channels), the pairwise distance is the square root of the sum of squared per-channel alpha-divergences. This encoding and distance computation is applied across all epoch pairs to populate the full _N_ × _N_ symmetric distance matrix. Optional hierarchical complete-linkage clustering is then performed on this matrix. The `representative` heuristic iteratively bisects the set of epochs using Otsu's threshold on the pairwise distance distribution within each current partition, selecting as the exemplar the epoch with the lowest median distance to all others in its partition.
 
 <h3>Parameters</h3>
 
-Other than specifying the type of distance matrix to be constructed (via `cat`, `unit` and the presence of a prior `EPOCH` command), you
+Other than specifying the type of distance matrix to be constructed (via `cat`, `unit` and the presence of a prior [`EPOCH`](epochs.md#epoch) command), you
 can change the default embedding dimension (`m`) and whether to skip samples (`t`).  
 
 | Parameter | Example | Description |
@@ -59,7 +63,7 @@ Extracting representative epochs heuristic:
 
 <h3>Output</h3>
 
-The primary output of `EXE` is the `.mat` text file, which is a
+The primary output of [`EXE`](clustering.md#exe) is the `.mat` text file, which is a
 tab-delimited distance matrix, containing the symmetric
 alpha-divergence distance measure (which is proportional to the
 squared [Hellinger
@@ -223,12 +227,12 @@ epochs, etc).
 
 
 !!! note
-    We provide these examples simply to illustrate working with signal data and the `EXE` command, i.e.
+    We provide these examples simply to illustrate working with signal data and the [`EXE`](clustering.md#exe) command, i.e.
     by itself, epoch-level time series clustering is probably not the most obvious way to QC sleep signal data.
 
 <h5>Potential applications</h5>
 
-The `EXE` command by itself is not particularly useful, but it can form the basis of
+The [`EXE`](clustering.md#exe) command by itself is not particularly useful, but it can form the basis of
 other ways of looking at the data, i.e. any subsequent analysis that takes a distance
 matrix as its starting point, either between channels, epochs, and both.
 
@@ -274,7 +278,7 @@ The basic heuristic seeds on the epoch-by-epoch distance matrix, and iteratively
 luna s.lst -o out.db -s ' EPOCH & EXE sig=C3 representative=5 '
 ```
 
-Note, it is necessary to explicitly `EPOCH` the data before running `EXE representative`. 
+Note, it is necessary to explicitly [`EPOCH`](epochs.md#epoch) the data before running `EXE representative`. 
 
 
 Here, we see five splits, as requested, with exemplar epochs `1169`, `294`, etc.

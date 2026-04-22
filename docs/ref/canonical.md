@@ -2,9 +2,9 @@
 
 _Generates canonical signals for harmonized EDFs, given a set of rules_
 
-`CANONICAL` helps harmonize EDF data from different sources by mapping site-specific channel labels and conventions onto a common set of canonical signals. Given one or more definition files, the command sequentially tries to create canonical signals from existing channels, checking that channel labels, units, transducer types and sample rates satisfy the specified requirements. It is most useful in multi-cohort contexts where channel naming is inconsistent, and is the basis of the [NSRR harmonization](https://gitlab-scm.partners.org/zzz-public/nsrr/-/blob/master/common/harm-principles.md) effort.
+[`CANONICAL`](canonical.md#canonical) helps harmonize EDF data from different sources by mapping site-specific channel labels and conventions onto a common set of canonical signals. Given one or more definition files, the command sequentially tries to create canonical signals from existing channels, checking that channel labels, units, transducer types and sample rates satisfy the specified requirements. It is most useful in multi-cohort contexts where channel naming is inconsistent, and is the basis of the [NSRR harmonization](https://gitlab-scm.partners.org/zzz-public/nsrr/-/blob/master/common/harm-principles.md) effort.
 
-The `CANONICAL` command is designed to help when harmonizing multiple
+The [`CANONICAL`](canonical.md#canonical) command is designed to help when harmonizing multiple
 sets of EDFs that have different labels and conventions.  We're
 currently using this in the context of the [NSRR
 harmonization](https://gitlab-scm.partners.org/zzz-public/nsrr/-/blob/master/common/harm-principles.md)
@@ -18,7 +18,7 @@ efforts (the linked document gives some motivating examples in actual multi-coho
 
 ## Canonical signal definitions
 
-The `CANONICAL` command is designed to help producing sets of EDFs
+The [`CANONICAL`](canonical.md#canonical) command is designed to help producing sets of EDFs
 that have harmonized sets of channel labels and conventions. It sequentially
 attempts to process a number of _rules_, that will create a new _canonical_ signal
 based on existing signals, as long as certain _requirements_ (based on the EDF header fields)
@@ -33,7 +33,7 @@ The types of requirements may include:
  - certain sample rates
  - certain minimum/maximum values
 
-The `CANONICAL` command takes one or more _canonical signal definition
+The [`CANONICAL`](canonical.md#canonical) command takes one or more _canonical signal definition
 files_ and tries to make as many _canonical signals_ as it can, by
 following the set of rules. Rules are followed sequentially, and once
 a particular canonical signal has been generated, Luna will skip all
@@ -99,20 +99,20 @@ This rule creates a new signal called `canonical_label`, _if the following condi
  - the EDF also has a channel `ref1` or `ref2` (again, if both are present, the first will be used)
  - the primary signal selected (either `sig1` or `sig2`) has an EDF transducer field that is `type1` or `T1` (first line)
  or it is `unknown` or an empty field (the `.`) (second line)
- - the EDF physical unit is one of `uV`, `micro-volts`, etc, or (on the second line) `mV`, etc
+ - the EDF physical unit is one of [`uV`](manipulations.md#uv), `micro-volts`, etc, or (on the second line) [`mV`](manipulations.md#mv), etc
  
 If these conditions are not met for any term (`sig`, `ref`, `unit`
 and `trans`), the rule will not be enacted.  If these conditions are
-met, then when running the `CANONICAL` command, Luna will generate a
+met, then when running the [`CANONICAL`](canonical.md#canonical) command, Luna will generate a
 new channel with the following properties:
 
  - the new label is `canonical_label`
  - the primary signal (either `sig1` or `sig2`) will be _re-referenced_ by either `ref1` or `ref2`
  - the new signal's transducer field will be set to _either_ `type1` or `unknown` (as these are the __first__ entries
  for each `trans:` line above)
- - likewise, the new signal's unit field will initially be set to _either_ `uV` or `mV` (as these are the first entries, i.e. the preferred values) for that set
+ - likewise, the new signal's unit field will initially be set to _either_ [`uV`](manipulations.md#uv) or [`mV`](manipulations.md#mv) (as these are the first entries, i.e. the preferred values) for that set
  - because the rule also has a `set:` section, two additional operations will be performed:
-  - first, if the unit is `mV`, then the channel will be rescaled to be in `uV` and then EDF header will be updated to reflect that
+  - first, if the unit is [`mV`](manipulations.md#mv), then the channel will be rescaled to be in [`uV`](manipulations.md#uv) and then EDF header will be updated to reflect that
   - second, if the original sample rate (i.e. for `sig1` or `sig2`) is not 100 Hz, then the channel will be resampled to be 100 Hz
 
 That is, (as well as the re-referencing step), the two `set:`
@@ -156,8 +156,8 @@ that string value.  For example, the line as part of a `req:`
 ```
   unit = uV,mV,micro-volts,milli-volts
 ```
-would be incorrect, as any of these four values would be changed to `uV`.  In contrast, this
-would appropriately set the field to either `uV` or `mV` depending on the matched values:
+would be incorrect, as any of these four values would be changed to [`uV`](manipulations.md#uv).  In contrast, this
+would appropriately set the field to either [`uV`](manipulations.md#uv) or [`mV`](manipulations.md#mv) depending on the matched values:
 ```
   unit = uV,micro-volts
   unit = mV,milli-volts
@@ -180,7 +180,7 @@ one would just write
   unit = ${volt}
 ```
 as part of a _requirement_.  Because each line is a different unit (i.e. not just different labels for the same thing), they
-need to be on different lines.  Note that this still leads to the same _preferred_ units (`uV`, `mV`, `V`).  
+need to be on different lines.  Note that this still leads to the same _preferred_ units ([`uV`](manipulations.md#uv), [`mV`](manipulations.md#mv), `V`).  
 
 Here is an example rule for an EEG target channel: `C4_M1`, i.e. a
 right central electrode with contralateral mastoid reference.  Using the unit
@@ -210,7 +210,7 @@ C4_M1
   sr = 128
 ```
 
-Here we have two rules for the same channel.  The `CANONICAL` command
+Here we have two rules for the same channel.  The [`CANONICAL`](canonical.md#canonical) command
 would first try to make the top one, which assumes a suitable
 referenced channel already exists (but allowing for some variations on
 the naming, e.g. `A1` instead of `M1` etc).   Thus there is no `ref` requirement.
@@ -223,8 +223,8 @@ channel would also be required to be of some flavor of voltage units.
 
 The `set:` sub-section in the last command would then change the
 sample rate of 128 Hz if it was not already that; also, if the channel
-(based on `sig` only) was `mV` or `V`, it would rescale that variable
-to be in `uV` units (and update the EDF header field appropriately for
+(based on `sig` only) was [`mV`](manipulations.md#mv) or `V`, it would rescale that variable
+to be in [`uV`](manipulations.md#uv) units (and update the EDF header field appropriately for
 the new channel).
 
 ### Templates
@@ -322,7 +322,7 @@ apply: EEG_left_mastoid C4 F4 O2
 apply: EEG_right_mastoid C3 F3 O1
 ```
 
-If you add the `dump` option, the `CANONICAL` command will just print
+If you add the `dump` option, the [`CANONICAL`](canonical.md#canonical) command will just print
 the expanded form of the script (i.e. after variables and templates
 have been substituted), and then stop; this can be useful for checking
 that the syntax works as expected.
@@ -387,7 +387,7 @@ ${eeg=C3,C4,F3,F4,O1,O2}
 
 which would generate six rules.  (Note that, unlike in Luna scripts,
 variables such as `${eeg}` are not pre-populated when using
-`CANONICAL`.)
+[`CANONICAL`](canonical.md#canonical).)
 
 You can also use variables within the definition of the template: e.g.
 if we've defined variables to voltage units, as above, and `${lm_ref}`
@@ -611,7 +611,7 @@ is known that a particular study uses an unusual naming convention,
 this can be incorporated into the generic body of rules for that
 particular study/cohort.
 
-As noted below, the `CANONICAL` command can optionally called with one
+As noted below, the [`CANONICAL`](canonical.md#canonical) command can optionally called with one
 or more `group` options set:
 
 ```
@@ -621,7 +621,7 @@ luna s.lst -s CANONICAL file=defs.txt group=study1,study2
 When processing the rules, if groups have been set, then Luna will
 watch out for group-specific rules.  If a rule has a `group:`
 attached, then it will only be processed if one of those groups (here
-`study1`) was specified when running `CANONICAL`.  Group labels can be
+`study1`) was specified when running [`CANONICAL`](canonical.md#canonical).  Group labels can be
 any _sanitized_ text label (i.e avoid whitespace, etc)
 
 
@@ -648,7 +648,7 @@ This can be useful when constructing _generic_ signal definition files
 labels are more or less self-explanatory.  In this context,
 intrinsically ambiguous or confusing labels should not be included in
 any generic set.  Here, they can be partitioned out into separate
-rules/files, and only applied when running `CANONICAL` for those
+rules/files, and only applied when running [`CANONICAL`](canonical.md#canonical) for those
 studies/groups.  In the above example, say you have datasets where
 `EEG2` generically means `C4-M1` in some studies, but `CZ-(M1+M2)/2`
 in another.  Especially as the label `EEG2` is ambiguous without
@@ -758,7 +758,7 @@ unique (i.e. adding `.1`, `.2` etc):  i.e. `canon`, `canon.1` and `canon.2`.
     represents a _new_ signal that is generated from existing signals
     according to a set of rules.  A _channel type_ is simply a label
     or annotation that is given to all channels, based on their
-    channel name.  The reason for the `CANONICAL` command is that
+    channel name.  The reason for the [`CANONICAL`](canonical.md#canonical) command is that
     often datasets (such as those in the NSRR) can contain EDFs with mixtures
     of conventions and montages.  Thus, this command is designed to be
     able to more simply, e.g., "extract a central EEG" across multiple studies.
@@ -769,8 +769,11 @@ unique (i.e. adding `.1`, `.2` etc):  i.e. `canon`, `canon.1` and `canon.2`.
 _Apply a set of rules from one or more canonical signal definition files_
 
 See the logic of canonical signal definitions and rules above.  To process one
-or more definition files on a set of PSGs, use the `CANONICAL` command as below.
+or more definition files on a set of PSGs, use the [`CANONICAL`](canonical.md#canonical) command as below.
 
+<h3>Methods</h3>
+
+One or more canonical signal definition files are parsed in the order listed. Variable assignments (using `${var=value}` syntax) and template definitions (`define:` / `apply:` blocks) are expanded by text substitution on a first pass, yielding a flat list of rules in their canonical form. Each rule specifies a target canonical label together with optional sub-sections: `group:` (cohort-specific applicability), `unless:` (skip if a named canonical signal has already been created), `req:` (requirements that must be satisfied), and `set:` (transformations to apply). Rules are processed sequentially. For each rule, [`CANONICAL`](canonical.md#canonical) first checks whether the target label has already been satisfied; if so, the rule is skipped. It then checks group membership (if `group:` is present), `unless:` conditions, and `closed:` directives, bailing out of the rule if any check fails. The requirements under `req:` are then evaluated against the EDF header: a primary signal (`sig`) must be present (the first listed matching channel is selected), an optional reference signal (`ref`) must be present (linked-mastoid references, given in quotes as a comma-delimited list, require all named channels to exist), and any specified `trans:`, `unit:`, sample-rate (`sr-min`, `sr-max`), and `scale` constraints must be met by the matched primary signal. Wildcard values (`.` for an empty field, `*` for any non-empty value) are supported for `unit` and `trans` fields. If all requirements are satisfied, the new canonical signal is constructed: the primary signal is copied (and optionally re-referenced against the matched reference channel using a simple subtraction, or against a linked average of multiple reference channels) and added to the in-memory EDF under the canonical label. If `set: sr` is specified, the new signal is resampled to the target rate; if `set: unit` is specified and the current unit indicates a different voltage scale (V, mV, or uV), the signal is rescaled accordingly and the EDF physical dimension field is updated. All matched channel labels and their output dispositions are reported at the individual level.
 
 <h3>Parameters</h3>
 

@@ -1,6 +1,6 @@
 # Interval annotations
 
-Annotations are time-stamped labels attached to an EDF — sleep stages, arousals, events, or any user-defined interval — and are central to most Luna workflows. This page describes how Luna reads and stores annotations (in `.annot`, `.eannot`, and NSRR XML formats) and the commands used to view, create, and export them. `ANNOTS` tabulates all loaded annotations; `MAKE-ANNOTS` and `WRITE-ANNOTS` create and save new ones. `REMAP` relabels annotation classes after loading. `AXA` cross-tabulates pairs of annotation classes; `SPANNING` and `ESPAN` report temporal coverage statistics. `A2S` and `S2A` convert between annotations and signal data, and `META` attaches additional meta-data to annotation instances.
+Annotations are time-stamped labels attached to an EDF — sleep stages, arousals, events, or any user-defined interval — and are central to most Luna workflows. This page describes how Luna reads and stores annotations (in `.annot`, `.eannot`, and NSRR XML formats) and the commands used to view, create, modify, and export them. [`ANNOTS`](annotations.md#annots) tabulates all loaded annotations; `MAKE-ANNOTS`, `DROP-ANNOTS`, and `WRITE-ANNOTS` create, remove, and save them. [`REMAP`](annotations.md#remap) relabels annotation classes after loading. [`AXA`](annotations.md#axa) cross-tabulates pairs of annotation classes; [`SPANNING`](annotations.md#spanning) and [`ESPAN`](annotations.md#espan) report temporal coverage statistics. [`A2S`](annotations.md#a2s) and [`S2A`](annotations.md#s2a) convert between annotations and signal data, and [`META`](annotations.md#meta) attaches additional meta-data to annotation instances.
 
 
 | Command  | Description |
@@ -13,6 +13,7 @@ Annotations are time-stamped labels attached to an EDF — sleep stages, arousal
 | [`REMAP`](#remap) | Apply annotation remappings after loading | 
 | [`ANNOTS`](#annots)       | Tabulate all annotations |
 | [`MAKE-ANNOTS`](#make-annots) | Make new annotations |
+| [`DROP-ANNOTS`](#drop-annots) | Drop loaded annotation classes |
 | [`WRITE-ANNOTS`](#write-annots) | Write annotations as `.annot` or `.xml` |
 | [`META`](#meta) | Add meta-data to annotations |
 | [`AXA`](#axa) | Pairwise annotation cross-tabulation |
@@ -67,6 +68,39 @@ Annotations can be represented in a number of different file formats, all descri
     [`annot`](../luna/args.md#selecting-annotations) option works at the _class_ level
     only.  That is, either all _instances_ of a given _class_ are
     loaded in, or none are.
+
+## DROP-ANNOTS
+
+_Drop one or more loaded annotation classes_
+
+`DROP-ANNOTS` removes one or more annotation classes from the current
+in-memory EDF. This is useful for clearing temporary annotations from a prior
+step, or for discarding unwanted classes before later masking, summaries, or
+export.
+
+<h3>Methods</h3>
+
+`DROP-ANNOTS` deletes the specified annotation classes from the current Luna
+session only. It does not edit the original annotation file on disk; it simply
+removes those classes from the annotation set attached to the in-memory EDF, so
+subsequent commands no longer see them.
+
+<h3>Parameters</h3>
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `annot` | `annot=N4,M` | Comma-delimited list of annotation classes to remove |
+
+<h3>Output</h3>
+
+No formal tabular output. The command modifies the in-memory annotation set and
+may emit notes to the console log.
+
+<h3>Example</h3>
+
+```bash
+luna s.lst -s 'DROP-ANNOTS annot=N4,M & ANNOTS'
+```
 
 ## .annot files 
 
@@ -387,7 +421,7 @@ __M/D/Y and Y/M/D formats:__ By setting the [special
 variable](../luna/args.md#special-variables) `date-format` to either
 `MDY` or `YMD` (versus the default value of `DMY`) you can instruct
 Luna to assume these alternate date formats.  Note, this implies that _all_ annotation
-files will have the same date format.   All outputs (e.g. from `WRITE-ANNOTS` or `HEADERS` etc, will
+files will have the same date format.   All outputs (e.g. from `WRITE-ANNOTS` or [`HEADERS`](summaries.md#headers) etc, will
 always use European formats for dates, however.    Although the EDF specification requires European dates
 in the EDF header, if this is wrongly specified, you can use `edf-date-format` with the same convention.
 
@@ -585,7 +619,7 @@ duration and do not overlap when using `.eannot` files.
     2. Set the special variable
     [`epoch-len`](../luna/args.md#epochs-and-sleep-staging) variable if the `.eannot`
     is specified in the sample list (i.e. and so loaded when the EDF
-    is first attached, prior to running any `EPOCH` command)
+    is first attached, prior to running any [`EPOCH`](epochs.md#epoch) command)
     
     3. Use the `e:` epoch encoding notation in a generic `.annot` file instead, as described above.
 
@@ -774,7 +808,7 @@ _class_ versus _instances_.
     annotations:
       HVT_END (x1) | HVT_START (x1) | edf_annot (x39)
     ```
-    This means they will be separately represented in the `ANNOTS` output, and can more easily be used as annotations in 
+    This means they will be separately represented in the [`ANNOTS`](annotations.md#annots) output, and can more easily be used as annotations in 
     masks, etc.   Typically this might be done to pull out sleep stage annotations: e.g. to pull out stages from an EDF+
     (assuming these are the labels) and save as a simple `.annot` file:
 
@@ -796,7 +830,7 @@ in the log, that lists some of these _instance_ IDs too:
    36 instance IDs:  A1+A2_OFF HVT_00:30 HVT_01:00 HVT_01:30 HVT_02:00 ...
 ```
 
-The `ANNOTS` command can be used to tabulate these annotations.  
+The [`ANNOTS`](annotations.md#annots) command can be used to tabulate these annotations.  
 
 ```
 luna ma0844az_1-1+.edf -o out.db  -s ANNOTS
@@ -839,7 +873,7 @@ Processing: ma0844az_1-1+.edf [ #1 ]
 We'll use two of the annotations in this file to extract only the
 epochs containing those annotations: `HVT_00:30` and `HVT_01:00`,
 which occur at `00.21.32` and `00.22.02` (elapsed time) respectively,
-as one can see from looking at the full output as the above `ANNOTS`
+as one can see from looking at the full output as the above [`ANNOTS`](annotations.md#annots)
 command, for example.
 
 
@@ -874,7 +908,7 @@ luna ma0844az_1-1+.edf -o out.db  -s  ' MASK mask-ifnot=edf_annot[HVT_00:30|HVT_
         total of 58 of 60 retained
     ```
 
-    Expressing the above `MASK` command on the command line in this way, we used `-s` to write it out.  To stop the (bash) shell from interpreting special characters that
+    Expressing the above [`MASK`](masks.md#mask) command on the command line in this way, we used `-s` to write it out.  To stop the (bash) shell from interpreting special characters that
     can often occur (e.g. `&` to separate Luna commands) we
     placed all text within single quotes (`'`).  We also had to place the eval expression with double quotes, so that Luna could correctly parse the entire expression.
     This means we could not also use single quotes easily to specify string literals on the command line (e.g. `HVT_00:30`).  We therefore used Luna's alternate way of
@@ -896,6 +930,10 @@ _Remap annotation labels after loading_
 
 This command replicates the functionality of the [`remap`](#../luna/args.md#remapping-annotations) command, but can be applied _after_
 a dataset is first attached.  It also allows for some flexibility in the format of the remapping file.
+
+<h3>Methods</h3>
+
+Annotation label remapping applies a lookup table to rename or consolidate annotation classes after the initial file load. Each entry in the mapping file specifies one primary label and one or more synonymous labels that are collapsed onto it; all instances of synonym labels are atomically relabeled to the primary label in the in-memory annotation store. This operation is purely label-level and does not alter the timing or metadata of any annotation instance.
 
 <h3>Parameters</h3>
 
@@ -960,11 +998,15 @@ _Tabulate and summarize annotation information_
 Produces information about the number and total duration of
 annotations in an EDF, at the whole-file level and optionally per-epoch.
 
-By default, `ANNOTS` will only show annotations that span at least one
+By default, [`ANNOTS`](annotations.md#annots) will only show annotations that span at least one
 unmasked epoch. The definition of whether or not an annotation
 instance is masked or not can be varied.  Depending on the context,
 this can be useful to generate different types of summaries, e.g. the
 number of respiratory events in REM versus NREM sleep.
+
+<h3>Methods</h3>
+
+Annotation tabulation iterates over all loaded annotation classes and, for each, counts the number of discrete instances and accumulates their total duration in seconds. An annotation instance is considered "included" according to one of three overlap rules relative to the current epoch mask: any overlap with at least one unmasked epoch (default), complete containment within unmasked epochs, or having its start point fall within an unmasked epoch. Per-epoch output additionally records which annotation classes overlap each epoch, along with their individual mask status.
 
 <h3>Parameters</h3>
 
@@ -1026,17 +1068,21 @@ Per-epoch _instance-level_ annotation tabulation (strata: `E` x `INTERVAL` x `IN
 
 _Pairwise annotation cross-tabulation_
 
-`AXA` summarises the pairwise relationships between a set of _seed_ annotations and
+[`AXA`](annotations.md#axa) summarises the pairwise relationships between a set of _seed_ annotations and
 one or more _query_ annotations. For each seed × query pair it reports the mean
 proportion of seed events overlapped, the mean time spanned, the mean count of
 spanning events, and the mean signed time to the nearest query event.
 
-**Compared to [`OVERLAP`](#overlap) / [`--overlap`](#-overlap):** `OVERLAP` uses a
+**Compared to [`OVERLAP`](#overlap) / [`--overlap`](#-overlap):** [`OVERLAP`](intervals.md#overlap) uses a
 permutation framework to assess statistical significance of enrichment across an
-entire dataset. `AXA` is a faster, lighter descriptive cross-tab — no resampling,
+entire dataset. [`AXA`](annotations.md#axa) is a faster, lighter descriptive cross-tab — no resampling,
 no sample-list required. It is the right choice when you want simple numerical
 summaries of annotation co-occurrence or proximity within a single recording, or
 when building per-subject annotation tables at scale.
+
+<h3>Methods</h3>
+
+For each ordered seed–query annotation pair, a set of descriptive co-occurrence statistics is computed without resampling. Overlap metrics (proportion, duration, and count of query events spanning each seed event) are derived by intersecting seed and query interval sets. Nearest-event distances are computed as the signed time from each seed event to the temporally closest query event, with the sign indicating whether the query precedes (negative) or follows (positive) the seed; an optional window restricts which query events are considered. When instance IDs are used, comparisons can optionally be limited to annotation pairs sharing the same instance identifier, enabling channel- or event-level specificity.
 
 <h3>Parameters</h3>
 
@@ -1114,6 +1160,9 @@ Also, there are special cases to
 
  - cut up longer annotations along the lines of epoch boundaries (`split`)
 
+<h3>Methods</h3>
+
+New annotations are derived from existing annotation sets using interval set operations. The union of two classes produces intervals spanning regions covered by either class; the intersection retains only regions covered by both; the overlap-filter retains events from class A whose intervals intersect at least one event from class B; and the difference-filter retains events from class A with no overlap with class B. Contiguous or overlapping events within a single class can be merged (flattened) into non-overlapping spans, and longer intervals can be fragmented at epoch boundaries to produce epoch-aligned sub-events. Epoch-based modes create annotations that directly reflect the temporal footprint of the current epoch structure, including optional edge-window annotations demarcating the boundaries of each continuous epoch span.
 
 <h3>Parameters</h3>
 
@@ -1295,7 +1344,7 @@ class   start   stop
 E       0.000   29.000
 ```
 This spans 0 to 29 seconds, reflecting the epoch structure.  To confirm, we
-could add `verbose` to the `EPOCH` command as described [here](epochs.md#epoch);
+could add `verbose` to the [`EPOCH`](epochs.md#epoch) command as described [here](epochs.md#epoch);
 alternatively, here we can use `MAKE-ANNOTS epoch-num` to make new annotations corresponding
 to each epoch:
 ```
@@ -1374,6 +1423,10 @@ Alternatively, one can write XML files (with `xml`) instead of .annot,
 although we suggest you use `.annot` format as the most practical
 default.
 
+<h3>Methods</h3>
+
+Annotation export serializes the in-memory annotation store to a plain-text file conforming to Luna's canonical six-column format. Each annotation instance is written as a single row with class label, instance identifier, optional channel association, start time, stop time, and metadata. Times are expressed in elapsed seconds by default, but may alternatively be rendered as clock-time strings (with or without calendar dates). When tabular metadata formatting is requested, key–value metadata fields are written as additional named columns rather than a single semicolon-delimited string. Subset export restricts output to specified annotation classes, supporting wildcard matching.
+
 <h3>Parameters</h3>
 
 |  Parameter | Example | Description |
@@ -1441,10 +1494,10 @@ _Collapsing EDF+D annotations_: If the current data are in EDF+D
 *(with gaps), adding the `collapse` option will splice out those gaps,
 as shown in this
 [vignette](../vignettes/merge.md#edfd-to-edf-conversion).  Note that if
-combined in the same Luna run as a `WRITE` command, you should place
+combined in the same Luna run as a [`WRITE`](outputs.md#write) command, you should place
 `WRITE-ANNOTS collapse` first, as if the EDF+D isn't truly
 discontinuous (i.e. it may skip initial epochs, but is still a single
-contiguous interval), then `WRITE` will convert the record to a
+contiguous interval), then [`WRITE`](outputs.md#write) will convert the record to a
 standard EDF in memory (without changing the annotation times).   
 
 
@@ -1466,6 +1519,10 @@ Added annotation meta-data can be exported (with
 [WRITE-ANNOTS](#write-annots)) or used to [derive](evals.md#derive)
 other summary metrics.
 
+<h3>Methods</h3>
+
+Annotation metadata augmentation attaches numeric key–value pairs to existing annotation instances. In annotation-overlap mode, each instance of the target class is evaluated against one or more reference annotation classes; computed quantities include binary overlap indicators, count of overlapping reference events, and signed or absolute distance to the nearest reference event (based on starts, stops, or midpoints). An optional temporal window expands the target interval before evaluating overlap. In signal-mode, the EDF samples spanning each target annotation (optionally extended by a window) are extracted and summarized by their mean, minimum, maximum, or range. A dedicated duration mode simply attaches each event's own duration as a metadata field.
+
 <h3>Parameters</h3>
 
 Annotation mode options (`other`, i.e. meta-data reflect overlaps with other annotations):
@@ -1474,7 +1531,7 @@ Annotation mode options (`other`, i.e. meta-data reflect overlaps with other ann
 | --- | --- | --- |
 | `annot` | `X`	| add meta-data to annotation X | 
 | `other` | `A,B,C` | one or more other annotations |
-| `md` | `D` | key name for metadata (i.e. the main _output_ of `META`)| 
+| `md` | `D` | key name for metadata (i.e. the main _output_ of [`META`](annotations.md#meta))| 
 | `w` | 10 | optional window size around X | 
 | `w-left` | 10 | optional window size before X | 
 | `w-right` | 10 | optional window size after X | 
@@ -1583,7 +1640,7 @@ Left    .       .       21-Jun-2023 00:07:30    21-Jun-2023 00:07:35    .
 
 The respiratory event annotations include two _meta-data_ tags:
 `SpO2DeltaE` and `ArE`.  At this point, it doesn't matter what these
-are: the `META` command is generic.  Consider we have a sample list
+are: the [`META`](annotations.md#meta) command is generic.  Consider we have a sample list
 `s.lst` linking these annotation files:
 
 ```
@@ -1608,9 +1665,9 @@ That is, the two annotations will be remapped to `apnea` and `hypopnea` (i.e. om
 Here we attach and merge the annotations (in this example case,
 fixing a dummy EDF start time and length, etc);  we then add the _duration_ (tag `DUR`) of each event
 as a meta-data tag, for `apnea`, `hypopnea` and `N2` and export those to the file `f.annot`. We
-also use `DERIVE` (described [elsewhere](evals.md#derive)) to calculate the sum of all newly added
+also use [`DERIVE`](evals.md#derive) (described [elsewhere](evals.md#derive)) to calculate the sum of all newly added
 apnea event durations, and save this in the individual-level variable `ADUR`, which can then be output
-by `DERIVE`:
+by [`DERIVE`](evals.md#derive):
 
 ```
 luna s.lst @param -o out.db \
@@ -1682,7 +1739,7 @@ N2       .         .        85410.000   85440.000   .     .     30      .
 ---
 
 As a second example, we'll add meta-data to indicate whether respiratory
-events are NREM/REM, and supine or not, using `META` in annotation-overlap mode:
+events are NREM/REM, and supine or not, using [`META`](annotations.md#meta) in annotation-overlap mode:
 
 ```
 luna s.lst @param \
@@ -1692,7 +1749,7 @@ luna s.lst @param \
        WRITE-ANNOTS file=f.annot '
 ```
 
-The first `META` statement specifies all NREM epochs and "flattens" them, i.e. makes
+The first [`META`](annotations.md#meta) statement specifies all NREM epochs and "flattens" them, i.e. makes
 a single event for all contiguous (or overlapping) instances of the listed `other` annotations.
 This means that when we ask for `complete-overlap` (i.e. that the respiratory event is completely
 spanned by NREM, this will include cases that span, e.g. N2 and N3 epochs, as otherwise
@@ -1700,7 +1757,7 @@ the respiratory event would not be defined as being _completely_ spanned by a si
 This sets the tag to `NR` which will have a 0 or 1 value for each respiratory event, depending on
 whether it is NREM or not, based on this definition.
 
-The second `META` statement does the same for supine events; here we
+The second [`META`](annotations.md#meta) statement does the same for supine events; here we
 don't need to flatten annotations, as there is only a single class
 (`Supine`) and these position annotations aren't epoched (i.e. split
 into smaller periods, as the staging data are, i.e. as separate
@@ -1725,7 +1782,7 @@ N1       .   .   107520.000  107550.000   .
 
 ---
 
-As a final more complex example of `DERIVE`: here we calculate the AHI
+As a final more complex example of [`DERIVE`](evals.md#derive): here we calculate the AHI
 (count of apnea events per hour) for events that are a) in N2, b)
 associated with an arousal (as in this particular case, an `ArE` of 1
 indicates this, and c) are associated with a desaturation of at least
@@ -1742,7 +1799,7 @@ luna s.lst @param -o out.db \
                                my_ahi = N / D  " '
 ```
 
-The `META` commands add the tags as above, that can be used in the subsequent `DERIVE` expression:
+The [`META`](annotations.md#meta) commands add the tags as above, that can be used in the subsequent [`DERIVE`](evals.md#derive) expression:
 
  - `DUR` - duration of each annotation
 
@@ -1751,7 +1808,7 @@ The `META` commands add the tags as above, that can be used in the subsequent `D
  - `Supine` - a flag (0/1) for whether the event was during a supine position
 
 
-The `DERIVE` expression has three parts:
+The [`DERIVE`](evals.md#derive) expression has three parts:
 
  - `D = sum(N2.DUR)/3600 ;` creates a new variable `D` which is the total N2 duration in hours; note how these expressions can access the meta-data values of
  annotations uses the `class.meta` syntax
@@ -1761,7 +1818,7 @@ The `DERIVE` expression has three parts:
 
  - `my_ahi = N / D` create a final (scalar) variable which is the count per hour (i.e. AHI under this definition). 
 
-The final output `my_ahi` as requested by the option `var=my_ahi` to `DERIVE` can be accessed in the output:
+The final output `my_ahi` as requested by the option `var=my_ahi` to [`DERIVE`](evals.md#derive) can be accessed in the output:
 ```
 destrat out.db +DERIVE
 ```
@@ -1771,12 +1828,12 @@ id1   2.70198675496689
 ```
 
 Although this particular example uses an empty EDF with fixed start
-times, etc, the `META` and `DERIVE` commands can be used in the usual
+times, etc, the [`META`](annotations.md#meta) and [`DERIVE`](evals.md#derive) commands can be used in the usual
 multi-sample project-based manner, i.e. these derived metrics could be
 calculated across large numbers of studies with a single command.
 
 One thing to watch out for when working with expressions and
-annotation meta-data is the treatment of missing values - `DERIVE` in
+annotation meta-data is the treatment of missing values - [`DERIVE`](evals.md#derive) in
 principle detects and handles missing values, but the logic of the
 expression may not be as expected under some conditions.  See the page
 on [eval expressions](evals.md) for more details.
@@ -1799,7 +1856,11 @@ specified annotations.
 !!! note 
     Currently, this command can only be applied to continuous,
     unmasked EDFs (i.e. not discontinuous EDF+ files, not EDFs after
-    running the `MASK` or `RE` commands.
+    running the [`MASK`](masks.md#mask) or `RE` commands.
+
+<h3>Methods</h3>
+
+Coverage analysis merges the specified annotation classes into a single interval set and computes the total duration spanned by at least one annotation, expressed both in seconds and as a percentage of the EDF duration. Annotations extending beyond the EDF end are flagged as invalid and their excess duration is reported separately. Internal overlaps among the grouped annotations are detected by checking whether any two intervals intersect, which is relevant for quality control of mutually exclusive annotation schemes such as sleep staging.
 
 <h3>Parameters</h3>
 
@@ -1843,7 +1904,7 @@ List of _invalid_ annotations (strata: `N` )
 
 <h3>Example</h3>
 
-Here we use `SPANNING` on the first [tutorial](../tut/tut1.md)
+Here we use [`SPANNING`](annotations.md#spanning) on the first [tutorial](../tut/tut1.md)
 individual.  For example, given the sleep stage annotations, we might
 want to check that all epochs are spanned by one (and only one) stage
 annotation:
@@ -1917,7 +1978,7 @@ luna s.lst 1 -o out.db -s SPANNING annot=NREM1,NREM2,NREM3,NREM4,REM,wake
 
 As an alternative (and to demonstrate using Luna in different ways), we
 could have identified the "unspanned" epoch and its annotations as
-follows, using the `ANNOTS` command (described [above](#annots)) on the
+follows, using the [`ANNOTS`](annotations.md#annots) command (described [above](#annots)) on the
 EDF after excluding epochs with one of the above five annotations:
 
 ```
@@ -1954,6 +2015,9 @@ Outputs are generated both per annotation class, and as a single, combined set (
 Annotations are "flattened" (i.e. overlapping events merged) when
 calculating these statistics.
 
+<h3>Methods</h3>
+
+For each epoch, each specified annotation class is intersected with the epoch interval after first merging any overlapping events within that class into non-overlapping spans (flattening). The total duration, count, and presence/absence of annotation coverage per epoch is then computed from these flattened intervals. Combined summaries pool all specified annotation classes before flattening, yielding aggregate epoch-level coverage statistics across the full annotation group.
 
 <h3>Parameters</h3>
 
@@ -2090,8 +2154,8 @@ id0  desat     655   2      44   19638    19682    12     19638     19650
     It can often be helpful to also
     run `EPOCH verbose` (or, if epochs are already defined and you
     just want to list them, not change/set them, `EPOCH table`) prior
-    to `ESPAN`: this will dump the start/stop times of the epochs,
-    that can be linked to the output of `ESPAN` via the shared `E`
+    to [`ESPAN`](annotations.md#espan): this will dump the start/stop times of the epochs,
+    that can be linked to the output of [`ESPAN`](annotations.md#espan) via the shared `E`
     field per individual.
 
 
@@ -2139,7 +2203,7 @@ luna s.lst -o out.db \
 ```
 
 Pulling the epoch information (not showing all columns below) we see that only
-epoch 655 is retained, consistent with it being the only epoch from `ESPAN` to have (`HAS`==1)
+epoch 655 is retained, consistent with it being the only epoch from [`ESPAN`](annotations.md#espan) to have (`HAS`==1)
 for all three annotation classes:
 ```
 destrat out.db +EPOCH -r E
@@ -2153,12 +2217,15 @@ id0  655   30    1    02:13:03.000   19620   19650
 
 _Add a signal based on an annotation_
 
-The `A2S` command, by default, makes a binary (0/1) EDF channel
+The [`A2S`](annotations.md#a2s) command, by default, makes a binary (0/1) EDF channel
 corresponding to one or more annotation(s), i.e. whether that
 sample-point is spanned by that annotation or not.  Alternatively, it
 can use the instance ID if it is a numeric value (instead of always
 1).
 
+<h3>Methods</h3>
+
+A new EDF signal is constructed at the specified sample rate by evaluating, for each sample point, whether that time falls within any instance of the target annotation class. Samples within annotated intervals are assigned a value of one (or the numeric instance ID when requested), and all other samples are assigned zero. The resulting binary or numeric channel is appended to the in-memory EDF and is available for downstream signal-domain analyses.
 
 | Option | Example | Description |
 | ---- | ---- | ---- |
@@ -2172,12 +2239,16 @@ can use the instance ID if it is a numeric value (instead of always
 
 _Add an annotation based on a signal_
 
-The complement to `A2S`, the `S2A` command makes an annotation
+The complement to [`A2S`](annotations.md#a2s), the [`S2A`](annotations.md#s2a) command makes an annotation
 corresponding to ranged intervals in an EDF channel.  For example,
 sometimes body position is encoded as a signal with values `0`,
-`1`, `2` or `3`, e.g. for supine, non-supine, left, right.  The `S2A`
+`1`, `2` or `3`, e.g. for supine, non-supine, left, right.  The [`S2A`](annotations.md#s2a)
 command can make an annotation that represents the same information
-(e.g. and be saved with `WRITE-ANNOTS` or used in a `MASK`, etc.)
+(e.g. and be saved with `WRITE-ANNOTS` or used in a [`MASK`](masks.md#mask), etc.)
+
+<h3>Methods</h3>
+
+The signal is scanned sample-by-sample and contiguous runs of samples mapping to the same encoding category are collapsed into annotation intervals. Two encoding schemes are supported: a discrete encoding that maps specific signal values to named labels, and a range encoding that maps samples falling within defined numeric intervals to named labels. Contiguous samples sharing the same label are merged into a single annotation instance, with the resulting start and stop times reflecting the first and last sample of each run. When a class-mode is specified, all label values become instance IDs under a single annotation class, enabling compact representation of multi-state categorical signals.
 
 <h3>Parameters</h3>
 
@@ -2233,7 +2304,7 @@ instances of `1`, etc).
 
 Let's say the CFS encoded body positions supine, non-supine, left and
 right as 0, 1, 2 and 3 respectively.  To generate annotations based on this signal, 
-we can use the `S2A` command:
+we can use the [`S2A`](annotations.md#s2a) command:
 ```
 luna cfs.lst -s ' S2A sig=POSITION encoding=S,0,NS,1,L,2,R,3
                   WRITE-ANNOTS file=pos-^.annot '
@@ -2257,7 +2328,7 @@ R      .          POSITION    7941.000    7943.000    .
 ```
 
 That is: four new annotations (`S`, `NS`, `L` and `R`) have been generated from the values of the `POSITION` channel, as specified by 
-the `encoding` argument of `S2A`, which takes one or more label/value pairs as above (i.e. _S=0_, _NS=1_, etc).
+the `encoding` argument of [`S2A`](annotations.md#s2a), which takes one or more label/value pairs as above (i.e. _S=0_, _NS=1_, etc).
 
 Note that EDF is a floating-point numeric format, and depending on the
 encoding of the EDF (physical and digital min/max in the headers), or
@@ -2320,7 +2391,7 @@ encoding2=X,7.5,+2.5,Y,15,+5
 
 ---
 
-In the first example, `S2A` will by default add four new annotation
+In the first example, [`S2A`](annotations.md#s2a) will by default add four new annotation
 classes: `S`, `NS`, `L` and `R` corresponding to the labels in the
 `encoding`.  As noted in the example above, the instance IDs
 will be blank (`.`).  If you instead added:
@@ -2370,6 +2441,3 @@ However, with `span-gaps` added, then we would see:
  NS     1       2
  R      3       9
 ```
-
-
-## ALIGN-ANNOTS

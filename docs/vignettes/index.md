@@ -5,6 +5,8 @@ describe some of the more practical aspects, or best-practice
 workflows, of various features of Luna, as well as their application
 to [NSRR](../nsrr.md) and other data.
 
+- [Aligning long recordings with INSERT](insert.md)
+
 - [Using Luna at scale](scale.md)
 
 - [Luna for Windows users](windows.md)
@@ -15,19 +17,19 @@ to [NSRR](../nsrr.md) and other data.
 
 - [Evaluating, manipulating & predicting stages (SOAP/POPS)](soap-pops.md)
 
-- [EEG microstate analysis](microstates.md), by Lei Wang
+- [EEG microstate analysis](microstates.md)
 
-- [Artifact rejection for hdEEG sleep data](chep.md), by Nataliia Kozhemiako
+- [Artifact rejection for hdEEG sleep data](chep.md)
 
 - [Working with discontinuous EDFs and annotations](annots.md)
 
-- [Cox & Fell's _Analyzing human sleep EEG_](rcox.md), by Shaun Purcell & Roy Cox
+- [Cox & Fell's _Analyzing human sleep EEG_](rcox.md)
 
 - [NSRR whole-dataset visualizations](dataplots.md)
 
 - [Working with compressed EDFs](edfz.md)
 
-- [EEG polarity issues in the NSRR](nsrr-polarity.md), by Shaun Purcell and Michael Prerau
+- [EEG polarity issues in the NSRR](nsrr-polarity.md)
 
 - [UMAP clustering of NSRR data](nsrr-umap.md)
 

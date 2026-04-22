@@ -317,7 +317,7 @@ The _Covariates_ panel will show a table after a covariate file has been attache
 
 In the example dataset, as well as some basic demographics (age, sex)
 the covariate file contains a set of metrics calculated _based on the
-hypnogram data themselves_ (i.e. from Luna's `HYPNO` command).  This
+hypnogram data themselves_ (i.e. from Luna's [`HYPNO`](../ref/hypnograms.md#hypno) command).  This
 will be a common scenario, i.e. to enable sorting the rows by relevant
 features such as total sleep time (TST) or other measures.  The
 covariates can be any feature however (e.g. disease groups), but
@@ -341,7 +341,7 @@ destrat out.db +HYPNO -r E -v CLOCK_TIME CYCLE OSTAGE > data.hypnos
 
 !!! info "Original staging"
     Note that above we extract `OSTAGE`
-    (_original_ stage) rather than `STAGE`, as the latter may be
+    (_original_ stage) rather than [`STAGE`](../ref/hypnograms.md#stage), as the latter may be
     slightly editted by Luna (e.g. setting lights out for
     leading/trailing epochs, or setting some epochs to `?` if they
     imply excessive WASO (e.g. a single sleep epoch followed by

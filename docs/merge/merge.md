@@ -125,7 +125,7 @@ Examples (in the `eeg_spectral` domain/group):
 
 ## Variable naming conventions
 
-- Root variable names (e.g. `PSD`) can only contain alphanumeric characters and underscores
+- Root variable names (e.g. [`PSD`](../ref/power-spectra.md#psd)) can only contain alphanumeric characters and underscores
 
 - Factor names (e.g. `B`) can only contain alphanumeric characters and periods
 
@@ -138,7 +138,7 @@ For example, if the following file
 eeg_spectral_psd_B_CH_SS-N2.txt
 ```
 
-contained the variable `PSD` (which was defined in the `eeg_spectral`
+contained the variable [`PSD`](../ref/power-spectra.md#psd) (which was defined in the `eeg_spectral`
 domain/group data dictionary), then we might then find expanded
 variables such as:
 
@@ -354,7 +354,7 @@ Less complicated than it may look at first sight, here's a summary of identifier
 
 - Flag duplicate rows (same ID/factors) in and across datasets
 
-- Creates a data dictionary, with variable base-names (e.g. `PSD`) and
+- Creates a data dictionary, with variable base-names (e.g. [`PSD`](../ref/power-spectra.md#psd)) and
 factors (e.g. spectral band) expanded (e.g. `PSD.SIGMA_C3_N2`)
 
 - List the column numbers and count of non-missing observations for
@@ -375,7 +375,7 @@ column gives the actual missing value code)
 - Counts missing data for each variable
 
 - Data-dictionary only needs to specify root (long-format) variables
-  (e.g. `PSD` not `PSD.B_SIGMA_CH_C3_SS_N2`)
+  (e.g. [`PSD`](../ref/power-spectra.md#psd) not `PSD.B_SIGMA_CH_C3_SS_N2`)
 
 - Throws an error if a variable is present but not described in the
   dictionary

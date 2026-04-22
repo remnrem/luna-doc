@@ -2,7 +2,7 @@
 
 _Fit principal spectral components (PSC) to sample-level power spectral and cross-channel connectivity metrics_
 
-Spectral analysis of multi-channel EEG can generate very high-dimensional output — thousands of frequency-by-channel metrics per individual — but with substantial redundancy, so the effective dimensionality is typically much lower. PSC addresses this by applying singular value decomposition (SVD) to a matrix of individuals-by-spectral-metrics, extracting a compact set of components that captures most of the variance. The resulting components can be used for visualization, as features for downstream statistical models (such as [`POPS`](pops.md)), or to reduce the multiple-testing burden. `--psc` fits a decomposition to a set of existing Luna spectral output files; `PSC` projects new data into a previously defined PSC space.
+Spectral analysis of multi-channel EEG can generate very high-dimensional output — thousands of frequency-by-channel metrics per individual — but with substantial redundancy, so the effective dimensionality is typically much lower. PSC addresses this by applying singular value decomposition (SVD) to a matrix of individuals-by-spectral-metrics, extracting a compact set of components that captures most of the variance. The resulting components can be used for visualization, as features for downstream statistical models (such as [`POPS`](pops.md)), or to reduce the multiple-testing burden. `--psc` fits a decomposition to a set of existing Luna spectral output files; [`PSC`](psc.md#psc) projects new data into a previously defined PSC space.
 
 
 | Command | Description | 
@@ -34,11 +34,11 @@ Specifically, each file must have a header row that lists the following stratify
 
 In addition to the above, the command also expects one or more
 variables to be present, which correspond to the `v` parameter,
-e.g. `v=PSD` in the case of output from the `PSD` command.
+e.g. `v=PSD` in the case of output from the [`PSD`](power-spectra.md#psd) command.
 
 The command reads in the data from one or more long-format file, and
 constructs a matrix where rows are individuals (or epochs) and
-columns are values of the variable(s) listed (e.g. `PSD`) stratified
+columns are values of the variable(s) listed (e.g. [`PSD`](power-spectra.md#psd)) stratified
 by channel(s) and frequencies.  It checks that the matrix is
 fully-specified (i.e. all measures are defined for all individuals)
 and then performs one or more case-wise outlier removal sweeps, based
@@ -84,6 +84,10 @@ inputs are the results files from previous spectral analyses.
     a historical accident in Luna development, reflecting the first
     application of what is really a more generic command.
 
+<h3>Methods</h3>
+
+One or more long-format text files are parsed to construct a rectangular data matrix _X_ of dimensions _N_ (observations) by _P_ (features), where each feature is the Cartesian product of one or more metric variables (e.g. [`PSD`](power-spectra.md#psd)), channel(s) (`CH` or `CH1`/`CH2`), and frequency bin `F`. Missing cells generate a fatal error unless `drop-incomplete-rows` is set, in which case incomplete observations are removed. Optional pre-processing steps include taking the base-10 logarithm (`dB`) or absolute value (`abs`) of selected variables and restricting the frequency range (`f-lwr`, `f-upr`). Case-wise outlier removal is then applied iteratively: in each pass, any observation whose value for any feature falls beyond _th_ standard deviations from the column mean is excluded. The retained matrix is column mean-centered (or, if `norm` is set, standardized to unit variance), and then factored via SVD (bidiagonal divide-and-conquer thin decomposition), yielding left singular vectors _U_ (one per observation), singular values _W_, and right singular vectors _V_ (one per feature). Variance explained per component is computed as w²ᵢ / Σw²ⱼ. Only the first `nc` components are retained for output; the full _V_ and _W_ matrices, together with per-feature column means and standard deviations, are optionally written to a projection file (`proj`) for use by the [`PSC`](psc.md#psc) command.
+
 <h3>Parameters</h3>
 
 Core parameters are:
@@ -91,7 +95,7 @@ Core parameters are:
 | Parameter | Example | Description |
 | ---- | ---- | ---- |
 |`spectra` | `psd.txt,coh.txt` | Original metrics (i.e. input) |
-|`v`       | `PSD` | Name of the variables(s) to extract |
+|`v`       | [`PSD`](power-spectra.md#psd) | Name of the variables(s) to extract |
 |`nc`      | 15 | Number of components to extract (default: 10) |
 |`norm` | | Standardize inputs |
 |`th`      | `5,5` | Set individuals to missing (case-wise deletion) |
@@ -104,7 +108,7 @@ Optional parameters:
 |`ch`      | `C3,C4` | Only extract these channels |
 |`inc-ids` | `id1,id2` | Only extract these individuals |
 |`ex-ids` | `id3` | Exclude these individuals |
-|`dB`      | `PSD` | Take log of these variables |
+|`dB`      | [`PSD`](power-spectra.md#psd) | Take log of these variables |
 |`abs`     | `ICOH` | Take absolute value of these variables |
 |`epoch`   | | Expect epoch-level input (and so key on `ID:E`) |   
 |`f-lwr`   | 0.5 | Lower frequency bin |
@@ -130,7 +134,7 @@ signed-pairwise flag
 <h3>Outputs</h3>
 
 
-Individual-level output: (strata: `PSC`)
+Individual-level output: (strata: [`PSC`](psc.md#psc))
 
 | Variable | Description |
 | ---- | ---- |
@@ -208,7 +212,7 @@ The console logs some key information:
 ```
 
 The new components (left singular vectors) are in the _U_ matrix, which is
-stratified by `PSC` (i.e. here the ten PSCs requested):
+stratified by [`PSC`](psc.md#psc) (i.e. here the ten PSCs requested):
 
 ```
 destrat psc.db +PSC -r PSC		
@@ -258,9 +262,13 @@ ID   J             CH   F      VAR
     We intend to produce a vignette to some applications of PSC in the near future.
 
 
-## `PSC`
+## [`PSC`](psc.md#psc)
 
 _Project new samples into an existing PSC space_
+
+<h3>Methods</h3>
+
+The [`PSC`](psc.md#psc) command reads a previously saved projection file (written by `--psc proj=<file>`) that encodes the reference population's feature names, per-feature means and standard deviations, singular values _W_, and right singular vectors _V_. For the new observation, the matching spectral features are retrieved from Luna's internal cache (populated by a prior command such as `PSD cache-metrics=<name>`). The feature vector is mean-centered by subtracting the reference population column means (and, if `norm` is set, divided by the reference standard deviations). The PSC scores for the new observation are computed by projecting the centered feature vector onto the reference component space: each PSC score equals the dot product of the centered feature vector with the corresponding right singular vector, scaled by the inverse singular value.
 
 <h3>Parameters</h3>
 
@@ -272,7 +280,7 @@ _Project new samples into an existing PSC space_
 
 <h3>Output</h3>
 
-Individual-level output: (strata: `PSC`)
+Individual-level output: (strata: [`PSC`](psc.md#psc))
 
 | Variable | Description |
 | ---- | ---- |
@@ -291,7 +299,7 @@ echo "spectra=psd.txt v=PSD nc=10 proj=p1.txt" | luna --psc -o psc.db
 ```
 
 To project a new individual into this space, we need to generate the equivalent set of features,
-and use Luna's _cache_ mechanism to allow the `PSC` to speak to the `PSD` command, i.e. supplying
+and use Luna's _cache_ mechanism to allow the [`PSC`](psc.md#psc) to speak to the [`PSD`](power-spectra.md#psd) command, i.e. supplying
 the relevant features X for this individual, which will be scaled by V and W to give the corresponding
 U values (components) for this new individual.
 
@@ -301,9 +309,9 @@ luna s.lst 51 -o out.db -s ' MASK ifnot=NREM2 & RE
 			     PSC proj=p1.txt cache=c1 '
 ```
 
-Note the use of `cache-metrics` for `PSD` and the same cache (arbitrarily labelled `c1` here) is attached to the `PSC` command.
+Note the use of `cache-metrics` for [`PSD`](power-spectra.md#psd) and the same cache (arbitrarily labelled `c1` here) is attached to the [`PSC`](psc.md#psc) command.
 
-The `PSC` checks that all of the required features (i.e. `PSD` for `C3` and `C4` channels for a given set of frequencies) are available
-in the cache; if they are not, the `PSC` command reports an error message.   Naturally, the `PSC` is not able to check that other factors
+The [`PSC`](psc.md#psc) checks that all of the required features (i.e. [`PSD`](power-spectra.md#psd) for `C3` and `C4` channels for a given set of frequencies) are available
+in the cache; if they are not, the [`PSC`](psc.md#psc) command reports an error message.   Naturally, the [`PSC`](psc.md#psc) is not able to check that other factors
 are similar (i.e. whether absolute or relative, raw versus log-scaled power was used, or whether power is only from N2 sleep etc).  Naturally,
 for the PSCs to be interpretable in these new individuals, it is important to ensure that one is comparing like with like.

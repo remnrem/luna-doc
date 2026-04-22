@@ -1,6 +1,6 @@
 # Expressions
 
-_Eval_ expressions are a flexible mini-language built into Luna for combining signals and annotations in arbitrary ways. `EVAL` uses these expressions to generate new epoch-level annotations from logical or arithmetic operations on existing signal or annotation data. `TRANS` applies channel-based transformations to create or modify signals on the fly. `DERIVE` summarises annotation meta-data into individual-level scalar variables. Together these commands fill the gap between fixed commands and full scripting: when masking or annotation commands alone are insufficient, eval expressions usually provide the needed flexibility.
+_Eval_ expressions are a flexible mini-language built into Luna for combining signals and annotations in arbitrary ways. [`EVAL`](evals.md#eval) uses these expressions to generate new epoch-level annotations from logical or arithmetic operations on existing signal or annotation data. [`TRANS`](evals.md#trans) applies channel-based transformations to create or modify signals on the fly. [`DERIVE`](evals.md#derive) summarises annotation meta-data into individual-level scalar variables. Together these commands fill the gap between fixed commands and full scripting: when masking or annotation commands alone are insufficient, eval expressions usually provide the needed flexibility.
 
 
 | Command  | Description |
@@ -15,7 +15,7 @@ _Eval_ expressions are a flexible mini-language built into Luna for combining si
     This page can likely be skipped on the
     first pass through of this documentation.  The material provided
     here provides some flexible ways to work with annotations and
-    signals. For `EVAL` at least, most simple tasks can be
+    signals. For [`EVAL`](evals.md#eval) at least, most simple tasks can be
     accomplished using the simpler [mask](masks.md) syntax.
 
 ## Eval expressions
@@ -41,8 +41,8 @@ attached signal and annotation data to be manipulated via a range of [_functions
 and operators_](#operators-and-functions) in
 [_multi-component_](#multi-component-expressions) expressions, which are
 evaluated to return a true/false (Boolean) result (used in the case of
-the `MASK` command), or numeric vector (as for `TRANS`), as well as [_assigning new
-variables_](#assignments) (which is the focus of the `EVAL` command).
+the [`MASK`](masks.md#mask) command), or numeric vector (as for [`TRANS`](evals.md#trans)), as well as [_assigning new
+variables_](#assignments) (which is the focus of the [`EVAL`](evals.md#eval) command).
 
 <h3>Testing expressions with the <tt>--eval</tt> option</h3>
 
@@ -59,7 +59,7 @@ echo "2+2" | luna --eval
 The output below shows that the expression a) was valid, b) evaluated to `4`
 (with the `i` indicating integer type), c) has a return value that was
 interpreted as `true` when cast to a Boolean type (as would be the
-case if using _eval_ expressions with the `MASK` command), and d)
+case if using _eval_ expressions with the [`MASK`](masks.md#mask) command), and d)
 did not create/assign any new variables 
 
 ```
@@ -501,10 +501,10 @@ Parentheses should be used to group expressions following standard rules of prec
 
 ##### Assignments
 
-When used with the `EVAL` command, _eval_ expressions can also be used
+When used with the [`EVAL`](evals.md#eval) command, _eval_ expressions can also be used
 to create new variables, via the _assignment_ operator (a single equal
 character,`=`) that will be present for any subsequent operations
-(e.g. applying a `MASK` statement or writing an annotation to file).
+(e.g. applying a [`MASK`](masks.md#mask) statement or writing an annotation to file).
 
 ```
  X = A + B 
@@ -532,7 +532,7 @@ assigned meta-data           : J=true;K=2
 ```
 
 As described below, assigned variables are added as meta-data to that
-epoch's _instance_ of the annotation _class_ specified by the `EVAL`
+epoch's _instance_ of the annotation _class_ specified by the [`EVAL`](evals.md#eval)
 command. For example, this command:
 
 ```
@@ -540,8 +540,8 @@ EVAL annot=myannot expr="X = a1.v3 || a1.v1 > 50"
 ```
 
 will create a new annotation class `myannot` which will have a
-meta-data variable `X` that is a Boolean type.  Subsequent `MASK` and
-`EVAL` statements can access this `myannot` annotation and its
+meta-data variable `X` that is a Boolean type.  Subsequent [`MASK`](masks.md#mask) and
+[`EVAL`](evals.md#eval) statements can access this `myannot` annotation and its
 meta-data. 
 
 !!! Note "You aren't allowed to change existing annotations" 
@@ -554,7 +554,7 @@ meta-data.
     variable `a1` in the above example (i.e. assuming an annotation
     class `a1` already exists), this would create the variable `a1`
     within the `myannot` annotation class, that would subsequently
-    (i.e. in later `MASK` or `EVAL` statements) be referred to as
+    (i.e. in later [`MASK`](masks.md#mask) or [`EVAL`](evals.md#eval) statements) be referred to as
     `myannot.a1`.  In other words, you cannot change any existing
     annotation within an _eval_ expression, you can only generate new
     annotations.
@@ -592,7 +592,7 @@ return value (as T/F)        : true
 assigned meta-data           : A=2,99,2,2
 ```
 
-Vector assignment is primarily of use when using the `TRANS` command, e.g. for replace all values above 100 with 100:
+Vector assignment is primarily of use when using the [`TRANS`](evals.md#trans) command, e.g. for replace all values above 100 with 100:
 ```
 X[ X > 100 ] = 100 
 ```
@@ -616,7 +616,7 @@ creates a new variable `X` and returns a Boolean value indicating
 whether `X` is greater than 10.  As expressions are evaluated
 sequentially left-to-right, any modifications to variables, or newly
 created variables, will be available for the rest of the expression.
-The final "return" value is the rightmost expression: for a `MASK`,
+The final "return" value is the rightmost expression: for a [`MASK`](masks.md#mask),
 this will typically be a Boolean expression, but it does not have to
 be.
 
@@ -714,10 +714,13 @@ implemented explicit tests for `NaN`, `Inf`, `DIV0`, etc.
 
 _Evaluates annotation-based expressions on an epoch-by-epoch basis, to create new measures_
 
-Like [`MASK`](masks.md#mask), the `EVAL` command works with _eval_
+Like [`MASK`](masks.md#mask), the [`EVAL`](evals.md#eval) command works with _eval_
 expressions: generic expressions that are evaluated.  The focus of the
-`EVAL` command is to create new meta-information _on-the-fly_.
+[`EVAL`](evals.md#eval) command is to create new meta-information _on-the-fly_.
 
+<h3>Methods</h3>
+
+For each epoch, all annotation instances overlapping that epoch are assembled into the expression evaluation context, making their class membership and numeric metadata accessible as named variables. The specified expression is evaluated once per epoch, and the result — along with any intermediate variables assigned during evaluation — is attached as metadata to a new annotation instance of the specified class for that epoch. This epoch-by-epoch evaluation enables the construction of derived epoch-level annotations that integrate information from multiple co-occurring annotation classes.
 
 <h3>Parameters</h3>
 
@@ -784,7 +787,7 @@ _to be added_
 
 ## TRANS
 
-Based on the [_eval expression_ syntax](#eval-expressions), the `TRANS`
+Based on the [_eval expression_ syntax](#eval-expressions), the [`TRANS`](evals.md#trans)
 command allows for on-the-fly transformations for signal data, to
 create or modify existing signals, or to create new annotations based
 on arbitrary expressions based on one or more signals. Specifically, this command:
@@ -802,7 +805,7 @@ For example, one might use this command to rescale, threshold or
 normalize signals (as demonstrated below), or to derive new channels based
 on logical and numerical functions applied to one or more existing signals.
 
-The primary operatorion performed by `TRANS` is to bind whole signals
+The primary operatorion performed by [`TRANS`](evals.md#trans) is to bind whole signals
 (i.e. EDF channels) to vector variables within an expression (i.e. if
 the variable in the expression has the same label as the EDF channel
 name).  These vectors can then be flexibly transformed within the
@@ -811,6 +814,9 @@ thing evaluated in the context of a multi-part expression) then
 populates the single, specified EDF channel, or
 alternatively, creates a new interval-annotation.
 
+<h3>Methods</h3>
+
+EDF channel data are bound to vector variables within the expression evaluator, where each variable name matches an EDF channel label. The expression is evaluated over the full signal (or the retained unmasked epochs), supporting element-wise arithmetic, logical operations, conditional assignments, and a library of vector and scalar functions. The final return value of the expression replaces or creates the specified EDF channel in the in-memory representation. When annotation mode is used, the boolean return vector is scanned for contiguous true-valued runs, and each run is emitted as a new annotation interval.
 
 <h3>Parameters</h3>
 
@@ -829,18 +835,18 @@ is no further output (except some notes written to the log).
 
 <h3>Examples</h3>
 
-Here we give some examples of using `TRANS`, including (data-dependent) rescaling and thresholding, 
-other numeric functions, incorporating annotations (via `A2S`), incorporating individual-level variables, 
+Here we give some examples of using [`TRANS`](evals.md#trans), including (data-dependent) rescaling and thresholding, 
+other numeric functions, incorporating annotations (via [`A2S`](annotations.md#a2s)), incorporating individual-level variables, 
 and deriving annotations rather than creating/modifying channels.
 
 Note that in these examples, one would normally add subsequent commands too, 
 e.g. to analyse or output the derived channels or annotations.
 
 !!! hint "Sample rates" 
-    All `TRANS` expressions must contain at least
+    All [`TRANS`](evals.md#trans) expressions must contain at least
     one channel; if containing multiple channels, then all must have
     the same sample rate (i.e. to ensure that the corresponding vectors
-    in the `TRANS` expression have similar lengths.
+    in the [`TRANS`](evals.md#trans) expression have similar lengths.
 
 
 #### Basic transformations
@@ -855,7 +861,7 @@ MAX    100
 MEAN   78.72
 ```
 
-To use `TRANS` to convert this channel (and then subsequently confirm the change with `STATS`) we can write:
+To use [`TRANS`](evals.md#trans) to convert this channel (and then subsequently confirm the change with [`STATS`](summaries.md#stats)) we can write:
 
 ```
 luna s.lst -s ' TRANS sig=SpO2 expr=" SpO2 = SpO2 / 100 " & STATS sig=SpO2 '
@@ -876,8 +882,8 @@ After running this command, the log may show something like:
   updating SpO2...
 ```
 
-As expected, the output of `STATS` now reflects the modification of
-the `SpO2` channel performed by the prior `TRANS` command:
+As expected, the output of [`STATS`](summaries.md#stats) now reflects the modification of
+the `SpO2` channel performed by the prior [`TRANS`](evals.md#trans) command:
 
 ```
 MIN    0
@@ -910,7 +916,7 @@ In this way, all final `SpO2` values should be on the percentage
 (0-100) scale, irrespective of the inputs.  (Note: as noted, this
 particular example assumes that a signal with a maximum less than 1.0
 is _not_ a percentage, e.g. 0.5; this use is simply intended to
-illustrate `TRANS` syntax).
+illustrate [`TRANS`](evals.md#trans) syntax).
 
 
 As other example of signal modification, we can _threshold_ a variable between certain min/max values, 
@@ -930,7 +936,7 @@ would be generated as a new channel.
 
 #### EDF channel modification 
 
-Note that `TRANS` only updates/modifies one channel at a time: the one
+Note that [`TRANS`](evals.md#trans) only updates/modifies one channel at a time: the one
 specified by `sig`.  Any other modifications of a channel within the
 expression are restricted to the scope of the expression only, as this cartoon illustrates:
 
@@ -951,11 +957,11 @@ This will set the EDF channel `SpO2` to 0 if the log of the `TcCO2` is above 10.
  (i.e. log-scaled), and the modified `TcCO2` is used to
  conditionally modify `SpO2` (i.e. setting elements to 0).
 
- - however, only the modified `SpO2` will be returned from the `TRANS`
+ - however, only the modified `SpO2` will be returned from the [`TRANS`](evals.md#trans)
  command and update the (internal) EDF.  Changes to the
  `TcCO2` variable are not permanent.
 
- - if you wanted to modify multiple channels, one could use sequential `TRANS` commands (in the same Luna run) with differnt `sig` values: 
+ - if you wanted to modify multiple channels, one could use sequential [`TRANS`](evals.md#trans) commands (in the same Luna run) with differnt `sig` values: 
    ```
    TRANS sig=TcCO2 expr=" TcCO2 = log( TcCO2 ) "
    ```
@@ -976,7 +982,7 @@ This will set the EDF channel `SpO2` to 0 if the log of the `TcCO2` is above 10.
     ```
     SpO2 = SpO2 / 100 ; SpO2
     ```
-    In this way, Luna ensures that the value returned by `TRANS` (which is the value
+    In this way, Luna ensures that the value returned by [`TRANS`](evals.md#trans) (which is the value
     assigned to the EDF channel `SpO2`) is the whole
     vector from the expression (named `SpO2`), as the last expression
     `SpO2` evaluates to itself.
@@ -1040,7 +1046,7 @@ TRANS sig=ZEEG expr=" ZEEG = ( C4 – mean( C4 ) ) / sd( C4 ) "
 ```
 
 Note that Luna does not currently explicitly flag if numerical errors
-occur within `TRANS` expressions: e.g. if `sd(C4)` above is infact
+occur within [`TRANS`](evals.md#trans) expressions: e.g. if `sd(C4)` above is infact
 `0.0`.  Therefore, either use these expressions when you are confident this is not the case;  or
 make the expression check this explicitly: e.g. 
 
@@ -1077,14 +1083,14 @@ luna s.lst vars=file.txt -s ‘ TRANS sig=S1 expr=" S1[ S1 > ${t} ] = 0 " ‘
 
 #### Including annotations
 
-To include annotations in a `TRANS` expression, you need to first use the [`A2S`](annotations.md#a2s) command to create a channel that 
+To include annotations in a [`TRANS`](evals.md#trans) expression, you need to first use the [`A2S`](annotations.md#a2s) command to create a channel that 
 represents the presence or absence of that annotation.   Currently it is not possible to directly include numeric meta-data from annotations
-as parts of `TRANS` expressions.
+as parts of [`TRANS`](evals.md#trans) expressions.
 
 #### Deriving annotations
 
-If instead of specifying `sig` one specifies `annot` for a `TRANS` command, instead of creating/modifying a new signal, 
-`TRANS` will generate a new annotation, that is derived from evaluating the return value of the expression as a boolean vector. 
+If instead of specifying `sig` one specifies `annot` for a [`TRANS`](evals.md#trans) command, instead of creating/modifying a new signal, 
+[`TRANS`](evals.md#trans) will generate a new annotation, that is derived from evaluating the return value of the expression as a boolean vector. 
 
 ```
 luna s.lst -s 'TRANS annot=EXC expr=" SpO2 < 10 || ! SpO2_Status "  
@@ -1095,7 +1101,7 @@ In the above example, we create a new annotation `EXC` and then subsequently exc
 
 #### Label sanitization
 
-Channel labels such as `C3-M1` would create a problem for `TRANS`, i.e. given that `-` is interpreted as a _minus_ operator, it
+Channel labels such as `C3-M1` would create a problem for [`TRANS`](evals.md#trans), i.e. given that `-` is interpreted as a _minus_ operator, it
 would be ambiguous as to whether the expression `C3-M1` means simply
 _this channel_ versus `C3` _minus_ `M1`.  (Even if `C3` and `M1` didn't
 exist separately as other channels in the EDF, this would still cause an
@@ -1191,8 +1197,8 @@ vectors cannot change their length (or become scalars) in eval
 expressions.  Thus, when assigned the mean (a scalar) to `SpO2` (which
 is already a vector of correct length, i.e. 15,581,600 points), Luna
 will set every value of that vector to the same value.  When that vector is 
-returned from `TRANS`, it will match the length of the EDF signal (also named `SpO2`) 
-and so is valid.    In contrast, as `Z` does not exist prior to `TRANS`, it will not be initiated 
+returned from [`TRANS`](evals.md#trans), it will match the length of the EDF signal (also named `SpO2`) 
+and so is valid.    In contrast, as `Z` does not exist prior to [`TRANS`](evals.md#trans), it will not be initiated 
 with any fixed value.  Therefore, after the assignment `Z` is truly a scalar, and so cannot be passed 
 back to the EDF channel.   
 
@@ -1217,10 +1223,13 @@ To state the same thing schematically, consider a toy-example:
 
 _Generate individual-level statistics based on evaluating annotation meta-data_
 
-The `DERIVE` command is designed to calculate _on-the-fly_ summary
+The [`DERIVE`](evals.md#derive) command is designed to calculate _on-the-fly_ summary
 metrics per recording, based on flexible manipulations of annotation
 events and meta-data.
 
+<h3>Methods</h3>
+
+Annotation instances passing the current epoch mask are assembled into a per-class collection, and their numeric metadata fields are made available as named vectors within the expression evaluator. The expression is evaluated once per recording; any variables assigned during evaluation and listed in the output variable specification are emitted as individual-level summary statistics. This mechanism enables flexible aggregation of event-level metadata (e.g., computing the mean duration of apnea events in REM sleep) without requiring a separate post-processing step.
 
 <h3>Parameters</h3>
 
@@ -1246,5 +1255,5 @@ Primary output (strata: _none_ )
 <h3>Example</h3>
 
 See [this page on the META command](annotations.md#meta) for an
-example using `DERIVE`.  More examples will be added here in the
+example using [`DERIVE`](evals.md#derive).  More examples will be added here in the
 future.

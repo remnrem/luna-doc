@@ -2,7 +2,7 @@
 
 _Commands to show and summarize elements of sleep macro architecture_
 
-These commands characterize the sleep hypnogram — the epoch-by-epoch sleep stage record — at multiple levels of detail, and require sleep stage annotations to be present. `HYPNO` is the main command, computing a comprehensive set of individual-level summary statistics (total sleep time, stage percentages, latencies, cycle structure, bout lengths, transition probabilities) as well as epoch-level metrics and optionally NREM cycle annotations. `STAGE` outputs the stage label for each epoch in a simple tabular format. `DYNAM` takes epoch-level output from other commands and summarizes it as a function of NREM cycles.
+These commands characterize the sleep hypnogram — the epoch-by-epoch sleep stage record — at multiple levels of detail, and require sleep stage annotations to be present. [`HYPNO`](hypnograms.md#hypno) is the main command, computing a comprehensive set of individual-level summary statistics (total sleep time, stage percentages, latencies, cycle structure, bout lengths, transition probabilities) as well as epoch-level metrics and optionally NREM cycle annotations. [`STAGE`](hypnograms.md#stage) outputs the stage label for each epoch in a simple tabular format. [`DYNAM`](hypnograms.md#dynam) takes epoch-level output from other commands and summarizes it as a function of NREM cycles.
 
 |Command |Description | 
 |---|---|
@@ -14,7 +14,7 @@ These commands characterize the sleep hypnogram — the epoch-by-epoch sleep sta
 
 _Estimates multiple summary statistics based on the hypnogram_
 
-`HYPNO` produces individual-level summary statistics (e.g. total sleep
+[`HYPNO`](hypnograms.md#hypno) produces individual-level summary statistics (e.g. total sleep
 time, percent in each sleep stage, etc), epoch-level output
 (e.g. cumulative elapsed sleep duration, etc), statistics on bout
 lengths and stage transition counts/probabilities.  NREM sleep cycles
@@ -140,7 +140,7 @@ is often more robust if lights off/on has not been accurately tracked.
 
 If lights off/on annotations are known but not present in the
 annotations, they can be set explicitly via the `lights-off` and/or
-`lights-on` options for the `HYPNO` command:
+`lights-on` options for the [`HYPNO`](hypnograms.md#hypno) command:
 ```
 luna s.lst -o out.db -s HYPNO lights-off=22:30 lights-on=07:45
 ```
@@ -167,7 +167,7 @@ _hh:mm:ss_ (24-hour clock) values.
     Many NSRR datasets do not
     have explicit annotations that indicate when lights off/on events
     occurred.  Alternatively, lights off/on times can be set via
-    additional options to `HYPNO`, i.e. if they are known but not
+    additional options to [`HYPNO`](hypnograms.md#hypno), i.e. if they are known but not
     explicitly represented in the staging annotations. (For example,
     this is the case in the MrOS cohort, where lights on/off times are
     available as part of the CSV datasets that accompany the signal
@@ -220,7 +220,7 @@ number of times this happens with the `CONF` variable in the output).
 
 However, this can be easily avoided by telling Luna to alternatively start
 encoding its own epochs so as to align with the external stage information, as per
-the last row.  See the `EPOCH` command for details.  This can be accomplished as
+the last row.  See the [`EPOCH`](epochs.md#epoch) command for details.  This can be accomplished as
 ```
 luna s.lst -o out.db -s ' EPOCH align & HYPNO '
 ```
@@ -242,7 +242,7 @@ main sleep period.
 
 ### Constrained analysis
 
-The `HYPNO` command supports a range of _constrained_ analyses of
+The [`HYPNO`](hypnograms.md#hypno) command supports a range of _constrained_ analyses of
 hypnograms.  This means that only a constrained portion of the
 recording is used in analysis; internally, the remainder is set to
 _Lights On_ (`L`), i.e. it is effectively excluded from analysis.
@@ -303,7 +303,7 @@ HYPNO slide=120,20 slide-anchor=3
 ### Annotations
 
 Adding the `annot` command generates a series of annotations (i.e. held
-in memory, as if read in from an annotation file, and that can be used in `MASK`
+in memory, as if read in from an annotation file, and that can be used in [`MASK`](masks.md#mask)
 commands or output with `WRITE-ANNOTS`) that capture key aspects of the hypnogram:
 
 If `annot=hyp` the default prefix of `h_` below is changed to `hyp_`.
@@ -379,10 +379,13 @@ _Epoch-level annotations_
 
 See below for examples of using a visualizing these annotations alongside a hypnogram.
 
+### Methods
+
+Hypnogram analysis derives macro-architectural sleep statistics from epoch-by-epoch stage labels. A set of canonical time markers — recording start and end, lights-off and lights-on, sleep onset, sleep midpoint, and final wake — partition the recording into intervals from which primary metrics are calculated: total recording time, time in bed, sleep period time, total sleep time, sleep efficiency, and latencies to each stage. NREM sleep cycles are identified using a modified Feinberg–Floyd heuristic, which delineates successive NREM–REM cycles based on the temporal pattern of NREM and REM epochs within the sleep period. Flanking wake periods (pre-sleep-onset and post-final-wake) can be trimmed to prevent artifactually extended pre-recording or post-recording wakefulness from distorting epoch-level statistics. Stage transition matrices and bout-length distributions are computed from the sequence of stage labels. When lights-off and lights-on annotations are absent, the recording boundaries are used instead; when available from a prior edge-detection step, empirically estimated boundary times are applied.
 
 ### Parameters
 
-The primary options for `HYPNO` are tabulated here:
+The primary options for [`HYPNO`](hypnograms.md#hypno) are tabulated here:
 
 | Parameter | Example | Description |
 | ---- | ---- | ---- | 
@@ -524,7 +527,7 @@ Sleep fragmentation indices
 | `TI_S` | Stage Transition Index (excludes `W`) `N1`-`N2`-`N3`-`R` transition count / `TST` |
 | `TI_S3` | 3-class Stage Transition Index, NREM-REM-wake transition count / `SPT` |
 | `TI_RNR` | REM-NREM transition count / `TST` |
-| `LZW` | LZW complexity index (5-stages) |
+| [`LZW`](power-spectra.md#lzw) | LZW complexity index (5-stages) |
 | `LZW3` | LZW complexity index (3-stages: NR, R & W) |
 
 Stage-level output (option: _none_ , strata: `SS`)
@@ -544,7 +547,7 @@ The following metrics are calculated for the following categories:
 | `BOUT_05` | Stage duration, considering only bouts of at least 5 minutes (mins) |
 | `BOUT_10` | Stage duration, considering only bouts of at least 10 minutes  (mins) |
 
-In addition, `HYPNO` distinguishes ascending vs. descending (vs. “flat”) N2 for `MINS` & `PCT` based on a heuristic:
+In addition, [`HYPNO`](hypnograms.md#hypno) distinguishes ascending vs. descending (vs. “flat”) N2 for `MINS` & `PCT` based on a heuristic:
 
  * `N2_ASC` : ascending N2 :  N3 → N2 →  N1/R/ W
 
@@ -571,8 +574,8 @@ Epoch-level output (option: `epoch`, strata: `E`)
 |`CLOCK_TIME`| Start time of epoch (_hh:mm:ss_) | 
 |`MINS`|  Start time of epoch (minutes since start of EDF) | 
 |`START_SEC`| Start time of epochs (seconds since start of EDF) |
-|`STAGE`| Text description of sleep stage |
-|`STAGE_N`| Numeric encoding of sleep stage (see `STAGE` example, above) |
+|[`STAGE`](hypnograms.md#stage)| Text description of sleep stage |
+|`STAGE_N`| Numeric encoding of sleep stage (see [`STAGE`](hypnograms.md#stage) example, above) |
 |`OSTAGE` | Original stage (i.e. before any editing to set `L`) | 
 |`PERSISTENT_SLEEP`| Flag to indicate persistent sleep (more than 10 minutes of sleep has elapsed) |
 |`PRE` | Flag to indicate a pre-sleep epoch |
@@ -635,12 +638,12 @@ Transition probabilities (strata: `PRE` x `POST`)
 
 <h3>Example</h3>
 
-Here we run `HYPNO` on `nsrr02` from the [tutorial](../tut/tut1.md) data:
+Here we run [`HYPNO`](hypnograms.md#hypno) on `nsrr02` from the [tutorial](../tut/tut1.md) data:
 ```
 luna s.lst nsrr02 -o out.db -s HYPNO epoch 
 ```
 
-The baseline, individual-level output for `HYPNO` contains summaries
+The baseline, individual-level output for [`HYPNO`](hypnograms.md#hypno) contains summaries
 such as total sleep time (`TST`).  Here we use Luna's `behead` utility 
 to view the output in a more human-readable fashion:
 
@@ -782,7 +785,7 @@ transitions from REM and wake.  The corresponding `TOT_` variables
 indicate the total number of NREM epochs in that segment - i.e. and so
 can be used to select "stable" periods of some state of a minimum
 duration prior to a transition to some other state.  As noted above,
-the `HYPNO` option `req-pre-post` option can be used to specify a
+the [`HYPNO`](hypnograms.md#hypno) option `req-pre-post` option can be used to specify a
 minimum duration of the _post_ stage in order to trigger these flags;
 by default this is 4 epochs (2 minutes).  That is, if epoch 1227 below
 was in fact back to `N2` sleep, then the command would not have
@@ -999,7 +1002,7 @@ id1   EEG    5      -3.7668
 id1   EEG    6      -5.5107
 ```
 
-## `STAGE`
+## [`STAGE`](hypnograms.md#stage)
 
 _Export sleep stage information_
 
@@ -1009,8 +1012,8 @@ Internally, it creates a single annotation class called `SleepStage`,
 with instances that correspond to `W`, `N1`, `N2`, `N3`, `R`, `?` and
 `L` (_Lights On_).  The [`HYPNO`](#hypno) command does the same but
 additionally computes a number of other statistics.  Unlike
-`HYPNO` however, the `STAGES` command can be run after epochs have
-been [masked out](masks.md).  In contrast, `HYPNO` requires the
+[`HYPNO`](hypnograms.md#hypno) however, the `STAGES` command can be run after epochs have
+been [masked out](masks.md).  In contrast, [`HYPNO`](hypnograms.md#hypno) requires the
 original, entire EDF in order to produce meaningful summary
 statistics on sleep macro architecture.
 
@@ -1023,10 +1026,13 @@ mapped to `N3` sleep.
 !!! info
     There is no explicit representation of movement or artifact
     (i.e. set those to `?` in terms of epoch-level staging) in the
-    `STAGES` or `HYPNO` commands.  Still, you can always track that
+    `STAGES` or [`HYPNO`](hypnograms.md#hypno) commands.  Still, you can always track that
     information (e.g. and [`MASK`](masks.md#mask) epoch based on
     them as generic annotations however.
 
+<h3>Methods</h3>
+
+Sleep stage annotations are read from the in-memory annotation store and mapped to canonical stage labels for each epoch. The mapping is tolerant of common alternative label conventions and can be user-specified for non-standard annotation schemes. The stage label and a numeric encoding of each epoch are emitted as output; no derived statistics are computed.
 
 <h3>Parameters</h3>
 
@@ -1048,7 +1054,7 @@ mapped to `N3` sleep.
 | ---- | ---- |
 | `CLOCK_TIME` | Clock time (hh:mm:ss) |
 | `MINS`       | Elapsed time from start of EDF (minutes) |
-| `STAGE`      | Sleep stage (text value) |
+| [`STAGE`](hypnograms.md#stage)      | Sleep stage (text value) |
 | `STAGE_N`    | Numeric encoding of sleep stage | 
 
 
@@ -1065,7 +1071,7 @@ plot( d$E , d$STAGE_N )
 <h3>See also</h3>
 
 The [`lstages()`](../ext/R/ref.md#lstages) function in
-[_lunaR_](../ext/R/index.md) provides a quick way to run the `STAGE` command
+[_lunaR_](../ext/R/index.md) provides a quick way to run the [`STAGE`](hypnograms.md#stage) command
 for a single EDF, returning just a vector of stage names.
 
 ## DYNAM
@@ -1074,11 +1080,15 @@ _Summarize outputs from other commands (or inputs from a file) in terms of hypno
 
 
 This command will typically be invoked by adding `dynam` as an option
-to one of the following commands that currently supports it: `PSD`,
-`COH`, `SPINDLES`, `SO`, `PSI`, `CORREL`.  Alternatively, epoch-level
+to one of the following commands that currently supports it: [`PSD`](power-spectra.md#psd),
+[`COH`](cc.md#coh), [`SPINDLES`](spindles-so.md#spindles), [`SO`](spindles-so.md#so), [`PSI`](cc.md#psi), [`CORREL`](cc.md#correl).  Alternatively, epoch-level
 inputs can be specified from a file, in which case this functionality
-is directly invoked via the `DYNAM` command.  The same functions are
+is directly invoked via the [`DYNAM`](hypnograms.md#dynam) command.  The same functions are
 executed in either case.
 
-This command requires that `HYPNO` has previously been run, as it
+This command requires that [`HYPNO`](hypnograms.md#hypno) has previously been run, as it
 relies on knowing the NREM cycle structure of a recording.
+
+<h3>Methods</h3>
+
+Epoch-level metrics are summarized within and across NREM sleep cycles as identified by the Feinberg–Floyd heuristic applied during a prior hypnogram analysis. For each cycle, statistics are computed separately for ascending and descending NREM phases (the N2 periods bracketing the N3 core of the cycle), enabling characterization of how measures such as spectral power, spindle density, or slow-oscillation rate evolve over the course of the night. Cycle-normalized time positions allow within-cycle dynamics to be averaged across cycles or individuals in a common temporal reference frame.

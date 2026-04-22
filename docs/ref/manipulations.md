@@ -2,7 +2,7 @@
 
 _Commands to alter basic properties of the EDF and the signals therein_
 
-This page covers a broad set of commands for modifying signals and EDF properties in memory. Channel management commands (`SIGNALS`, `RENAME`, `COPY`) control which channels are present and how they are labelled. Unit and amplitude commands (`uV`, `mV`, `REFERENCE`, `FLIP`, `ZC`, `ROBUST-NORM`, `CLIP`, `SCALE`, `RECTIFY`) adjust signal values. Timing and structural commands (`RESAMPLE`, `RECORD-SIZE`, `EDF-MINUS`) modify sample rates and EDF record layout. Header and metadata commands (`ANON`, `SET-HEADERS`, `SET-VAR`, `SET-TIMESTAMPS`) update EDF header fields and Luna variables. These tools are typically used to clean and standardize EDFs before running analytical commands.
+This page covers a broad set of commands for modifying signals and EDF properties in memory. Channel management commands ([`SIGNALS`](manipulations.md#signals), [`RENAME`](manipulations.md#rename), [`COPY`](manipulations.md#copy)) control which channels are present and how they are labelled. Unit and amplitude commands ([`uV`](manipulations.md#uv), [`mV`](manipulations.md#mv), [`REFERENCE`](manipulations.md#reference), [`FLIP`](manipulations.md#flip), [`ZC`](manipulations.md#zc), [`ROBUST-NORM`](manipulations.md#robust-norm), [`ROLLING-NORM`](manipulations.md#rolling-norm), [`CLIP`](manipulations.md#clip), [`SCALE`](manipulations.md#scale), [`LOG`](manipulations.md#log), [`RECTIFY`](manipulations.md#rectify)) adjust signal values. Timing and structural commands ([`RESAMPLE`](manipulations.md#resample), [`RECORD-SIZE`](manipulations.md#record-size), [`EDF-MINUS`](manipulations.md#edf-minus)) modify sample rates and EDF record layout. Header and metadata commands ([`ANON`](manipulations.md#anon), [`SET-HEADERS`](manipulations.md#set-headers), [`SET-VAR`](manipulations.md#set-var), [`SET-TIMESTAMPS`](manipulations.md#set-timestamps)) update EDF header fields and Luna variables. These tools are typically used to clean and standardize EDFs before running analytical commands.
 
 | Command | Description |
 | -----  | ----- | 
@@ -22,11 +22,14 @@ This page covers a broad set of commands for modifying signals and EDF propertie
 |[`CLIP`](#clip) | Clip a signal using absolute or relative thresholds |
 |[`COMBINE`](#combine) | Combine two or more channels into a new channel (e.g. sum/mean) | 
 |[`SCALE`](#scale) | Rescale a channel (min/max scaling) |
+|[`LOG`](#log) | Apply a log transform to one or more signals |
+|[`ROLLING-NORM`](#rolling-norm) | Rolling-window normalization |
 |[`SHIFT`](#shift) | Shift a signal |
 |[`SCRAMBLE`](#scramble) | Scramble a signal |
 |[`TIME-TRACK`](#time-track) | Add a time-track to an EDF |
 |[`RECORD-SIZE`](#record-size) | Change EDF record size |
 |[`EDF-MINUS`](#edf-minus) | Realign EDF records, annotations and epochs |
+|[`INSERT`](#insert) | Align and splice signals from a secondary EDF, with clock-drift estimation |
 |[`ANON`](#anon)    | Strip ID information from EDF header |
 |[`SET-HEADERS`](#set-headers) | Directly specify certain EDF headers |
 |[`SET-VAR`](#set-var) | Directly specify Luna variables |
@@ -45,6 +48,10 @@ The command requires one of two options: _either_ `keep` _or_ `drop`.
 Each expects a comma-delimited list of channel names (or
 [_aliases_](../luna/args.md#aliases)), which are either retained or
 removed from the in-memory dataset.
+
+<h3>Methods</h3>
+
+Specified channels are selectively retained or removed from the in-memory recording, reducing the dataset to only those signals required for subsequent analysis steps.
 
 <h3>Parameters</h3>
 
@@ -65,7 +72,7 @@ For an EDF with 6 signals, including `EMG`, `EOG-L` and `EOG-R`, this command wo
 ```		
 luna s.lst -s 'SIGNALS drop=EMG,EOG-L,EOG-R & DESC'
 ```
-as shown by the relevant lines in the output from `DESC`:
+as shown by the relevant lines in the output from [`DESC`](summaries.md#desc):
 ```
 Number of signals : 3
 Signals           : EEG1[256] EEG2[256] EEG3[256]
@@ -93,6 +100,10 @@ command can use [variables](../luna/args.md#variables) (which may be
 
 It is also possible to supply a `file` of new labels for multiple signals instead.
 
+<h3>Methods</h3>
+
+Channel labels are reassigned within the in-memory representation of the recording, allowing recording-specific naming conventions to be mapped to a standardized nomenclature. Unlike static pre-processing aliases, relabelling at this stage allows individual-specific label assignments to be applied dynamically within a processing script.
+
 <h3>Parameters</h3>
 
 | Parameter | Example | Description |
@@ -116,7 +127,7 @@ No formal output, other than changing the labels of channels in the internal EDF
 
 In its simplest form, if we have a channel named `THOR_RES`, for
 example, we can rename it to some other label -- here just using `XX` --
-using `RENAME`, and then use that new label in other commands:
+using [`RENAME`](manipulations.md#rename), and then use that new label in other commands:
 
 ```
 luna s.lst -s ' RENAME sig=THOR_RES new=XX & STATS sig=XX '
@@ -133,7 +144,7 @@ As noted above, this provides similar functionality as using a signal
 luna s.lst "alias=XX|THOR_RES" -s ' STATS sig=XX '
 ```
 
-The primary difference is that `RENAME` accepts (individual-specific)
+The primary difference is that [`RENAME`](manipulations.md#rename) accepts (individual-specific)
 variables as arguments, i.e. which can allow different individuals to
 have different assignments (with `sig` and/or `new`).  For example, in
 this toy example, we change `THOR_RES` and `ABDO_RES` (all present in
@@ -158,16 +169,16 @@ luna s.lst vars=ch.txt \
 
 ```
 
-will use `RENAME` to swap those two channels to the other specified
-values: e.g. showing extracts from the `DESC` output for the three
-individuals: in all cases, the first `DESC` command gives the same:
+will use [`RENAME`](manipulations.md#rename) to swap those two channels to the other specified
+values: e.g. showing extracts from the [`DESC`](summaries.md#desc) output for the three
+individuals: in all cases, the first [`DESC`](summaries.md#desc) command gives the same:
 
 ```
 Signals : SaO2[1] PR[1] EEG_sec_[125] ECG[250] EMG[125] EOG_L_[50]
           EOG_R_[50] EEG[125] AIRFLOW[10] THOR_RES[10] ABDO_RES[10] POSITION[1]
           LIGHT[1] OX_STAT[1]
 ```
-whereas the second `DESC` varies between the three individuals as expected:
+whereas the second [`DESC`](summaries.md#desc) varies between the three individuals as expected:
 ```
 Signals : SaO2[1] PR[1] EEG_sec_[125] ECG[250] EMG[125] EOG_L_[50]
           EOG_R_[50] EEG[125] AIRFLOW[10] XX[10] YY[10] POSITION[1]
@@ -187,12 +198,12 @@ Signal   : SaO2[1] PR[1] EEG_sec_[125] ECG[250] EMG[125] EOG_L_[50]
 ```
 
 Another difference is that using signal aliases allows a many-to-one
-mapping, whereas `RENAME` requires a one-to-one mapping of
+mapping, whereas [`RENAME`](manipulations.md#rename) requires a one-to-one mapping of
 labels. That is, `"alias=XX|AA|BB|CC"` will map either `AA`, `BB` or
-`CC` to `XX` (i.e. where an individual EDF may have none, one or
-multiple of these labels).  In contrast, `RENAME` must use the single,
+[`CC`](cc.md#cc) to `XX` (i.e. where an individual EDF may have none, one or
+multiple of these labels).  In contrast, [`RENAME`](manipulations.md#rename) must use the single,
 primary label in the `sig` option.   However, there is nothing stopping
-combined use of signal aliases and the `RENAME` command, i.e. to achieve a many-to-many
+combined use of signal aliases and the [`RENAME`](manipulations.md#rename) command, i.e. to achieve a many-to-many
 mapping of labels: e.g. 
 
 ```
@@ -200,7 +211,7 @@ luna s.lst vars=ch.txt "alias=XX|AA|BB|CC" \
      -s ' RENAME sig=XX new=${CHS} & WRITE edf-dir=edfs/ ' 
 ```
 
-This effectively uses `XX` as an intermediate (mapped from _either_ `AA`, `BB` or `CC`) and will then write to
+This effectively uses `XX` as an intermediate (mapped from _either_ `AA`, `BB` or [`CC`](cc.md#cc)) and will then write to
 the new EDF a label as defined in `ch.txt`.   Of course, an alternative would be to also supply individual-specific
 labels for both `sig` and `new` in the `vars.txt` file, e.g. if it had two columns defining `OLD` and `NEW` variables/columns:
 ```
@@ -208,6 +219,45 @@ luna s.lst vars=ch.txt \
      -s ' RENAME sig=${OLD} new=${NEW} & WRITE edf-dir=edfs/ '	
 ```
 
+
+
+## ROLLING-NORM
+
+_Normalize a signal using a rolling local window_
+
+`ROLLING-NORM` applies a rolling-window normalization to one or more signals
+across the whole retained trace. The command uses a local window around each
+sample to compute a mean and standard deviation, then rescales the central
+sample to a local z-score. This can be useful when a signal has slow drift or
+time-varying scale that is not well handled by a single whole-trace
+normalization.
+
+<h3>Methods</h3>
+
+For each requested signal, Luna reads the whole retained trace and computes a
+locally normalized version using a symmetric rolling window of width `w`
+seconds. Internally, the window size is converted to samples using the signal's
+sample rate and forced to an odd number. At each sample, the central value is
+standardized relative to the samples in that local window, producing a
+time-varying z-score. The normalized trace replaces the original in-memory
+signal.
+
+<h3>Parameters</h3>
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `sig` | `sig=C3,C4` | Signals to normalize |
+| `w` | `w=30` | Rolling window width in seconds; must be at least 1 second |
+
+<h3>Output</h3>
+
+No formal tabular output. The command updates the in-memory signal values.
+
+<h3>Example</h3>
+
+```bash
+luna s.lst -s 'ROLLING-NORM sig=EEG w=30'
+```
 
 
 ## COPY
@@ -222,6 +272,10 @@ with the [`WRITE`](outputs.md#write) command.
 Although multiple signals can be duplicated at the same time
 (i.e. will all be given the same tag), only data channels (i.e. not
 EDF Annotation channels in EDF+) are duplicated.
+
+<h3>Methods</h3>
+
+One or more channels are duplicated within the in-memory recording, preserving the original signal while allowing subsequent processing steps (such as filtering or normalization) to be applied to the copy without altering the source channel.
 
 <h3>Parameters</h3>
 
@@ -244,7 +298,7 @@ To extract one channel (`EEG`) from an original EDF, and then duplicate it:
 luna s.lst 2 sig=EEG -s 'DESC & COPY sig=EEG tag=V2 & DESC'
 ```
 
-As expected, the first `DESC` output shows a single channel:
+As expected, the first [`DESC`](summaries.md#desc) output shows a single channel:
 ```
 EDF filename      : edfs/learn-nsrr02.edf
 ID                : nsrr02
@@ -254,7 +308,7 @@ Duration          : 09:57:30
 Signals           : EEG[125]
 ```
 
-After the `COPY` command has been executed, there are now two channels: `EEG` and `EEG_V2`:
+After the [`COPY`](manipulations.md#copy) command has been executed, there are now two channels: `EEG` and `EEG_V2`:
 ```
 EDF filename      : edfs/learn-nsrr02.edf
 ID                : nsrr02
@@ -280,6 +334,10 @@ The `downsample` and `upsample-if` options can be used to control whether a chan
 
  - `upsample-if=50` means that channels will only be resampled (up or down) if the rate is above, e.g. 50 Hz.  This option can
  avoid "garbage channels" (e.g. a channel labelled as an EEG but with a sample rate of 10 Hz, for example) being included.
+
+<h3>Methods</h3>
+
+Signals are resampled to a common target rate using a high-quality sinc-interpolation algorithm (via the Secret Rabbit Code / libsamplerate library). The approach supports arbitrary rational and irrational resampling ratios, applying anti-aliasing lowpass filtering prior to downsampling and sinc-based interpolation for upsampling, thereby minimising aliasing and interpolation artefacts. Channels can be selectively downsampled only (leaving channels already at or below the target rate unmodified) or restricted to those above a minimum rate threshold to prevent unintended resampling of low-rate auxiliary channels.
 
 <h3>Parameters</h3>
 
@@ -319,6 +377,10 @@ internal EDF representation. This command can be used prior to a
 Further, this command can optionally drop signals with a sample rate
 below or above a given range (using `sr`).
 
+<h3>Methods</h3>
+
+Channels that cannot be represented at the target EDF record duration (because their sample count per record would not be an integer) are dropped from the in-memory recording prior to any record-size restructuring. Optionally, channels outside a specified sample-rate range are also removed, preventing inadvertent inclusion of auxiliary low-rate channels in downstream analyses.
+
 <h3>Parameters</h3>
 
 | Parameter | Example | Description |
@@ -336,6 +398,10 @@ signal).
 ## REFERENCE
 
 _Re-references signals with respect to one or more other signals_
+
+<h3>Methods</h3>
+
+EEG signals are re-referenced by subtracting a reference signal (or the average of multiple reference signals) from each target channel. When a single reference channel is specified, this corresponds to a bipolar or linked-electrode reference; when multiple reference channels are provided, their arithmetic mean is subtracted, approximating a linked-mastoid or common-average-like reference restricted to the specified electrodes. A pairwise referencing mode applies distinct reference channels to corresponding target channels rather than averaging across all references. Optionally, all channels can be first resampled to a common rate before referencing to ensure sample-by-sample alignment.
 
 <h3>Parameters</h3>
 
@@ -376,9 +442,13 @@ No output, other than a note to the log.  In memory, the updated
 
 _De-references signals with respect to one or more other signals_
 
-This command is a mirror of `REFERENCE`: instead of subtracting another reference signal, this simply adds it back in, i.e.
+This command is a mirror of [`REFERENCE`](manipulations.md#reference): instead of subtracting another reference signal, this simply adds it back in, i.e.
 effectively removing an existing reference.  The options (`new`, `pairwise`, `sr`, `sig` and `ref`) are otherwise similar,
 see above for details.
+
+<h3>Methods</h3>
+
+A previously applied reference is reversed by adding back the reference signal to the target channel, recovering an approximation to the original unreferenced signal. This is the arithmetic inverse of the re-referencing operation.
 
 
 ## MINMAX
@@ -391,6 +461,10 @@ comparable, e.g. all EEG and EOG with a common amplifier and ADC, and
 so are expected to have similar scaling and sensitivity (unit/bit) in
 the EDF.
 
+<h3>Methods</h3>
+
+The physical minimum and maximum values in the EDF header are harmonized across a set of comparable channels by setting all channels to the common extremes of the group. This operation adjusts the scaling factor (sensitivity, in units per bit) uniformly, ensuring consistent amplitude representation and EDF-specification compliance without altering the underlying signal values.
+
 <h3>Parameters</h3>
 
 | Parameter | Example | Description |
@@ -401,12 +475,12 @@ the EDF.
 <h3>Output</h3>
 
 No formal output is given. The channels are rescaled internally.  Any
-subsequent commands (i.e. including `WRITE` to write a new EDF) will
+subsequent commands (i.e. including [`WRITE`](outputs.md#write) to write a new EDF) will
 therefore be based on these new header values.
 
 <h3>Example</h3>
 
-Here we have an EDF with channels C3, C4, F3, F4, O1, O2, A1 and A2. The `HEADERS`
+Here we have an EDF with channels C3, C4, F3, F4, O1, O2, A1 and A2. The [`HEADERS`](summaries.md#headers)
 command shows that the channels have different physical min/max values, and therefore
 different `SENS` values (scaling of micro-volts per bit in the EDF):
 
@@ -428,7 +502,7 @@ id01.edf  A1  32767  -32768  uV    3238.6  -3276.8  0.09941 500  EEG
 id01.edf  A2  32767  -32768  uV    3255.3  -3276.8  0.09967 500  EEG
 ```
 
-After running the `MINMAX` command, we see that the `SENS` values are now
+After running the [`MINMAX`](manipulations.md#minmax) command, we see that the `SENS` values are now
 set to be equal across all channels.  This command will not fundamentally
 change the underlying signal data, only the scaling in the EDF header.
 
@@ -448,9 +522,9 @@ id01.edf  A2  32767  -32768  uV    3276.7  -3276.8  0.1   500  EEG
 ```
 
 Note, if the EDF contained other signals that you did not want
-included in the `MINMAX` procedure (e.g. respiratory channels, which
+included in the [`MINMAX`](manipulations.md#minmax) procedure (e.g. respiratory channels, which
 have different scaling from EEG channels), you would need to add `sig`
-after `MINMAX` to specify, e.g. only the EEG channels.  This command
+after [`MINMAX`](manipulations.md#minmax) to specify, e.g. only the EEG channels.  This command
 will skip any EDF+ Annotation channels automatically.
 
 
@@ -458,9 +532,13 @@ will skip any EDF+ Annotation channels automatically.
 
 _Converts a signal to uV units_ 
 
-Checks the `unit` (physical dimension) field of the EDF header for either `V`, `mV` or `uV`
+Checks the `unit` (physical dimension) field of the EDF header for either `V`, [`mV`](manipulations.md#mv) or [`uV`](manipulations.md#uv)
 and rescales the signal appropriately.  If the header specifies some
 other unit, or none, then no action is taken.
+
+<h3>Methods</h3>
+
+Signal amplitudes are converted to microvolts by reading the physical dimension field of the EDF header and applying the appropriate multiplicative scaling factor (×1,000 from mV, or ×1,000,000 from V). If the header dimension is already µV, or is unrecognized, no rescaling is applied.
 
 <h3>Parameters</h3>
 
@@ -479,9 +557,13 @@ No output, other than updating the in-memory signal.
 
 _Converts a signal to mV units_ 
 
-Checks the `unit` (physical dimension) field of the EDF header for either `V`, `mV` or `uV`
+Checks the `unit` (physical dimension) field of the EDF header for either `V`, [`mV`](manipulations.md#mv) or [`uV`](manipulations.md#uv)
 and rescales the signal appropriately.  If the header specifies some
 other unit, or none, then no action is taken.
+
+<h3>Methods</h3>
+
+Signal amplitudes are converted to millivolts by reading the physical dimension field of the EDF header and applying the appropriate multiplicative scaling factor (÷1,000 from µV, or ×1,000 from V). If the header dimension is already mV, or is unrecognized, no rescaling is applied.
 
 <h3>Parameters</h3>
 
@@ -501,12 +583,20 @@ _Adds a time-track, which implicitly converts an EDF into an EDF+_
 
 This command is only used internally, currently.  
 
+<h3>Methods</h3>
+
+The `TIME-TRACK` command converts a standard EDF to EDF+C format by appending an `EDF Annotations` channel that encodes the onset time of each record as a Time-stamped Annotation List (TAL). If the in-memory EDF is not already marked as EDF+, the header reserved field is updated accordingly and the file is declared continuous (`EDF+C`). A new annotation signal channel is then inserted at the end of each record, with a fixed width (controlled by `globals::edf_timetrack_size`), containing a TAL entry of the form `+<onset>\x14\x14\x00` where `<onset>` is the elapsed time in seconds from the EDF start. For continuous recordings this offset is computed incrementally as a multiple of the record duration; for discontinuous (EDF+D) recordings produced by a merge operation, per-record timestamps are provided explicitly. The channel is labelled `EDF Annotations` (or `EDF Annotations1`, `EDF Annotations2`, etc. if annotation channels already exist), with nominal digital range −32768 to 32767 and scaling fields set to unity, as required by the EDF+ specification.
+
 
 ## FLIP
 
 _Flips the polarity of a signal_ 
 
 Multiplies every sample value of a signal by -1.
+
+<h3>Methods</h3>
+
+Signal polarity is inverted by multiplying all sample values by −1, correcting for inadvertent polarity reversals introduced during recording or electrode placement.
 
 <h3>Parameters</h3>
 
@@ -595,6 +685,10 @@ _Mean-center a signal_
 Subtracts the mean from a signal, either based on the entire duration or performed epoch-by-epoch.  The latter may
 be more appropriate if there are large changes in the scale/mean of the signal across the recording.
 
+<h3>Methods</h3>
+
+Signals are mean-centered by subtracting either the whole-recording mean or, when epoch-wise centering is requested, the within-epoch mean from each sample. Epoch-wise centering removes slowly drifting DC offsets that vary across the night and may otherwise bias spectral or amplitude-based analyses.
+
 <h3>Parameters</h3>
 
 | Parameter | Example | Description |
@@ -617,7 +711,7 @@ which has a mean as follows:
 MEAN   94.1955
 ```
 
-First adding the `ZC` command: 
+First adding the [`ZC`](manipulations.md#zc) command: 
 ```
 luna s.lst -s 'ZC sig=SpO2 & STATS sig=SpO2'
 ```
@@ -628,8 +722,8 @@ MEAN   -0.000734802
 
 Note that, due to EDF's 16-bit floating-point accuracy, the mean will
 not be numerically exactly 0.00 (i.e. as internally, the signal is
-written back to the internal, in-memory EDF at the end of the `ZC`
-command, before being re-read by `STATS`).
+written back to the internal, in-memory EDF at the end of the [`ZC`](manipulations.md#zc)
+command, before being re-read by [`STATS`](summaries.md#stats)).
 
 
 ## ROBUST-NORM 
@@ -642,6 +736,10 @@ the median and an estimate of the SD based on the inter-quartile range
 signal (and optionally re-normalize after winsorization, to ensure
 (non-robust) mean/SD of 0/1).  This can be performed either on the whole signal, or
 epoch-by-epoch.
+
+<h3>Methods</h3>
+
+Signals are standardized using a robust normalization procedure that subtracts the median and divides by a robust estimate of the standard deviation derived from the interquartile range (IQR × 0.7413, which equals the SD for a normal distribution). Because this approach uses rank-based statistics, it is resistant to the influence of extreme values and non-Gaussian tails that are common in physiological signals. Optionally, signal values beyond specified percentile thresholds can be winsorized (clipped to those quantile boundaries) prior to normalization, further limiting the influence of outliers. A second normalization pass may subsequently be applied to the winsorized signal to yield a distribution with mean 0 and SD 1. Normalization can be performed either across the whole signal or independently within each epoch, the latter being appropriate when the signal's scale changes systematically across the recording.
 
 <h3>Parameters</h3>
 
@@ -680,14 +778,14 @@ winsorize the signal at the 5th (and 95th) percentiles:
 luna s.lst -s 'ROBUST-NORM sig=SpO2 winsor=0.05 & STATS sig=SpO2'
 ```
 
-From the subsequent `STATS` output, we can see the mean and SD are closer to 0 and 1 respectively, and (due to the winsorization), the
+From the subsequent [`STATS`](summaries.md#stats) output, we can see the mean and SD are closer to 0 and 1 respectively, and (due to the winsorization), the
 signal is also much less skewed:
 ```
 MEAN    -0.80652
 SKEW    -0.4575
 SD      2.05714
 ```
-Here, the mean and SD are still quite different from 0 and 1 - which naturally reflects the fact that we used robust measures of central tendency and spread (median and IQR-based estimate of the SD) rather than the typical mean and SD.  If we look at the percentiles from the `STATS` command, we see the median (`P50`) is effectively 0 (save for numerical rounding):
+Here, the mean and SD are still quite different from 0 and 1 - which naturally reflects the fact that we used robust measures of central tendency and spread (median and IQR-based estimate of the SD) rather than the typical mean and SD.  If we look at the percentiles from the [`STATS`](summaries.md#stats) command, we see the median (`P50`) is effectively 0 (save for numerical rounding):
 ```
 P01	-5.39593
 P02	-5.39593
@@ -723,6 +821,10 @@ beyond those thresholds will be set to those values).
 Additionally, if `min-max` is set to specify a lower/upper bound, the
 scale will be rescaled to set the min/max at those values.
 
+<h3>Methods</h3>
+
+Signals are linearly rescaled to a specified output range by applying a min–max normalization. Optionally, values beyond specified lower and/or upper bounds are first clipped (winsorized) to those boundary values before rescaling, preventing extreme outliers from dominating the rescaled range.
+
 <h3>Parameters</h3>
 
 |  Parameter | Example | Description |
@@ -745,25 +847,92 @@ clips at 0 and 1; it then rescales to a percent (0-100) rather than a proportion
 luna s.lst -s ' SCALE sig=oxy clip-min=0 clip-max=1 min-max=0,100 '
 ```
 
-Typically a `SCALE` command will be paired with subsequent analyses,
-or a `WRITE` command to output a new EDF.  (i.e. by itself the above command
+Typically a [`SCALE`](manipulations.md#scale) command will be paired with subsequent analyses,
+or a [`WRITE`](outputs.md#write) command to output a new EDF.  (i.e. by itself the above command
 would only change the in-memory EDF and then quit/move to the next EDF).
+
+
+## LOG
+
+_Apply a log transform to one or more signals_
+
+The [`LOG`](manipulations.md#log) command applies a natural log transform to one or more signals:
+
+```
+log( x + offset )
+```
+
+This is useful when working with strongly right-skewed non-negative signals,
+for example activity counts, power-like measures, or other strictly positive
+derived channels.
+
+Values below zero are clamped to zero before the transform, with a warning.
+
+<h3>Methods</h3>
+
+Signals are transformed in-place using the natural logarithm after the
+addition of a small constant offset. This offset can be fixed explicitly,
+which is often appropriate for count or activity data, or estimated from
+the observed signal distribution using a low percentile, which is often more
+appropriate for strictly positive continuous measures such as spectral power.
+
+<h3>Parameters</h3>
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `sig` | `sig=activity` | One or more signals to transform |
+| `offset` | `offset=1` | Fixed additive constant before taking the log |
+| `eps` | `eps=0.01` | Data-driven offset: 0.1 times this percentile of the signal |
+
+If both `offset` and `eps` are specified, `offset` takes priority.
+
+For `eps`, Luna sets:
+
+```
+offset = 0.1 x percentile(sig, eps)
+```
+
+with a fallback to a very small constant if that percentile is zero or
+non-finite.
+
+<h3>Output</h3>
+
+No formal output other than changing the selected signals in the
+internal EDF and writing notes to the log.
+
+<h3>Examples</h3>
+
+Apply a standard `log(x+1)` transform to an actigraphy channel:
+
+```
+luna s.lst -s ' LOG sig=activity offset=1 '
+```
+
+Apply a percentile-based offset to a strictly positive derived signal:
+
+```
+luna s.lst -s ' LOG sig=DELTA eps=0.01 '
+```
 
 
 ## CLIP
 
 _Clip a signal using absolute or relative thresholds_
 
-The `CLIP` command truncates one or more signals in the in-memory EDF
+The [`CLIP`](manipulations.md#clip) command truncates one or more signals in the in-memory EDF
 so that values outside specified bounds are clipped to those bounds.
 Unlike [`SCALE`](#scale), which can optionally clip as part of a
-rescaling step, `CLIP` is a standalone command intended specifically
+rescaling step, [`CLIP`](manipulations.md#clip) is a standalone command intended specifically
 for threshold-based clipping.
 
 Thresholds can be specified either directly on the signal scale or via
 quantiles of the observed signal distribution. This command modifies
 the in-memory signal only; pair it with [`WRITE`](outputs.md#write) if
 you want to save the clipped signal to a new EDF.
+
+<h3>Methods</h3>
+
+Signal amplitude is bounded (winsorized) by setting values below a specified lower threshold and/or above a specified upper threshold to those threshold values. Thresholds may be defined as absolute values on the native signal scale or as quantiles of the observed signal distribution, the latter providing a data-adaptive approach that automatically accommodates signals with different amplitude ranges.
 
 <h3>Parameters</h3>
 
@@ -804,7 +973,7 @@ Clip a signal based on distribution tails:
 luna s.lst -s ' CLIP sig=C3 lwr-pct=0.01 upr-pct=0.99 '
 ```
 
-As above, `CLIP` is distinct from the `CLIP` summary metric reported
+As above, [`CLIP`](manipulations.md#clip) is distinct from the [`CLIP`](manipulations.md#clip) summary metric reported
 by [`SIGSTATS`](summaries.md#sigstats), which quantifies the
 proportion of clipped sample points rather than modifying the signal.
 
@@ -823,6 +992,10 @@ sum would be based just on those two).  If no channels are available, no new
 channel is created.  If only two channels are available and a median is requested, this is
 automatically changed to a mean instead.
 
+<h3>Methods</h3>
+
+A new channel is constructed as the sample-wise sum, arithmetic mean, or median of two or more existing channels. This operation is used, for example, to create a composite respiratory effort channel, a bilateral EEG average, or to combine reference electrodes prior to referencing.
+
 <h3>Parameters</h3>
 
 |  Parameter | Example | Description |
@@ -833,7 +1006,7 @@ automatically changed to a mean instead.
 | `median` | `M1` | Make a new median channel called `M1` (for 3 or more channels) |
 | `allow-missing` | | If present, allow for channels in `sig` to be not present | 
 
-Names for new channels (e.g. `S1` or `M1` above) are not allowed to exist in the EDF prior to calling `COMBINE`.
+Names for new channels (e.g. `S1` or `M1` above) are not allowed to exist in the EDF prior to calling [`COMBINE`](manipulations.md#combine).
 
 <h3>Output</h3>
 
@@ -861,7 +1034,7 @@ something that you should not normally need to change.  Often, EDFs
 have a record size (i.e. the size of the _blocks_ in which the data
 are stored) of 1 second or so.  Why might you want to change this?  
 
- - as the smallest `EPOCH` size is limited by the EDF record size, if
+ - as the smallest [`EPOCH`](epochs.md#epoch) size is limited by the EDF record size, if
    the EDF record size is relatively large (e.g. 10 seconds), it will
    not be possible to specify smaller epochs (e.g. 5 seconds). 
 
@@ -881,6 +1054,9 @@ There are a number of points that should be borne in mind:
  - as only whole records are written to disk, the final part of an EDF
    (that is shorter than the new record size) may be truncated
 
+<h3>Methods</h3>
+
+The low-level record (block) size of the EDF is changed by reorganizing samples into records of the specified duration. This operation is required when the original record size is incompatible with a desired epoch length or imposes an unnecessary read-performance penalty. The modified EDF is immediately written to disk; any trailing samples that do not fill a complete record at the new block size are discarded.
 
 <h3>Parameters</h3>
 
@@ -894,7 +1070,7 @@ There are a number of points that should be borne in mind:
 That is, while `RECORD-SIZE` itself only takes `dur` as the single
 option, one must also specify all options for
 [`WRITE`](outputs.md#write), as `RECORD-SIZE` automatically triggers
-`WRITE` after changing the record size of the in-memory
+[`WRITE`](outputs.md#write) after changing the record size of the in-memory
 representation. (That is, as always, the original EDF file is left
 untouched.)
 
@@ -950,7 +1126,7 @@ command, you'll see the following messages in the log:
 
 The warning message is expected, this is just Luna's way of ensuring
 that no further commands can be run after `RECORD-SIZE` command.
-Running `SUMMARY` on the new EDF, we see that the record size has been
+Running [`SUMMARY`](summaries.md#summary) on the new EDF, we see that the record size has been
 changed:
 
 ``` 
@@ -1013,7 +1189,7 @@ poses problems when thinking about how to write a new EDF that is
 structured by those epochs, i.e. only NREM sleep epochs, etc.
 
 Here we break this down three distinct issues, only the third of which
-is more challenging and requires the `ALIGN` command.
+is more challenging and requires the [`ALIGN`](manipulations.md#align) command.
 
 <h6>Offsets for EDF annotations</h6>
 
@@ -1094,12 +1270,12 @@ past the start of each second.  Although one solution would be to have a very sh
 one sample, 1/256 seconds), this may for technical reasons make data access suboptimal for many readers; further, we consider the
 more general case, where the offset is not even exactly aligned with a sample point. 
 
-The `ALIGN` command attempts to handle this issue, by creating a new
+The [`ALIGN`](manipulations.md#align) command attempts to handle this issue, by creating a new
 EDF in which the epochs are perfectly aligned to EDF records.
 
 One specifies a list of annotations that will define epochs: these annotations must be a) non-overlapping, and b)
 an exact multiple of the EDF record size.  i.e. if we have changed the above data to have 1 second records, then we can
-specify 30-second epochs.  The `ALIGN` command then finds all sample points within an annotation that fits completely within the observed duration
+specify 30-second epochs.  The [`ALIGN`](manipulations.md#align) command then finds all sample points within an annotation that fits completely within the observed duration
 (i.e. only ‘complete’ annotations, to skip those spans discontinuities/borders) and maps these into a new set of records
 (e.g. 30 new 1 second records) for each annotation (i.e. which may be mapping fractionally across original records). The end result is a new EDF
 with in which annotations, epochs & EDF records are all aligned.
@@ -1163,6 +1339,10 @@ have to select the closest next signal, so there will be a slight
 shift in the timings of signals.  If this matters, you can first
 resample all signals to align to the new offset perfectly.
 
+<h3>Methods</h3>
+
+[`ALIGN`](manipulations.md#align) reconstructs the internal EDF record structure so that a specified set of annotations — which must be non-overlapping and each an exact integer multiple of the current EDF record duration — map cleanly onto record boundaries. First, every annotation interval is validated: instances that span a discontinuity in the timeline or whose duration is not a whole-number multiple of the EDF record length are silently skipped. The surviving annotation intervals are sorted and checked for pairwise non-overlap, halting with an error if any overlap is found. A new set of EDF records is then pre-allocated, one record for every EDF-record-sized slot within each accepted annotation. For each signal channel (excluding the existing time-track), a contiguous slice of digital sample values is extracted from the original record store using the annotation interval as the slice boundary; because the annotation start may fall at a fractional sample position, the nearest available sample is selected, introducing at most one inter-sample shift. Digital values (not physical values) are copied directly into the new record buffer, preserving the existing scaling and offset fields. Once all channels are copied, the record count in the EDF header is updated, the old record store is replaced, and the internal timeline maps (`tp2rec`, `rec2tp`, `rec2tp_end`) are rebuilt from the per-record onset timestamps. Because EDF start times are constrained to whole seconds, the new EDF start is rounded to the nearest preceding second and all annotation onset values are shifted by the same amount to maintain consistency; the EDF header start-time field is updated to the corresponding clock time. Finally, the file is written as an EDF+D, with a freshly generated time-track that encodes each record's onset as a TAL timestamp.
+
 <h3>Parameters</h3>
 
 Main arguments
@@ -1182,7 +1362,7 @@ Other arguments as required by the [`WRITE` command](outputs.md#write)
 
 <h3>Output</h3>
 
-The `ALIGN` command forces a `WRITE` of the EDF; also, annotation files can be output, with the
+The [`ALIGN`](manipulations.md#align) command forces a [`WRITE`](outputs.md#write) of the EDF; also, annotation files can be output, with the
 annotations correctly altered to specify onset relative to the new EDF start.
 
 <h3>Example</h3>
@@ -1347,6 +1527,9 @@ the context of a gapped recording, it is often a reasonable trade-off
 to drop a little more data to make the resulting records easier to
 work with.
 
+<h3>Methods</h3>
+
+Discontinuous EDF+D recordings are converted to standard, contiguous EDF files using a two-stage alignment procedure. First, the desired segments are selected (e.g., only the largest segment or those containing scoring annotations), and records are realigned to standard epoch and record boundaries using a sub-sample interpolation step. Gaps between segments are handled by one of two strategies: zero-padding, which preserves the original clock-time timeline by inserting silent intervals at gap locations and annotating them accordingly; or splicing, which concatenates retained segments directly, with annotation timestamps adjusted to reflect the new local timeline. In both cases, the output is a standard EDF (without discontinuities) in which record boundaries, epoch boundaries, and staging annotations are mutually aligned, facilitating downstream analysis and compatibility with EDF-only software.
 
 <h3>Parameters</h3>
 
@@ -1662,7 +1845,7 @@ This is the impact of zero-padding:
 ```
 
 However, because the annotations have not been changed, you'd get
-conflict messages if attempting commands such as `HYPNO`, for example
+conflict messages if attempting commands such as [`HYPNO`](hypnograms.md#hypno), for example
 (which could not be solved by `EPOCH align`, as the staging
 annotations themselves are not uniformly distributed.
 
@@ -1671,11 +1854,15 @@ annotations themselves are not uniformly distributed.
 
 Sets the _in memory_ EDF header fields `Patient ID` and `Start Date` 
 fields to missing values as per the EDF spec (e.g. `X X X X` for EDF+ files, `.` for EDF). Any output
-of EDFs subsequently generated with the `WRITE` command will have those fields blanked.
+of EDFs subsequently generated with the [`WRITE`](outputs.md#write) command will have those fields blanked.
 As with all Luna commands, this does not alter the original EDF.
 
 Also see the [`anon=T` special variable](../luna/args.md#anonymize-edf-headers),
 which wipes EDF headers _before_ attaching any annotation files.
+
+<h3>Methods</h3>
+
+Protected health information is removed from the in-memory EDF header by replacing the patient identifier and recording start-date fields with the EDF-specification placeholder values, producing de-identified output EDFs when subsequently written to disk.
 
 !!! note 
     This command does not alter the ID specified in the
@@ -1699,7 +1886,7 @@ representation of the EDF header.
 <h3>Example</h3>
 
 A typical EDF with identifying information in the header (showing only
-relevant rows from the `SUMMARY` output):
+relevant rows from the [`SUMMARY`](summaries.md#summary) output):
 
 ```
 luna my.edf -s 'SUMMARY' | head 
@@ -1714,7 +1901,7 @@ Start time     : 23:07:56
 ... (cont'd) ...
 ```
 
-Here we see how the `ANON` command effectively wipes this information:
+Here we see how the [`ANON`](manipulations.md#anon) command effectively wipes this information:
 
 ```
 luna my.edf -s 'ANON & SUMMARY' | head 
@@ -1744,7 +1931,7 @@ _Directly specify certain EDF header values_
 Note that EDF header fields which relate to the size/structure of the
 actual data (i.e. sample rate, EDF header size, physical min/max, etc)
 cannot be changed in this way - i.e. for those changes, use the relevant
-data-modifying command, e.g. `RESAMPLE`, `RECORD-SIZE`, `MINMAX`,
+data-modifying command, e.g. [`RESAMPLE`](manipulations.md#resample), `RECORD-SIZE`, [`MINMAX`](manipulations.md#minmax),
 etc).  That is, these options only modify the header and nothing else.
 
 Note that any start time/date changes and made _after_ any annotations
@@ -1756,6 +1943,9 @@ setting `hms` or `dhms` flags. See also the
 [`startdate`](../luna/args.md#set-edf-start-date) special variables
 (which make the changes _before_ attaching annotations).
 
+<h3>Methods</h3>
+
+Descriptive EDF header fields (patient identifier, recording information, start date and time, channel transducer type, physical dimension, and prefiltering description) are updated in-memory without altering the underlying signal data or its scaling. This is used to correct erroneous metadata, apply standardized labels, or prepare files for redistribution.
 
 <h3>Parameters</h3>
 
@@ -1781,7 +1971,7 @@ Channel-specific headers
 
 <h3>Output</h3>
 
-This command only modifies the in-memory representation of the EDF.  Use `WRITE` to save any changes.
+This command only modifies the in-memory representation of the EDF.  Use [`WRITE`](outputs.md#write) to save any changes.
 
 e.g. to fix the start date, and add transducer types for the EEGs (here
 using Luna's automatic specification of common EEG channel names):
@@ -1799,6 +1989,10 @@ _Directly specify Luna variables_
 This can be useful if one wants to include individual-level variables
 when defining a script variable.  If it isn't clear why you'd want to
 do this, then there is no need to worry about using this command.
+
+<h3>Methods</h3>
+
+Named variables are set or overridden within the active Luna session, allowing script-level parameters to be dynamically assigned during processing rather than requiring all values to be specified at launch.
 
 <h3>Parameters</h3>
 
@@ -1833,6 +2027,10 @@ Note that this command does not adjust _annotations_ in any way.
 
 All times are expected in seconds, one value per line, and all values must be increasing.
 
+<h3>Methods</h3>
+
+EDF record timestamps are directly overwritten using values supplied from an external file, enabling construction of recordings with arbitrary temporal structures (e.g., discontinuous segments) for testing or simulation purposes. Annotation timings are not adjusted by this operation.
+
 <h3>Parameters</h3>
 
 | Parameter | Example | Description |
@@ -1852,7 +2050,11 @@ See [this vignette](../vignettes/merge.md) for an example of using `SET-TIMESTAM
 _Rectifies a signal_
 
 This command sets all values of an EDF signal to their absolute values.  It is primarily designed for use
-working with other functions such as `HILBERT` and `PEAKS`, to build up larger processing procedures.
+working with other functions such as [`HILBERT`](power-spectra.md#hilbert) and [`PEAKS`](intervals.md#peaks), to build up larger processing procedures.
+
+<h3>Methods</h3>
+
+Full-wave rectification replaces each sample with its absolute value, collapsing the signal onto the non-negative real axis. This operation is commonly applied as a preprocessing step prior to envelope extraction or peak detection, where the sign of the signal is uninformative.
 
 <h3>Parameters</h3>
 
@@ -1908,6 +2110,10 @@ This command is primarily designed for evaluating other
 time-domain/phase-based methods, e.g. to provide a sanity-check by
 completely reversing a signal in the time-domain.
 
+<h3>Methods</h3>
+
+Time-domain reversal reflects the signal about its midpoint, so that the sample originally at time _t_ is placed at time _T_ − _t_, where _T_ is the total recording duration. Because this transformation preserves the amplitude spectrum while inverting the phase spectrum, it serves as a useful negative control for assessing directional or causal properties of time-domain analyses.
+
 <h3>Parameters</h3>
 
 | Parameter | Example | Description |
@@ -1923,6 +2129,10 @@ None (other than reversing the in-memory signal).
 _Applies a moving-average (or median) filter to a signal_ 
 
 Applies a moving average window to filter a signal based on either a) the mean, b) median, or c) ...
+
+<h3>Methods</h3>
+
+A sliding window of user-specified duration is applied to each signal to produce a smoothed output. Within each window, the central sample is replaced by the arithmetic mean, the median, or — for a triangular filter — a linearly weighted mean that tapers toward the window edges. Mean filtering attenuates high-frequency noise while preserving low-frequency trends; median filtering is more robust to transient outliers; and the triangular (Bartlett) weighting provides a smoother spectral roll-off than a rectangular window while remaining computationally efficient.
 
 <h3>Parameters</h3>
 
@@ -1941,3 +2151,112 @@ Note that `median` and `tri` cannot be specified together.
 <h3>Output</h3>
 
 None.
+
+
+## INSERT
+
+_Estimate lag between EDFs or insert channels from one EDF into another_
+
+[`INSERT`](manipulations.md#insert) supports two related workflows and is designed for
+aligning and splicing channels across EDFs:
+
+1. Estimate the temporal offset between a primary and secondary EDF.
+2. Insert one or more channels from the secondary EDF into the current EDF using
+   a known offset, optionally with a simple linear time-stretch correction.
+
+Unlike most EDF-manipulation commands, insert mode can add channels at the
+secondary signal's own sample rate, so it is intended for merging asynchronous
+or differently sampled recordings into one in-memory EDF.
+
+Current implementation notes:
+
+- Both EDFs must be continuous, or at least not actually discontinuous with gaps.
+- Lag-estimation mode requires matched sample rates within each comparison pair,
+  and all comparison pairs must share the same sample rate.
+- Insert mode zero-pads uncovered regions and makes channel names unique by
+  appending `.1`, `.2`, etc. if needed.
+- The `annot=` argument is parsed in insert mode, but annotation creation is not
+  currently implemented.
+
+<h3>Methods</h3>
+
+[`INSERT`](manipulations.md#insert) operates in two distinct modes. In lag-estimation mode, each signal pair is optionally band-pass filtered before processing. The default cross-correlation method extracts matched-length windows from the secondary EDF and, for each window, searches a constrained offset range by computing the normalised cross-correlation between z-scored primary and secondary segments; the lag at the cross-correlation maximum is determined per channel pair and the median lag across pairs is taken as the window estimate. A quality gate based on the normalised peak correlation filters windows before they enter the drift model. Across accepted windows, ordinary least-squares regression of estimated offset (seconds) on window position (seconds) is performed; residuals exceeding 3 SD are removed and the regression is refit on the clean set. The slope of this regression quantifies linear clock drift between the two devices. In insert mode, a secondary EDF signal is aligned to the primary by applying a user-specified constant offset in sample points; if a drift rate is also provided, the secondary signal is first resampled via cubic spline interpolation to correct the linear time-stretch before insertion. Regions of the primary EDF not covered by the secondary signal are zero-padded.
+
+<h3>Parameters</h3>
+
+Common parameter:
+
+| Parameter | Example | Description |
+|---|---|---|
+| `edf` | `edf=secondary.edf` | Secondary EDF to compare against or insert from |
+
+Lag-estimation mode:
+
+| Parameter | Example | Description |
+|---|---|---|
+| `pairs` | `pairs=C3,C3_ref,C4,C4_ref` | Comma-delimited signal pairs: primary-channel, secondary-channel, repeated |
+| `xcorr` | | Use cross-correlation rather than the default Euclidean sliding-window method |
+| `verbose` | | Emit extra lag-profile detail |
+| `w` | `w=30` | With `xcorr`, half-width of lag search window in seconds |
+| `c` | `c=0` | With `xcorr`, center of lag search window in seconds |
+| `start` | `start=600` | With Euclidean mode, start time in the secondary EDF for the first window (seconds) |
+| `len` | `len=120` | With Euclidean mode, window length in seconds |
+| `inc` | `inc=600` | With Euclidean mode, step size between windows (default `600`) |
+| `steps` | `steps=3` | With Euclidean mode, number of windows to evaluate (default `1`) |
+| `offset-range` | `offset-range=-60,60` | With Euclidean mode, constrain candidate offsets to this range in seconds |
+
+Insert mode:
+
+| Parameter | Example | Description |
+|---|---|---|
+| `sig` | `sig=ECG_ref` | Signal(s) from the secondary EDF to insert |
+| `offset` | `offset=-12.5` | Offset in seconds to apply before insertion |
+| `drift` | `drift=-10` | Optional linear drift correction in seconds over the interval specified by `secs` |
+| `secs` | `secs=28800` | Denominator for `drift`, e.g. `28800` for 8 hours |
+| `annot` | `annot=MISSING2` | Reserved for adding missing-data annotations, but not currently implemented |
+
+<h3>Output</h3>
+
+Lag-estimation with `xcorr` writes output at `CHS` strata, and optionally at `CHS × SP`
+if `verbose` and `w` are used:
+
+| Variable | Description |
+|---|---|
+| `SR` | Sample rate used for the pair |
+| `L1` | Number of samples in the primary signal |
+| `L2` | Number of samples in the secondary signal |
+| `LAG_SP` | Estimated lag in sample points |
+| `LAG_SEC` | Estimated lag in seconds |
+| `MX` | Maximum cross-correlation value |
+| `T` | Lag in seconds for a sampled point in the correlation profile [`verbose`] |
+| `XC` | Cross-correlation value at that lag [`verbose`] |
+
+Lag-estimation with the default Euclidean mode writes output at `WIN` strata:
+
+| Variable | Description |
+|---|---|
+| `SP` | Estimated offset in sample points |
+| `SEC` | Estimated offset in seconds |
+
+Insert mode has no formal tabular output; it modifies the in-memory EDF by adding
+new zero-padded signals from the secondary EDF.
+
+<h3>Examples</h3>
+
+Estimate lag by cross-correlation:
+
+```
+INSERT edf=secondary.edf pairs=C3,C3,C4,C4 xcorr w=30
+```
+
+Estimate lag by sliding Euclidean distance:
+
+```
+INSERT edf=secondary.edf pairs=C3,C3,C4,C4 start=600 len=120 inc=600 steps=3
+```
+
+Insert channels once an offset is known:
+
+```
+INSERT edf=secondary.edf sig=ECG,EMG offset=-12.5
+```

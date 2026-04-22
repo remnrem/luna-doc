@@ -13,7 +13,7 @@ interface ([_lunaR_](ext/R/index.md)).
 
 ## Version
 
-The current version is __v1.3.4 (27-Feb-2026)__.
+The current version is __v1.5.1 (21-April-2026)__.
 Use `luna -v` to display the specific build date/time.
 
 ## Where

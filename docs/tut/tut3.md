@@ -12,7 +12,7 @@ typical metrics of interest for sleep studies, including:
 
 ## Epoch-level summaries
 
-Returning to the `STATS` command described above, here we use it
+Returning to the [`STATS`](../ref/summaries.md#stats) command described above, here we use it
 with the `epoch` option, in order to generate per-epoch statistics.
 This section also illustrates working with the text output format.
 
@@ -63,9 +63,9 @@ ___________________________________________________________________
 
 This command was applied only to the second EDF in the sample-list
 (i.e. the `2` argument), and only to the `ECG` and `EMG` signals.
-After defining 30-second epochs (the default from the `EPOCH` command),
+After defining 30-second epochs (the default from the [`EPOCH`](../ref/epochs.md#epoch) command),
 it generates basic statistics per-epoch (the `epoch` option for the
-`STATS` command), as well as entire-signal summaries.  Note that 1195
+[`STATS`](../ref/summaries.md#stats) command), as well as entire-signal summaries.  Note that 1195
 epochs are generated, which corresponds to the stated duration of 9
 hours, 57 and a half minutes (i.e. `( 9 * 60 + 57 ) * 2 + 1 = 1195`).
 
@@ -85,8 +85,8 @@ nsrr02   STATS   CH/ECG   2   MAX      1.25
 ...
 ```
 That is, the first three lines (for which the 4th column is empty, `.`)
-are from the `EPOCH` command.  The subsequent lines are
-the per-epoch values from the `STATS` command: e.g. the mean is 0.00506797
+are from the [`EPOCH`](../ref/epochs.md#epoch) command.  The subsequent lines are
+the per-epoch values from the [`STATS`](../ref/summaries.md#stats) command: e.g. the mean is 0.00506797
 for the first epoch.
 
 This format is designed to be easily parsed and read by other
@@ -163,7 +163,7 @@ the final time that night.  We can confirm this by indicating the
 manually-annotated sleep stage for each point. Going back to the
 command line (type `q()` to get out of R, or even better, run the next
 couple of Luna commands in a separate window to keep the R session
-open), we can use Luna to extract sleep stages (using the `STAGE`
+open), we can use Luna to extract sleep stages (using the [`STAGE`](../ref/hypnograms.md#stage)
 command) in a format that can be read into R:
 
 ```
@@ -224,7 +224,7 @@ legend("bottomleft",legend=cols , fill = as.factor( cols ) )
 
 ## Hypnograms 
 
-Given a set of epoch-based staging values, the `HYPNO` command
+Given a set of epoch-based staging values, the [`HYPNO`](../ref/hypnograms.md#hypno) command
 produces a series of statistics that describe different aspects of
 sleep macro-architecture.
 
@@ -233,7 +233,7 @@ luna s.lst -o stage.db -s 'EPOCH & HYPNO epoch'
 ```
 
 This generate a large number of variables, as described [here](../ref/hypnograms.md#hypno).
-There are various different strata groups in the output from `STAGE`:
+There are various different strata groups in the output from [`STAGE`](../ref/hypnograms.md#stage):
 
 ```
 destrat stage.db
@@ -295,7 +295,7 @@ distinct strata group(s):
 -----------:-----------:-------------:---------------------------
 ```
 
-The first (`.`) `HYPNO` group is a set of variables with no
+The first (`.`) [`HYPNO`](../ref/hypnograms.md#hypno) group is a set of variables with no
 stratifiers: that is, simply one value per individual/EDF, such as
 Total Sleep Time (`TST`).
 
@@ -338,11 +338,11 @@ nsrr03   3    137.5       630
 ```
 
 To illustrate extracting epoch-level information: here we consider the
-designated sleep stage (`STAGE` variable), along with the time
+designated sleep stage ([`STAGE`](../ref/hypnograms.md#stage) variable), along with the time
 (`CLOCK_TIME`) and a measure of how many nearby epochs had the same
 stage (`FLANKING`).  By default, `FLANKING` treats all three NREM stages
 as similar for this particular analysis, unless the option `flanking-collapse-nrem=F`
-is passed to `HYPNO`. The latter is the minimum number of
+is passed to [`HYPNO`](../ref/hypnograms.md#hypno). The latter is the minimum number of
 contiguous epochs, either forwards or backwards in time, that are
 similar to the index epoch (truncated at the start and end of the
 recording).  In other words, selecting epochs with 3 or more for this
@@ -409,7 +409,7 @@ following (somewhat unrealistic) example - to select epochs that:
 * do not contain any apnea or hypopnea events
 
 The following Luna command script (`cmd/third.txt`) shows one way of doing this, leveraging the
-ability of `HYPNO` to add annotations on-the-fly (to define persistent sleep):
+ability of [`HYPNO`](../ref/hypnograms.md#hypno) to add annotations on-the-fly (to define persistent sleep):
 
 ```
 % with `annot`, HYPNO will add annotations to the EDF starting h_
@@ -439,8 +439,8 @@ MASK mask-if=Obstructive_Apnea,Hypopnea
 DUMP-MASK
 ```
 
-The above first runs `HYPNO` (which also epochs the data in 30-second
-epochs) but adds the flag `annot` which tells `HYPNO` to add a series
+The above first runs [`HYPNO`](../ref/hypnograms.md#hypno) (which also epochs the data in 30-second
+epochs) but adds the flag `annot` which tells [`HYPNO`](../ref/hypnograms.md#hypno) to add a series
 of _annotations_ to the recording, largely based upon the hynogram.
 By default, these start with the prefix `h_` and include one that
 defines (at an epoch-level) persistent sleep, called
@@ -459,7 +459,7 @@ command.)
     You must use 24 hour hh:mm:ss notation, so 11pm is 23:00:00.
 
 As shown above, `HYPNO annot` also emits some annotations corresponding to clock-times,
-and we could have used that `MASK` statement instead to achieve the same effect.
+and we could have used that [`MASK`](../ref/masks.md#mask) statement instead to achieve the same effect.
 
 It next masks any epochs that are _not_ labelled as `h_persistent_sleep`.
 Next, it masks any epoch that is not stage 2 NREM sleep (annotation
@@ -474,7 +474,7 @@ Next, it masks any epoch that is not stage 2 NREM sleep (annotation
     * To _unmask_ or _set the mask to false_ mean to **include** that epoch. 
 
     See the page on [masks](../ref/masks.md) for a detailed description of how 
-    the `MASK` syntax works in Luna.
+    the [`MASK`](../ref/masks.md#mask) syntax works in Luna.
 
 Finally, it masks any epochs that contain at least one apnea or
 hypopnea event, using the labels `Obstructive_Apnea` and `Hypopnea` as
@@ -488,8 +488,8 @@ that describes the masking process (i.e. we'll ignore the output in `out.db`):
 luna s.lst id=nsrr01 -o out.db < cmd/third.txt
 ```
 Looking at the output written to the console, we can track what
-happened at each `MASK` stage.  First, the hypnogram derived
-annotations are added from running `HYPNO`, with a note that
+happened at each [`MASK`](../ref/masks.md#mask) stage.  First, the hypnogram derived
+annotations are added from running [`HYPNO`](../ref/hypnograms.md#hypno), with a note that
 these will have a prefix `h_`:
 ```
  CMD #1: HYPNO
@@ -498,7 +498,7 @@ these will have a prefix `h_`:
   set 0 leading/trailing sleep epochs to '?' (given end-wake=120 and end-sleep=5)
   creating hypnogram-derived annotations, with prefix h
 ```
-To see a full list of the added annotations, either run a `ANNOTS` command or see the documentation
+To see a full list of the added annotations, either run a [`ANNOTS`](../ref/annotations.md#annots) command or see the documentation
 page for [`HYPNO`](../ref/hypnograms.md#hypno).   Next,  all epochs are included (with
 the `none` mask option):
 
@@ -534,7 +534,7 @@ epochs.  We next further mask epochs that are not in persistent sleep:
 
 Based on this, it implies that 209 epochs are within the 11pm to 3am window but not
 in persistent sleep, as they are newly masked.  Only those epochs have their
-status changed (i.e. because we've set this `MASK` commands up to
+status changed (i.e. because we've set this [`MASK`](../ref/masks.md#mask) commands up to
 only ever _mask_, not to _unmask_, epochs), leaving us with 272
 epochs:
 
@@ -635,13 +635,13 @@ ___________________________________________________________________
 ```
 
 This selects only the two EEG signals, based on their aliases `EEG1` and
-`EEG2`.  the `mV` command rescales any signals in `uV` and `V` units to
+`EEG2`.  the [`mV`](../ref/manipulations.md#mv) command rescales any signals in [`uV`](../ref/manipulations.md#uv) and `V` units to
 mV, changing the EDF headers appropriately too. The `RESEAMPLE`
 command takes an argument `sr` which is the new sampling rate
-(i.e. set to 100Hz here).  The `FILTER` command designs and applies a
+(i.e. set to 100Hz here).  The [`FILTER`](../ref/fir-filters.md#filter) command designs and applies a
 FIR filter with transition frequencies at 0.3 and 35 Hz.
 
-The `REFERENCE` command re-references the signal data -- in this
+The [`REFERENCE`](../ref/manipulations.md#reference) command re-references the signal data -- in this
 example, for illustration of the syntax only, we reference EEG2
 relative to EEG1 (i.e. subtract EEG1 values from EEG2).  Signals must
 have the same sampling rate to be referenced.  Multiple,
@@ -650,7 +650,7 @@ average of those values is used as the reference; if multiple signals
 are given for the `sig` command, then each signal is re-referenced
 with respect to whatever `ref` was specified.
 
-Finally, the `WRITE` command generates a new EDF, that will reflect
+Finally, the [`WRITE`](../ref/outputs.md#write) command generates a new EDF, that will reflect
 these changes.  The `edf-tag` value is appended to the original
 filename for the EDF, and it is written to a directory `edf-dir` (if
 this doesn't exist, it will be created).  A new sample-list `new.lst`
@@ -671,7 +671,7 @@ nsrr02     newedfs/learn-nsrr02-v2.edf
 nsrr03     newedfs/learn-nsrr03-v2.edf
 ```
 
-We can also inspect the new sets of EDFs, using the `SUMMARY` command on `new.lst`:
+We can also inspect the new sets of EDFs, using the [`SUMMARY`](../ref/summaries.md#summary) command on `new.lst`:
 
 ```
 luna new.lst id=nsrr01 -s SUMMARY
@@ -708,7 +708,7 @@ Signal 2 : [EEG1]
        pre-filtering        : 
 ```
 
-That is, in relation to the original `SUMMARY` for this individual,
+That is, in relation to the original [`SUMMARY`](../ref/summaries.md#summary) for this individual,
 the sampling rate is different, the labels have been reset to their
 alias values, there are now only two signals, not 14, the units of mV
 and not uV, and the min/max range is different (reflecting both the
@@ -735,7 +735,7 @@ SIGSTATS epoch
 
 After filtering the signal to consider only sleep epochs, and
 filtering the signal to remove very slow and fast rhythms, we use the
-`SIGSTATS` command to generate Hjorth parameters (and also RMS) for a
+[`SIGSTATS`](../ref/summaries.md#sigstats) command to generate Hjorth parameters (and also RMS) for a
 signal, both overall (i.e. all sleep epochs) and per-epoch (by virtue
 of the `epoch` option).  We run Luna and save the results in
 `artifact.db`, only for a single EEG channel for now:
@@ -778,7 +778,7 @@ distinct strata group(s):
 ----------------:-------------------:---------------:---------------------------
 ```
 
-The `SIGSTATS` command produces Hjorth parameters (H1, H2 and H3) both
+The [`SIGSTATS`](../ref/summaries.md#sigstats) command produces Hjorth parameters (H1, H2 and H3) both
 overall (`CH` strata group) and per-epoch (`E CH` strata group).  To
 see the overall values:
 
@@ -803,12 +803,12 @@ As well as viewing these statistics, we can use them to flag likely
 artifacts, by considering values that are statistical outliers in the
 per-epoch distribution.  If we consider a new command script, below
 (and `cmd/sixth.txt` in the tutorial folder), we add the `mask` option
-to the `SIGSTATS` command, and specify a set of thresholds: 3,3,3
+to the [`SIGSTATS`](../ref/summaries.md#sigstats) command, and specify a set of thresholds: 3,3,3
 means to iteratively remove epochs that are more than 3 standard
-deviations above or below the mean. We also add the `ARTIFACTS`
+deviations above or below the mean. We also add the [`ARTIFACTS`](../ref/artifacts.md#artifacts)
 command beforehand, which implements the Buckelmueller et
-al. filtering referenced above.  Note that the `SIGSTATS` command will
-only operate on unmasked values (the prior `ARTIFACTS` command will
+al. filtering referenced above.  Note that the [`SIGSTATS`](../ref/summaries.md#sigstats) command will
+only operate on unmasked values (the prior [`ARTIFACTS`](../ref/artifacts.md#artifacts) command will
 have masked some).
 
 ```
@@ -862,8 +862,8 @@ destrat mask.db +DUMP-MASK -r E -v EMASK > mask.txt
 ```
 
 This has 888 rows: one header plus the 887 non-wake epochs (i.e. after
-a `RESTRUCTURE` command, this is the "total" number of epochs left).
-Loading this file, plus the previous output from `SIGSTATS` into R, we
+a [`RESTRUCTURE`](../ref/masks.md#restructure) command, this is the "total" number of epochs left).
+Loading this file, plus the previous output from [`SIGSTATS`](../ref/summaries.md#sigstats) into R, we
 can plot the per-epoch distribution of the Hjorth parameters, colored
 by whether that epoch was excluded by artifact detection (__run the
 following in R__):
@@ -888,7 +888,7 @@ outlier status.
 
 To examine one of the removed epochs more closely (we can use `scope`
 as below, also), here we illustrate using commands such as `DUMP` and
-`MATRIX` to obtain simple, plain-text signal data.  This extracts the
+[`MATRIX`](../ref/outputs.md#matrix) to obtain simple, plain-text signal data.  This extracts the
 EEG signal only, for the first individual's epoch 220.  (This was one
 of the flagged epochs, as you can see by examining the output of
 `DUMP-MASK` above.
@@ -927,7 +927,7 @@ plot( seq(1/125,30,1/125), s, type="l", ylim=c(-125, 125 ) ,
 ## Spectral and spindle analyses
 
 To generate the EEG power density spectrum for each individual, say
-during stage 2 NREM sleep, we can use the `PSD` command.
+during stage 2 NREM sleep, we can use the [`PSD`](../ref/power-spectra.md#psd) command.
 Specifically, if we had a command file as follows:
 
 ```

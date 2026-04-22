@@ -2,7 +2,7 @@
 
 _An implementation of the fastICA algorithm_
 
-Independent Component Analysis (ICA) decomposes multi-channel EEG into statistically independent components, most commonly used to identify and remove stereotyped artifacts (ocular, cardiac, muscular) from the signal. `ICA` fits the fastICA algorithm to one or more channels and adds the resulting independent components as new EDF signals for inspection. `ADJUST` subtracts specified components from the original channels to produce a cleaned signal. `SVD` applies singular value decomposition (PCA) to multi-channel data as a related alternative, useful for dimensionality reduction.
+Independent Component Analysis (ICA) decomposes multi-channel EEG into statistically independent components, most commonly used to identify and remove stereotyped artifacts (ocular, cardiac, muscular) from the signal. [`ICA`](ica.md#ica) fits the fastICA algorithm to one or more channels and adds the resulting independent components as new EDF signals for inspection. [`ADJUST`](ica.md#adjust) subtracts specified components from the original channels to produce a cleaned signal. [`SVD`](ica.md#svd) applies singular value decomposition (PCA) to multi-channel data as a related alternative, useful for dimensionality reduction.
 
 | Command | Description | 
 | ---- | ------ | 
@@ -17,14 +17,18 @@ _Independent components analysis_
 This command implements the [fastICA algorithm](https://www.cs.helsinki.fi/u/ahyvarin/),
 providing a C/C++ implementation of R's [fastICA package](https://cran.r-project.org/web/packages/fastICA/fastICA.pdf).
 
+<h3>Methods</h3>
+
+Independent component analysis (ICA) decomposes a multivariate time series into a set of statistically independent source signals. The fastICA algorithm maximizes non-Gaussianity of the estimated sources using a fixed-point iteration, with preprocessing steps of centering (zero-mean) and whitening (pre-sphering via PCA) to reduce the search space to orthogonal rotations. The number of extracted components can be restricted to a subset of the full channel space. The resulting mixing matrix (relating original channels to components) is retained for use in subsequent artifact removal, and the independent component time series are optionally appended to the in-memory EDF for inspection and downstream analysis. Because ICA is initialized with random starting values, results are not deterministic across runs.
+
 We hope that in future [vignettes](../vignettes/index.md) we will be able to
 provide a more contextualized account of how to apply ICA using Luna to
 sleep data in practice.  __For now, this page contains only bare-bones
 reference material__.
 
-By default, `ICA` adds signals `IC_1`, `IC_2`, etc to the internal
-EDF: these can then be used as signals in other commands (e.g. `PSD`)
-to examine the properties of those components. You can also `WRITE`
+By default, [`ICA`](ica.md#ica) adds signals `IC_1`, `IC_2`, etc to the internal
+EDF: these can then be used as signals in other commands (e.g. [`PSD`](power-spectra.md#psd))
+to examine the properties of those components. You can also [`WRITE`](outputs.md#write)
 the EDF containing these ICs.
     
 Currently, this command works on a whole-recording basis, e.g. rather
@@ -75,13 +79,13 @@ Secondary parameters include:
 
 <h3>Outputs</h3>
 
-As mentioned, one output of `ICA` is a set of new channels added to
+As mentioned, one output of [`ICA`](ica.md#ica) is a set of new channels added to
 the (internal) EDF (unless `no-new-channels` is specified). These are
 labelled `IC_1`, `IC_2`, etc, by default.
 
 A second key output is the mixing matrix `A`, which is written to a
 file.  A typical workflow will involve using this matrix/file in a
-subsequent `ADJUST` command, in order to remove certain components from
+subsequent [`ADJUST`](ica.md#adjust) command, in order to remove certain components from
 the original signals.
 
 Various other outputs are written to the standard output stream:
@@ -108,7 +112,7 @@ ICA matrix K (strata: `KCH` x `KIC`)
 
 <h3>Example</h3>
 
-Running `ICA` on a single EDF:
+Running [`ICA`](ica.md#ica) on a single EDF:
 
 ```
 luna s.lst k=57 -o out.db -s ' MASK ifnot=N2
@@ -133,7 +137,7 @@ combined with the topographies of the ICs, and then use lunaR's [`ltopo.rb()`](.
 
 Here we see that some components are highly channel-specific (i.e. as
 indicated by the topoplots, e.g. `IC_18`).  Looking at the PSD, some
-ICs appear to reflect artifact, e.g. `IC_53`.  We can use the `ADJUST`
+ICs appear to reflect artifact, e.g. `IC_53`.  We can use the [`ADJUST`](ica.md#adjust)
 command to remove certain components from the original signals, as
 illustrated below.
 
@@ -142,23 +146,26 @@ illustrated below.
 
 _Adjusts signals given various ICs and other criteria_
 
-This command is designed to work with `ICA`, and expects as input a)
+This command is designed to work with [`ICA`](ica.md#ica), and expects as input a)
 the same signals used to compute the ICs, and b) the `A` matrix from
-an ICA run.  Based on these, the `ADJUST` command will remove certain
+an ICA run.  Based on these, the [`ADJUST`](ica.md#adjust) command will remove certain
 components from the original signals.  One can specify the
 components directly on the command line (e.g. `IC_53`).
-Alternatively, it is possible to instruct `ADJUST` to select
+Alternatively, it is possible to instruct [`ADJUST`](ica.md#adjust) to select
 components to be removed automatically, based on certain criteria.
 Currently, only two criteria are supported: topographical outliers and 
 high correlation with one or more other channels (e.g. EOG or EMG).
 
- 
+<h3>Methods</h3>
+
+Artifact removal via ICA component subtraction operates by projecting each identified artifactual component out of the original signal space using the stored mixing matrix. Specific components can be designated for removal explicitly, or selected automatically: topographical outliers are identified as components whose spatial weights across channels deviate by more than a specified number of standard deviations from the mean channel loadings; correlation-based selection identifies components whose time courses are correlated above a threshold with reference artifact channels (e.g., EOG or EMG). Selected components are subtracted from the original signals by reconstructing the data using only the retained components via the inverse mixing matrix, and the corrected signals replace the originals in the in-memory EDF.
+
 <h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | ---- | ---- | ---- |
 | `sig` |               | Signals to be adjusted |
-| `A`   | `a-id1.txt` | Filename of `A` mixing matrix (from `ICA`) |
+| `A`   | `a-id1.txt` | Filename of `A` mixing matrix (from [`ICA`](ica.md#ica)) |
 | `adj` | `[IC_][1:57]` | Putative set of ICs that may be adjusted for |
 | `force` | `IC_5` | Force this component to be removed |
 | `spatial` | 3 | Select components with extreme spatial variance |
@@ -182,7 +189,7 @@ Channel-level output (strata: `CH`)
 
 <h3>Example</h3>
 
-Following from the `ICA` example above, to remove channel `IC_57` (and show before and after PSDs) we might write:
+Following from the [`ICA`](ica.md#ica) example above, to remove channel `IC_57` (and show before and after PSDs) we might write:
 
 ```
 luna file-ic.edf -o out.db -s ' TAG ver/pre
@@ -218,6 +225,10 @@ This command performs PCA via SVD of multiple channels, and
 (optionally) adds new channels to the current in-memory EDF. All input
 channels must have the same sample rate.  A specified number of new channels (with
 the same sample rate) will be added to the in-memory EDF.
+
+<h3>Methods</h3>
+
+Singular value decomposition (SVD) of the multichannel data matrix yields an orthogonal decomposition equivalent to principal component analysis (PCA). The data matrix is optionally normalized to unit variance per channel and/or Winsorized at symmetric percentiles to reduce the influence of extreme samples before decomposition. The resulting left singular vectors form the component time series, the right singular vectors describe the channel weights, and the singular values encode the proportion of variance explained by each component. A specified number of leading components are retained and optionally appended to the in-memory EDF as new channels.
 
 <h3>Parameters</h3>
 

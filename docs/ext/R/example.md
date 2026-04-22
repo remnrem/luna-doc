@@ -94,7 +94,7 @@ lx(k)
 PSD : CH B_CH CH_F 
 ```
 
-Of primary interest, is spectral power (`PSD` variable) stratified by
+Of primary interest, is spectral power ([`PSD`](../../ref/power-spectra.md#psd) variable) stratified by
 frequency (`F`) and channel (`CH`, although note that in this
 particular analysis we only have a single channel, `EEG`):
 

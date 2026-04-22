@@ -214,14 +214,14 @@ specific to a domain and the names should be unique to a domain.
 
 !!! hint
     The same variable name can exist in diffferent data files within the same domain/group.
-    e.g. `PSD` might exist in two files
+    e.g. [`PSD`](../ref/power-spectra.md#psd) might exist in two files
 
     `eeg_spec_avg_B.txt`
 
     `eeg_spec_avg_B_SS.txt`
 
     meaning that this measure is stratified by either _band_ (`B`) or
-    by both _band_ and _sleep stage_ (`SS`).  The variable `PSD` would
+    by both _band_ and _sleep stage_ (`SS`).  The variable [`PSD`](../ref/power-spectra.md#psd) would
     only feature once in the data dictionary `eeg_spec.txt` (along
     with factor definitions for `B` and `SS`), and the the program
     would correctly pull these together.

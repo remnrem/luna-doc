@@ -104,7 +104,7 @@ which prints the **tab-delimited** output:
 ID      NR      NS   REC.DUR   TOT.DUR.HMS   TOT.DUR.SEC
 nsrr01  40920   2    1         11:22:00      40920
 ```
-The output of the `HEADERS` command is described
+The output of the [`HEADERS`](../ref/summaries.md#headers) command is described
 [here](../ref/summaries.md#headers).
 
 !!! hint
@@ -208,26 +208,26 @@ distinct strata group(s):
                 :                   :               : 
 ```
 
-We now see four distinct strata groups.  The `EPOCH` command produces
+We now see four distinct strata groups.  The [`EPOCH`](../ref/epochs.md#epoch) command produces
 some basic output in the _baseline_ stratum (such as the number of
-epochs, `NE`).  For the `PSD` command, we see three strata groups 
+epochs, `NE`).  For the [`PSD`](../ref/power-spectra.md#psd) command, we see three strata groups 
 (none of which are the default baseline group) that are collectively 
 defined by three _factors_:
 
 | Factor | Description |
 | ---- | ----- | 
-| `E` | _Epoch_ (due to the `epoch` option on the `PSD` command) |
+| `E` | _Epoch_ (due to the `epoch` option on the [`PSD`](../ref/power-spectra.md#psd) command) |
 | `B` | Spectral _band_ | 
-| `CH` | _Channel_, because `PSD` always operates on a particular channel |
+| `CH` | _Channel_, because [`PSD`](../ref/power-spectra.md#psd) always operates on a particular channel |
 
 Based on these three _factors_, there are three distinct strata groups 
-from `PSD`, each of which contains its own set of variables/data, are:
+from [`PSD`](../ref/power-spectra.md#psd), each of which contains its own set of variables/data, are:
 
 | Strata group | Content |
 | ----- | ----- | 
 | `CH`             | Number of epochs (although this will be similar for each channel) |
 | `B` x `CH`       | Spectral band power for each channel for the entire signal | 
-| `E` x `B` x `CH` | As above, but output _per-epoch_ (due to the `epoch` option of the `PSD` command) | 
+| `E` x `B` x `CH` | As above, but output _per-epoch_ (due to the `epoch` option of the [`PSD`](../ref/power-spectra.md#psd) command) | 
 
 In other words, `out.db` contains four _virtual tables_, and
 we can output any one of them by specifying the appropriate
@@ -560,7 +560,7 @@ See [merge](../merge/merge.md) for more details.
     
     - Certain commands may add additional variables to the output, even if the option normally required
     (under `-o` output mode) wasn't given.  For example, the
-    `SPINDLES` command will generate variables for slow oscillations
+    [`SPINDLES`](../ref/spindles-so.md#spindles) command will generate variables for slow oscillations
     and their coupling with spindles, even if the `sw` parameter was
     not specified. These extra columns will be populated by `NA` (not
     available) values when that option wasn't specified. Whereas the
@@ -569,7 +569,7 @@ See [merge](../merge/merge.md) for more details.
     what analyses will be performed; this will occassionally mean that
     extra variables are included.
 
-    - In certain instances (e.g. especially for the `SPINDLES` command
+    - In certain instances (e.g. especially for the [`SPINDLES`](../ref/spindles-so.md#spindles) command
       when using additional options) you may find that information is
       split across multiple rows.  For example
       ```

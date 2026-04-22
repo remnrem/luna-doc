@@ -2,7 +2,7 @@
 
 _Saving/reverting to snapshots of the dataset and derived metrics_
 
-These commands manage two mechanisms for preserving and restoring internal state during a Luna run. `FREEZE` takes a named snapshot of the current in-memory EDF; `THAW` reverts to that snapshot, effectively providing undo/rewind functionality without re-reading data from disk. `CLEAN-FREEZER` removes all stored snapshots to free memory. `CACHE` is a related but distinct mechanism that stores derived metrics (e.g. peak annotations from `SPINDLES`) for use by downstream commands such as `PREDICT`, without writing them to the output database.
+These commands manage two mechanisms for preserving and restoring internal state during a Luna run. [`FREEZE`](freezes.md#freeze) takes a named snapshot of the current in-memory EDF; [`THAW`](freezes.md#thaw) reverts to that snapshot, effectively providing undo/rewind functionality without re-reading data from disk. `CLEAN-FREEZER` removes all stored snapshots to free memory. [`CACHE`](freezes.md#cache) is a related but distinct mechanism that stores derived metrics (e.g. peak annotations from [`SPINDLES`](spindles-so.md#spindles)) for use by downstream commands such as [`PREDICT`](predict.md#predict), without writing them to the output database.
 
 
 | Command | Description | 
@@ -22,10 +22,10 @@ or augmented _in memory_, e.g.  by resampling, filtering and other
 transformations, adding or dropping channels, and masking/dropping certain epochs.
   
 There are two key commands to 1) take a snapshot of the current state
-of the dataset (`FREEZE`) and then 2) later revert back to that state
-(`THAW`). This effectively enables _rewind_ or _undo_
+of the dataset ([`FREEZE`](freezes.md#freeze)) and then 2) later revert back to that state
+([`THAW`](freezes.md#thaw)). This effectively enables _rewind_ or _undo_
 functionality after changes have been made to an _in-memory_ EDF.
-That is, `FREEZE`/`THAW` allows for more efficient single-run
+That is, [`FREEZE`](freezes.md#freeze)/[`THAW`](freezes.md#thaw) allows for more efficient single-run
 pipelines (i.e.  to avoid unnecessarily having to reload the same EDF
 from disk multiple times, say if restricting to N2 epochs only with a
 mask, but then reverting to the full dataset and subsequently
@@ -57,6 +57,10 @@ freezes are not saved after the last command has finished for that EDF.
    if added during a freeze, they remain after thawing.  Use the `DROP-ANNOTS` command
    to remove annotations added.
 
+<h3>Methods</h3>
+
+When [`FREEZE`](freezes.md#freeze) is invoked, Luna ensures that all EDF records have been fully loaded into memory, then closes any open file handles. A new EDF object is allocated and populated with a deep copy of the current in-memory EDF state, including all signal data, epoch definitions, and epoch masks; the annotations pointer is shared rather than copied, so that interval-based annotations are preserved across freezes and thaws. The copied object is stored in an internal map keyed by the user-supplied tag.
+
 <h3>Parameters</h3>
 
 | Option | Example | Description |
@@ -64,10 +68,10 @@ freezes are not saved after the last command has finished for that EDF.
 | `tag` | `tag=f1`  | Make freeze called `f1` |
 | `preserve-cache` | Retain any caches from the current freeze when thawing a prior freeze | 
 
-Alternatively, `tag` can be dropped and the freeze name is specified directly after `FREEZE`.
+Alternatively, `tag` can be dropped and the freeze name is specified directly after [`FREEZE`](freezes.md#freeze).
 
-By default, `THAW` wipes any changes to the cache made after the
-paired `FREEZE`, unless `preserve-cache` is specified.
+By default, [`THAW`](freezes.md#thaw) wipes any changes to the cache made after the
+paired [`FREEZE`](freezes.md#freeze), unless `preserve-cache` is specified.
 
 <h3>Output</h3>
 
@@ -85,7 +89,7 @@ or omitting the `tag` option, simply:
     FREEZE f1
 ```
 You can make multiple freezes with different labels, and then revert to a particular freeze with
-the `THAW` command:
+the [`THAW`](freezes.md#thaw) command:
 ```
     THAW tag=f1
 ```
@@ -181,7 +185,7 @@ wc -l a*.txt
   391681 a3.txt
 ```
 
-Looking at the dumped `MATRIX` outputs:
+Looking at the dumped [`MATRIX`](outputs.md#matrix) outputs:
 ```
 head a0.txt a2.txt
 ```
@@ -243,7 +247,7 @@ id001 200  5970 8    5970.03125      -57.7899443046  -57.7899443046
 ```
 
  
-In practice, one might use `FREEZE` and `THAW` to apply a uniform set of manipulations
+In practice, one might use [`FREEZE`](freezes.md#freeze) and [`THAW`](freezes.md#thaw) to apply a uniform set of manipulations
 to the whole, continuous sample (e.g. resampling or filtering) and then extract out different
 subsets for analyses:
 
@@ -284,9 +288,9 @@ CHEP epochs & RE
 PSD spectrum dB
 ```
 
-Note that the `TAG` commands are necessary to differentiate the output of
-`PSD` (or any other commands) from the different freezes, i.e.  here
-`PSD` output is stratified by `CH` x `F` x `STG`, for example, not
+Note that the [`TAG`](summaries.md#tag) commands are necessary to differentiate the output of
+[`PSD`](power-spectra.md#psd) (or any other commands) from the different freezes, i.e.  here
+[`PSD`](power-spectra.md#psd) output is stratified by `CH` x `F` x `STG`, for example, not
 just `CH` x `F`:
 
 ```
@@ -307,7 +311,7 @@ id001 C3   2.5  17.9078051859294     23.4408530496513     16.3539538209027
 ```
 
 !!! info
-    One thing you can’t do is `FREEZE`, change EDF record size and then `THAW`, as Luna forces a `WRITE`
+    One thing you can’t do is [`FREEZE`](freezes.md#freeze), change EDF record size and then [`THAW`](freezes.md#thaw), as Luna forces a [`WRITE`](outputs.md#write)
     after `RECORD-SIZE` and moves to the next EDF.
 
 
@@ -315,7 +319,7 @@ id001 C3   2.5  17.9078051859294     23.4408530496513     16.3539538209027
 
 _Revert to a previous data freeze_
 
-If the named freeze does not exist (i.e. from a prior `FREEZE` command), Luna will give an error.
+If the named freeze does not exist (i.e. from a prior [`FREEZE`](freezes.md#freeze) command), Luna will give an error.
 
 If you add the option `remove`, this will delete the freeze after
 retrieving it, meaning that it cannot be used again, which can help to
@@ -330,6 +334,10 @@ this context.
     string of commands - i.e.  as noted above, all freezes are deleted
     when moving to the next EDF.
 
+<h3>Methods</h3>
+
+[`THAW`](freezes.md#thaw) looks up the named freeze in the internal store and performs a copy of the frozen EDF back onto the currently active EDF object, replacing all signal data, epoch definitions, and mask state. If `preserve-cache` is specified, the active EDF's cache contents are saved before the copy and restored immediately afterwards, preventing cache contents accumulated after the freeze point from being discarded. If `remove` is specified, the freeze is deleted from the store after retrieval.
+
 <h3>Parameters</h3>
 
 | Option | Example | Description |
@@ -343,7 +351,7 @@ None (other than changing the state of the current in-memory EDF).
 
 <h3>Example</h3>
 
-See the example above given for the `FREEZE` command.
+See the example above given for the [`FREEZE`](freezes.md#freeze) command.
 
 ## CLEAN-FREEZER
 
@@ -354,6 +362,10 @@ Typically, you should not need to call this (as it is called
 implicitly when one is finished processing a given file).  If you are
 working with _extremely_ large files and memory becomes an issue, then
 this command might be useful, i.e. to manage intermediate memory storage.
+
+<h3>Methods</h3>
+
+`CLEAN-FREEZER` iterates over all entries in the internal freeze store, deletes each frozen EDF object (freeing the associated heap memory), and clears the store map. This operation is performed automatically at the end of processing each EDF, so explicit use is necessary only when memory pressure from large frozen datasets requires earlier release.
 
 <h3>Parameters</h3>
 
@@ -377,8 +389,12 @@ several ways, such that it can be shared between different commands
 running on the same dataset/EDF. One exemplar use of the cache mechanism is
 when working with the [`PREDICT`](predict.md#predict) command, which expects
 _features_ to be derived from one or more Luna commands (e.g. spectral
-power) which are then combined with a _model_ (read by the `PREDICT`
+power) which are then combined with a _model_ (read by the [`PREDICT`](predict.md#predict)
 command) to make a prediction.
+
+<h3>Methods</h3>
+
+The cache is a typed key-value store attached to each EDF's timeline, supporting numeric, integer, and string values. Each cache entry is keyed by a variable name combined with a set of stratum labels (e.g., channel `CH` and frequency `F`). The `record` option registers a listener so that any subsequent output of a specified variable from a specified command is written into the named cache. The `import` option reads a long-format tab-delimited file and populates the cache from its columns, optionally restricting to a named variable and tracking one or more factor columns as the key strata. Cache contents are typically wiped when [`RESTRUCTURE`](masks.md#restructure) or [`THAW`](freezes.md#thaw) is called (because sample-point indices may be invalidated by epoch changes), unless `preserve-cache` is appended to those commands.
 
 <h3>Parameters</h3>
 
@@ -392,7 +408,7 @@ command) to make a prediction.
 | `dump` |  Dump cache contents to the console (with `num`, `int`, `text` or `bool`) |
 
 Various other commands use the cache indirectly: for example, the
-`SPINDLES` command has a `cache-peaks` option to store the sample
+[`SPINDLES`](spindles-so.md#spindles) command has a `cache-peaks` option to store the sample
 points of spindle peaks (see below for an example).
 
 Cache types are either _numeric_ (`num`), _integer_ (`int`), _textual_
@@ -413,7 +429,7 @@ CACHE dump num=p1
 ```
 
 It first sets up a cache called `p1` and instructs it to record any
-`SR` variables emitted from a subsequent `HEADERS` command; as `SR` is
+`SR` variables emitted from a subsequent [`HEADERS`](summaries.md#headers) command; as `SR` is
 a channel-specific variable, it always is stratified by `CH`
 (channel), as described in the [`HEADERS`](summaries.md#headers)
 documentation.  That is, the `record` option takes at least two
@@ -489,7 +505,7 @@ id1  HRate  32767  -32768   bpm   120    40   28  0.00122   1024    Off   HR
 
 Note that only numeric values are included in the cache here.
 
-For the `SPINDLES` example, the `cache-peaks` option generates an integer cache:
+For the [`SPINDLES`](spindles-so.md#spindles) example, the `cache-peaks` option generates an integer cache:
 ```
 luna s.lst -o out.db -s 'MASK ifnot=N2 & RE & SPINDLES sig=C3 cache-peaks=p1 & CACHE dump int=p1 ' 
 ```
@@ -503,7 +519,7 @@ strata: F=13.5
 value: (695 element vector)
 ```
 
-This is not directly manipulated, but rather may be passed to other Luna commands, e.g. `TLOCK`.  
+This is not directly manipulated, but rather may be passed to other Luna commands, e.g. [`TLOCK`](intervals.md#tlock).  
 
 
 !!! info "Preserving the cache"
@@ -511,6 +527,6 @@ This is not directly manipulated, but rather may be passed to other Luna command
     or [`THAW`](#thaw) operation from wiping the cache, which is the default behavior.  The reason for this is that
     some cache values may point to intervals of signals using sample-points as the index, which could potentially
     be invalidated after either of these two operations if the number of epochs changes.  However, for metrics
-    that will not be impacted by this (e.g. storing outputs for `PREDICT`), then you can preserve the cache
-    by adding `preserve-cache` to any `RE` or `THAW` command.
+    that will not be impacted by this (e.g. storing outputs for [`PREDICT`](predict.md#predict)), then you can preserve the cache
+    by adding `preserve-cache` to any `RE` or [`THAW`](freezes.md#thaw) command.
     

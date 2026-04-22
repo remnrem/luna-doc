@@ -2,7 +2,7 @@
 
 _Implementation of the modified K-means approach to EEG microstate analysis_
 
-EEG microstates are quasi-stable topographic patterns of scalp electrical activity, lasting tens to hundreds of milliseconds, that recur across the recording. `MS` is the primary command: it extracts global field power (GFP) peaks, clusters their scalp maps into _K_ prototype states using a polarity-invariant modified k-means algorithm, back-fits the prototypes to all time points, and reports per-individual statistics (duration, occurrence, coverage, transitions). The auxiliary commands `--kmer`, `--cmp-maps`, `--label-maps`, and `--correl-maps` support group-level analyses of microstate sequences, spatial comparisons between maps, and template-based label assignment.
+EEG microstates are quasi-stable topographic patterns of scalp electrical activity, lasting tens to hundreds of milliseconds, that recur across the recording. [`MS`](ms.md#ms) is the primary command: it extracts global field power (GFP) peaks, clusters their scalp maps into _K_ prototype states using a polarity-invariant modified k-means algorithm, back-fits the prototypes to all time points, and reports per-individual statistics (duration, occurrence, coverage, transitions). The auxiliary commands `--kmer`, `--cmp-maps`, `--label-maps`, and `--correl-maps` support group-level analyses of microstate sequences, spatial comparisons between maps, and template-based label assignment.
 
 | Command | Description | 
 | ---- | ------ | 
@@ -13,7 +13,7 @@ EEG microstates are quasi-stable topographic patterns of scalp electrical activi
 | [`--correl-maps`](#-correl-maps) | Spatial correlations between maps |
 
 
-## `MS`
+## [`MS`](ms.md#ms)
 
 _Fits the modified k-means clustering to EEG data_
 
@@ -21,7 +21,7 @@ This implementation follows the seminal publication by [Pascual-Marqui et
 al. (1995)](https://pubmed.ncbi.nlm.nih.gov/7622149/) as well as
 a guide and code by [Poulsen et al](https://www.biorxiv.org/content/10.1101/289850v1.full).
 
-Briefly, the `MS` workflow follows these steps:
+Briefly, the [`MS`](ms.md#ms) workflow follows these steps:
 
  - extracts global field power (GFP) __peaks__ from EEG signals (that must previously have been average-referenced)
  - cluster GFP maps (__segmentation__) to a small number of prototypes, e.g. _K_ = 2,3,4, etc, using a polarity-invariant (modified _k_-means clustering), in which prototypes are based on the first eigenvector of the class-specific covariance
@@ -30,11 +30,15 @@ Briefly, the `MS` workflow follows these steps:
  - calculate various statistics per individual
  - finally, per individual or at the group level, search for enriched sequences of states as well as group differences (__kmer__ analysis)
 
+<h3>Methods</h3>
+
+Global field power (GFP) is computed at each sample point as the standard deviation across channels (square root of the population variance), and local maxima of the GFP time series are identified as peaks. Optional thresholds exclude peaks whose amplitude or spatial kurtosis exceeds a user-specified number of standard deviations above (or below) the mean across all peaks; a random subsample of up to `npeaks` peaks is then drawn if the remaining count exceeds that limit. The selected GFP peak maps are submitted to a polarity-invariant modified _k_-means algorithm (following Pascual-Marqui et al. 1995 and Poulsen et al. 2018). Clustering is initialized by selecting _K_ random sample points as prototype maps, each column-normalized to unit length. At each iteration the projection _Z = A'X_ is computed and each time point is assigned to the prototype with the largest squared projection (polarity-invariant assignment); the prototype for class _k_ is then updated to the leading eigenvector of the class-specific cross-product matrix _X_k X_k'_, normalized to unit length. Convergence is declared when the relative change in the residual noise variance _σ²_ = (tr(_X'X_) − Σ_j_ (_a__{L_j}'_ _x_j_)²) / (_N_(_C_−1)) falls below 10⁻⁶, or 1000 iterations are reached. Multiple random restarts (default 10) are run per _K_ value, and the restart yielding the lowest _σ²_ is retained. The optimal _K_ is selected as that maximizing the global explained variance (GEV = ratio of the squared GFP-weighted spatial correlation summed over all time points to total GFP squared). Prototype maps from the best solution are column-normalized (zero mean, unit GFP). Back-fitting assigns each sample point to the prototype minimizing the polarity-invariant global map dissimilarity (GMD), computed as min(‖_x̃_ − _ã_‖, ‖_x̃_ + _ã_‖) / √_C_ where _x̃_ and _ã_ are GFP-normalized versions of the data and prototype vectors respectively. Temporal smoothing iteratively reassigns segments shorter than `min-msec` milliseconds (default 20 ms) to the next-best candidate prototype, cycling through candidates in order of increasing GMD.
+
 <h3>Individual versus group level analyses</h3>
 
 Luna operates one EDF at a time, although often one wants to apply EEG
 microstate clustering across multiple individuals.  To achieve this,
-Luna splits out the core functions of the `MS` command (GFP peak
+Luna splits out the core functions of the [`MS`](ms.md#ms) command (GFP peak
 extraction, segmentation, backfitting and kmer/sequence enrichment)
 into sub-commands that can be run individually to facilitate
 group-level analysis.
@@ -116,7 +120,7 @@ Individual-level outputs for the best-fit solution (strata: _none_)
 | --- | --- |
 | `GEV`  | Global variance explained |
 | `OPT_K` | Optimal K (based on GEV) |
-| `LZW` | Lev-Zimpel-Welch complexity of state sequences |
+| [`LZW`](power-spectra.md#lzw) | Lev-Zimpel-Welch complexity of state sequences |
 | `SE1` | Sample entropy statistics `SE1`, `SE2`, etc |
 
 Per-cluster statistics (for the best-fit model) (strata: `K`)
@@ -135,7 +139,7 @@ Per-solution statistics, i.e. for a given value of _K_  (strata: `NK`)
 
 | Variable | Description |
 | --- | --- |
-| `MSE`	|  |
+| [`MSE`](power-spectra.md#mse)	|  |
 | `R2` | |
 | `SIG2` | | 
 | `SIG2_MCV` |  
@@ -268,7 +272,7 @@ First we ensure there is no file named `peaks.edf` to start with:
 rm -rf peaks.edf
 ```
 
-Adding the `peaks` option to the `MS` command will then cause Luna to iterate over every individual in the
+Adding the `peaks` option to the [`MS`](ms.md#ms) command will then cause Luna to iterate over every individual in the
 `s.lst` sample list, and append the peaks for that individual to the end of the `peaks.edf` (updating the EDF header each time
 more records are added).  Because we need to write the EDF header on encountering the first individual, we also need to manually
 specify the physical min/max values we expect to see across all subjects (`pmin` and `pmax`).  Finally, we select the number of GFP
@@ -279,7 +283,7 @@ luna  s.lst -s MS peaks=peaks.edf gfp-th=1 npeaks=5000 pmin=-200 pmax=200
 ```
 
 The aggregated EDF `peaks.edf` is therefore a temporary file that contains data (peaks) from multiple individuals (in this case, 130 individuals
-from `s.lst`).  Because it is only used in the `MS` analysis, we set the sample rate (arbitrarily) to 1 Hz.  As a sanity check, as we
+from `s.lst`).  Because it is only used in the [`MS`](ms.md#ms) analysis, we set the sample rate (arbitrarily) to 1 Hz.  As a sanity check, as we
 extracted 5000 peaks for each of 130 individuals, we expect a total of 650,000 observations for the subsequent EEG microstate clustering. Indeed,
 this is what we observe (i.e. assuming a
 
@@ -292,7 +296,7 @@ luna peaks.edf -s DESC
 
 !!! hint "Inspecting the GFP peaks across individuals"
     When combining data across individuals, it is important to ensure that peak amplitudes are broadly comparable across individuals.  You can use the standard Luna
-    summary tools such as `SIGSTATS` (i.e. to get RMS and Hjorth parameters) to achieve this (so long as the metric does not depend on the sampling rate that is).
+    summary tools such as [`SIGSTATS`](summaries.md#sigstats) (i.e. to get RMS and Hjorth parameters) to achieve this (so long as the metric does not depend on the sampling rate that is).
     Because `peaks.edf` arbitrarily sets the "sample rate" to 1 Hz, and in this example we extracted 5000 peaks per individual, we can use a trick of setting the "epoch length"
     to 5000 seconds, and request an epoch-level analysis.  This means that each "epoch" in the output in fact corresponds to all GFP peaks for one individual: e.g. from
     ```
@@ -348,7 +352,7 @@ literature).
 _Apply state sequence permutation analysis across multiple individuals and assess group differences_
 
 As well as applied within individual, the `kmer` option can be run
-"stand-alone", on the output from `write-states` from the `MS`
+"stand-alone", on the output from `write-states` from the [`MS`](ms.md#ms)
 command, if they are concatenated into a single file.  The permutation
 occurs within individual, but the statistics (i.e. enrichment of
 specific k-mers) are aggregated across all people.  In addition, if a
@@ -357,6 +361,10 @@ calculated separately for _CASES_ (phenotype == 1) and _CONTROLS_
 (phenotype == 0); furthermore, the _difference_ between case and
 control statistics is evaluated for each metric and the empirical
 significance of all these terms is calculated.
+
+<h3>Methods</h3>
+
+Prior to analysis, ambiguous (`?`) state labels and immediately self-repeating consecutive states are removed from each individual's sequence. For each observed k-mer of length _k_ ∈ [k1, k2], the observed count is tallied by sliding a window of length _k_ across each individual's sequence and pooling counts across individuals. Equivalence groups are defined as the set of all distinct permutations of the character multiset composing a given k-mer that contain no immediately repeated state (i.e. valid microstate sequences); each k-mer is mapped to the lexicographically first member of its equivalence group as a canonical key. To assess enrichment, a null distribution is constructed over `nreps` permutation replicates: within each replicate, each individual's sequence is independently permuted using a modified random-draw procedure that, by construction, avoids immediately repeated states, preserving the marginal state frequencies within each individual. Counts of all k-mers are re-tallied on the permuted sequences and pooled across individuals. Empirical enrichment p-values are computed as the proportion of permuted replicates in which the count meets or exceeds the observed value (one-sided, with a continuity correction of +1 in numerator and denominator). Z-scores are derived from the mean and standard deviation of the permutation distribution. When a binary phenotype is provided, the same counting and permutation procedure is carried out separately for cases and controls, and the difference in counts (cases − controls) is tested against a null generated by permuting the phenotype labels across individuals within each sequence-permutation replicate.
 
 <h3>Parameters</h3>
 
@@ -464,6 +472,12 @@ This command takes a set of microstate maps, along with an optional
 group/phenotype file (two groups only) and evaluates the topographical
 similarity / dissimilarity of maps between groups/people, based on the
 summed spatial correlation between maps.
+
+<h3>Methods</h3>
+
+Spatial correlation between two microstate maps is computed from the polarity-invariant global map dissimilarity (GMD): for each prototype pair the GMD is min(‖_m₁ − m₂_‖, ‖_m₁ + m₂_‖) / √_C_, and the spatial correlation is 1 − GMD² / 2. To quantify overall similarity between two individuals' _K_-prototype solutions, all _K_! permutations of one solution's prototype ordering relative to the other are enumerated and the permutation minimizing Σ_k_ (1 − _r_k_)^_p_ / _K_ (default _p_ = 2) is selected; this minimum average dissimilarity is the pairwise global similarity score. The resulting _N_ × _N_ individual-by-individual similarity matrix is then used to compute four group-level statistics: (1) mean within-case similarity, (2) mean within-control similarity, (3) the absolute difference between within-case and within-control mean similarities, and (4) the ratio of mean concordant-pair similarity to mean discordant-pair similarity. Empirical p-values for all four statistics are obtained by permuting the phenotype labels across individuals (`nreps` replicates), with the one-sided tail probability computed with a +1 continuity correction. In template mode, each individual's _K_-prototype solution is instead compared to a fixed reference map containing _M_ ≥ _K_ prototypes by enumerating all _M_! orderings of the template, selecting the first _K_ at each step, and retaining the assignment minimizing the same loss function; three analogous statistics (mean case–template similarity, mean control–template similarity, and their absolute difference) are then tested against the same permutation null.
+
+
 
 The starting point for this command is always running
 _individual-level_ segmentation with the [`MS`](#ms) command.
@@ -667,6 +681,10 @@ change the underlying information/values in a solution, only the labels.
 
 _Note that this function does not require or accept an EDF or sample list._
 
+<h3>Methods</h3>
+
+For each prototype in the test solution and each prototype in the template, the polarity-invariant spatial correlation is computed (1 − GMD²/2, where GMD = min(‖_m₁ − m₂_‖, ‖_m₁ + m₂_‖) / √_C_), yielding a _K_ × _M_ correlation matrix (_K_ ≤ _M_). All _M_! orderings of the template prototypes are enumerated; for each ordering, the first _K_ entries define a candidate assignment of test prototypes to template prototypes, and the objective Σ_k_ (1 − _r_k_)^_p_ / _K_ is computed (default _p_ = 2). The assignment minimizing this objective is retained as the optimal labelling. If a spatial-correlation threshold `th` is specified, any test prototype whose spatial correlation with its assigned template prototype falls below `th` receives the label `?` rather than the template label. For visualization purposes, the polarity of each test prototype map is also set to match its assigned template prototype (i.e. the map is multiplied by −1 if the anti-phase correlation is smaller than the in-phase correlation), though this does not affect the underlying spatial correlation values.
+
 <h3>Parameters</h3>
 
 | Option | Example | Description |
@@ -764,6 +782,10 @@ matrix of spatial correlations (between states) to standard output.
 
 _Note that this function does not require or accept an EDF or sample list._
 
+<h3>Methods</h3>
+
+For each pair of prototype maps (_i_, _j_) in the solution file, the polarity-invariant spatial correlation is computed as 1 − GMD²/2, where GMD = min(‖_mᵢ − mⱼ_‖, ‖_mᵢ + mⱼ_‖) / √_C_ and _C_ is the number of channels. The full _K_ × _K_ symmetric matrix of pairwise spatial correlations (including unity on the diagonal) is written to standard output.
+
 <h3>Parameters</h3>
 
 | Option | Example | Description |
@@ -779,7 +801,7 @@ Some notes to the console, and the matrix to standard output.
 <h3>Example</h3>
 
 
-If `k4.sol` is a file as output by `MS` (i.e. first column channels, subsequent columns are channel weights/loadings for each map, one per column):
+If `k4.sol` is a file as output by [`MS`](ms.md#ms) (i.e. first column channels, subsequent columns are channel weights/loadings for each map, one per column):
 ```
 CH      C           B           A             D
 Fp1     1.33501     1.41774     0.194605      1.17416

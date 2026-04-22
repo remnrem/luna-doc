@@ -3,7 +3,7 @@
 
 _Efficient sample-level permutation-based association testing_
 
-Unlike most Luna commands that operate on EDFs serially, these commands operate at the sample level: they take derived metrics (e.g. the output of prior Luna commands) and test associations with clinical or demographic covariates across a cohort. Association analyses do not require a [sample-list](../luna/args.md#sample-lists) as input and are invoked via special command-line options. Both commands use permutation (Freedman-Lane approach) to correct for multiple testing and support nuisance covariates. `GPA` is the default choice, performing general pairwise association testing between two sets of variables. `CPT` is a specialized variant that adds cluster-based testing — pooling evidence across spatially or spectrally similar metrics (e.g. neighboring channels or adjacent frequency bins) — which can be more powerful when effects are expected to be distributed across related measures.
+Unlike most Luna commands that operate on EDFs serially, these commands operate at the sample level: they take derived metrics (e.g. the output of prior Luna commands) and test associations with clinical or demographic covariates across a cohort. Association analyses do not require a [sample-list](../luna/args.md#sample-lists) as input and are invoked via special command-line options. Both commands use permutation (Freedman-Lane approach) to correct for multiple testing and support nuisance covariates. `GPA` is the default choice, performing general pairwise association testing between two sets of variables. [`CPT`](assoc.md#cpt) is a specialized variant that adds cluster-based testing — pooling evidence across spatially or spectrally similar metrics (e.g. neighboring channels or adjacent frequency bins) — which can be more powerful when effects are expected to be distributed across related measures.
 
 
 | Command | Description | 
@@ -41,6 +41,10 @@ This module comprises two commands:
 See [this page](https://zzz.nyspi.org/luna-walkthrough/p5/assoc/) of the
 Luna walk-through to see an application of GPA, and the notes below the parameter and output tables
 for more context.
+
+<h3>Methods</h3>
+
+`GPA` operates in two stages. In the preparation stage (`--gpa-prep`), one or more tab-delimited text files — each containing per-individual rows of derived metrics, optionally stratified by frequency (`F`), channel (`CH`), or other factor columns — are collated into a compact binary file, with variables assigned to named groups and with optional inclusion or exclusion filters applied at this stage. In the analysis stage (`--gpa`), the binary file is loaded and a sequence of quality-control steps is applied to each dependent variable: robust standardization (z-scoring), optional winsorization at a specified percentile to limit the influence of extreme values, and optional k-nearest-neighbour (kNN) imputation of missing values; individuals with residual missing data after imputation are dropped case-wise. Association testing then proceeds via a linear model fitted separately for each independent variable (X), with all dependent variables (Y) and nuisance covariates (Z) included jointly. The Freedman–Lane procedure (following Winkler et al., 2014) is used to account for covariates under permutation: the residual maker matrix R_Z = I − Z(Z'Z)⁻¹Z' is formed from the nuisance model, the Y matrix is pre-multiplied by R_Z to partial out covariate effects, and t-statistics for the coefficient of each X variable are obtained from the complete model via complete orthogonal decomposition. Empirical point-wise p-values are accumulated by comparing the observed |t| to the distribution of |t| values across permutation replicates; a shared permutation order is reused across all X variables to preserve the multivariate dependence structure and support family-wise correction via the max-|t| distribution across all tests. Asymptotic p-values are also reported, along with optional Bonferroni, Holm, Benjamini–Hochberg FDR, and Benjamini–Yekutieli FDR adjustments.
 
 <h3>Parameters</h3>
 
@@ -155,7 +159,7 @@ Primary outputs (strata: `X` (IV) x `Y` (DV)):
 
 | Variable | Description |
 | --- | --- |
-| `BASE` | Base variable for the `Y` variable (e.g. `PSD` for `PSD_B_SIGMA_CH_C3` ) |
+| `BASE` | Base variable for the `Y` variable (e.g. [`PSD`](power-spectra.md#psd) for `PSD_B_SIGMA_CH_C3` ) |
 | `GROUP` | Group to which `Y` belongs |
 | `STRAT` | Key-value pairing for `Y` strata | 
 | `N` | Number of non-missing observations |
@@ -1554,9 +1558,12 @@ the [Freedman-Lane method](https://www.tandfonline.com/doi/abs/10.1080/07350015.
 and follows an implementation described [here](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4010955/).
 
 !!! hint
-    For correctly-formated inputs, the `CPT` command can be used to analyse _any_ types of numeric inputs,
+    For correctly-formated inputs, the [`CPT`](assoc.md#cpt) command can be used to analyse _any_ types of numeric inputs,
     whether they come from prior Luna commands or not.
 
+<h3>Methods</h3>
+
+[`CPT`](assoc.md#cpt) fits a single linear model relating one independent variable (IV) to a potentially large set of dependent variables (DVs), controlling for optional nuisance covariates, and evaluates significance both point-wise and via a cluster-based statistic. The Freedman–Lane permutation procedure (Winkler et al., 2014) is applied: the residual maker R_Z is computed from the nuisance-only model Z (intercept plus covariates) using complete orthogonal decomposition, and the DV matrix Y is pre-multiplied by R_Z to yield covariate-partialled residuals. t-statistics for the IV coefficient are obtained from the full model under the observed and each permuted data order; under each permutation the full-model design matrix (with the IV column permuted) is re-fitted to the same R_Z-transformed Y, producing a permuted t-vector. Point-wise empirical p-values are accumulated by counting the proportion of permuted |t| values that meet or exceed the observed |t|; family-wise corrected empirical p-values are obtained from the max-|t| distribution across all DVs. For the cluster-based step, an adjacency graph is constructed among DVs prior to permutation: two DVs are declared adjacent if they share the same root variable name and satisfy all applicable proximity criteria simultaneously — their frequencies differ by no more than a user-specified threshold (`th-freq`), their time-bin midpoints differ by no more than `th-time`, and for channel-indexed DVs either the same electrode (or electrode pair) is matched or the inter-electrode distance from a supplied channel-locations file is below `th-spatial`. Clusters are then formed as connected components of DVs whose absolute t-statistics exceed a threshold (`th-cluster`), with the cluster statistic defined as the sum of t-values within each component. Under each permutation, the same adjacency graph is applied to the permuted t-vector to produce a null distribution of maximum cluster statistics; cluster-corrected empirical p-values are the proportion of permuted maximum cluster statistics that meet or exceed each observed cluster statistic.
 
 <h3>Parameters</h3>
 
@@ -1686,7 +1693,7 @@ echo 'iv-file=descr.txt iv=X1  covar=C1,C2
 
 This specifics a set of regressions of the IV `X1` in the file
 `descr.txt`, with covariates `C1` and `C2`.  The dependent variable(s)
-are the values of `PSD` from the file `n2-spec.txt`.  These DVs will
+are the values of [`PSD`](power-spectra.md#psd) from the file `n2-spec.txt`.  These DVs will
 be log-transformed (due to the `dB` option).  We further specify 1000 permutations,
 with clustering based on channel locations in the file `clocs` and the given set of
 cluster-defining thresholds.  We restrict the analysis to power values for frequencies under 20 Hz
@@ -1767,7 +1774,7 @@ ID  VAR           B             CH    CLST   F       PC        PU          STAT
     Also note that outputs in later versions of Luna will now include a `T` field as the time-stratifier, and the `VAR` labels are expanded to reflect this additional extra stratifier.
 
 The variable names (under `VAR`) are automatically constructed from
-the specified `dv` variables (i.e. `PSD` here) and any frequency and
+the specified `dv` variables (i.e. [`PSD`](power-spectra.md#psd) here) and any frequency and
 channel stratifiers, with the `~` character separating them.  To ease
 parsing, the output also includes the channel (`CH`) and frequency
 (`F`) associated with each variable.

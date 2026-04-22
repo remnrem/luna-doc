@@ -2,7 +2,7 @@
 
 _Simulation of new data_
 
-These commands generate synthetic signal data for testing methods, producing examples, or augmenting recordings. `SIMUL` generates random stationary time-series with a specified power spectrum using a simple spectral approach; it does not model realistic EEG phase or distributional properties, but provides a convenient way to create signals with known spectral content. `SIGGEN` generates structured deterministic signals — sine waves, chirps and related waveforms — either as new channels or added on top of existing ones.
+These commands generate synthetic signal data for testing methods, producing examples, or augmenting recordings. [`SIMUL`](simul.md#simul) generates random stationary time-series with a specified power spectrum using a simple spectral approach; it does not model realistic EEG phase or distributional properties, but provides a convenient way to create signals with known spectral content. [`SIGGEN`](simul.md#siggen) generates structured deterministic signals — sine waves, chirps and related waveforms — either as new channels or added on top of existing ones.
 
 | Command | Description | 
 | ---- | ------ | 
@@ -25,13 +25,13 @@ not already exist in the EDF) or it can modify an existing signal.  In
 the latter case, the command will either completely overwrite the old
 signal, or if the `add` option is specified, it will add
 (i.e. numerical addition) the simulated signal onto the existing
-signal.  In both these cases, if `SIMUL` modifies an existing signal,
+signal.  In both these cases, if [`SIMUL`](simul.md#simul) modifies an existing signal,
 the simulated signal must have the same sample rate (`sr`) as the
 original.
 
 There are three primary modes for specifying the power spectrum:
 
- - to read a power spectrum from a file (e.g. the output of a previous Luna `PSD` command), using `file`
+ - to read a power spectrum from a file (e.g. the output of a previous Luna [`PSD`](power-spectra.md#psd) command), using `file`
 
  - to specify a _1/f_ form, with the arguments `alpha` and `intercept`
 
@@ -42,12 +42,12 @@ There are three primary modes for specifying the power spectrum:
  centered on 10 Hz (where `w` is the standard deviation).
  
  - note that the latter two options can be combined: i.e. to simulate a
-   _1/f_ that also has spectral peaks; further, by applying `SIMUL` repeatedly
+   _1/f_ that also has spectral peaks; further, by applying [`SIMUL`](simul.md#simul) repeatedly
    on the same signal using the `add` option, it is possible to build up more
    complex composite signals.
 
 
-The `SIMUL` command first scales the (positive) spectrum to _m=n/2+1_
+The [`SIMUL`](simul.md#simul) command first scales the (positive) spectrum to _m=n/2+1_
 points where _n_ is the desired length of the time series (which is
 fixed given the EDF duration).  If power spectra are read from a file, they
 are interpolated as necessary (using cubic spline interpolation) to be of length _m_. 
@@ -72,20 +72,23 @@ issues a warning and stops.
 
 The time series is stored as a channel in the internal EDF, i.e. it
 can be output with commands such as [`WRITE`] or [`MATRIX`] or fed
-into subsequent commands such as `PSD`.
+into subsequent commands such as [`PSD`](power-spectra.md#psd).
 
 !!! hint
     It might often be convenient to use the _empty EDF_ feature
-    of Luna when using `SIMUL`, i.e. if you want to create one or more
+    of Luna when using [`SIMUL`](simul.md#simul), i.e. if you want to create one or more
     signals from scratch.  Here, you specify `.` (period character) as
     the sample-list/file-name along with `--nr` and `--rs` on the
     command line, to give the number of records (`nr`) and the EDF
     record size (`rs`) respectively.  Luna will then create an EDF of
     this duration (i.e. with headers specifying the length of the
     recording) but with 0 signals, i.e. a collection of empty records.
-    The `SIMUL` command will then create a new channel that will be of
+    The [`SIMUL`](simul.md#simul) command will then create a new channel that will be of
     the desired duration (and sample rate given by the `sr` option).
 
+<h3>Methods</h3>
+
+A stationary Gaussian time series with a prescribed power spectrum is generated using the spectral synthesis method. The target amplitude spectrum is constructed from the specified components — a 1/f background, discrete spectral peaks modeled as Gaussian bumps, or amplitudes read directly from a file — and interpolated as needed to the length required by the recording duration and sample rate. Random phases are independently and uniformly drawn for each frequency bin, and the corresponding complex Fourier coefficients are formed by combining the target amplitudes with these random phases. An inverse discrete Fourier transform then yields the time-domain signal. Non-stationarity can be approximated by applying the procedure to discrete "pulses" randomly placed within the recording, with non-pulse segments set to zero. When applied to an existing signal, the simulated series is either added sample-wise to the existing values or replaces them entirely.
 
 <h3>Parameters</h3>
 
@@ -100,7 +103,7 @@ Primary parameters to specify the data and any outlier actions for the dependent
 | `w`   | `2`     | Specify peak width (SD of normal distribution centered at `frq` values) |
 | `alpha` | `2`   | Specify spectra in terms of `1/f^a` slope |
 | `intercept` | `1` | Specify spectral intercept, required if `alpha` is used |
-| `file` | `psd.txt` | Read power spectrum from a file (assumes `F` and `PSD` columns) | 
+| `file` | `psd.txt` | Read power spectrum from a file (assumes `F` and [`PSD`](power-spectra.md#psd) columns) | 
 | `sr` | `100` | Specify a sample rate (for any new signal) |
 | `pulses` | `100,1` | Specify 100 pulses of 1 second duration each | 
 | `verbose` | | Output the specified power spectrum |
@@ -181,11 +184,11 @@ log-log scale, as well as a peak at 15 Hz:
 
 ![img](../img/simul1.png){width="100%"}
 
-The `MATRIX` command above output the simulated time series to the file `s1.txt`: here is five seconds of the signal:
+The [`MATRIX`](outputs.md#matrix) command above output the simulated time series to the file `s1.txt`: here is five seconds of the signal:
 
 ![img](../img/simul2.png){width="100%"}
 
-We also applied the `PSD` command to the newly generated
+We also applied the [`PSD`](power-spectra.md#psd) command to the newly generated
 signal `S1`, to use Welch method to estimate the spectrum from the
 data.  Plotting the expected (gray line, same as above) against the
 estimated values for this one epoch, we see a good agreement: (note,
@@ -195,7 +198,7 @@ to the plot above):
 
 ![img](../img/simul3.png){width="100%"}
 
-We can add the `slope` option to `PSD` to estimate the spectral slope using a simple linear regression on the log-log spectrum: i.e. the final `PSD` command were instead written:
+We can add the `slope` option to [`PSD`](power-spectra.md#psd) to estimate the spectral slope using a simple linear regression on the log-log spectrum: i.e. the final [`PSD`](power-spectra.md#psd) command were instead written:
 
 ```
 PSD spectrum max=50 slope=30,45 
@@ -237,7 +240,7 @@ PSD spectrum max=50 slope=10,45
   SPEC_SLOPE_N   141 
 ```
 
-See [here](power-spectra.md#psd) for more details on the `PSD` and `slope` commands/options.
+See [here](power-spectra.md#psd) for more details on the [`PSD`](power-spectra.md#psd) and `slope` commands/options.
 
 ---
 
@@ -250,14 +253,14 @@ luna cfs.lst 1 -o out.db -s ' MASK ifnot=N2 & RE
                               PSD spectrum sig=C3 min=0 max=50 '
 ```
 
-Note how we use the `PSD` options `min` and `max` along with `spectrum` to extract a broader range than the
-`PSD` command typically gives.   We can extract the power spectrum to a file `s.txt`:
+Note how we use the [`PSD`](power-spectra.md#psd) options `min` and `max` along with `spectrum` to extract a broader range than the
+[`PSD`](power-spectra.md#psd) command typically gives.   We can extract the power spectrum to a file `s.txt`:
 
 ```
 destrat	out.db +PSD -r F CH > s.txt
 ```
 
-To now simulate a time series with a similar power spectrum, we can use `SIMUL` and `file`:  here, we simulate 6 minutes
+To now simulate a time series with a similar power spectrum, we can use [`SIMUL`](simul.md#simul) and `file`:  here, we simulate 6 minutes
 of signal (i.e. 180 one-second records) and read in the spectrum from `s.txt`:
 
 ```
@@ -265,8 +268,8 @@ luna . -o out.db --nr=180 --rs=1 -s ' SIMUL sr=400 file=s.txt sig=S1 verbose
                                       PSD spectrum max=200 '
 ```
 
-By default, Luna assumes the `PSD` values are raw and not logged; if
-Luna detects a negative value in `PSD` it will assume they are
+By default, Luna assumes the [`PSD`](power-spectra.md#psd) values are raw and not logged; if
+Luna detects a negative value in [`PSD`](power-spectra.md#psd) it will assume they are
 10log10(X) values (i.e. generated by `PSD spectrum dB`) and will
 convert them accordingly.    
 
@@ -284,7 +287,7 @@ which implies a different Nyquist frequency.  The original spectrum
 was output up to 50 Hz.  Implicitly, all unspecified frequencies are
 set to zero, when reading from a file: for a sample rate of 400 Hz for
 the generated signal, this implies values from 50 up to 200 Hz.  Indeed,
-if we plot the full range of output from the previous `SIMUL` command, we'll
+if we plot the full range of output from the previous [`SIMUL`](simul.md#simul) command, we'll
 see the spectrum extends up to 200 Hz, but with values of 0 for all frequencies
 above 50 Hz (which are therefore not defined on the log scale, and so are `NA`):
 
@@ -308,10 +311,10 @@ luna . -o out.db --nr=10 --rs=1 \
 Note that we set the epoch length to 10 seconds (smaller than the
 default of 30 seconds), which ensures that subsequent commands operate
 correctly on a segment of data smaller than 30 seconds.  We also use
-the `FFT` command to output the power spectrum associated with the new
+the [`FFT`](power-spectra.md#fft) command to output the power spectrum associated with the new
 signal, which uses the basic DFT algorithm (rather than Welch or
 multi-taper approaches to spectral estimation).  Plotting the contents of `s1.txt` (i.e.
-the raw time-domain signal output by `MATRIX`):
+the raw time-domain signal output by [`MATRIX`](outputs.md#matrix)):
 
 ![img](../img/simul6.png){width="100%"}
 
@@ -345,7 +348,7 @@ luna . -o out.db --nr=10 --rs=1 \
 
 
 
-Now, for each of these three signals, we can look at power spectra obtained from the `FFT` command, extracting out
+Now, for each of these three signals, we can look at power spectra obtained from the [`FFT`](power-spectra.md#fft) command, extracting out
 output as:
 
 ```
@@ -390,10 +393,14 @@ luna . -o out.db --nr=10 --rs=1 \
 
 _Generate, or add-in, artificial test signals_
 
-_This command is largely redundant (given `SIMUL`), but is described here for completeness._
+_This command is largely redundant (given [`SIMUL`](simul.md#simul)), but is described here for completeness._
 
 This is a simple command to generate test signal data (on top of an existing EDF).  Currently, it
 only generates sine wave signals, or pulses of a given duration.
+
+<h3>Methods</h3>
+
+Deterministic test signals are injected into existing or newly created EDF channels. Sine waves are generated analytically at the specified frequency, amplitude, and phase, producing a pure periodic signal with no noise. Impulse signals consist of rectangular pulses of specified amplitude, duration, and onset time, placed at one or more positions within the recording. Multiple calls with the `add` option allow composite test signals to be built up by superposition.
 
 <h3>Parameters</h3>
 
@@ -421,9 +428,9 @@ luna s.lst -o out.db -s ' MASK ifnot=NREM2 & RE
                           MTM sig=C3 '
 ```
 
-Plotting the output of `MTM`:
+Plotting the output of [`MTM`](power-spectra.md#mtm):
 
 ![img](../img/siggen.png){width="100%"}
 
 
-Also, see [this vignette](../vignettes/merge.md#simulating-data) for an example of using `SIGGEN` to generate a toy dataset.
+Also, see [this vignette](../vignettes/merge.md#simulating-data) for an example of using [`SIGGEN`](simul.md#siggen) to generate a toy dataset.

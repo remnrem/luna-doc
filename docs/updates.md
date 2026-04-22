@@ -1,7 +1,50 @@
 
 # Updates, additions and fixes
 
-Current stable version: __v1.3.5__ (main [downloads](download/index.md) page)
+Current stable version: __v1.5.1__ (main [downloads](download/index.md) page)
+
+## v1.5.1 (21-April-2026)
+
+_POPS / staging_
+
+- added [`RUN-POPS`](ref/pops.md#hypnodensity-mode) _hypnodensity mode_ — passing
+  `hypnodensity=N` to `RUN-POPS` runs the POPS model at N staggered epoch offsets
+  (N must divide 30; e.g. the default `N=6` gives one sample every 5 s at 0.2 Hz) and
+  writes the resulting per-stage posterior probability traces back into the EDF as
+  continuous signals (`PP_W`, `PP_N1`, `PP_N2`, `PP_N3`, `PP_R`; optionally also
+  `PP_NR`); edge regions filled by zero-order hold are marked with a `PP/edge`
+  annotation; output channel prefix and NREM channel composition are configurable
+  via `prefix`, `add-nrem123`, and `add-nrem`
+
+- added [`HDSTATS`](ref/pops.md#hdstats) — analysis of hypnodensity signals
+  (posterior-probability EDF channels produced by `RUN-POPS hypnodensity`); organises
+  output around four domains: **mixedness** (entropy, confidence, margin, pairwise
+  state mixing), **instability** (total variation, longer-lag TV, entropy–TV
+  correlation), **transition structure** (automated event detection via `motion`, `hard`,
+  or `both` methods; transition density, width, peak entropy, and TV area; transition-
+  aligned mean profiles for all derived signals and posteriors), and **context**
+  (all metrics repeated per user-specified annotation stratum via `annot`); optional
+  `3state` mode collapses N1+N2+N3 → NREM and emits parallel 3-class summaries; a
+  `verbose` flag adds a full per-sample time-series table
+
+_Alpha / untested_
+
+- added [`DESAT`](ref/physio.md#desat) — oxygen desaturation (SpO2) event detection;
+  currently alpha / untested
+
+- added [`RESPBREATH`](ref/physio.md#respbreath) — respiratory breath segmentation
+  for timing / phase-locking analyses; currently alpha / untested
+
+- added [`ALIGN-SCAN`](ref/outputs.md#align-scan) — diagnostics for checking whether
+  EDF records, epoch boundaries, and staging-like annotations are mutually aligned
+
+- added [`AROUSALS`](ref/physio.md#arousals) — candidate sleep arousal detection from
+  EEG with optional EMG support; currently under development
+
+- promoted [`INSERT`](ref/manipulations.md#insert) into the main
+  [Manipulations](ref/manipulations.md) reference page — lag estimation between EDFs,
+  plus insertion/alignment of channels from a secondary EDF, including simple drift
+  correction
 
 ## v1.3.5 (19-Mar-2026)
 
@@ -15,7 +58,7 @@ _New commands_
   sleep-debt analysis
 
 - added [`DAYS`](ref/actigraphy.md#days) — creates day, hourly, and AM/PM
-  annotations for multi-day recordings; designed to work alongside `ACTIG`
+  annotations for multi-day recordings; designed to work alongside [`ACTIG`](ref/actigraphy.md#actig)
 
 - added [`QC`](ref/artifacts.md#qc) — automated multi-domain PSG signal quality
   control covering respiratory effort (RESP), SpO2 (OXY), EEG, EMG, ECG, and
@@ -49,7 +92,7 @@ _Other changes_
 
 _Actigraphy details_
 
-- `ACTIG` supports a recommended two-run workflow: `score-period` first (coarse
+- [`ACTIG`](ref/actigraphy.md#actig) supports a recommended two-run workflow: `score-period` first (coarse
   period-window annotations SP/WP) then `score` (granular S/W epoch scoring),
   with fragmentation metrics computed separately within each window
 
@@ -74,11 +117,11 @@ _New commands_
 
  - added [`RAI`](ref/physio.md#rai) to calculate an index of REM loss of atonia from the EMG
 
- - added `REQUIRES`, including a `version` option; documentation pending
+ - added [`REQUIRES`](ref/helpers.md#requires), including a `version` option
 
- - added `DROP-ANNOTS`; documentation pending
+ - added [`DROP-ANNOTS`](ref/annotations.md#drop-annots)
 
- - added `ROLLING-NORM`, which uses an iterative sliding window to calculate a signal mean and SD; documentation pending
+ - added [`ROLLING-NORM`](ref/manipulations.md#rolling-norm), which uses an iterative sliding window to calculate a signal mean and SD
 
  - initial (beta) implementation of [`HRV`](ref/physio.md#hrv) metrics
 
@@ -112,9 +155,9 @@ _Annotations_
 
  - added `annot-dir` to [`WRITE-ANNOTS`](ref/annotations.md#write-annots), to be used instead of `file`; this creates the folder if it does not exist, analogous to `edf-dir` for [`WRITE`](ref/outputs.md#write)
 
- - `AXA` now allows `[x]`, `[-x]`, and `[][]`; fuller documentation is still pending
+ - [`AXA`](ref/annotations.md#axa) now allows `[x]`, `[-x]`, and `[][]`; fuller documentation is still pending
 
- - annotations can now be dropped via `DROP-ANNOTS`; documentation pending
+ - annotations can now be dropped via [`DROP-ANNOTS`](ref/annotations.md#drop-annots)
 
 
 _New functionality in core commands_
@@ -134,7 +177,7 @@ _Minor additions & changes_
 
  - standardized the calculation of Hjorth complexity; to obtain the old form, set the special variable `legacy-hjorth=T`
 
- - added `REPORT` with `hide` and `show` options; documentation pending
+ - added [`REPORT`](ref/helpers.md#report) with `hide` and `show` options
    
  - added `M1` to [`MEANS`](ref/intervals.md#means), giving range-normalized values (0..1) for a given `CH`/`ANNOT` pair when more than two instances are present
 
@@ -200,24 +243,16 @@ _Bug fixes_
 
  - fixed issue w/ `dynam` when no cycles are defined
 
- - `THAW` does not fail if the freeze does not exist, unless `strict`
+ - [`THAW`](ref/freezes.md#thaw) does not fail if the freeze does not exist, unless `strict`
    is set; i.e. this allows cases where a freeze was not made because
    zero records remained
 
 
 _New commands still lacking full reference coverage_
 
- - `REQUIRES`
+ - [`IPC`](ref/cc.md#ipc)
 
- - `DROP-ANNOTS`
-
- - `ROLLING-NORM`
-
- - `REPORT`
-
- - `IPC`
-
- - `S2C`
+ - [`S2C`](ref/intervals.md#s2c)
 
 
 
@@ -261,11 +296,11 @@ _Annotations_
 
  - fixed occasional issue with AM/PM encoding of times in annotation files
 
- - fixed a bug in `S2A` when spanning gaps in an EDF+D
+ - fixed a bug in [`S2A`](ref/annotations.md#s2a) when spanning gaps in an EDF+D
 
 _Generic_
 
- - added the `REPORT` command (with `cmd`, `fac` and `vars` options),
+ - added the [`REPORT`](ref/helpers.md#report) command (with `cmd`, `fac` and `vars` options),
    to explicitly request outputs in text-table mode that might not
    otherwise be emitted
 
@@ -319,7 +354,7 @@ _Other new commands_
 
  - statistics to quantify _ultradian dynamics_
    from epoch-level metrics; typically invoked via `dynam` added to
-   `PSD`, `COH`, `SPINDLES`, `SO`, `PSI`, `CORREL`,
+   [`PSD`](ref/power-spectra.md#psd), [`COH`](ref/cc.md#coh), [`SPINDLES`](ref/spindles-so.md#spindles), [`SO`](ref/spindles-so.md#so), [`PSI`](ref/cc.md#psi), [`CORREL`](ref/cc.md#correl),
 
  - [`COMBINE`](ref/manipulations.md#combine) command, to make a
    new channel that is the mean or median of others
@@ -330,7 +365,7 @@ _Other new commands_
    [`--merge`](ref/helpers.md#-merge)
 
  - [`RUN-POPS`](ref/pops.md#run-pops) command (wrapper around
-   `POPS`)
+   [`POPS`](ref/pops.md#pops-prediction))
  
 _Lunapi_
 
@@ -391,7 +426,7 @@ _Annotations_
 
   - added `annot-meta-default-num` (which accepts `T`/`F` values) to
      set the default type of annotation meta-data to be numeric rather
-     than string (this is useful for the `DERIVE` command that will
+     than string (this is useful for the [`DERIVE`](ref/evals.md#derive) command that will
      typically assume numeric meta-data)
    
  - added `num-atype`, `txt-atype`, `bool-atype` and `int-atype`
@@ -404,19 +439,19 @@ _Annotations_
   same value if needed)
 
  - added `SEED_ANNOT`, `SEED_CH`, `OTHER_ANNOT` and `OTHER_CH` to
-   `OVERLAP` output (`OTHER` x `SEED` strata)
+   [`OVERLAP`](ref/intervals.md#overlap) output (`OTHER` x `SEED` strata)
 
  - `annot=` can now accept [_expanded values_](luna/args.md#sequence-expansion) 
 
 
 _Hypnograms_
 
- - fixed error where `HYPNO`'s baseline `POST` variable (post-sleep recording time) was
+ - fixed error where [`HYPNO`](ref/hypnograms.md#hypno)'s baseline `POST` variable (post-sleep recording time) was
  one epoch smaller than it should be
 
  - added `pre_sleep` and `post_sleep` annotations from `HYPNO annot`
 
- - known issue: for long (multi-day) recordings, the timing of some `HYPNO`
+ - known issue: for long (multi-day) recordings, the timing of some [`HYPNO`](ref/hypnograms.md#hypno)
    variables is incorrect (e.g. `TX_` statistics); arguably, this is not
    a big issue as values such as sleep-midpoint etc, have no intrinsic
    meaning if the recording contains multiple sleep periods;  _in future,
@@ -446,15 +481,15 @@ _Misc additions, changes and fixes_
 
  - added `force-digital-minmax` (and `force-digital-min`/`force-digital-max`) special options
  
- - `SOAP` now iterates over channels and stratifies all outputs by `CH`
+ - [`SOAP`](ref/soap.md#soap) now iterates over channels and stratifies all outputs by `CH`
 
- - revised `SO` variable naming scheme (e.g. `SO_P2P` now `SO_AMP_P2P`, etc)
+ - revised [`SO`](ref/spindles-so.md#so) variable naming scheme (e.g. `SO_P2P` now `SO_AMP_P2P`, etc)
 
  - added `uppercase-keys` to [`CACHE record`](ref/index.md)
 
  - added `scale` added to [`PSC`](ref/psc.md) (for scaled-PCA implementation)
 
- - `PSC` now takes `cmd-var=SPINDLES,DENS` etc to select only specific variables
+ - [`PSC`](ref/psc.md#psc) now takes `cmd-var=SPINDLES,DENS` etc to select only specific variables
 
  - added `q` option to [`S2A`](ref/annotations.md#s2a) e.g. `q=10`
  
@@ -462,11 +497,11 @@ _Misc additions, changes and fixes_
    (i.e. now using same number of decimal places as `.annot` output,
    1e-4s by default
 
- - fixed bug in all-by-all `CORREL` where off-diagonal elements had
+ - fixed bug in all-by-all [`CORREL`](ref/cc.md#correl) where off-diagonal elements had
    flipped signs (i.e. treated as directed measures of
    connectivity)
 
- - added decimal-place outputs to HMS times in `SEGMENTS` 
+ - added decimal-place outputs to HMS times in [`SEGMENTS`](ref/outputs.md#segments) 
 
  - known issue: `dynam` does not work with `-t` output (i.e. cannot
    register the col names for arbitrary commands yet...)
@@ -474,10 +509,10 @@ _Misc additions, changes and fixes_
  - added `so-fast-trans` and `so-slow-trans` (w/ arg in Hz as trans
    freq) to return only FS or SS (SO fast/slow swtichers)
 
- - added `winsor` option to `SPINDLES`; also changed the implementation of Q-score filtering; new
+ - added `winsor` option to [`SPINDLES`](ref/spindles-so.md#spindles); also changed the implementation of Q-score filtering; new
    `q-frq={freq},{cycles},{freq2},{cycles2}` option; also `q-verbose` and `q-verbose-all` and `q-max`
 
- - added outputs from `show-coef` for `SPINDLES`
+ - added outputs from `show-coef` for [`SPINDLES`](ref/spindles-so.md#spindles)
  
 
 ## v1.00 (10-Jul-2024)
@@ -506,7 +541,7 @@ _New commands_
 
 _Annotations_
 
- - the `ANNOTS` command now takes `annot` classes to output only a
+ - the [`ANNOTS`](ref/annotations.md#annots) command now takes `annot` classes to output only a
    subset (w/ wildcard character `*` allowed to subset, in form
    `root*` only)
 
@@ -518,7 +553,7 @@ _Annotations_
    to values in the EDF header (i.e. if they have been incorrectly
    specified).
 
- - `OVERLAP` now has option to output a shuffled set of annotations
+ - [`OVERLAP`](ref/intervals.md#overlap) now has option to output a shuffled set of annotations
    (given the full shuffling scheme - shuffle, event-based,
    constrained, background-filtered, etc): e.g. `add-shuffled-annots=A1,A2`
    adds `s_A1`, `s_A2` as new, shuffled versions of `A1` and `A2`; the default tag `s_`
@@ -528,15 +563,15 @@ _Annotations_
 _Epoch definitions_
 
  - EPOCH now takes `fixed` and `trunc` ; output gives `FIXED_DUR` from
-   `EPOCH`
+   [`EPOCH`](ref/epochs.md#epoch)
 
  - generic epochs can now be shifted left/right (backwards/forwards)
    using `shift` (-ve/+ve values)
 
- - new `EPOCH` outputs: `TOT_DUR`, `TOT_PCT`, `TOT_REC`, `TOT_SPANNED`
+ - new [`EPOCH`](ref/epochs.md#epoch) outputs: `TOT_DUR`, `TOT_PCT`, `TOT_REC`, `TOT_SPANNED`
    and `TOT_UNSPANNED`
 
- - added `SEGMENTS` largest annotation (`largest1`), (`largest2`) etc;
+ - added [`SEGMENTS`](ref/outputs.md#segments) largest annotation (`largest1`), (`largest2`) etc;
    the 1,2,3,... index is in the _instance_ ID of the annotation (class
    = `largest`); also, adding e.g.  `requires-min=120` enforces that
    largest segments must be at least 2 hours -- 1,2,3 is in INST ID
@@ -544,19 +579,19 @@ _Epoch definitions_
 
 _Spectral analysis_
 
- - fixed `MTM` options; added `speckurt` for fbins (`MTM`)
+ - fixed [`MTM`](ref/power-spectra.md#mtm) options; added `speckurt` for fbins ([`MTM`](ref/power-spectra.md#mtm))
 
- - `PSD` and `MTM` now have `band` (=`T`/`F`) to drop band output altogether
+ - [`PSD`](ref/power-spectra.md#psd) and [`MTM`](ref/power-spectra.md#mtm) now have `band` (=`T`/`F`) to drop band output altogether
 
- - allow `skip-bands` (e.g. `skip-bands=SIGMA,GAMMA,TOTAL`) for `PSD` to omit certain bands from the output
+ - allow `skip-bands` (e.g. `skip-bands=SIGMA,GAMMA,TOTAL`) for [`PSD`](ref/power-spectra.md#psd) to omit certain bands from the output
 
  - to support ISO analyses: PSD now has an `add` option to emit
    (currently 1Hz) values (requries `EPOCH dur=4 inc=1` and `PSD
    segment-size=4`).  This creates a new 1 Hz time-series in the EDF.
 
- - `COH` now allows generic epochs - _as long as they are of fixed
+ - [`COH`](ref/cc.md#coh) now allows generic epochs - _as long as they are of fixed
     size_ (which requires adding `fixed` along with `annot` when applying
-    the `EPOCH` command)
+    the [`EPOCH`](ref/epochs.md#epoch) command)
 
 
 _Spindle/SO analyses_
@@ -564,12 +599,12 @@ _Spindle/SO analyses_
  - now `so-annots` (instead of `annots`) is needed to emit slow
   oscillation annotations (as is called by SPINDLES)
 
- - `SPINDLES`/`SO` coupling issue fixed if a record is above epoch span
+ - [`SPINDLES`](ref/spindles-so.md#spindles)/[`SO`](ref/spindles-so.md#so) coupling issue fixed if a record is above epoch span
 
 
 _Data manipulation_
 
- - `COPY` allows `new` to specify a full name (when used with a single
+ - [`COPY`](ref/manipulations.md#copy) allows `new` to specify a full name (when used with a single
    channel); `pretag` adds the tag to the front (better for `[xx][1:8]`);
    also, `tag` no longer adds `"_"` in between, this must be explicitly
    specified, e.g. `tag=_TAG`
@@ -613,17 +648,17 @@ _Scripting: filters and sequence expansions_
 
 _Misc. fixes and changes_
 
- - added  `output-both` option to `CORREL`
+ - added  `output-both` option to [`CORREL`](ref/cc.md#correl)
  
- - fixed `TOT_DUR_HMS` when >24 hrs in `HEADERS`
+ - fixed `TOT_DUR_HMS` when >24 hrs in [`HEADERS`](ref/summaries.md#headers)
 
- - `WRITE` now resets EDF start date if needed (i.e. when changing start time if collapsing to standard EDF)
+ - [`WRITE`](ref/outputs.md#write) now resets EDF start date if needed (i.e. when changing start time if collapsing to standard EDF)
 
  - fixed the `ids=<list>` option (to swap in alternate IDs on reading a sample list), as it was previously not working
 
- - `POPS` `ignore-obs-staging` option is now fixed
+ - [`POPS`](ref/pops.md#pops-prediction) `ignore-obs-staging` option is now fixed
 
- - `SIMUL` can zero-out frequencies above or below a certain value
+ - [`SIMUL`](ref/simul.md#simul) can zero-out frequencies above or below a certain value
    (i.e. after interpolation) with `zero=lwr,upr`
 
     
@@ -737,10 +772,10 @@ _Signal processing_
  - added bandpower outputs for [`MTM`](ref/power-spectra.md#mtm)
    (`B`-stratified)
 
- - added `kurt`/`kurt3` options to `PSD`, to give epoch-level kurtosis
+ - added `kurt`/`kurt3` options to [`PSD`](ref/power-spectra.md#psd), to give epoch-level kurtosis
    (of power averaged over channels)
 
- - added `speckurt`/`speckurt3` options to `MTM`, to give
+ - added `speckurt`/`speckurt3` options to [`MTM`](ref/power-spectra.md#mtm), to give
    _segment-level_ kurtsosis (of power averaged over channels,
    _within_ epochs if any epochs are specified).  Also, added the
    `alternate-speckurt` to support an alternate definition of
@@ -806,8 +841,8 @@ _Masks, epochs, freezes and caches_
    Labels are given to epochs in the output now.
 
  - for either conceptual or practical reasons, not all command
-   currently support variable-sized annotations (e.g. `COH` or
-   `HYPNO`) but this is flagged if attempting to run such a command in
+   currently support variable-sized annotations (e.g. [`COH`](ref/cc.md#coh) or
+   [`HYPNO`](ref/hypnograms.md#hypno)) but this is flagged if attempting to run such a command in
    the presence of variable-sized (generic, annotation-based) epochs.
  
  - __major:__ reworked the primary [`MASK`](ref/masks.md#mask) command
@@ -822,7 +857,7 @@ _Masks, epochs, freezes and caches_
  - generic (annotation-based) masks can now use wildcards to complete
    annotation names: `MASK ifnot=artifact_*`
 
- - new `MASK` syntax `ifnot=+annot` means to match the epoch _only if
+ - new [`MASK`](ref/masks.md#mask) syntax `ifnot=+annot` means to match the epoch _only if
    it is completely spanned by that annotation_.  (One cannot use both
    `+` and `*` symbols together, however.)
  
@@ -838,8 +873,8 @@ _Masks, epochs, freezes and caches_
 
  - the [`THAW`](ref/freezes.md#thaw) command has a new
    `preserve-cache` option so that the cache is not over-written;
-   i.e. it can be allowed to build up between successive `FREEZE` /
-   `THAW` operations
+   i.e. it can be allowed to build up between successive [`FREEZE`](ref/freezes.md#freeze) /
+   [`THAW`](ref/freezes.md#thaw) operations
 
  - the [`RE`](ref/masks.md#restructure) command has a new
    `preserve-cache` option, which does not wipe the cache when
@@ -889,21 +924,21 @@ _Interval-based analyses:_
 
 _Spindle/slow oscillation detection:_
 
- - added `COUPL_ALL` statistics to `SPINDLES`, which performs
+ - added `COUPL_ALL` statistics to [`SPINDLES`](ref/spindles-so.md#spindles), which performs
    spindle/SO analysis under both default (only using spindles that
    overlap a detected SO) and `all-spindles` (calculating
    `COUPL_ANGLE` and `COUPL_MAG` metrics based on all spindles); if
    the `all-spindles` option is explicitly set, then these two sets
    are identical, and only a single set is reported).
 
- - Slow oscillation output (`SO`/`SPINDLES` commands) is changed: now
+ - Slow oscillation output ([`SO`](ref/spindles-so.md#so)/[`SPINDLES`](ref/spindles-so.md#spindles) commands) is changed: now
    `SO_SLOPE` is output by default instead of `SLOPE_NEG2`.  The other
    slopes are only generated w/ the `verbose` option. Additionally, it
    now doesn't output `_neg` and `_pos` halfwaves as annotations, but
    instead adds `rp_mid` `rp_pos` and `rp_neg` as _relative positions_
    within the interval (scored 0..1); the
    [`OVERLAP`](ref/intervals.md#overlap) command is now able to use
-   these `rp` (relative position) terms.  Finally, `SO` annotations do
+   these `rp` (relative position) terms.  Finally, [`SO`](ref/spindles-so.md#so) annotations do
    not output `dur` now, only `frq`.
  
  - [`SPINDLES`](ref/spindles-so.md#spindles) annotations (from
@@ -911,13 +946,13 @@ _Spindle/slow oscillation detection:_
    the mid/peak of the spindle, i.e. rather than in the old time-point based form
    `mid=tp:123456789`
 
- - the `SPINDLES` command has a new `cache-peaks-sec` option
+ - the [`SPINDLES`](ref/spindles-so.md#spindles) command has a new `cache-peaks-sec` option
  
- - `SPINDLES` now gives a message if `fc` is out-of-range given `q`.
+ - [`SPINDLES`](ref/spindles-so.md#spindles) now gives a message if `fc` is out-of-range given `q`.
    In this case, added the option `noq` (i.e. equivalent to setting
    `q=-999`)
      
- - fixed the `SPINDLES` option `stratify-by-phase` to avoid
+ - fixed the [`SPINDLES`](ref/spindles-so.md#spindles) option `stratify-by-phase` to avoid
    double-counting
 
 
@@ -934,8 +969,8 @@ _Minor additions and fixes_
    subsequent call to `timeline.wholetrace()` uses the correct
    time-points
  
- - added `min` and `max` options to `MINMAX`, to clip EDF physical
-   min/max values; can specify both or either; other wise `MINMAX`
+ - added `min` and `max` options to [`MINMAX`](ref/manipulations.md#minmax), to clip EDF physical
+   min/max values; can specify both or either; other wise [`MINMAX`](ref/manipulations.md#minmax)
    sets all `sig` channels to the same PMIN/PMAX and DMIN/DMAX.  If
    `force` is specified with `min` or `max` then that value is always
    set; otherwise, the physical min/max values are only changed if
@@ -949,7 +984,7 @@ _Minor additions and fixes_
 
  - new `srand=XXXX` special argument to set the RNG seed
   
- - added `REC_DUR_SEC` and `REC_DUR_HMS` to `HEADERS` which used to be
+ - added `REC_DUR_SEC` and `REC_DUR_HMS` to [`HEADERS`](ref/summaries.md#headers) which used to be
   `TOT_*`.  Now, `TOT_DUR_SEC` and `TOT_DUR_HMS` reflect the full
   duration, including any gaps (i.e. if an EDF+D)
 
@@ -1016,9 +1051,9 @@ _Major new functionality_
  - major improvements to [`--merge`](ref/helpers.md#-merge) which can now handle gaps between consecutive files and will generate EDF+Ds
 
  - new `add` option for [`MTM`](ref/power-spectra.md) to generate a
-   new signal (with the same sample rate as the original); also, `MTM`
-   now outputs estimates of the spectral slope as well as `PSD` and
-   `IRASA`.
+   new signal (with the same sample rate as the original); also, [`MTM`](ref/power-spectra.md#mtm)
+   now outputs estimates of the spectral slope as well as [`PSD`](ref/power-spectra.md#psd) and
+   [`IRASA`](ref/power-spectra.md#irasa).
 
  - new [`SET-TIMESTAMPS`](ref/manipulations.md#set-timestamps) utility command
 
@@ -1044,7 +1079,7 @@ _Minor changes/additions_
    annotations)
 
  - new [`anon=T`](luna/args.md#anonymize-edf-headers) special variable to set EDF headers to null values
-   upon loading; this is similar to runnong [`ANON`](ref/manipulations.md#anon), although `ANON`
+   upon loading; this is similar to runnong [`ANON`](ref/manipulations.md#anon), although [`ANON`](ref/manipulations.md#anon)
    allows a few extra options); as with `starttime` and `startdate`,
    this setting is enacted _before_ attaching annotations (i.e. and so
    can influence how annotations are aligned)
@@ -1059,7 +1094,7 @@ _Minor changes/additions_
  - new `offset` option for [`WRITE-ANNOT`](ref/annotations.md#write-annots)
 
  - Luna now gives a warning message to the console if looking at an
-   etnire signal (e.g. from `FILTER`) but some epochs are masked -
+   etnire signal (e.g. from [`FILTER`](ref/fir-filters.md#filter)) but some epochs are masked -
    i.e. as this means that those epochs will be included in that step
    (if not running `RE` beforehand to remove them)
 
@@ -1120,7 +1155,7 @@ _Misc. fixes_
  - changed behavior of `keep-spaces` and `sanitize` to be similar for both channel and annotation labels; also, labels are now always trimmed
  on both whitespace and sanitized insert character (underscore by default)
   
- - stopped the `HEADERS` command from writing out EDF Annotation channels
+ - stopped the [`HEADERS`](ref/summaries.md#headers) command from writing out EDF Annotation channels
 
  - changed lunaR to attach EDF+ annotations on attaching an EDF+
  
@@ -1236,9 +1271,9 @@ _Micro-architecture/signal processing_
 
  - added `segment-median` and `segment-sd` to [`PSD`](ref/power-spectra.md#psd)
 
- - added `precomputed` function to `SPINDLES`
+ - added `precomputed` function to [`SPINDLES`](ref/spindles-so.md#spindles)
 
- - added `ch-median` `ch-epoch` `ch-spatial-threshold` `ch-spatial-weight` to `CORREL`,
+ - added `ch-median` `ch-epoch` `ch-spatial-threshold` `ch-spatial-weight` to [`CORREL`](ref/cc.md#correl),
    which now also prints out disjoint sets of "high corr" channels (`CHS`)
 
  - added [`OTSU`](ref/helpers.md#otsu) and `--otsu` commands; changed Otsu implementation
@@ -1358,7 +1393,7 @@ _New functionality_
  
  - prototype [`ALTER`](ref/artifacts.md#alter) command to perform reference-channel, regression-based artifact removal
 
- - `peaks` and `slope` options for `PSD` and `MTM`
+ - `peaks` and `slope` options for [`PSD`](ref/power-spectra.md#psd) and [`MTM`](ref/power-spectra.md#mtm)
 
  - [`REBASE`](ref/soap.md#rebase), which adopts the
    [`SOAP`](ref/soap.md#soap) framework to (probabilistically)
@@ -1367,7 +1402,7 @@ _New functionality_
    epochs) given a) manual staging in the original epoch duration, and
    b) one or more signals (i.e. EEG) that are expected to encode sleep
    stage information well (i.e. have a high kappa from the original
-   `SOAP` command).
+   [`SOAP`](ref/soap.md#soap) command).
 
 
 _Annotation format modifications/extensions_
@@ -1408,16 +1443,16 @@ _Annotation format modifications/extensions_
    annotations; i.e. if wanting to only load annotations from an
    alternate, explicitly referenced annot file
 
- - added the `interval` option to the `EVAL` command, to generate new
+ - added the `interval` option to the [`EVAL`](ref/evals.md#eval) command, to generate new
    interval-level annotations based on eval expressions
 
 _EEG microstates_
 
- - `MS` has new `add-spc-sig` option to add spatial correlations as new EDF channels (instead of 0/1 binary variable, as per `add-sig`)
+ - [`MS`](ref/ms.md#ms) has new `add-spc-sig` option to add spatial correlations as new EDF channels (instead of 0/1 binary variable, as per `add-sig`)
 
- - `MS` has new `canonical` option to specify a file definining canonical microstates
+ - [`MS`](ref/ms.md#ms) has new `canonical` option to specify a file definining canonical microstates
 
- - `MS` solutions now always have a header row; you cannot extract based on sol=file,A,B,C,D; also, 'unassigned' states are labeled 1,2,3, etc not A,B,C,...
+ - [`MS`](ref/ms.md#ms) solutions now always have a header row; you cannot extract based on sol=file,A,B,C,D; also, 'unassigned' states are labeled 1,2,3, etc not A,B,C,...
 
  - new `--cmp-maps` command to compare (spatial correlation) EEG microstates
 
@@ -1428,16 +1463,16 @@ _Other fixes, minor modifications and new features_
 
  - added ability to specify an empty EDF (`--nr`, `--rs` and filename equals `.` ) 
 
- - added 1st, 2nd, 5th and 10th percentiles to `STATS` 
+ - added 1st, 2nd, 5th and 10th percentiles to [`STATS`](ref/summaries.md#stats) 
 
- - added _transition frequency_ to slow oscillation output (`SPINDLES`, `SO`)
+ - added _transition frequency_ to slow oscillation output ([`SPINDLES`](ref/spindles-so.md#spindles), [`SO`](ref/spindles-so.md#so))
 
  - fixed bug in `flanked` mask option (e.g. `flanked=W,1`)
 
- - made `CANONICAL` definition file format more flexible: 1) it now allows
+ - made [`CANONICAL`](ref/canonical.md#canonical) definition file format more flexible: 1) it now allows
    whitespace, not just tab-delimitation; 2) only the first three
    fields are required now; if not given, the latter fields/columns
-   will be set to `.`; 3) `CANONICAL` now respects the order of
+   will be set to `.`; 3) [`CANONICAL`](ref/canonical.md#canonical) now respects the order of
    canonical signals (i.e. rather than processing things
    alphabetical); this allows _multi-stage_ definitions, e.g. to first
    map `S1`, then `S2`, and then apply a rule such as `S3 = S1 - S2`.
@@ -1446,7 +1481,7 @@ _Other fixes, minor modifications and new features_
   it allows nesting, but can also be handy on the command line
   (i.e. if already using `-s ''` form)
 
- - added `drop` and `keep` options to the `PSC` command
+ - added `drop` and `keep` options to the [`PSC`](ref/psc.md#psc) command
 
  - added `import=file.txt` command to [`CACHE`](ref/freezes.md#cache) to read from destrat
    output; can take `factors` and `v` param (as well as required
@@ -1460,9 +1495,9 @@ _Other fixes, minor modifications and new features_
    specified, find first instance of this annot, then align with 1
    second boundary (or `align-annots-res=X` if given) align /all/
    annots with this offset (bound at 0); i.e all records beforehand will
-   be skipped if subsequent `MASK`/`WRITE` commands are applied 
+   be skipped if subsequent [`MASK`](ref/masks.md#mask)/[`WRITE`](ref/outputs.md#write) commands are applied 
 
- - added `pick` option to `SIGNALS` to pick first of pick=a,b,c that
+ - added `pick` option to [`SIGNALS`](ref/manipulations.md#signals) to pick first of pick=a,b,c that
    is present, and drop the rest; can map with `rename` to rename the
    pick
  
@@ -1473,7 +1508,7 @@ _Other fixes, minor modifications and new features_
    columns were found after first five rows, reflecting how R
    `read.table()` works)
  
-  - `CANONICAL` does not now need an explicit GROUP to be specified;
+  - [`CANONICAL`](ref/canonical.md#canonical) does not now need an explicit GROUP to be specified;
    the file must still have a first col, it is just ignored now; also,
    new `drop-originals` option to drop all original (non-CANONICAL)
    signals after making the new signals; matches case-insentive
@@ -1483,7 +1518,7 @@ _Other fixes, minor modifications and new features_
    greater than this; otherwise writes warning to log; i.e. set to 0
    for an exact match
    
- - `CONTAINS` can now skip to the next EDF (rather than alter the return code), if the option `skip` is given
+ - [`CONTAINS`](ref/summaries.md#contains) can now skip to the next EDF (rather than alter the return code), if the option `skip` is given
 
  - check for whether an ID contains the ID-wildcard character (by default, ^) and reports an error if it does;  added the `wildcard` option to specify an alternate character
  
@@ -1493,12 +1528,12 @@ _Other fixes, minor modifications and new features_
 
 _Major new functionality_
 
-  - Major changes to the epoch-wise __artifact detection__ via `SIGSTATS`, which is now implemented
+  - Major changes to the epoch-wise __artifact detection__ via [`SIGSTATS`](ref/summaries.md#sigstats), which is now implemented
     via the [`CHEP-MASK`](ref/artifacts.md#chep-mask) and [`CHEP`](ref/masks.md#chep) commands, as
     illustrated in [this vignette](vignettes/chep.md)
 
- - Significant __speed improvements__ for spectral analyses (`PSD` and
-    especially `MTM`) and other (e.g. `PSC`, `SUDS`, `ICA`, `CPT`)
+ - Significant __speed improvements__ for spectral analyses ([`PSD`](ref/power-spectra.md#psd) and
+    especially [`MTM`](ref/power-spectra.md#mtm)) and other (e.g. [`PSC`](ref/psc.md#psc), `SUDS`, [`ICA`](ref/ica.md#ica), [`CPT`](ref/assoc.md#cpt))
     commands through code refactoring, tweaking our use of FFTW and
     the incorporation of the Eigen matrix library
 
@@ -1512,7 +1547,7 @@ _Major new functionality_
 
  - __Epoch-wise spherical spline interpolation__ via the [`INTERPOLATE` command](ref/spatial.md#interpolate)
 
- - __Independent components analysis__ via the [`ICA` and `ADJUST` commands](ref/ica.md)
+ - __Independent components analysis__ via the [`ICA` and [`ADJUST`](ref/ica.md#adjust) commands](ref/ica.md)
 
  - __EEG microstate analysis__ via the [`MS` command](ref/ms.md)
 
@@ -1522,11 +1557,11 @@ _Major new functionality_
 
 _Other new commands/functionality_
 
- - added `DUPES` command to find flat signals and digital duplicates
+ - added [`DUPES`](ref/summaries.md#dupes) command to find flat signals and digital duplicates
 
- - Added `cache-metrics` options for `PSD`, `MTM`, `COH`, `PSI`, `SPINDLES` and `SO` (i.e. primarily for use with the `PSC` command)
+ - Added `cache-metrics` options for [`PSD`](ref/power-spectra.md#psd), [`MTM`](ref/power-spectra.md#mtm), [`COH`](ref/cc.md#coh), [`PSI`](ref/cc.md#psi), [`SPINDLES`](ref/spindles-so.md#spindles) and [`SO`](ref/spindles-so.md#so) (i.e. primarily for use with the [`PSC`](ref/psc.md#psc) command)
 
- - `SO` caches negative peaks (with the `cache` option)
+ - [`SO`](ref/spindles-so.md#so) caches negative peaks (with the `cache` option)
 
  - New [`MEANS` command](ref/intervals.md#means) to give signal means conditional on annotations
  
@@ -1570,7 +1605,7 @@ _Other new commands/functionality_
 
 _Minor modifications/fixes_
 
- - the `epoch` argument of `MASK` accepts `end` as the final epoch number
+ - the `epoch` argument of [`MASK`](ref/masks.md#mask) accepts `end` as the final epoch number
  - added the `force-edf` and `EDF+D` options to
    [`WRITE`](ref/outputs.md#write) to force writing as EDF (or EDF+D);
    this command also now properly supports EDF+C, EDF+D files properly
@@ -1589,12 +1624,12 @@ _Minor modifications/fixes_
 
  - we now allow `.eannot` to be attached with EDF+C but not EDF+D files
 
-- `SPINDLES` now has an `annot` function to generate an internal
+- [`SPINDLES`](ref/spindles-so.md#spindles) now has an `annot` function to generate an internal
   annotation track (which should be used by `WRITE-ANNOTS` but can also
-  be used by, e.g. `TLOCK`, etc.  The old `ftr` format is now retired.
+  be used by, e.g. [`TLOCK`](ref/intervals.md#tlock), etc.  The old `ftr` format is now retired.
 
-- all commands that use epoch-level sleep stages (`SOAP`, `HYPNO`,
-  `STAGE`, etc) will note if an epoch has multiple spanning stage
+- all commands that use epoch-level sleep stages ([`SOAP`](ref/soap.md#soap), [`HYPNO`](ref/hypnograms.md#hypno),
+  [`STAGE`](ref/hypnograms.md#stage), etc) will note if an epoch has multiple spanning stage
   annotations (i.e. which might happen if stages and epochs are not
   temporally well-aligned); it now reports tje `CONF` variable
   describing the overlap
@@ -1603,12 +1638,12 @@ _Minor modifications/fixes_
   with sample points (fixed for continuous EDFs; _need to check
   whether EDF+D requires additional tweaks_)
 
-- added the `epoch` option to `HYPNO`, which now give less verbose
+- added the `epoch` option to [`HYPNO`](ref/hypnograms.md#hypno), which now give less verbose
   output by default
 
-- added `offset` and `align` to `EPOCH`
+- added `offset` and `align` to [`EPOCH`](ref/epochs.md#epoch)
 
-- added `annot` output for the `SOAP`command
+- added `annot` output for the [`SOAP`](ref/soap.md#soap)command
 
 - added a `regional` MASK which masks epochs surrounded by masked
   epochs
@@ -1619,23 +1654,23 @@ _Minor modifications/fixes_
 
 - added test for non-integer sample rates
 
-- now the `HEADERS` command respects the `sig` option; also, some
+- now the [`HEADERS`](ref/summaries.md#headers) command respects the `sig` option; also, some
   changes to variable output names
 
-- fixed the `mkdir` system call during `WRITE` for the Windows
+- fixed the `mkdir` system call during [`WRITE`](ref/outputs.md#write) for the Windows
   platform
 
-- the `ANON` command now conforms with EDF+ specifications for the
+- the [`ANON`](ref/manipulations.md#anon) command now conforms with EDF+ specifications for the
   null ID
 
-- added the `root` option to the `ANON` command, to specify "dummy"
+- added the `root` option to the [`ANON`](ref/manipulations.md#anon) command, to specify "dummy"
   IDs, in the form `root_N` where `N` is 1, 2, 3, etc. As the `N`
   count is always from 1 for a given run of luna, this can be
   inconvenient if splitting a sample-list and running in parallel:
   thus the `ids` option as above is also given.
 
 - added the `ids` command-line option to supply an ID mapper [ old ->
-  new , tab-delim file ]; this can be used with the `ANON` to set the
+  new , tab-delim file ]; this can be used with the [`ANON`](ref/manipulations.md#anon) to set the
   EDF header IDs
 
 - `--build` has an option to add quotes around file paths if they contain spaces
@@ -1659,7 +1694,7 @@ _Minor modifications/fixes_
  - added `fac` instead of `bin` for PSD (but, in general, removing
    support/documentation around this).
   
-- for `SIGNALS` command, added the `req` option to _require_ that
+- for [`SIGNALS`](ref/manipulations.md#signals) command, added the `req` option to _require_ that
   specified signals are present/kept; in contrast, the original `keep`
   option now will not complain if a requested signal is not present
   (i.e. `keep` implies keep if present)
@@ -1667,19 +1702,19 @@ _Minor modifications/fixes_
 - added the `id` command-line option, so that a numeric ID can be
   specified (i.e. and not be interpreted as a sample-list line number)
 
-- added a `min` option to `EPOCH`, which gives minimal output: just
+- added a `min` option to [`EPOCH`](ref/epochs.md#epoch), which gives minimal output: just
   the epoch count to standard output
 
 - added a `dump` option to [`STAGE`](ref/hypnograms.md#stage) to write stages to standard out
   (i.e. parallels `eannot` option, but does not write to a file)
 
-- added `guess` (and `eeg`) options to the `CANONICAL` command, to
+- added `guess` (and `eeg`) options to the [`CANONICAL`](ref/canonical.md#canonical) command, to
   guess `csEEG` without a file/group specified
 
 
 _Internal_
 
-- added `cache_t` for `PSC` command `SPINDLES`/`SO`, and [in flight]
+- added `cache_t` for [`PSC`](ref/psc.md#psc) command [`SPINDLES`](ref/spindles-so.md#spindles)/[`SO`](ref/spindles-so.md#so), and [in flight]
   adding a `COUPL` command to separate out spindle/SO detection from
   coupling analyses
 
@@ -1706,7 +1741,7 @@ _New commands_
  - [`TYPES`](ref/summaries.md#types) command and accompanying options `ch-match`, `ch-exact` and
    `ch-clear`, which groups channels by [_types_](luna/args.md#channel-types) (e.g. EEG, EMG,
    respiratory effort, etc) and defines corresponding automatic
-   variables (e.g. `${eeg}` and `${emg}`); the `HEADERS` command
+   variables (e.g. `${eeg}` and `${emg}`); the [`HEADERS`](ref/summaries.md#headers) command
    now also outputs a `TYPE` field
 
  - [`CANONICAL`](ref/canonical.md#canonical) command to generate _canonical signals_,
@@ -1759,7 +1794,7 @@ _New options/behaviors for existing commands_
  - added the `channels` option to the [`DESC`](ref/summaries.md#desc) command
    (to write a simple list of all channel labels to standard output)
 
- - the `ANNOTS` command now outputs `START_HMS`/`STOP_HMS` and `START_ELAPSED_HMS`/`STOP_ELAPSED_HMS`
+ - the [`ANNOTS`](ref/annotations.md#annots) command now outputs `START_HMS`/`STOP_HMS` and `START_ELAPSED_HMS`/`STOP_ELAPSED_HMS`
    under `ANNOT` x `INST` x `T` output strata, which are the _hh:mm:ss_ version of clock-time and elapsed
    time since EDF start, respectively
 
@@ -1795,14 +1830,14 @@ _Other changes_
  
  - Luna can now read gzipped (compressed) ASCIIs directly
 
- - added a check that named `TAG`s do not clash with existing,
+ - added a check that named [`TAG`](ref/summaries.md#tag)s do not clash with existing,
    internal tags, e.g. `F` or `CH`
 
  - fixed an issue with 0-duration annotations, e.g. as may occur with
    _marks_ from `EDF Annotations` channel
 
- - fixed an issue with the `ANNOTS` command not reporting all output
-   if the `EPOCH` command hadn't been explicitly called first
+ - fixed an issue with the [`ANNOTS`](ref/annotations.md#annots) command not reporting all output
+   if the [`EPOCH`](ref/epochs.md#epoch) command hadn't been explicitly called first
 
  - Luna now explicitly gives an error message if trying to use an
    `.eannot` file (or `e:1` notation in an `.annot` file) with EDF+
@@ -1828,9 +1863,9 @@ _Other changes_
  - changed formatting of `-t` [text table](luna/args.md#text-tables) file names;
   added `--tt-prepend` and `--tt-append` options (equivalently, `--tt-prefix` and `--tt-suffix`)
 
- - `SPANNING` now works on EDF+D files
+ - [`SPANNING`](ref/annotations.md#spanning) now works on EDF+D files
 
- - `HEADERS` now reports `EDF_TYPE`
+ - [`HEADERS`](ref/summaries.md#headers) now reports `EDF_TYPE`
 
 
 ## v0.23 (15-Jan-2020)
@@ -1884,7 +1919,7 @@ sequences](luna/args.md#variables), e.g. `[ICA][1:10]` expands to
    can accept `sig1` and `sig2` parameters to more flexibly specify
    which pairs of channels are considered
 
- - the `CHS` output factor is now split into two separate factors, `CH1` and `CH2`, for `COH` `CORREL` and `MI`
+ - the `CHS` output factor is now split into two separate factors, `CH1` and `CH2`, for [`COH`](ref/cc.md#coh) [`CORREL`](ref/cc.md#correl) and [`MI`](ref/cc.md#mi)
 
  - added [`SPANNING`](ref/annotations.md#spanning) command to report on
    "coverage" of an EDF by one or more annotations
@@ -1905,7 +1940,7 @@ sequences](luna/args.md#variables), e.g. `[ICA][1:10]` expands to
    default, and accepts a time parameter to define whether ambiguous
    times are assigned AM or PM values
 
- - added `START_TIME`, `START_DATE` and (optionally) `SIGNALS` output
+ - added `START_TIME`, `START_DATE` and (optionally) [`SIGNALS`](ref/manipulations.md#signals) output
    variables to the [`HEADERS`](ref/summaries.md#headers) command
  
  - now make new, unique labels for any duplicate channel labels found
@@ -1924,7 +1959,7 @@ sequences](luna/args.md#variables), e.g. `[ICA][1:10]` expands to
 
  - new mode (`-a` instead of `-o`) to append to, rather than overwrite, output databases
 
- - fixed an issue with the `MTM` command's `epoch` option, when used with
+ - fixed an issue with the [`MTM`](ref/power-spectra.md#mtm) command's `epoch` option, when used with
    multiple signals
 
  - fixed issue with command parameters not being recorded in the output
@@ -1938,7 +1973,7 @@ sequences](luna/args.md#variables), e.g. `[ICA][1:10]` expands to
 
  - added a `fail-list` option [note: _need to check implementation_]
 
- - fixed issue with `ANNOTS` where an annotation was flagged as
+ - fixed issue with [`ANNOTS`](ref/annotations.md#annots) where an annotation was flagged as
    overlapping a region/epoch is it ended exactly 1 time-unit
    beforehand (i.e. ignored convention that intervals are internally
    represented as [start] to [one past the end] of the interval).

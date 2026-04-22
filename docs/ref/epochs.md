@@ -2,7 +2,7 @@
 
 _Commands to define epochs for an EDF, and to attach annotations after loading an EDF_
 
-Epochs are fixed-length time windows into which Luna divides a recording for analysis — by default 30 seconds, matching AASM sleep staging convention. Most commands that operate on time-series data require epochs to be defined first, either explicitly with `EPOCH` or implicitly (Luna applies a 30-second default if none has been set). `EPOCH` also supports overlapping windows (e.g. 4-second epochs in 2-second steps) and annotation-based generic epochs. `EPOCH-ANNOT` loads an epoch-level annotation file in `.eannot` format, attaching stage or other labels to each epoch.
+Epochs are fixed-length time windows into which Luna divides a recording for analysis — by default 30 seconds, matching AASM sleep staging convention. Most commands that operate on time-series data require epochs to be defined first, either explicitly with [`EPOCH`](epochs.md#epoch) or implicitly (Luna applies a 30-second default if none has been set). [`EPOCH`](epochs.md#epoch) also supports overlapping windows (e.g. 4-second epochs in 2-second steps) and annotation-based generic epochs. `EPOCH-ANNOT` loads an epoch-level annotation file in `.eannot` format, attaching stage or other labels to each epoch.
 
 | Command   | Description |
 |------|---|
@@ -53,7 +53,7 @@ the most flexible form of epoch.
 ![img](../img/epoch-splice3.png){width="100%"}
 ![img](../img/epoch-splice4.png){width="100%"}
 
-Some commands (in particular `HYPNO`) require standard,
+Some commands (in particular [`HYPNO`](hypnograms.md#hypno)) require standard,
 non-overlapping epochs (otherwise, the resulting hypnogram metrics would
 not be appropriately defined). Most but not all commands can work with generic
 epochs, [as detailed below](#command-epoch-types).  Luna will give an error message if trying
@@ -64,6 +64,10 @@ to use generic epochs with a command that does not accept them.
 _Divides the time series into epochs_
 
 This command can define either standard or generic epochs. 
+
+<h3>Methods</h3>
+
+The recording is partitioned into fixed-length, non-overlapping or overlapping epochs by advancing a window of specified duration through the signal at a specified increment. If the increment equals the epoch length the partition is non-overlapping (the standard 30-second sleep epoch); if the increment is shorter, consecutive epochs overlap by the difference between length and increment. Epoch boundaries can be aligned to the first occurrence of a specified annotation class (e.g., the first scored sleep stage), allowing epoch numbering to be anchored to a biologically meaningful reference point rather than the EDF start time.
 
 <h3>Parameters</h3>
 
@@ -169,9 +173,9 @@ nsrr01 6   10  6 21:58:42  25.00->35.00    E6   30    25    35  25000000000->350
 ... (etc) ...
 ```
 
-If we instead first applied a [`MASK`](masks.md#mask) (which implicitly run `EPOCH`
+If we instead first applied a [`MASK`](masks.md#mask) (which implicitly run [`EPOCH`](epochs.md#epoch)
 if the data aren't already epoched), [`RESTRUCTURE`](masks.md#restructure)ed the data,
-and then requested information only (`table`) from `EPOCH`:
+and then requested information only (`table`) from [`EPOCH`](epochs.md#epoch):
 ```
 MASK epoch=10-14 & RE & EPOCH table
 ```
@@ -186,13 +190,13 @@ nsrr01  14  30  5 22:04:47  390.00->420.00   E14  405   390  420 390000000000->4
 ```
 
 !!! info
-    The above command implicitly ran an `EPOCH` command prior to the `MASK`; the 
-    above output will be from the second `EPOCH`.  Here, using 
+    The above command implicitly ran an [`EPOCH`](epochs.md#epoch) command prior to the [`MASK`](masks.md#mask); the 
+    above output will be from the second [`EPOCH`](epochs.md#epoch).  Here, using 
     [`TAG`](summaries.md#tag)s can keep track of the various outputs: e.g. 
     ```
     TAG R/1 & EPOCH & MASK epoch=10-14 & RE & TAG R/2 & EPOCH table
     ```
-    Output from the first (untagged) `EPOCH`:
+    Output from the first (untagged) [`EPOCH`](epochs.md#epoch):
     ```
     destrat out.db +EPOCH -r R
     ```
@@ -207,7 +211,7 @@ nsrr01  14  30  5 22:04:47  390.00->420.00   E14  405   390  420 390000000000->4
 <h4>Generic epochs</h4>
 
 Generic epochs are those based on existing _annotations_.  One or more
-annotation labels follow the `annot` option of `EPOCH`: e.g.
+annotation labels follow the `annot` option of [`EPOCH`](epochs.md#epoch): e.g.
 ```
 EPOCH annot=Obstructive_Apnea,Hypopnea 
 ```
@@ -290,9 +294,9 @@ after the EDF has been loaded and manipulated (e.g. via
 given the _current state_ of the in-memory EDF (i.e. after any
 restructuring, and with the current epoch definitions).  
            
-That is, if `EPOCH` generates 1022 epochs for a given EDF, then
+That is, if [`EPOCH`](epochs.md#epoch) generates 1022 epochs for a given EDF, then
 the annotation file must be _exactly_ 1022 epochs. Luna will give an
-error if the `EPOCH` command has not been performed prior to
+error if the [`EPOCH`](epochs.md#epoch) command has not been performed prior to
 `EPOCH-ANNOT`.
 
 _In contrast_, when attaching an `.eannot` file via the sample-list,
@@ -309,6 +313,10 @@ An optional `recode` parameter can be used to translate annotations on-the-fly.
     Annotation files should be plain-text ASCII files
     with no special encodings, not RTF (rich text format), etc.
     Please see [this FAQ](../faq.md#windows-line-endings).
+
+<h3>Methods</h3>
+
+Epoch-level annotations are loaded from a plain-text file in which each row corresponds to one epoch in the current in-memory EDF, and the row value specifies the annotation label for that epoch. The mapping is positional: row _i_ is assigned to epoch _i_ in the current epoch structure. Because epoch identity depends on any prior restructuring operations, the file must reflect the post-restructuring epoch count exactly. Optional label recoding translates annotation values from file-specific conventions to standard labels without modifying the source file.
 
 <h3>Parameters</h3>
 
@@ -442,9 +450,9 @@ For individual `id001`, for example, Luna searches for
 `annots/id001.eannot` and then masks epochs that do not match the
 value specified by the variable `${x}` (here set to `A`).
 
-After `RESTRUCTURE`-ing, it `WRITE`s an EDF to `edfs/my-extract-A.edf`
+After [`RESTRUCTURE`](masks.md#restructure)-ing, it [`WRITE`](outputs.md#write)s an EDF to `edfs/my-extract-A.edf`
 and creates a matching sample list `s-A.lst`. As a sanity check,
-running `DESC` on the new project:
+running [`DESC`](summaries.md#desc) on the new project:
 
 ```
 luna s-A.lst -s DESC
@@ -506,26 +514,26 @@ Of these, the following allow generic (variable-sized) epochs:
 
 | Command | Notes |
 |----|----|
-|`CHEP`| Variable epoch size allowed, but not directly accounted for in analysis |
+|[`CHEP`](masks.md#chep)| Variable epoch size allowed, but not directly accounted for in analysis |
 |`CHEP-MASK`|    (makes more sense w/ equal sized : epochs weighted equally) |
 |`DUMP-MASK`| | 
-|`DUPES`| |    
-|`EPOCH`| |    
+|[`DUPES`](summaries.md#dupes)| |    
+|[`EPOCH`](epochs.md#epoch)| |    
 |`EPOCH-ANNOT`| If no epochs defined, adds as fixed default (30s) |
-|`GP`|     |
-|`HEAD`| Select which epoch w/ "epoch" arg; always dump from epoch |
-|`INTERPOLATE`|    |
-|`MASK`| |
-|`MATRIX`| Only outputs epoched data |
-|`MSE`|    |
-|`MTM`| | Also has a concept of _segments_ | 
-|`PSC`| Only works on stats, which may be epoch level but size etc is arbitrary; they will be equally weighted in analyses however |
-|`PSD`|     |
+|[`GP`](cc.md#gp)|     |
+|[`HEAD`](outputs.md#head)| Select which epoch w/ "epoch" arg; always dump from epoch |
+|[`INTERPOLATE`](spatial.md#interpolate)|    |
+|[`MASK`](masks.md#mask)| |
+|[`MATRIX`](outputs.md#matrix)| Only outputs epoched data |
+|[`MSE`](power-spectra.md#mse)|    |
+|[`MTM`](power-spectra.md#mtm)| | Also has a concept of _segments_ | 
+|[`PSC`](psc.md#psc)| Only works on stats, which may be epoch level but size etc is arbitrary; they will be equally weighted in analyses however |
+|[`PSD`](power-spectra.md#psd)|     |
 |`RESTRUCTURE / RE`| |
-|`SEDF`| (but drops epoch timing information in output .sedf) |
-|`SIGSTATS`|  Outputs simple, unweighted epoch means |
-|`TABULATE`| |
-|`XCORR`| |
+|[`SEDF`](outputs.md#sedf)| (but drops epoch timing information in output .sedf) |
+|[`SIGSTATS`](summaries.md#sigstats)|  Outputs simple, unweighted epoch means |
+|[`TABULATE`](summaries.md#tabulate)| |
+|[`XCORR`](cc.md#xcorr)| |
 ```
 
 Allow whole-recording, or epoch-level analysis, and allow variable-sized epochs:

@@ -2,7 +2,7 @@
 
 _Linear-phase signal filters_
 
-Luna uses finite impulse response (FIR) filters, which provide linear-phase responses with no phase distortion. `FILTER` applies a low-pass, high-pass, band-pass or band-stop FIR filter to one or more channels; filter coefficients are derived using the Kaiser window method (specified via ripple and transition width), with alternatives including fixed-order window methods (Bartlett, Hann, Blackman) or coefficients read from a file. `FILTER-DESIGN` reports filter properties — order, transition widths, frequency response — without modifying any signal, and is useful for verifying filter parameters before applying them.
+Luna uses finite impulse response (FIR) filters, which provide linear-phase responses with no phase distortion. [`FILTER`](fir-filters.md#filter) applies a low-pass, high-pass, band-pass or band-stop FIR filter to one or more channels; filter coefficients are derived using the Kaiser window method (specified via ripple and transition width), with alternatives including fixed-order window methods (Bartlett, Hann, Blackman) or coefficients read from a file. `FILTER-DESIGN` reports filter properties — order, transition widths, frequency response — without modifying any signal, and is useful for verifying filter parameters before applying them.
 
 | Command   | Description |
 |------|---|
@@ -17,6 +17,9 @@ This command modifies the in-memory signal, by applying a finite
 impulse response (FIR) filter, which can be either a _low-pass_,
 _high-pass_, _band-pass_ or _band-stop_ filter.
 
+<h3>Methods</h3>
+
+Signals are filtered using linear-phase finite impulse response (FIR) filters, which preserve the phase relationships of all frequency components by applying a symmetric, zero-phase (or constant-delay) kernel. Filter coefficients are derived from the Kaiser window method by default, where the window shape and filter order are determined from the specified passband ripple and transition bandwidth, ensuring a predictable trade-off between stopband attenuation and transition sharpness. Alternatively, filter coefficients can be specified using a fixed-order window method (Bartlett, Hann, or Blackman taper) or loaded directly from a file. Filtering is implemented via fast convolution using the FFT by default, which is computationally efficient for the filter orders required at typical EEG/PSG sampling rates.
 
 <h3>Parameters</h3>
 
@@ -31,7 +34,7 @@ Core parameters are as follows:
 | `bandstop` | `bandstop=55,65` | Band-stop filter between 55 and 65 Hz |
 | `fft`      | Use FFT to implement the filter (this is now the default) |
 
-By default, the `FILTER` command uses the Kaiser window approach to
+By default, the [`FILTER`](fir-filters.md#filter) command uses the Kaiser window approach to
 define the filter, which requires the two following parameters:
 
 | Parameter | Example | Description |
@@ -90,9 +93,9 @@ in general, FIR filters are probably preferable choices.
  
 <h3>Output</h3>
 
-After running `FILTER`, the in-memory signal for a filtered channel
+After running [`FILTER`](fir-filters.md#filter), the in-memory signal for a filtered channel
 will represent the filtered signal.  No explicit output is generated
-by the `FILTER` command.
+by the [`FILTER`](fir-filters.md#filter) command.
 
 <h3>Examples</h3>
 
@@ -223,6 +226,10 @@ method to design the filter.  The `FILTER-DESIGN` command (or Luna
 This command does not depend on any EDFs to be present, and so can be
 run without a sample-list or EDF (see the example below).
 
+<h3>Methods</h3>
+
+Filter design parameters — including filter order (number of taps), frequency response at each frequency bin, and impulse response coefficients — are computed analytically from the specified window method and cutoff frequencies without requiring EDF data. The frequency response is evaluated across the full Nyquist range at the specified sample rate, enabling verification of passband flatness, transition bandwidth, and stopband attenuation before filter application.
+
 <h3>Parameters</h3>
 
 | Parameter | Example | Description |
@@ -234,7 +241,7 @@ run without a sample-list or EDF (see the example below).
 | `highpass` | `highpass=0.3` | High-pass filter with cutoff of 0.3 Hz |
 | `bandstop` | `bandstop=55,65` | Band-stop filter between 0.3 and 35 Hz |
 
-The FIR design approaches are as for the `FILTER` command: either through the window method
+The FIR design approaches are as for the [`FILTER`](fir-filters.md#filter) command: either through the window method
 (with either a Kaiser window -- `tw` and `ripple` -- or fixing the FIR `order`) or reading from a file:
 
 | Parameter | Description |

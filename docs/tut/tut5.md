@@ -43,7 +43,7 @@ when it appears to start a new session.
 
 
 As described in the original tutorial
-([here](tut1.md#displaying-edf-files)), we used `DESC` and `HEADERS`
+([here](tut1.md#displaying-edf-files)), we used [`DESC`](../ref/summaries.md#desc) and [`HEADERS`](../ref/summaries.md#headers)
 commands to review the contents of each EDF and any associated
 annotations.  This is easily achieved using _Moonlight_: once you have
 a running instance of the app, click the _Browse_ button (top-left
@@ -147,7 +147,7 @@ equivalent metrics (not shown).
     If you look
     carefully, you'll see the original tutorial gave different means
     compared to these.  This reflects the fact that the _Stats_ module
-    runs `STATS epoch` rather than simply `STATS` as per the original
+    runs `STATS epoch` rather than simply [`STATS`](../ref/summaries.md#stats) as per the original
     tutorial.  The `epoch` argument means that Luna estimates overall
     statistics (e.g. mean) as the _median of all epoch-level means_
     (as well as generating/reporting epoch-level statistics). That is,
@@ -181,7 +181,7 @@ The options above equate to
 ```
 
 Note that the _Expression_ box should be left empty if selecting annotation(s) from the list -- this box
-provides a means for adding different options to `MASK` (as we see below when using the `hms` flag).
+provides a means for adding different options to [`MASK`](../ref/masks.md#mask) (as we see below when using the `hms` flag).
 
 After clicking _Set_, you should see the following: 
 
@@ -210,7 +210,7 @@ of `ANNOTS start` in the original tutorial, we can type it in here and then clic
 
 If the evaluated command(s) generates output tables (i.e. as described [here](../luna/destrat.md), these will be listed
 below the _Execute_ button.  The bottom table shows the currently selected table from this list:
-here output from `ANNOTS` stratified by `ANNOT` (_annotation class_).  Here we see that there are 26
+here output from [`ANNOTS`](../ref/annotations.md#annots) stratified by `ANNOT` (_annotation class_).  Here we see that there are 26
 `Obstructive_Apnea` events under this definition (i.e. starting in REM), which matches the original Luna tutorial.
 
 ![img](../img/ml/ml-tut11s.png)
@@ -409,8 +409,8 @@ We first use _Drop_, selecting all channels _except_ the EEGs:
 We then use _Rename_ to set the labels to `EEG1` and `EEG2` (having to repeat this step for each):
 ![img](../img/ml/ml-tut27s.png)
 
-There is no _Manips_ tab to change units _per se_, but we can use the _Luna_ tab to apply the simple `mV` command (no `sig`
-is needed here, as we've already dropped all channels except the two EEGs, i.e. so `mV` will be applied to both):
+There is no _Manips_ tab to change units _per se_, but we can use the _Luna_ tab to apply the simple [`mV`](../ref/manipulations.md#mv) command (no `sig`
+is needed here, as we've already dropped all channels except the two EEGs, i.e. so [`mV`](../ref/manipulations.md#mv) will be applied to both):
 ![img](../img/ml/ml-tut28s.png)
 
 Next, the _Resample_ tab (selecting both signals) to get 100 Hz signals:
@@ -481,7 +481,7 @@ into the _Luna_ panel, and select _Execute_ (note - the panel scrolls, so not al
 This produces all of the same output as the orignal Luna run, which is
 accessible via the _Tables_ embedded in this page.  Here we see that five
 tables have been generated.  By default, the first is automatically selected and shown: in this case, output
-from `ARTIFACTS` stratified by `CH` (channel):
+from [`ARTIFACTS`](../ref/artifacts.md#artifacts) stratified by `CH` (channel):
 
 ![img](../img/ml/ml-tut36s.png)
 
@@ -536,7 +536,7 @@ exercises):
 ![img](../img/ml/ml-tut39s.png)
 
 That is, as per the standard output for Luna, we see the `CH` x `F`
-table of the `SPINDLES` command (described
+table of the [`SPINDLES`](../ref/spindles-so.md#spindles) command (described
 [here](../ref/spindles-so.md#spindles).  For example for the `EEG`
 channel, we see the density (`DENS`) of both fast and slow spindles is
 quite low (<1 spindle per minute).  Other metrics are scrolled off the
@@ -553,7 +553,7 @@ mouse).
     as straightforward to automatically format items for neat display.
 
 
-Because we added the `annot=spindles` flag to `SPINDLES` it 
+Because we added the `annot=spindles` flag to [`SPINDLES`](../ref/spindles-so.md#spindles) it 
 generated an annotation to indicate when the detected spindle events occurred.
 These will be automatically added to the lists of available annotations, and
 can be viewed in the _Signals_ tab along with other signals and annotations:

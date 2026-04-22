@@ -181,8 +181,8 @@ in the project's sample list, then any EDF and annotation files are automaticall
 | [`inst.e2i()`](#inste2i) | Helper function to convert epochs to intervals |
 | [`inst.s2i()`](#insts2i) | Helper function to convert epochs to intervals |
 | [`inst.mask()`](#instmask) | Applies one or more mask expressions and rebuilds epochs |
-| [`inst.segments()`](#instsegments) | Runs `SEGMENTS` and returns the `SEGMENTS: SEG` table |
-| [`inst.epoch()`](#instepoch) | Runs `EPOCH` with optional arguments |
+| [`inst.segments()`](#instsegments) | Runs [`SEGMENTS`](../ref/outputs.md#segments) and returns the `SEGMENTS: SEG` table |
+| [`inst.epoch()`](#instepoch) | Runs [`EPOCH`](../ref/epochs.md#epoch) with optional arguments |
 | [`inst.epochs()`](#instepochs) | Returns a compact epoch summary table |
 
 <h5>Updating signals & annotations</h5>
@@ -981,7 +981,7 @@ proj.pops( s='C3_M2' )
 Currently, the default (and only) model is `s2`; more models should be added soon.
 
 More than two channels can be used (as _equivalence channels_) by
-running `POPS` via `proj.proc()` directly.  See the main Luna pages for details on POPS.
+running [`POPS`](../ref/pops.md#pops-prediction) via `proj.proc()` directly.  See the main Luna pages for details on POPS.
 
 
 ### proj.predict_SUN2019()
@@ -1779,11 +1779,11 @@ _Apply one or more Luna mask expressions and rebuild epochs_
       nothing
 ```
 
-This runs `MASK` for each supplied expression and then issues `RE` to rebuild epochs.
+This runs [`MASK`](../ref/masks.md#mask) for each supplied expression and then issues `RE` to rebuild epochs.
 
 ### inst.segments()
 
-_Run `SEGMENTS` and return the `SEGMENTS: SEG` table_
+_Run [`SEGMENTS`](../ref/outputs.md#segments) and return the `SEGMENTS: SEG` table_
 
 ```
  segments()
@@ -1797,7 +1797,7 @@ _Run `SEGMENTS` and return the `SEGMENTS: SEG` table_
 
 ### inst.epoch()
 
-_Run `EPOCH` with optional arguments_
+_Run [`EPOCH`](../ref/epochs.md#epoch) with optional arguments_
 
 ```
  epoch( f = '' )
@@ -1996,7 +1996,7 @@ p.pops( s='C3_M2' )
 Currently, the default (and only) model is `s2`; more models should be added soon.
 
 More than two channels can be used (as _equivalence channels_) by
-running `POPS` via `p.eval()` directly.  See the main Luna pages for details on POPS.
+running [`POPS`](../ref/pops.md#pops-prediction) via `p.eval()` directly.  See the main Luna pages for details on POPS.
 
 ### inst.predict_SUN2019()
 
@@ -2104,7 +2104,7 @@ _Make a hypno-density (posterior stage probabilites)_
 ```
 
 This function expects columns `PP_N1`, `PP_N2`, etc, as returned by
-`POPS` and `SOAP` commands ( in the output stratified by `E` (epoch), 
+[`POPS`](../ref/pops.md#pops-prediction) and [`SOAP`](../ref/soap.md#soap) commands ( in the output stratified by `E` (epoch), 
 as above).
 
 ### inst.psd()
@@ -2155,7 +2155,7 @@ _Calculate and plot a spectrogram heatmap_
 
 ```
 
-This is a wrapper to call the Luna `PSD` command and the `lp.spec()` to plot a spectrogram of results.  Currently, it uses 
+This is a wrapper to call the Luna [`PSD`](../ref/power-spectra.md#psd) command and the `lp.spec()` to plot a spectrogram of results.  Currently, it uses 
 the Welch method to generate a spectrogram.
 
 ### inst.tfview()
@@ -2192,7 +2192,7 @@ _Generate an MTM spectrogram view for a selected interval_
       an MTM spectrogram plot
 ```
 
-This helper runs `MTM` internally over the selected interval, extracts the `CH_F_SEG` and `CH_SEG` tables, and then plots the result.
+This helper runs [`MTM`](../ref/power-spectra.md#mtm) internally over the selected interval, extracts the `CH_F_SEG` and `CH_SEG` tables, and then plots the result.
 
 ### lp.spec()
 

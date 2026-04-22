@@ -2,7 +2,7 @@
 
 _Commands to apply spatial filtering and interpolation to high-density EEG data_
 
-These commands support spatial analysis and filtering for high-density EEG montages. `CLOCS` loads channel locations (spherical or Cartesian coordinates), which are required by subsequent spatial commands. `SL` applies the surface Laplacian (current source density) transformation, which enhances spatial resolution by emphasizing local relative to distal sources. `INTERPOLATE` performs epoch-wise spherical spline interpolation of bad channels, typically applied after `CHEP-MASK` has identified outlying channel/epoch pairs. Built-in variables such as `${frontal}`, `${left}`, and `${posterior}` are also defined here for use with standard 64-channel layouts.
+These commands support spatial analysis and filtering for high-density EEG montages. [`CLOCS`](spatial.md#clocs) loads channel locations (spherical or Cartesian coordinates), which are required by subsequent spatial commands. [`SL`](spatial.md#sl) applies the surface Laplacian (current source density) transformation, which enhances spatial resolution by emphasizing local relative to distal sources. [`INTERPOLATE`](spatial.md#interpolate) performs epoch-wise spherical spline interpolation of bad channels, typically applied after `CHEP-MASK` has identified outlying channel/epoch pairs. Built-in variables such as `${frontal}`, `${left}`, and `${posterior}` are also defined here for use with standard 64-channel layouts.
 
 | Command | Description | 
 | ---- | ------ | 
@@ -62,6 +62,10 @@ used by commands such as [`SL`](#sl).
 In _verbose_ mode, as well as attaching the coordinates, the command writes
 the polar and spherical coordinates to the output stream.
 
+<h3>Methods</h3>
+
+Cartesian channel coordinates from the location file are read, matched case-insensitively to the in-memory EDF channel labels, and normalized to a unit sphere by dividing each coordinate vector by its Euclidean norm. The resulting spherical coordinates are stored in the session channel location table and made available to subsequent spatial processing commands.
+
 <h3>Parameters</h3>
 
 | Option | Description | 
@@ -107,6 +111,10 @@ for typical 64-channel montages; otherwise, special maps can be attached
 using the [`CLOCS`](#clocs) command. All signals are assumed
 to have similar sampling rates.
 
+<h3>Methods</h3>
+
+The surface Laplacian is computed using the spherical spline method of Perrin et al. (1987, 1989). Channel locations projected onto the unit sphere are used to construct a smoothing spline matrix from Legendre polynomial series of specified order, with a regularization parameter controlling the trade-off between spatial smoothness and data fidelity. The second spatial derivative of the fitted spline — the surface Laplacian — is applied sample-by-sample in the time domain to each channel, attenuating broadly distributed scalp potentials and enhancing topographically focal sources. The spline flexibility parameter _m_ controls the polynomial smoothness; higher values yield smoother spatial filters.
+
 <h3>Parameters</h3>
 
 | Parameter | Example | Description |
@@ -120,7 +128,7 @@ to have similar sampling rates.
 <h3>Output</h3>
 
 There is no explicit output; the internal EDF channels will reflect the spatially-filtered EEG channels.   They
-can be written to a new EDF, e.g. with a subsequent `WRITE` command.
+can be written to a new EDF, e.g. with a subsequent [`WRITE`](outputs.md#write) command.
 
 <h3>Example</h3>
 
@@ -137,7 +145,7 @@ luna s.lst -o out.db -s 'CLOCS file=clocs & SL sig=${eeg} & PSD sig=${eeg} spect
 
 _Epoch-wise interpolation of bad channels_
 
-The `INTERPOLATE` command performs spherical spline interpolation
+The [`INTERPOLATE`](spatial.md#interpolate) command performs spherical spline interpolation
 (following [Perrin et al
 (1989)](https://pubmed.ncbi.nlm.nih.gov/2464490/)) to interpolate data
 previously flagged by the [`CHEP-MASK`](artifacts.md#chep-mask) or
@@ -151,6 +159,10 @@ This command requires channel locations; Luna contains default locations
 for typical 64-channel montages; otherwise, special maps can be attached
 using the [`CLOCS`](#clocs) command. All signals are assumed
 to have similar sampling rates, and signals are assumed to be epoched.
+
+<h3>Methods</h3>
+
+Spherical spline interpolation (Perrin et al., 1989) is used to reconstruct signal data at each epoch for channels flagged as bad in the CHEP mask. For each epoch, the set of "good" channels forms the reference set; a spline is fitted to the scalp surface using the spherical coordinates of those channels, and the spline is evaluated at the positions of the bad channels to generate interpolated values. This is performed independently for each epoch, allowing different subsets of channels to be interpolated in different epochs. After interpolation the CHEP mask is cleared.
 
 <h3>Parameters</h3>
 
@@ -170,7 +182,7 @@ mask](masks.md#chep).
 
 <h3>Example</h3>
 
-As we illustrate in this [vignette](../vignettes/chep.md), here we use the `INTERPOLATE` command to clean up hdEEG data. See the vignette
+As we illustrate in this [vignette](../vignettes/chep.md), here we use the [`INTERPOLATE`](spatial.md#interpolate) command to clean up hdEEG data. See the vignette
 and the documentation for [`CHEP-MASK`](artifacts.md#chep-mask) and [`CHEP`](masks.md#chep) for more details.
 
 ```
@@ -182,7 +194,7 @@ luna Subj1.edf -o ss_psd3.db -s ' CHEP-MASK ch-th=2
                                 & PSD spectrum max=35'
 ```
 
-The left matrix shows the epochs, as identified by `CHEP-MASK` and `CHEP`, that the `INTERPOLATE` command
+The left matrix shows the epochs, as identified by `CHEP-MASK` and [`CHEP`](masks.md#chep), that the [`INTERPOLATE`](spatial.md#interpolate) command
 will interpolate; the right plot shows the PSD before and after QC and interpolation. 
 
 ![img](../img/chep/chep_intep.png){width="100%"}

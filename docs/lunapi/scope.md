@@ -120,7 +120,7 @@ six bands (slow, delta, theta, alpha, sigma and beta), for each
 
 ![img](../img/scope9.png)
 
-As above for Hjorth plots, trimming the recording (e.g. via `EDGER` or
+As above for Hjorth plots, trimming the recording (e.g. via [`EDGER`](../ref/artifacts.md#edger) or
 similar) makes the ultradian structure of the recording clearer:
 
 ![img](../img/scope11.png)

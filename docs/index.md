@@ -8,7 +8,7 @@ Originally oriented around command-line scripting
 including the [Python](http://python.org) module
 [_lunapi_](lunapi/index.md) and the [_lunaR_](ext/R/index.md) library
 for the [R](https://www.r-project.org/) statistical package. The
-__current release is v1.3.4__ (27-Feb-2026): see [here](updates.md) for
+__current release is v1.5.1__ (21-April-2026): see [here](updates.md) for
 a list of changes/additions. Please direct any questions to `luna.remnrem@gmail.com`. For
 background on the project itself, see [About](about.md).
 

@@ -92,7 +92,7 @@ Options that follow commands are typically lowercase, and are either
 single keywords or `variable=value` pairs.  When submitting multiple
 commands via the command line `-s` option, you will want to use quotes
 to stop the `&` being interpreted as a shell directive. For example,
-here we run two commands: `EPOCH` and `STATS`.
+here we run two commands: [`EPOCH`](../ref/epochs.md#epoch) and [`STATS`](../ref/summaries.md#stats).
 
 ```
 luna s.lst -s 'EPOCH len=20 & STATS epoch' > res.txt
@@ -100,7 +100,7 @@ luna s.lst -s 'EPOCH len=20 & STATS epoch' > res.txt
 
 By default, all commands are assumed to come from _standard input_,
 unless the `-s` is given (as above).  If the file `command.txt`
-contains only the word `DESC`, then all four invocations of Luna
+contains only the word [`DESC`](../ref/summaries.md#desc), then all four invocations of Luna
 below are identical (although the first one is preferred):
 
 ```
@@ -135,7 +135,7 @@ and then the original file `command.txt`, and pass both to `luna` which will see
 By default, all output goes to _standard out_, i.e. the
 console/terminal by default.  When outputting plain text (instead of
 using an output database, see below), most Luna commands generate
-output in a fixed format.  (The initial `DESC` command is in fact an
+output in a fixed format.  (The initial [`DESC`](../ref/summaries.md#desc) command is in fact an
 exception, as one of the few commands that generate a simple,
 "human-readable" text file.)  The standard format comprises 6
 tab-delimited columns, with one row per value:
@@ -232,12 +232,12 @@ distinct strata group(s):
 That is, we see that 2 commands were performed, generating output for
 3 individuals.  Different Luna commands will produce different levels
 of stratified output, depending on how they are run.  By default, the
-`STATS` command produces one set of values for each channel.  This is
+[`STATS`](../ref/summaries.md#stats) command produces one set of values for each channel.  This is
 reflected in the _strata group_ labeled `CH`.  The 3 _levels_ of this
 _factor_ are the 3 channels specified in the command (i.e. EEG, ECG
 and EMG).  The five core variables (`MIN`, `MAX`, `MEAN`, `SD` and
 `RMS`) are equivalent to the results generated at the start of this
-tutorial using the `STATS` command: that is, whole-signal statistics.
+tutorial using the [`STATS`](../ref/summaries.md#stats) command: that is, whole-signal statistics.
 
 Running `destrat` with the `-x` option will give information about the
 factors and levels for that strata, rather than extracting the tabular
@@ -265,7 +265,7 @@ Variables: 29
       STATS/P98 STATS/P99 STATS/RMS STATS/SD STATS/SKEW
 ```
 
-Adding the `epoch` option to the `STATS` command generated
+Adding the `epoch` option to the [`STATS`](../ref/summaries.md#stats) command generated
 some additional output: 
 
 - per-epoch values for these five measures (`MIN`, `MAX`, `MEAN`, `SD`
@@ -284,7 +284,7 @@ Specifically, the new variables are
 - the unit of measurement from the EDF header (`UNIT`)
 
 !!! hint 
-    The goal of the `STATS` command's `epoch` option is primarily
+    The goal of the [`STATS`](../ref/summaries.md#stats) command's `epoch` option is primarily
     to generate per-epoch level data, although using the median of
     per-epoch means will be more robust to outliers compared to the
     whole-signal mean, which is why both are given.

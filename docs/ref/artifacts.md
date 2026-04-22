@@ -3,11 +3,11 @@
 _Commands to perform artifact detection and correction_
 
 Luna provides several complementary tools for dealing with signal artifacts in PSG data.
-A typical workflow moves from broad assessment to targeted correction: `QC` gives a
-multi-domain overview of signal quality across the whole recording; `EDGER` trims
-artifactual leading/trailing intervals; `CHEP-MASK` and `ARTIFACTS` flag bad
-channel/epoch pairs for EEG; `POL` checks signal polarity; and `LINE-DENOISE`,
-`SUPPRESS-ECG`, and `ALTER` apply spectral or regression-based corrections to specific
+A typical workflow moves from broad assessment to targeted correction: [`QC`](artifacts.md#qc) gives a
+multi-domain overview of signal quality across the whole recording; [`EDGER`](artifacts.md#edger) trims
+artifactual leading/trailing intervals; `CHEP-MASK` and [`ARTIFACTS`](artifacts.md#artifacts) flag bad
+channel/epoch pairs for EEG; [`POL`](artifacts.md#pol) checks signal polarity; and `LINE-DENOISE`,
+`SUPPRESS-ECG`, and [`ALTER`](artifacts.md#alter) apply spectral or regression-based corrections to specific
 artifact types. These tools are designed to be combined — running multiple routines in
 sequence is usually warranted for robust cleaning.
 
@@ -27,10 +27,10 @@ sequence is usually warranted for robust cleaning.
 _Multi-domain PSG signal quality control_
 
 !!! warning "Active development"
-    `QC` is under active development and expansion. Thresholds, defaults,
+    [`QC`](artifacts.md#qc) is under active development and expansion. Thresholds, defaults,
     channel-domain coverage, and output details may still evolve.
 
-`QC` performs automated signal quality assessment for standard PSG channels.
+[`QC`](artifacts.md#qc) performs automated signal quality assessment for standard PSG channels.
 It operates independently on up to six signal domains — respiratory effort
 (**RESP**), pulse oximetry (**OXY**), EEG, chin/limb EMG, ECG/EKG, and EOG —
 producing per-epoch flags and channel-level quality designations that can guide
@@ -145,6 +145,7 @@ Use `ecg-add-peaks` to attach detected R-peak locations as EDF+ annotations
 
 <h4>EOG</h4>
 
+
 Shares the EEG artifact framework with physiologically appropriate defaults:
 wider amplitude tolerance (|700 µV|), lower frequency band (0.3–20 Hz), Hjorth
 pre-filtering restricted to 0.5–20 Hz.
@@ -156,10 +157,16 @@ Line noise tracked separately.
 
 <h3>Annotations</h3>
 
-When annotations are enabled (default), `QC` writes epoch-spanning interval
+<h3>Methods</h3>
+
+Automated signal quality assessment is performed independently across up to six physiological signal domains (respiratory effort, pulse oximetry, EEG, EMG, ECG, and EOG), each evaluated with domain-appropriate criteria. Per-epoch quality flags are generated using criteria including flatline detection (standard deviation or derivative-based), amplitude clipping at ADC limits, gross amplitude excursions, and spectral measures such as high-frequency-to-broadband power ratios and narrowband spectral peakedness. For EEG and EOG, Hjorth parameters (activity, mobility, complexity) are computed on a bandpass-filtered signal and outliers are identified by robust z-score relative to the recording-level distribution. ECG R-peak detection is performed globally on the full recording using a bandpass-differentiate-square-integrate algorithm before per-epoch HR and RR-interval plausibility metrics are derived. Line noise (50/60 Hz) is assessed independently from structural artifact criteria and does not contribute to primary channel-level flagging. A channel is designated as globally flagged when either the proportion of bad epochs exceeds a threshold or the longest contiguous bad run meets a minimum duration criterion.
+
+<h3>Annotations</h3>
+
+When annotations are enabled (default), [`QC`](artifacts.md#qc) writes epoch-spanning interval
 annotations for flagged and line-noise windows, merging adjacent flagged epochs.
 
-By default, one annotation class is created **per channel** (prefix `QC`):
+By default, one annotation class is created **per channel** (prefix [`QC`](artifacts.md#qc)):
 
 | Annotation | Description |
 |---|---|
@@ -187,8 +194,8 @@ of that type):
 | `ecg` | — | Channels for the ECG domain |
 | `eog` | — | Channels for the EOG domain |
 | `epoch` | off | Emit per-epoch WIN-level metrics for all active domains |
-| `annot` | `QC` | Annotation prefix; emits per-channel annotations `{prefix}_{CH}` |
-| `annot-domain` | — | Emit per-domain annotations instead; value sets prefix (default `QC`) |
+| `annot` | [`QC`](artifacts.md#qc) | Annotation prefix; emits per-channel annotations `{prefix}_{CH}` |
+| `annot-domain` | — | Emit per-domain annotations instead; value sets prefix (default [`QC`](artifacts.md#qc)) |
 | `annot-show` | `T` | Set `F` to suppress all QC annotations |
 
 <h4>RESP parameters</h4>
@@ -349,7 +356,7 @@ Output strata: `CH × DOMAIN` (summary), `CH × DOMAIN × WIN` (per-epoch, with 
 | `KURT` | Spectral kurtosis: excess kurtosis of detrended log-PSD residuals |
 | `ACT` | Hjorth activity on bandpass-filtered signal |
 | `CPLX` | Hjorth complexity on bandpass-filtered signal |
-| `FLAT` / `CLIP` / `AMP` / `HF` / `LN` / `PEAK` / `HJORTH` | Per-criterion flags (0/1) |
+| `FLAT` / [`CLIP`](manipulations.md#clip) / `AMP` / `HF` / `LN` / `PEAK` / `HJORTH` | Per-criterion flags (0/1) |
 | `FLAG_EPOCH` | Epoch flagged as bad (0/1); excludes line noise |
 
 ECG per-epoch additionally includes `NP` (R-peak count), `HR` (bpm), `RR` (mean RR in ms), `P_RR` (fraction implausible RR), and `RR_FLAG`.
@@ -412,26 +419,30 @@ cumbersome for these periods to be included in downstream datasets:
    adversely impact the "true" or _physiologic_ period of the recording,
    e.g. artificially restricting the range 
 
-The `EDGER` command attempts to define such regions - with a
+The [`EDGER`](artifacts.md#edger) command attempts to define such regions - with a
 particular focus on finding contiguous intervals of leading and
 trailing artifact, distinct from noise occurring within the main
 portion of the recording.  It also attempts to empirically define
 lights on/lights off times (or at least likely specific if not
 sensitive flagging of Lights On epochs).
-In principle, the behavior of `EDGER` would be very
+In principle, the behavior of [`EDGER`](artifacts.md#edger) would be very
 simple to do _by eye_ via manual analysis: the goal here
 is to have something automated and reproducible.
 
+<h3>Methods</h3>
+
+Epoch-level Hjorth parameters (activity and complexity) are computed for each channel and thresholded to produce a binary "bad epoch" indicator per channel. The normative distribution for thresholding is derived from sleep epochs (or all epochs if staging is unavailable). The binary indicator is smoothed with a short moving average to reduce isolated flagging, and a boundary-maximizing statistic — the square of the count of bad epochs divided by the number of epochs considered — is evaluated from each recording edge inward. The cutpoint that maximizes this statistic defines the putative lights-off or lights-on boundary. A minimum contiguous bad-epoch requirement prevents trivial trimming, and a maximum good-epoch tolerance ensures that flagging does not extend beyond the genuine edge region into the main recording body.
+
 <h4>Heuristic</h4>
 
-`EDGER` uses a simple heuristic based on epochwise [Hjorth
+[`EDGER`](artifacts.md#edger) uses a simple heuristic based on epochwise [Hjorth
 parameters](summaries.md#sigstats).  For a single (EEG) channel, this plots
 the three parameters for a recording, showing a clear region at the end of the recording
 with excessively high amplitude (H1, on a log-scale) and low complexity (H3): 
 
 ![img](../img/edger2.png)
 
-`EDGER` defines trailing/leading periods that are outliers as follows:
+[`EDGER`](artifacts.md#edger) defines trailing/leading periods that are outliers as follows:
 if epochs are flagged as "good" or "bad" based on Hjorth-parameter
 thresholds, it defines a window that _maximizes both the mean and
 total number of bad epochs at the edge_:
@@ -447,7 +458,7 @@ line):
 
 ![img](../img/edger4.png)
 
-In practice, `EDGER` performs the following steps:
+In practice, [`EDGER`](artifacts.md#edger) performs the following steps:
 
  - smooths the epochwise `0/1` "artifact vector" before
    selecting the cut-point, using a moving average with width +/-2mins
@@ -477,11 +488,11 @@ In practice, `EDGER` performs the following steps:
 
  - if `cache=<name>` is specified, this saves the estimates of
   `lights-off` and `lights-on` to the cache, in such a way that
-  `HYPNO`, `STAGE`, `POPS` and `SOAP` will automatically use them to
+  [`HYPNO`](hypnograms.md#hypno), [`STAGE`](hypnograms.md#stage), [`POPS`](pops.md#pops-prediction) and [`SOAP`](soap.md#soap) will automatically use them to
   set epochs to `L` as appropriate.
 
  - if the `mask` option is specified, then it will additionally set
-   the epoch `MASK` to flag lights-on epochs; running a subsequent `RE`
+   the epoch [`MASK`](masks.md#mask) to flag lights-on epochs; running a subsequent `RE`
    command would then mask out (remove from the in-memory EDF) those
    epochs
 
@@ -563,8 +574,8 @@ luna s.lst 2 -o out.db -s ' EDGER sig=EEG epoch cache=c1 & HYPNO cache=c1 '
   set 0 leading/trailing sleep epochs to '?' (given end-wake=120 and end-sleep=5)
 ```
 
-In the above example, `EDGER` identifies over 200 epochs to skip,
-setting `lights-on` to 5:14:35am.  As `HYPNO` is passed the `cache`
+In the above example, [`EDGER`](artifacts.md#edger) identifies over 200 epochs to skip,
+setting `lights-on` to 5:14:35am.  As [`HYPNO`](hypnograms.md#hypno) is passed the `cache`
 option, it searches for `lights-on` (and also `lights-off`) values,
 and, if they exist, it will set epochs to `L` as appropriate.
 
@@ -627,6 +638,10 @@ A few notes on using `CHEP-MASK` to detect outlying epochs:
   in a given epoch that are a) above a certain absolute value (`max`), that are clipped (`clipped`)
   or flat (`flat`). 
 
+<h3>Methods</h3>
+
+Epoch-level Hjorth parameters (activity, mobility, and complexity) are computed for each channel in each epoch to characterize signal amplitude, frequency content, and complexity. Outlier detection operates across three dimensions: within-channel across epochs (flagging epochs whose statistics deviate from the channel's own distribution), between-channel within each epoch (flagging channels that deviate from the cross-channel distribution for that epoch), and globally across all channel–epoch pairs. Each detection mode applies iterative z-score thresholding: in each iteration, channel–epoch pairs exceeding the threshold are removed from the reference distribution before the next iteration is applied, reducing the influence of gross outliers on the normative estimate. Additional amplitude-based criteria — clipping (samples at ADC extremes), flatness (near-constant samples), and absolute amplitude exceedance — can be incorporated independently. Flagged channel–epoch pairs are recorded in the CHEP mask but do not alter the underlying signal data.
+
 <h3>Parameters</h3>
 
 Core parameters:
@@ -681,7 +696,7 @@ luna s.lst 1 sig=EEG -o out.db -s 'CHEP-MASK sig=EEG ep-th=2,2 '
 ```
 
 By itself, `CHEP-MASK` only alters the internal _CHEP_ mask: to actually remove these
-potentially aberrant epochs, we need to pair this command with `CHEP`, which sets the
+potentially aberrant epochs, we need to pair this command with [`CHEP`](masks.md#chep), which sets the
 epoch-level mask based on the current _CHEP_ mask:
 
 ```
@@ -692,7 +707,7 @@ luna s.lst 1 sig=EEG -o out.db -s ' CHEP-MASK sig=EEG ep-th=2,2
 
 ```
 
-Here we see output from `CHEP` which shows that we are now dropping those flagged epochs, by
+Here we see output from [`CHEP`](masks.md#chep) which shows that we are now dropping those flagged epochs, by
 setting the [epoch-level mask](masks.md):
 
 ```
@@ -721,7 +736,7 @@ state of the epoch-level mask (as used below).
 
 The reason for separating out the steps of flagging channel/epoch
 pairs as outliers (`CHEP-MASK`), to setting particular epochs as
-outliers (for all channels, via `CHEP`), to actually removing the
+outliers (for all channels, via [`CHEP`](masks.md#chep)), to actually removing the
 flagged epochs (with `RE`) is that it provides more flexibility to
 design artifact detection workflows that are suitable to different
 types of data/different modes of artifact.
@@ -799,6 +814,10 @@ epoch), an epoch is flagged to be masked if either the delta power is
 more than 2.5 times the local average (from the sliding window) or the
 beta power is more than 2.0 times the local average.
 
+<h3>Methods</h3>
+
+The artifact detection algorithm of Buckelmueller et al. (2006) is applied per channel. For each 30-second epoch, spectral power in the delta band (0.6–4.6 Hz) and beta band (40–60 Hz) is estimated using Welch's method on ten 4-second non-overlapping windows. Each epoch is then compared to a local reference derived from a sliding window of 15 surrounding epochs; an epoch is flagged as artifactual if its delta power exceeds 2.5 times the local average or its beta power exceeds 2.0 times the local average. This local-reference design makes the method robust to gradual drifts in signal level while remaining sensitive to transient power bursts characteristic of EEG artifacts.
+
 <h3>Parameters</h3>
 
 | Parameter | Example | Description |
@@ -830,12 +849,12 @@ Epoch-level output (option: `verbose`, strata: `CH` x `E`):
 |`BETA_FAC` | Relative beta power factor |
 |`DELTA_MASK` | Masked based on delta power? |
 |`BETA_MASK` | Masked based on beta power? |
-|`MASK` | Whether the epoch is masked |
+|[`MASK`](masks.md#mask) | Whether the epoch is masked |
 
 <h3>Example</h3>
 
 Taking the same EEG channel from the first tutorial EDF as in the
-`SIGSTATS` example above:
+[`SIGSTATS`](summaries.md#sigstats) example above:
 ```
 luna s.lst 1 sig=EEG -o out.db -s 'ARTIFACTS verbose' 
 ```
@@ -877,7 +896,7 @@ does a good job of flagging individual epochs with unusual artifacts,
 but does not flag the very extended stretches of gross artifact
 towards the end of the recording (i.e. because the entire local window
 is itself aberrant) .  This latter type of artifact is, of course,
-easier to spot by eye, and is flagged by `SIGSTATS`. In practice,
+easier to spot by eye, and is flagged by [`SIGSTATS`](summaries.md#sigstats). In practice,
 running multiple artifact detection/correction routines is usually
 warranted.
 
@@ -886,7 +905,7 @@ warranted.
 
 _Signal polarity diagnostics_
 
-`POL` evaluates whether an EEG-like signal appears to have the
+[`POL`](artifacts.md#pol) evaluates whether an EEG-like signal appears to have the
 expected polarity by comparing upward and downward half-waves after
 slow-band filtering. It is intended as a diagnostic command to flag
 channels whose sign may be inverted, or whose slow-wave morphology is
@@ -896,9 +915,13 @@ The default method band-pass filters the signal, extracts candidate
 half-waves above a threshold, and compares the resulting upper and
 lower semi-signals using Hjorth summaries and relative spectral power.
 This is the same general heuristic described in the [polarity
-vignette](../vignettes/nsrr-polarity.md). In practice, `POL` is most
+vignette](../vignettes/nsrr-polarity.md). In practice, [`POL`](artifacts.md#pol) is most
 useful on sleep EEG after restricting to NREM epochs and after basic
 artifact handling.
+
+<h3>Methods</h3>
+
+The signal is bandpass-filtered in the slow-wave frequency range (default 0.5–4 Hz) and candidate half-waves are extracted between consecutive zero-crossings. Upward (positive) and downward (negative) half-waves are compared on Hjorth parameters (activity, mobility, complexity) and on relative spectral power across frequency bins. Discrepancies between the two polarity populations — quantified as paired t-statistics — indicate whether the signal deviates from expected symmetric slow-wave morphology. An alternative mode compares rising versus falling delta half-waves to characterize directional asymmetry in slow-wave dynamics. Because genuine EEG slow waves are expected to be approximately symmetric in time-domain morphology, strong asymmetry flags likely polarity inversion or recording anomalies.
 
 <h3>Parameters</h3>
 
@@ -924,7 +947,7 @@ Secondary parameters:
 
 Notes:
 
-- By default, `POL` extracts thresholded half-waves from a 0.5 to 4 Hz band-passed signal and compares mirrored positive and negative segments.
+- By default, [`POL`](artifacts.md#pol) extracts thresholded half-waves from a 0.5 to 4 Hz band-passed signal and compares mirrored positive and negative segments.
 - `d-mode` changes the comparison from positive-versus-negative polarity to rising-versus-falling delta half-waves. In this mode, Luna also reports separate `UP_*` and `DOWN_*` summaries.
 - `double` and `d-mode` cannot be combined.
 
@@ -1001,6 +1024,9 @@ Briefly, this approach works as follows:
 
  - apply the inverse FFT to obtain a corrected time-domain signal
 
+<h3>Methods</h3>
+
+Electrical line noise is attenuated via spectrum interpolation, following the approach of Leske & Dalal (2019). The amplitude spectrum is obtained by applying the discrete Fourier transform to the full signal. For each target frequency (e.g., 50 or 60 Hz and harmonics), amplitudes within a narrow noise band are replaced by linear interpolation from flanking spectral bins, while the original complex phase values are retained. The corrected complex spectrum is transformed back to the time domain via the inverse FFT, yielding a signal in which line-noise components are suppressed without altering the phase structure of the recording.
 
 <h3>Parameters</h3>
 
@@ -1035,7 +1061,7 @@ pattern, whereby the presence or absence of line-noise seems to drive clear spik
 of between-individual variation.  Naturally, this represents a rather large source of potential confounding.
 
 We can apply the `LINE-DENOISE` approach to this sample, as follows (showing here just targeted frequencies up to 24 Hz); (nb.
-normally, one would add other commands, e.g. `PSD` or `WRITE` out new EDFs after running `LINE-DENOISE`):
+normally, one would add other commands, e.g. [`PSD`](power-spectra.md#psd) or [`WRITE`](outputs.md#write) out new EDFs after running `LINE-DENOISE`):
 ```
 luna s.lst –s LINE-DENOISE sig=${eeg} f=4,8,12,16,20,24 w=1,0.5
 ```
@@ -1087,6 +1113,10 @@ described [here](https://www.ncbi.nlm.nih.gov/pubmed/28649997). It
 also estimates heart rate per-epoch, and flags values likely to
 represent artifact. If needed, channels will be resampled to have
 similar sampling rates (to be set to the value of the parameter `sr`).
+
+<h3>Methods</h3>
+
+R-peaks in the ECG channel are detected using a modified Pan-Tompkins algorithm applied to the full recording. For each EEG channel, a 2-second template centered on each R-peak is extracted and the average cardiac artifact signature is estimated by time-locked averaging across all detected beats. This channel-specific template is then subtracted from the continuous EEG signal at each beat location, removing the stereotyped cardiac contaminant. Per-epoch heart rate is derived from the inter-beat intervals, and epochs with physiologically implausible estimates are flagged. All channels are resampled to a common rate if necessary before processing.
 
 <h3>Parameters</h3>
 
@@ -1228,7 +1258,7 @@ This command runs in one or two modes:
 By default, the regression-based approach uses segments of 5 seconds,
 with 2.5 second overlap.  The EMD-based approach uses non-overlapping
 30-second segments.  For now, we suggest using the regression-based
-mode of `ALTER`.
+mode of [`ALTER`](artifacts.md#alter).
 
 All sample rates must be similar for `sig` and `corr` channels.
 
@@ -1237,6 +1267,9 @@ All sample rates must be similar for `sig` and `corr` channels.
     depending on the nature of the signals and the artifact, there is no guarantee that this approach will
     correctly remove the true, underlying sources of artifact.
 
+<h3>Methods</h3>
+
+In regression mode (following Clercq et al., 2006), the target signal is corrected in short overlapping segments by regressing out the variance attributable to one or more reference channels. For each segment, the least-squares projection of the reference channels onto the target is subtracted, and the corrected segments are recombined using overlap-add weighted averaging to avoid segment-boundary discontinuities. In EMD mode, empirical mode decomposition is applied to the target signal (and optionally to each reference channel); intrinsic mode functions (IMFs) of the target that are highly correlated with either the raw reference channels or their IMFs — as determined by a user-specified correlation threshold — are identified and subtracted. The EMD approach requires no stationarity assumption and can capture non-stationary artifact structure, though the regression-based approach is generally recommended for routine use.
 
 <h3>Parameters</h3>
 
@@ -1262,7 +1295,7 @@ No output is generated, other than the in-memory channels specified by `sig` bei
 <h3>Examples</h3>
 
 We'll use a combination of real and simulated data to show how the
-`ALTER` command works.  Note that, in practice, real artifacts
+[`ALTER`](artifacts.md#alter) command works.  Note that, in practice, real artifacts
 (complex phenomena not necessarily well-captured by any one channel
 or component) are much more likely to be difficult to correct.  That is, the performance
 in this toy dataset is __not__ likely to be indicative of how well it performs on real data, e.g.
@@ -1285,7 +1318,7 @@ artifactual signal (a simple sine wave) into the real EEG signal.
 Below, we'll call the original signal `S1`; the artifact is `X1`; the
 contaminated signal is `S2 = S1 + X1`; the _cleaned_ signal is `S3`,
 which is intended to have the component due to `X1` removed.  That is, we run `S3` (which is `S1` plus `X1`)
-through the `ALTER` command, to see whether it removes this simple source of artifact:
+through the [`ALTER`](artifacts.md#alter) command, to see whether it removes this simple source of artifact:
 
 ```
 luna tmp/file.edf -o out.db alias="S1|C3" \
@@ -1297,7 +1330,7 @@ luna tmp/file.edf -o out.db alias="S1|C3" \
        PSD spectrum max=50 dB '
 ```
 
-After running `ALTER`, we run `COH` and `PSD` to generate power spectra and coherence statistics for all signals.  Here are the resulting power spectra: 
+After running [`ALTER`](artifacts.md#alter), we run [`COH`](cc.md#coh) and [`PSD`](power-spectra.md#psd) to generate power spectra and coherence statistics for all signals.  Here are the resulting power spectra: 
 
 
 ![img](../img/alter1.png){width="100%"}

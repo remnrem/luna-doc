@@ -19,7 +19,6 @@
 | [`FIP`](#fip)    | Frequency-interval plots | 
 | [`ALIGN-EPOCHS`](#align-epochs) | Align epochs between files |
 | [`ALIGN-ANNOTS`](#align-annots) | Realign annotations given an `ALIGN-EPOCHS` solution |
-| [`INSERT`](#insert) | Estimate lags across EDFs and insert new channels with offsets |
 
 
 ## ASYMM
@@ -28,7 +27,7 @@ _Evaluates (regional) signal asymmetries in specified metrics_
 
 `ASYMM` computes hemispheric lateralization indices from epoch-level power spectral
 density data, comparing left and right channel pairs across sleep stages and
-NREM–REM cycles. It reads cached PSD data (produced by a prior `PSD` command run
+NREM–REM cycles. It reads cached PSD data (produced by a prior [`PSD`](power-spectra.md#psd) command run
 with `cache`) rather than operating directly on raw signals.
 
 For each left/right channel pair and each frequency bin or band, `ASYMM` computes
@@ -45,12 +44,16 @@ Current implementation notes:
   epochs are skipped.
 - Transition analysis requires clean, stable epochs on both sides of the boundary.
 
+<h3>Methods</h3>
+
+`ASYMM` reads epoch-level power spectral density values from a named cache populated by a prior `PSD cache` run, then constructs a hypnogram and identifies up to six NREM–REM cycles using Luna's standard cycle-detection algorithm. For each specified left/right channel pair and each frequency bin or band, the log₂(L/R) lateralization index is computed per epoch; epochs in which either side falls below 1×10⁻⁸ or in which the ratio falls outside ±2.0 are flagged as outliers and excluded. Within each cycle, flanking NREM epochs are drawn from up to 50 epochs before and after the REM period, and cycles without at least 30 combined flanking NREM epochs are discarded. Per-cycle outliers in the log-scaled power values are further removed at ±6 SD. REM epochs are then expressed as z-scores relative to the combined flanking NREM distribution and compared with Welch's unequal-variance t-test; cycles whose leading and trailing NREM periods themselves differ significantly are excluded from the cross-cycle summary. Summary statistics (mean z-score, absolute z-score, signed and absolute −log₁₀(p)) are averaged across included cycles. Optionally, time-courses of |log₂(L/R)| around NREM→REM and REM→NREM boundaries are constructed over a user-specified epoch window, with empirical null distributions obtained by randomly shifting the window within the sleep period for the requested number of permutation replicates.
+
 <h3>Parameters</h3>
 
 | Parameter | Example | Description |
 |---|---|---|
 | `cache` | `cache=pc` | Name of the cache holding epoch-level PSD values (required) |
-| `cache-var` | `cache-var=PSD` | Variable name within the cache to extract (default `PSD`; use `PER` or `APER` for IRASA output) |
+| `cache-var` | `cache-var=PSD` | Variable name within the cache to extract (default [`PSD`](power-spectra.md#psd); use `PER` or `APER` for IRASA output) |
 | `left` | `left=C3,F3` | Left-hemisphere channel(s); use `+` to sum (e.g. `C3+F3+P3`) |
 | `right` | `right=C4,F4` | Right-hemisphere channel(s); must match `left` in count |
 | `epoch` | | Also emit epoch-level asymmetry values |
@@ -117,7 +120,7 @@ _Writes an annotation to a set of cache entries_
 
 `A2C` (annotation-to-cache) converts annotation events into cached integer
 sample-point indices. It is primarily used to prepare time-locked event lists for
-downstream commands such as `TLOCK`. For each annotation event, `A2C` reads a
+downstream commands such as [`TLOCK`](intervals.md#tlock). For each annotation event, `A2C` reads a
 metadata field containing a time-point value, locates the nearest sample in a
 reference signal, and stores the resulting sample index in a named cache.
 
@@ -128,6 +131,10 @@ Current implementation notes:
 - By default, each annotation class is stored in its own cache; use `cache` to
   combine all annotations into a single cache.
 - Channel stratification is preserved unless `ignore-channel` is set.
+
+<h3>Methods</h3>
+
+For each specified annotation class, `A2C` iterates over all annotation instances and reads a designated metadata field whose value is expected to encode a sample-point time in the form `tp:XXXXXXX` (an integer in Luna's internal time-point units). The time-point vector of a reference signal is obtained and a linear scan finds the pair of adjacent sample points bracketing each annotation time-point; the closer of the two is selected, and the event is accepted only if its distance from the nearest sample does not exceed the `diff` tolerance (defaulting to one sample period). Accepted events are stored as integer sample-point indices in an internal cache keyed by channel and annotation class, with optional merging of all annotation classes into a single named cache. The resulting cache entries can be consumed directly by downstream commands such as [`TLOCK`](intervals.md#tlock).
 
 <h3>Parameters</h3>
 
@@ -166,6 +173,10 @@ Current implementation notes:
 - All channels in `sig` must share the same sample rate.
 - Data must be epoched before running `L1OUT`.
 
+<h3>Methods</h3>
+
+`L1OUT` performs a leave-one-out cross-validation of spatial EEG consistency using spherical spline interpolation. Before iterating over epochs, the command pre-computes for each channel in turn the pair of interpolation matrices (the inverse of the between-good-channel spline matrix and the good-to-bad cross-channel spline matrix) derived from the full inter-electrode distance matrix — the same matrices used by the [`INTERPOLATE`](spatial.md#interpolate) command. For each epoch and each held-out channel, the pre-computed matrices are applied to the epoch's data from the remaining channels to produce a reconstructed time-series; the Pearson correlation between the reconstructed and the original observed time-series is then computed and reported. Channels with consistently low or negative leave-one-out correlations across epochs indicate electrodes that are spatially inconsistent with their neighbours.
+
 <h3>Parameters</h3>
 
 | Parameter | Example | Description |
@@ -199,6 +210,10 @@ Current implementation notes:
 - Intervals shorter than 2 × `t-upr` samples are ignored.
 - When `th=0` (default), all samples are treated as above threshold.
 - `ZIP` normalises across frequencies within each time bin; `FIP` normalises within each frequency by total duration.
+
+<h3>Methods</h3>
+
+`FIP` characterises the temporal structure of oscillatory activity by decomposing a signal's amplitude envelope into a two-dimensional frequency-by-duration representation. For each centre frequency in the specified grid (linearly or logarithmically spaced), a Morlet continuous wavelet transform (CWT) is applied to the entire signal; the resulting instantaneous amplitude time-series may optionally be log-transformed or min–max normalised per frequency. Samples falling below a threshold (if `th` > 0, defined as `th` times the mean amplitude) are excluded. The remaining amplitude series is decomposed into a set of nested intervals: starting from each above-threshold sample, the algorithm scans forward until a lower value is encountered, recording the interval as a (start, stop, height) tuple; intervals are processed in descending order of duration so that each sample's amplitude contribution is attributed only once — to the longest interval spanning it — with shorter nested intervals credited for the incremental height they add above the already-attributed baseline. Each interval is assigned to the time-bin corresponding to its duration in seconds (or oscillation cycles if `by-cycles` is set), and the summed amplitude within each frequency-by-bin cell is divided by total signal duration to yield the `FIP` statistic; normalisation across frequencies within each time-bin yields `ZIP`.
 
 <h3>Parameters</h3>
 
@@ -359,106 +374,9 @@ ALIGN-ANNOTS sol=align.txt out=realigned.annot
 ```
 
 
+
 ## INSERT
 
-_Estimate lag between EDFs or insert channels from one EDF into another_
+_This command has moved to the Manipulations reference page._
 
-`INSERT` is implemented and callable, but should still be treated as
-experimental. It supports two related workflows:
-
-1. Estimate the temporal offset between a primary and secondary EDF.
-2. Insert one or more channels from the secondary EDF into the current EDF using
-   a known offset, optionally with a simple linear time-stretch correction.
-
-Unlike most EDF-manipulation commands, insert mode can add channels at the
-secondary signal's own sample rate, so it is intended for merging asynchronous
-or differently sampled recordings into one in-memory EDF.
-
-Current implementation notes:
-
-- Both EDFs must be continuous, or at least not actually discontinuous with gaps.
-- Lag-estimation mode requires matched sample rates within each comparison pair,
-  and all comparison pairs must share the same sample rate.
-- Insert mode zero-pads uncovered regions and makes channel names unique by
-  appending `.1`, `.2`, etc. if needed.
-- The `annot=` argument is parsed in insert mode, but annotation creation is not
-  currently implemented.
-
-<h3>Parameters</h3>
-
-Common parameter:
-
-| Parameter | Example | Description |
-|---|---|---|
-| `edf` | `edf=secondary.edf` | Secondary EDF to compare against or insert from |
-
-Lag-estimation mode:
-
-| Parameter | Example | Description |
-|---|---|---|
-| `pairs` | `pairs=C3,C3_ref,C4,C4_ref` | Comma-delimited signal pairs: primary-channel, secondary-channel, repeated |
-| `xcorr` | | Use cross-correlation rather than the default Euclidean sliding-window method |
-| `verbose` | | Emit extra lag-profile detail |
-| `w` | `w=30` | With `xcorr`, half-width of lag search window in seconds |
-| `c` | `c=0` | With `xcorr`, center of lag search window in seconds |
-| `start` | `start=600` | With Euclidean mode, start time in the secondary EDF for the first window (seconds) |
-| `len` | `len=120` | With Euclidean mode, window length in seconds |
-| `inc` | `inc=600` | With Euclidean mode, step size between windows (default `600`) |
-| `steps` | `steps=3` | With Euclidean mode, number of windows to evaluate (default `1`) |
-| `offset-range` | `offset-range=-60,60` | With Euclidean mode, constrain candidate offsets to this range in seconds |
-
-Insert mode:
-
-| Parameter | Example | Description |
-|---|---|---|
-| `sig` | `sig=ECG_ref` | Signal(s) from the secondary EDF to insert |
-| `offset` | `offset=-12.5` | Offset in seconds to apply before insertion |
-| `drift` | `drift=-10` | Optional linear drift correction in seconds over the interval specified by `secs` |
-| `secs` | `secs=28800` | Denominator for `drift`, e.g. `28800` for 8 hours |
-| `annot` | `annot=MISSING2` | Reserved for adding missing-data annotations, but not currently implemented |
-
-<h3>Output</h3>
-
-Lag-estimation with `xcorr` writes output at `CHS` strata, and optionally at `CHS × SP`
-if `verbose` and `w` are used:
-
-| Variable | Description |
-|---|---|
-| `SR` | Sample rate used for the pair |
-| `L1` | Number of samples in the primary signal |
-| `L2` | Number of samples in the secondary signal |
-| `LAG_SP` | Estimated lag in sample points |
-| `LAG_SEC` | Estimated lag in seconds |
-| `MX` | Maximum cross-correlation value |
-| `T` | Lag in seconds for a sampled point in the correlation profile [`verbose`] |
-| `XC` | Cross-correlation value at that lag [`verbose`] |
-
-Lag-estimation with the default Euclidean mode writes output at `WIN` strata:
-
-| Variable | Description |
-|---|---|
-| `SP` | Estimated offset in sample points |
-| `SEC` | Estimated offset in seconds |
-
-Insert mode has no formal tabular output; it modifies the in-memory EDF by adding
-new zero-padded signals from the secondary EDF.
-
-<h3>Examples</h3>
-
-Estimate lag by cross-correlation:
-
-```
-INSERT edf=secondary.edf pairs=C3,C3,C4,C4 xcorr w=30
-```
-
-Estimate lag by sliding Euclidean distance:
-
-```
-INSERT edf=secondary.edf pairs=C3,C3,C4,C4 start=600 len=120 inc=600 steps=3
-```
-
-Insert channels once an offset is known:
-
-```
-INSERT edf=secondary.edf sig=ECG,EMG offset=-12.5
-```
+See [`INSERT`](manipulations.md#insert).

@@ -111,7 +111,7 @@ library(luna)
 !!! Info "Previous material"
     The [corresponding section](tut1.md#displaying-edf-files) of the original tutorial covered:
     
-    - the `DESC` to obtain basic information on EDFs, essentially just stepping through this command: 
+    - the [`DESC`](../ref/summaries.md#desc) to obtain basic information on EDFs, essentially just stepping through this command: 
 
     ```
     luna s.lst -s DESC > res.txt
@@ -143,7 +143,7 @@ Mirroring how _lunaC_ processes a _script_ (i.e. a set of Luna
 [_command file_](../luna/args.md#command-files)), in _lunaR_ we can
 use the [`leval()`](../ext/R/ref.md/#leval) (or
 [`leval.project()`](../ext/R/ref.md#levalproject)) commands to process
-Luna commands such as `DESC`.  As for _lunaC_, the `DESC` command just
+Luna commands such as [`DESC`](../ref/summaries.md#desc).  As for _lunaC_, the [`DESC`](../ref/summaries.md#desc) command just
 displays some information on the terminal, rather than sending output
 to the formal output mechanism (i.e. an output database).  The same is
 true in _lunaR_:
@@ -175,7 +175,7 @@ recapitulate the simple _lunaC_ statement above:
 !!! info "Previous context"
     The [corresponding section](tut1.md#signal-summary-statistics) of the original tutorial covered:
 
-    - running the `STATS` command for all three tutorial individuals
+    - running the [`STATS`](../ref/summaries.md#stats) command for all three tutorial individuals
     - saving the output to an [output database](../luna/destrat.md)
     - querying it with [`destrat`](../luna/destrat.md#destrat)
 
@@ -183,7 +183,7 @@ recapitulate the simple _lunaC_ statement above:
 One difference between _lunaC_ and _lunaR_ is that, with a few
 exceptions, an attach EDF _persists_ in-memory after a `leval()`
 function has been performed.  That is, the effects of any `leval()`
-call that modifies the data (such as `FILTER` or `SIGNALS` or `MASK`)
+call that modifies the data (such as [`FILTER`](../ref/fir-filters.md#filter) or [`SIGNALS`](../ref/manipulations.md#signals) or [`MASK`](../ref/masks.md#mask))
 will carry over for the next `leval()`, up until a new EDF is
 `lattach()`-ed, or a `lrefresh()` command is issued to restore the EDF
 to its original state.  Therefore, unless you did something to make it
@@ -198,7 +198,7 @@ lstat()
 nsrr01 : 14 signals, 11 annotations, 11:22:00 duration
 ```
 
-To run the `STATS` command, we issue another `leval()`:
+To run the [`STATS`](../ref/summaries.md#stats) command, we issue another `leval()`:
 
 ```
 k <- leval( "STATS" )
@@ -235,7 +235,7 @@ lx(k)
 STATS : CH 
 ```
 
-That is, in this simple example, we have one command (`STATS`) and
+That is, in this simple example, we have one command ([`STATS`](../ref/summaries.md#stats)) and
 one output table (defined by channel, `CH`).  Using R's `str()`
 function reveals more about the _structure_ of `k`:
 
@@ -654,7 +654,7 @@ RESTRUCTURE : STAGE
 STATS : CH_STAGE 
 ```
 
-Note that each table also has `STAGE` as an additional factor, due to
+Note that each table also has [`STAGE`](../ref/hypnograms.md#stage) as an additional factor, due to
 the use of the [`TAG`](../ref/summaries.md#tag) command.  That is, these results 
 are currently just for NREM1 sleep:
 ```
@@ -790,7 +790,7 @@ R.2  nsrr02 EEG     R 22.273566 125.00000 -0.384220044 -124.01961 -44.60784
 ...
 ```
 
-Because we used `TAG` in the script, we have a variable named `STAGE`
+Because we used [`TAG`](../ref/summaries.md#tag) in the script, we have a variable named [`STAGE`](../ref/hypnograms.md#stage)
 that corresponds to this higher-level structure, making it easy to
 keep track of results.
  
@@ -1088,7 +1088,7 @@ attached with `lset()`.
 !!! Info "Previous material"
     The [corresponding section](tut3.md#epoch-level-summaries) of the original tutorial covered:
     
-    - using the `STATS` command to generate epoch-level summaries of signals for `nsrr02`
+    - using the [`STATS`](../ref/summaries.md#stats) command to generate epoch-level summaries of signals for `nsrr02`
 
     - reading those summaries into R, in order to make per-epoch plots of the RMS for the ECG signal
 
@@ -1105,11 +1105,11 @@ Epoch the data:
 ```
 lepoch()
 ```
-Then run `STATS` for these signals (as per the previous tutorial section), requesting epoch-level output:
+Then run [`STATS`](../ref/summaries.md#stats) for these signals (as per the previous tutorial section), requesting epoch-level output:
 ```
 k <- leval( "STATS epoch sig=ECG" ) 
 ```
-We next extract the epoch-level output from `STATS`:
+We next extract the epoch-level output from [`STATS`](../ref/summaries.md#stats):
 
 ```
 d <- lx( k , "STATS" , "CH" , "E" ) 
@@ -1167,7 +1167,7 @@ legend("bottomleft",legend=cols , fill = cols , cex=0.7)
 !!! Info "Previous material"
     The [corresponding section](tut3.md#hypnograms) of the original tutorial covered:
     
-    - using `HYPNO` to generate individual-level, cycle-level and epoch-level information about sleep architecture (based on manual staging)
+    - using [`HYPNO`](../ref/hypnograms.md#hypno) to generate individual-level, cycle-level and epoch-level information about sleep architecture (based on manual staging)
 
 Repeating these steps for `nsrr01`, we should first reset Luna's environment (just as a safety measure):
 
@@ -1270,7 +1270,7 @@ We then attach the first individual:
 ```
 lattach( sl , 1 ) 
 ```
-and run the `HYPNO` command:
+and run the [`HYPNO`](../ref/hypnograms.md#hypno) command:
 ```
 k <- leval( "HYPNO epoch" ) 
 ```
@@ -1422,7 +1422,7 @@ and start-time (`SEC`) are set to _NA_.  Luna tracks the original
 epoch numbers, start times and clock-time however (`E0`, `SEC0` and
 `HMS`).  For example, the first epoch to be included (the new epoch #1) was the old epoch #124, etc.
 
-If we run a `RESTRUCTURE` command, all masked epochs are permanently dropped from the internal EDF, and so we'll 
+If we run a [`RESTRUCTURE`](../ref/masks.md#restructure) command, all masked epochs are permanently dropped from the internal EDF, and so we'll 
 end up with a 86-epoch (43 minutes) dataset, but for which there are no masked epochs:
 
 ```
@@ -1487,7 +1487,7 @@ load this sample list, say calling is `nsl` for _new_ sample-list:
 ```
 nsl <- lsl("new.lst")
 ```
-and then run the `DESC` command for all three individuals:
+and then run the [`DESC`](../ref/summaries.md#desc) command for all three individuals:
 
 ```
 leval.project( nsl , "DESC" ) 
@@ -1871,7 +1871,7 @@ for (ch in c("EEG1","EEG2") )
 
 Now we'll turn to the spindle detection that was performed as part of `cmd/seventh.txt`.  
 As described [here](../ref/spindles-so.md#spindles), the primary individual-level output of 
-`SPINDLES` if stratified by channel (`CH`) and target frequency (`F`):
+[`SPINDLES`](../ref/spindles-so.md#spindles) if stratified by channel (`CH`) and target frequency (`F`):
 
 ```
 d <- lx( k , "SPINDLES" , "F" , "CH" ) 
@@ -1953,7 +1953,7 @@ RESTRUCTURE : BL
 SPINDLES : CH_F CH_F_SPINDLE 
 ```
 
-We can extract the time-points from the `SPINDLES` table that is
+We can extract the time-points from the [`SPINDLES`](../ref/spindles-so.md#spindles) table that is
 stratified by `SPINDLE` as well as `CH` and `F` (i.e. the
 spindle-level results):
 
@@ -1994,7 +1994,7 @@ points( d15$START/3600 , rep( 15, length(d15$START) ) ,
 
 ![img](../img/rt19.png){width="100%"}
 
-The `annot` option we used for the `SPINDLES` command means that
+The `annot` option we used for the [`SPINDLES`](../ref/spindles-so.md#spindles) command means that
 Luna will have written an [.annot file](../ref/annotations.md#annots) to the
 `edfs/` folder.  We can load those annotation files in as new annotations
 to be attached to the current EDF.  

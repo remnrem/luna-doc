@@ -67,7 +67,7 @@ As well as the original 1 second record size, we'll try working with a
 record size, we do not want to set this to be any larger.  To increase
 the record size to 30 seconds, but keep an uncompressed EDF, we'd use
 the [`RECORD-SIZE`](../ref/manipulations.md#record-size) command
-(which also expects the same parameters are `WRITE`, as it forces an
+(which also expects the same parameters are [`WRITE`](../ref/outputs.md#write), as it forces an
 immediate write of the reformatted EDF):
 
 ```
@@ -127,7 +127,7 @@ original EDF, but only using 43% of the disk space.  You do pay a 0.4
 second cost per-file on loading, but for any non-trivial analysis,
 this will be negligible in comparison to the overall processing time.
 
-Importantly, identical results (from the `STATS` command) were
+Importantly, identical results (from the [`STATS`](../ref/summaries.md#stats) command) were
 obtained for all four analyses.  That is, gzip is a _lossless_
 compression format.  We can also check that after using `gunzip` on
 the compressed EDF, we obtain an EDF that is _identical_ to the original one
@@ -190,7 +190,7 @@ Overall, the combination of large (i.e. epoch-length) record sizes and
 gzip compression appears to result in a favourable combination of performance in
 terms of both space and time.  If working with large datasets, or
 making copies of original EDFs that are used by Luna only, you may
-want to consider the `edfz` option of `WRITE` and `RECORD-SIZE`.
+want to consider the `edfz` option of [`WRITE`](../ref/outputs.md#write) and `RECORD-SIZE`.
 
 Naturally, there may be other considerations that impact
 performance. The potential drawbacks are a) using larger record size

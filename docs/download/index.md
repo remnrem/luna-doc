@@ -1,6 +1,6 @@
 # Downloads
 
-<p align="right"><em>Current Luna release: <b>v1.3.4</b> (27-Feb-2026)</em></p>
+<p align="right"><em>Current Luna release: <b>v1.5.1</b> (21-April-2026)</em></p>
 
 
 
@@ -11,16 +11,16 @@ Latest stable Luna command-line tool (binaries and source):
 | Platform | Link/command |
 | ----- | ----- |
 | __Executables__ | |
-| macOS (Intel/x86_64) binaries | [https://github.com/remnrem/luna-base/releases/download/v1.3.4/mac_luna.tar.gz](https://github.com/remnrem/luna-base/releases/download/v1.3.4/mac_luna.tar.gz) |
-| macOS (Silicon/ARM64) binaries | [https://github.com/remnrem/luna-base/releases/download/v1.3.4/macos_arm64_luna.tar.gz](https://github.com/remnrem/luna-base/releases/download/v1.3.4/macos_arm64_luna.tar.gz) |
-| Windows binaries | [https://github.com/remnrem/luna-base/releases/download/v1.3.4/win_luna.zip](https://github.com/remnrem/luna-base/releases/download/v1.3.4/win_luna.zip) |
+| macOS (Intel/x86_64) binaries | [https://github.com/remnrem/luna-base/releases/download/v1.5.1/mac_luna.tar.gz](https://github.com/remnrem/luna-base/releases/download/v1.5.1/mac_luna.tar.gz) |
+| macOS (Silicon/ARM64) binaries | [https://github.com/remnrem/luna-base/releases/download/v1.5.1/macos_arm64_luna.tar.gz](https://github.com/remnrem/luna-base/releases/download/v1.5.1/macos_arm64_luna.tar.gz) |
+| Windows binaries | [https://github.com/remnrem/luna-base/releases/download/v1.5.1/win_luna.zip](https://github.com/remnrem/luna-base/releases/download/v1.5.1/win_luna.zip) |
 | __Python__ | |
 | _lunapi_ Python package only | `pip install lunapi` |
 | LunaScope Python package | `pip install lunascope` |
 | __Interactive GUI__ | |
 | LunaScope install instructions | [https://zzz.nyspi.org/lunascope/install/](https://zzz.nyspi.org/lunascope/install/) |
 | __Source__| |
-| Stable Luna (all platforms)| [https://github.com/remnrem/luna-base/archive/refs/tags/v1.3.4.tar.gz](https://github.com/remnrem/luna-base/archive/refs/tags/v1.3.4.tar.gz)
+| Stable Luna (all platforms)| [https://github.com/remnrem/luna-base/archive/refs/tags/v1.5.1.tar.gz](https://github.com/remnrem/luna-base/archive/refs/tags/v1.5.1.tar.gz)
 | Latest (unstable) Luna| [https://github.com/remnrem/luna-base/](https://github.com/remnrem/luna-base/) |
 | Latest (unstable) _lunaR_ | [https://github.com/remnrem/luna/](https://github.com/remnrem/luna/) |
 | __Docker__ | | 

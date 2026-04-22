@@ -7,9 +7,4 @@ section rather than as a standard public command domain:
 
 | Command | Description |
 |---|---|
-| [`ALIGN-EPOCHS`](exp.md#align-epochs) | Align epochs between files |
-| [`ALIGN-ANNOTS`](exp.md#align-annots) | Realign annotations given an `ALIGN-EPOCHS` solution |
-| [`INSERT`](exp.md#insert) | Estimate lags and insert channels from another EDF |
-
-They are implemented and callable, but are intentionally not exposed through the
-normal `cmddefs` help system and should be treated as experimental/unsupported.
+| [`INSERT`](exp.md#insert) | Align and splice signals from a secondary EDF, with clock-drift estimation |

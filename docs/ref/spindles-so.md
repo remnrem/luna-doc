@@ -1,6 +1,6 @@
 # Spindles and slow oscillations (SO)
 
-Sleep spindles and slow oscillations (SO) are the two canonical NREM sleep oscillations most studied in sleep EEG research. `SPINDLES` uses a Morlet wavelet approach to detect spindles at user-specified center frequencies, with extensive options for threshold tuning, multi-channel collation, and morphological characterization. `SO` detects slow oscillations using a filtered-signal peak/trough approach. Both commands can be run jointly to assess spindle–SO coupling, and outputs from either can be passed to `TLOCK` (in the [interval-based](intervals.md) section) for time-locked averaging.
+Sleep spindles and slow oscillations (SO) are the two canonical NREM sleep oscillations most studied in sleep EEG research. [`SPINDLES`](spindles-so.md#spindles) uses a Morlet wavelet approach to detect spindles at user-specified center frequencies, with extensive options for threshold tuning, multi-channel collation, and morphological characterization. [`SO`](spindles-so.md#so) detects slow oscillations using a filtered-signal peak/trough approach. Both commands can be run jointly to assess spindle–SO coupling, and outputs from either can be passed to [`TLOCK`](intervals.md#tlock) (in the [interval-based](intervals.md) section) for time-locked averaging.
 
 |Command |Description | 
 |---|---|
@@ -16,12 +16,12 @@ This command detects spindles using a wavelet-based approach.
 Optionally, it also detects slow oscillations (SO) and the temporal
 coupling between spindles and SO.  A _target frequency_ is specified,
 which corresponds to the _center frequency_ of the Morlet wavelet.  A
-single `SPINDLES` command can detect spindles at different
+single [`SPINDLES`](spindles-so.md#spindles) command can detect spindles at different
 frequencies, and on different channels; there are also options for
 collating putative spindles that are coincident in time but 
 observed on different channels and/or at neighbouring frequencies.
 
-The `SPINDLES` command has quite a large number of options (although
+The [`SPINDLES`](spindles-so.md#spindles) command has quite a large number of options (although
 most of them are not necessary for its basic operation).  For clarity,
 this section is split into a number of sub-sections that describe
 different aspects of this command:
@@ -98,6 +98,14 @@ per-spindle statistics, as well as per-epoch counts of spindles.
 
 ### Basic usage
 
+<h3>Methods</h3>
+
+Sleep spindles are detected using a continuous wavelet transform (CWT) approach. A complex Morlet wavelet is convolved with each EEG signal at the specified center frequency (or frequencies); the number of wavelet cycles governs the time–frequency resolution tradeoff, with more cycles yielding greater frequency specificity at the expense of temporal precision. The magnitude of the resulting wavelet coefficients is smoothed with a short sliding window and normalized by the whole-signal mean (or median, if specified) to yield a dimensionless detection statistic. A spindle candidate is called when a core interval of at least the minimum core duration exhibits a normalized wavelet magnitude exceeding the primary threshold, and the event is retained only if a flanking region of at least the minimum total duration also exceeds a secondary (lower) threshold. Candidates shorter than the minimum duration or longer than the maximum duration are discarded; candidates separated by less than the merge window are combined into a single spindle.
+
+Following detection, each spindle is characterized morphologically using the bandpass-filtered signal (centered ±2 Hz around the target frequency). Morphological metrics include: duration (of the combined core and flanking interval); oscillation count; peak-to-peak amplitude; spindle frequency estimated by counting zero-crossings and independently from the FFT modal frequency; a symmetry index reflecting the relative position of the maximum-amplitude oscillation within the spindle; a folded symmetry index; and chirp, defined as the log ratio of mean peak-to-peak intervals in the first versus second half of the spindle. Integrated spindle activity (ISA) is computed as the sum of normalized wavelet coefficients over the spindle interval, providing a composite measure of spindle amplitude, duration, and wavelet coherence. A quality metric _q_ quantifies the degree to which the spindle's power is specifically elevated in the sigma band relative to broadband power change, providing a means to exclude spindles that reflect non-specific amplitude increases rather than genuine narrowband oscillatory activity. Spindle density (events per minute) is computed over the total analysed signal duration.
+
+For spindle–slow oscillation (SO) coupling analyses, the instantaneous phase of the slow oscillation is estimated using the filter–Hilbert method on the bandpass-filtered EEG (0.5–4 Hz by default). For each spindle, the SO phase at the point of maximum wavelet coefficient is extracted. Coupling magnitude is quantified as the mean resultant vector length across spindles, and the mean preferred phase angle is computed. Statistical significance is evaluated by permuting epoch labels and recomputing the coupling statistic to generate a null distribution; both empirical and asymptotic (Rayleigh test) p-values are reported. Spindles are also assessed for gross temporal overlap with detected SO intervals.
+
 <h3>Parameters</h3>
 
 The most basic parameter is `fc`, which specifies the target frequency
@@ -108,7 +116,7 @@ are targeted by the wavelet.  See also the
 wavelet properties.
 
 The primary output variables for an individual are spindle density
-(`DENS`), mean duration (`DUR`) and frequency (`FRQ` or `FFT`, both
+(`DENS`), mean duration (`DUR`) and frequency (`FRQ` or [`FFT`](power-spectra.md#fft), both
 are typically very similar).  An additional metric of interest is
 _integrated spindle activity_ (ISA), which, for a given spindle, is
 the sum of the normalized wavelet coefficients in the spindle
@@ -161,8 +169,8 @@ Most users will not need to alter these.
 
 | Parameter | Example | Description |
 | --- | --- | --- |
-|`cache` | `cache=w1` | Cache CWT coefficients per sample point (e.g. for `TLOCK`) |
-|`cache-peaks` | `cache-peaks=p1` | Cache spindle peaks (sample points) (e.g. for `TLOCK`) |
+|`cache` | `cache=w1` | Cache CWT coefficients per sample point (e.g. for [`TLOCK`](intervals.md#tlock)) |
+|`cache-peaks` | `cache-peaks=p1` | Cache spindle peaks (sample points) (e.g. for [`TLOCK`](intervals.md#tlock)) |
 
 <h6>Characterizing external spindles</h6>
 
@@ -192,7 +200,7 @@ Individual-level output (strata: `F` x `CH`)
 | `ISA_M` | Mean integrated spindle activity (ISA) per minute |
 | `ISA_T` | Total integrated spindle activity (ISA) |
 | `FRQ`   | Mean spindle frequency (from counting zero-crossings) |
-| `FFT`   | Mean spindle frequency (from FFT) |
+| [`FFT`](power-spectra.md#fft)   | Mean spindle frequency (from FFT) |
 | `CHIRP` | Mean chirp metric per spindle |
 | `SYMM`  | Mean spindle symmetry metric |
 | `SYMM2` | Mean spindle folded-symmetry metric |
@@ -220,7 +228,7 @@ Spindle-level output (option `per-spindle`; strata: `SPINDLE` x `F` x `CH`)
 | `FWHM` | Spindle FWHM (seconds) |
 | `NOSC` | Number of oscillations |
 | `FRQ` | Spindle frequency based on counting zero-crossings in bandpass filtered signal |
-| `FFT` | Spindle frequency based on FFT |
+| [`FFT`](power-spectra.md#fft) | Spindle frequency based on FFT |
 | `ISA` | Integrated spindle activity |
 | `MAXTSTAT` | Maximum wavelet statistic |
 | `MEANSTAT` | Mean wavelet statistic |
@@ -562,7 +570,7 @@ given individual is likely to yield meaningful results.
 Luna calculates a simple QC metric for each spindle, by considering
 the relative increase of non-spindle activity within the spindle
 interval, relative to spindle-activity.  We use five fixed bands,
-which unlike the `PSD` command, are _not_ altered by changing [special
+which unlike the [`PSD`](power-spectra.md#psd) command, are _not_ altered by changing [special
 variables](../luna/args.md#spectral-power-bands).  The three
 non-spindle bands are: _delta_ (0.5-4 Hz), _theta_ (4-8 Hz), and
 _beta_ (defined here as 20-30 Hz).  The two spindle bands are _slow
@@ -843,7 +851,7 @@ Spindle to _m_-spindle mappings (option: `list-all-spindles`, strata: `SPINDLE` 
 | Variable | Description |
 | ---- | ---- | 
 | `SCH` | Spindle label (_channel:target frequency_) | 
-| `FFT` | Spindle estimated frequency (via FFT) |
+| [`FFT`](power-spectra.md#fft) | Spindle estimated frequency (via FFT) |
 | `START` | Spindle start time (elapsed seconds from EDF start) |
 | `STOP` | Spindle stop time (elapsed seconds from EDF start) |
 
@@ -956,7 +964,7 @@ luna s.lst 2 -o out.db -s 'MASK ifnot=NREM2 & RE & \
                            SPINDLES sig=EEG fc=11,15 if tlock q=0.3 cycles=12'
 
 ```
-To get the estimate of _IF_ per spindle (which will should typically be very highly correlated with `FRQ` and `FFT`, 
+To get the estimate of _IF_ per spindle (which will should typically be very highly correlated with `FRQ` and [`FFT`](power-spectra.md#fft), 
 as they are all estimating essentially the same thing):
 
 ```
@@ -1038,7 +1046,7 @@ sp1     11         C4       11876.195    11877.062    .
 
 ### Spindle/SO coupling
 
-Adding the `so` option for the `SPINDLES` command instructs Luna to
+Adding the `so` option for the [`SPINDLES`](spindles-so.md#spindles) command instructs Luna to
 detect slow oscillations and report on their temporal coupling with
 spindles. In short, Luna lines up the phase of slow oscillations with
 the "peaks" of spindles (the point of maximal peak-to-peak amplitude,
@@ -1054,7 +1062,7 @@ spanning that spindle.
 
 A __magnitude__ metric (`MAG`) is calculated based on the intra-trial
 phase clustering (ITPC) statistic for all spindles, or those
-overlapping a detected SO.  Second, an __overlap__ metric (`OVERLAP`)
+overlapping a detected SO.  Second, an __overlap__ metric ([`OVERLAP`](intervals.md#overlap))
 is calculated, reflecting the proportion of spindles that show any
 overlap (temporally) with a SO (for that same channel).  This second,
 overlap metric is not reported if `all-spindles` is given.
@@ -1086,7 +1094,7 @@ on the [`SO` command](#so) below.  These include:
 - amplitude criteria (`mag`, `uV-neg`, `uV-p2p`, etc)
 - duration criteria (`t-lwr`, `t-upr`, etc)
 
-In addition to the above, the `so` option of the `SPINDLES` command
+In addition to the above, the `so` option of the [`SPINDLES`](spindles-so.md#spindles) command
 has additional parameters for the analysis of spindle/SO coupling:
 
 | Parameter | Example | Description |
@@ -1098,10 +1106,10 @@ has additional parameters for the analysis of spindle/SO coupling:
 
 <h3>Output</h3>
 
-The `so` option of the `SPINDLES` command produces the same set of
-outputs as the `SO` command (see [below](#so)), describing the
+The `so` option of the [`SPINDLES`](spindles-so.md#spindles) command produces the same set of
+outputs as the [`SO`](spindles-so.md#so) command (see [below](#so)), describing the
 number and properties of the detected SOs. In addition, the `so`
-option of the `SPINDLES` command generates extra outputs describing
+option of the [`SPINDLES`](spindles-so.md#spindles) command generates extra outputs describing
 the temporal coupling between spindles and SOs, described here:
 
 Primary individual-level spindle/SO coupling output (option: `so`, strata: `CH` x `F`)
@@ -1166,7 +1174,7 @@ Spindle/SO phase coupling (option: `so` `verbose-coupling`, strata: `CH` x `F` x
 Here we consider spindle/SO coupling for the second individual from
 the tutorial data.  We'll only consider NREM2 sleep, for fast (15 Hz
 target frequency) and slow (11 Hz target frequency) at default
-settings.  We achieve this by adding `so` to the `SPINDLES` command,
+settings.  We achieve this by adding `so` to the [`SPINDLES`](spindles-so.md#spindles) command,
 along with the definition of the SO (see [below](#so)).  Here we'll
 use a relative/adaptive threshold of 1.5 times the baseline mean,
 along with othe default settings (e.g. for the duration and frequency
@@ -1177,7 +1185,7 @@ of the SO).
 luna s.lst nsrr02 -o out.db -s 'MASK ifnot=NREM2 & RE & SPINDLES fc=11,15 sig=EEG so mag=1.5'
 ```
 
-As seen from the log/console, Luna now also detected slow oscillations (as the `SO` command would do):
+As seen from the log/console, Luna now also detected slow oscillations (as the [`SO`](spindles-so.md#so) command would do):
 ```
  detecting slow waves: 0.2-4.5Hz
   - relative threshold 1.5x median
@@ -1498,7 +1506,7 @@ luna s.lst 1 < cmd.txt \
 |Variable|Description|
 | ---- | ----- | 
 | `RAWCWT` | Absolute, raw wavelet coefficient value |
-| `CWT` | Normalized wavelet coefficient value |
+| [`CWT`](power-spectra.md#cwt) | Normalized wavelet coefficient value |
 | `CWT_TH` | Wavelet threshold for core spindle |
 | `CWT_TH2` | Wavelet threshold for flanking spindle |
 | `CWT_THMAX` | Wavelet max threshold for spindle |
@@ -1510,7 +1518,7 @@ luna s.lst 1 < cmd.txt \
 
 _Detects slow oscillations via a simple, heuristic approach_
 
-The `SO` command uses a heuristic approach to detect slow
+The [`SO`](spindles-so.md#so) command uses a heuristic approach to detect slow
 oscillations (SO) in the sleep EEG, combined with filter-Hilbert estimation
 of SO phase.  This command can also be invoked through the `so` parameter of
 [`SPINDLES`](#spindleso-coupling) command, in which case additional metrics
@@ -1520,6 +1528,10 @@ The SO command works by first bandpass-filtering the EEG (given the
 _frequency parameters_) and then applies a series of _time_ and
 _amplitude_ criteria to identify individual SOs. Either absolute (fixed) or
 adaptive (relative) amplitude thresholds can be specified.
+
+<h3>Methods</h3>
+
+Slow oscillations (SO) are detected using a heuristic filtering and thresholding approach. The EEG is first bandpass-filtered to the slow-oscillation frequency range (typically 0.5–4 Hz) using a linear-phase FIR filter. Candidate SOs are identified by locating negative half-wave peaks in the filtered signal, defined as local minima bounded by consecutive positive-to-negative and negative-to-positive zero-crossings. Each candidate is accepted as a SO if the duration of the negative half-wave falls within specified temporal bounds and if the amplitude of the negative peak and/or the peak-to-peak amplitude exceeds either a fixed absolute threshold (in µV) or an adaptive relative threshold derived as a multiple of the median negative-peak or peak-to-peak amplitude across the analysed epochs. The instantaneous SO phase is estimated by applying the Hilbert transform to the bandpass-filtered signal, enabling characterization of the phase at arbitrary time points within and around each SO. Time-locked averages of the EEG (and optionally other concurrently recorded signals) are computed around the negative peak (or onset or positive peak) of each detected SO, providing an estimate of the canonical SO waveform morphology.
 
 <h3>Parameters</h3>
 
@@ -1578,7 +1590,7 @@ Primary SO information per channel (strata: `CH`)
 
 | Variable | Description |
 | ---- | -----  |
-|`SO` | Number of SO detected| 
+|[`SO`](spindles-so.md#so) | Number of SO detected| 
 |`SO_RATE` | SO per minute |
 |`SO_AMP` | Median amplitude (of negative peak) |
 |`SO_P2P` | Median peak-to-peak amplitude |

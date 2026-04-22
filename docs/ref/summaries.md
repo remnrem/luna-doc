@@ -2,7 +2,7 @@
 
 _Basic commands to give overviews of the structure of an EDF_
 
-These commands are useful for inspecting the structure and content of an EDF before or alongside any processing. `DESC` and `SUMMARY` write human-readable overviews to the console; `HEADERS` tabulates channel-level EDF header fields. `CONTAINS` checks for the presence of signals, stages or annotations. `ALIASES` and `TYPES` report how channels are currently labelled and typed. `STATS` and `SIGSTATS` compute per-signal and per-epoch statistics, including Hjorth parameters. `TABULATE` counts discrete signal values and `DUPES` flags flat or duplicated channels. Running several of these commands early in a pipeline is a practical way to catch problems before they propagate.
+These commands are useful for inspecting the structure and content of an EDF before or alongside any processing. [`DESC`](summaries.md#desc) and [`SUMMARY`](summaries.md#summary) write human-readable overviews to the console; [`HEADERS`](summaries.md#headers) tabulates channel-level EDF header fields. [`CONTAINS`](summaries.md#contains) checks for the presence of signals, stages or annotations. [`ALIASES`](summaries.md#aliases) and [`TYPES`](summaries.md#types) report how channels are currently labelled and typed. [`STATS`](summaries.md#stats) and [`SIGSTATS`](summaries.md#sigstats) compute per-signal and per-epoch statistics, including Hjorth parameters. [`TABULATE`](summaries.md#tabulate) counts discrete signal values and [`DUPES`](summaries.md#dupes) flags flat or duplicated channels. Running several of these commands early in a pipeline is a practical way to catch problems before they propagate.
 
 | Command | Description |
 | -----  | ----- | 
@@ -28,6 +28,9 @@ labels and sampling rates of those signals.  If multiple EDFs are specified in a
 [_sample list_](../luna/args.md#sample-lists), this information will be
 repeated for each one.  
 
+<h3>Methods</h3>
+
+Basic recording metadata is read directly from the EDF header and written to the console: recording identifier, start time, total duration, number of signals, and the label and sample rate of each signal. No signal data are read or processed.
 
 <h3>Parameters</h3>
 
@@ -38,12 +41,12 @@ repeated for each one.
 <h3>Outputs</h3>
 
 Text written to the log/console.  Note that, unlike most Luna
-commands, the `DESC` command does not generate any other output, i.e. via
+commands, the [`DESC`](summaries.md#desc) command does not generate any other output, i.e. via
 Luna's formal [output mechanism](../luna/args.md#output).  
 
 <h3>Example</h3>
 
-Using `DESC` on the command-line with a single EDF:
+Using [`DESC`](summaries.md#desc) on the command-line with a single EDF:
     
 ```
 luna my.edf -s DESC 
@@ -61,23 +64,27 @@ Signals         : EOG-L[256] EOG-R[256] EMG[256] EEG1[256] EEG2[256] EEG3[256]
 
 _A more verbose display of EDF header information, written to the console_
 
-Similar to `DESC`, this command writes basic information from the EDF
+Similar to [`DESC`](summaries.md#desc), this command writes basic information from the EDF
 header to the console; per-channel information from the
 EDF header is also displayed.  
 
+<h3>Methods</h3>
+
+Complete EDF header information is read and written verbatim to the console, including recording-level fields (patient ID, recording info, start date and time) and per-channel fields (transducer type, physical dimension, physical and digital min/max, pre-filtering, and sample rate). No signal data are read or processed.
+
 <h3>Parameters</h3>
 
-There are no command options for `SUMMARY`.
+There are no command options for [`SUMMARY`](summaries.md#summary).
 
 <h3>Outputs</h3>
 
 Text written to the log/console.  Note that, unlike most Luna
-commands, `SUMMARY` does not generate any other output, i.e. via
+commands, [`SUMMARY`](summaries.md#summary) does not generate any other output, i.e. via
 Luna's formal [output mechanism](../luna/args.md#output).
 
 <h3>Example</h3>
 
-To obtain a `SUMMARY` on the command-line with a single EDF:
+To obtain a [`SUMMARY`](summaries.md#summary) on the command-line with a single EDF:
     
 ```
 luna my.edf -s SUMMARY
@@ -120,17 +127,21 @@ Signal 2 : [EOG-R]
 
 _Tabulate EDF header information_
 
-This command produces similar information to the `SUMMARY` command,
+This command produces similar information to the [`SUMMARY`](summaries.md#summary) command,
 except it uses Luna's standard [output
 mechanism](../luna/args.md#output), rather than writing to the
 console.
+
+<h3>Methods</h3>
+
+EDF header fields are read and emitted through the structured output system rather than the console, enabling downstream programmatic access and database storage. Recording-level and per-channel metadata fields are returned as distinct output strata.
 
 <h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | --- | --- | --- |
 | `sig` | `sig=${eeg}` | Only report HEADERS outputs for these channels |
-| `signals`  | | Add a `SIGNALS` variable to the output, that lists all signals as a comma-delimited string |
+| `signals`  | | Add a [`SIGNALS`](manipulations.md#signals) variable to the output, that lists all signals as a comma-delimited string |
 
 
 <h3>Outputs</h3>
@@ -150,7 +161,7 @@ Basic EDF header information (strata: _none_)
 | `REC_DUR` | Duration of each record (seconds) |
 | `TOT_DUR_SEC` | Total duration of EDF (seconds) |
 | `TOT_DUR_HMS` | Total duration of EDF (hh:mm:ss string) |
-| `SIGNALS` | (Optionally, if `signals`) A comma-delimited string of all channel labels |
+| [`SIGNALS`](manipulations.md#signals) | (Optionally, if `signals`) A comma-delimited string of all channel labels |
 
 Per-channel header information  (strata: `CH`)
 
@@ -163,7 +174,7 @@ Per-channel header information  (strata: `CH`)
 |`PMAX` | Physical max |
 |`PMIN` | Physical min |
 |`SR`   | Sample rate (Hz) |
-|`TRANS` | Transducer type field |
+|[`TRANS`](evals.md#trans) | Transducer type field |
 |`SENS`   | Sensitivity (unit/bit) |
 |`TYPE`   | Inferred channel [_type_](../luna/args.md#channel-types) |
 
@@ -203,7 +214,7 @@ there is only one value for that variable for that EDF.  The second
 _strata_ is by channel (`CH`), which has 14 levels, corresponding to
 the 14 channels/signals in the EDF.
 
-To extract the baseline information from the `HEADERS` command:
+To extract the baseline information from the [`HEADERS`](summaries.md#headers) command:
 ```
 destrat out.db +HEADERS  | behead
 ``` 
@@ -272,7 +283,7 @@ This command can be used to check whether certain necessary attributes
 (e.g. a particular signal or annotation, or the presence of staging)
 that may be required for a particular analysis are present.
 
-`CONTAINS` is unusual among Luna commands, in that it can be run in different modes:
+[`CONTAINS`](summaries.md#contains) is unusual among Luna commands, in that it can be run in different modes:
 
  - reporting to the standard output mechanisms (as detailed below)
 
@@ -309,6 +320,9 @@ For stages,
     Most shells other than bash support the `$?` variable, although there may be some
     variations.
 
+<h3>Methods</h3>
+
+The in-memory channel list, annotation classes, or staging annotations are queried against a user-specified set of required labels. The result is reported as a per-channel or per-annotation presence/absence flag, a count of observed versus requested items, and a categorical shell exit code summarizing whether all, some, or none of the required items are present. Optionally, processing of the current EDF is skipped entirely when required items are absent, enabling conditional pipeline execution without external scripting logic.
 
 <h3>Parameters</h3>
 
@@ -325,7 +339,7 @@ This command can be run with _either_ the `sig` or `stages` options:
 
 <h3>Output</h3>
 
-The primary output of `CONTAINS` is via the return code, as described
+The primary output of [`CONTAINS`](summaries.md#contains) is via the return code, as described
 above (and see example below). In addition, when checking whether the
 EDF contains signals, some additional output is sent to the standard
 output mechanism.
@@ -348,7 +362,7 @@ Channel-level output (option: `sig`, strata: `CH`)
 <h3>Output</h3>
 
 
-First checking which signals are present via the `DESC` command:
+First checking which signals are present via the [`DESC`](summaries.md#desc) command:
 
 ```
 luna cfs.lst 1 -s DESC
@@ -361,7 +375,7 @@ Signals : C3[128] C4[128] M1[128] M2[128] LOC[128] ROC[128]
           Light[512] HRate[512]
 ```
 
-To test whether all/some of the following are present in an automated manner, using `CONTAINS`: here to test
+To test whether all/some of the following are present in an automated manner, using [`CONTAINS`](summaries.md#contains): here to test
 for `LOC`, `ROC`, `EOG-L` and/or `EOG-R`:
 ```
 luna cfs.lst 1 -o out.db -s CONTAINS sig=LOC,ROC,EOG-L,EOG-R
@@ -398,7 +412,7 @@ cfs-visit5-800002    EOG-R      0
 ```
 
 
-In practice, the `CONTAINS` command is likely only to be used in scripting: e.g.
+In practice, the [`CONTAINS`](summaries.md#contains) command is likely only to be used in scripting: e.g.
 
 ```
 luna s.lst silent=T -s 'CONTAINS sig=${eeg}'
@@ -423,6 +437,10 @@ _Output which annotation and channel remappings (aliases) were used for a partic
 The `alias` and `remap` special options alter channel and annotation
 labels on-the-fly.  This command produces a record that tracks the
 original labels and associated remappings.
+
+<h3>Methods</h3>
+
+The internal alias and remap tables are read and emitted as output, listing each aliased channel or annotation alongside its original label prior to renaming. This provides a reproducibility record of all label transformations applied to a given EDF during a session.
 
 <h3>Parameters</h3>
 
@@ -502,6 +520,10 @@ spectra for all EEG channels:
 PSD sig=${eeg} spectrum
 ```
 
+<h3>Methods</h3>
+
+The active channel type matching rules are read from the internal type table and listed to the output. Each entry associates a channel label pattern with a type category (e.g., EEG, EOG, EMG), enabling automatic substitution of type-specific variable names such as `${eeg}` in command scripts. This command is diagnostic and does not alter any data.
+
 <h3>Parameters</h3>
 
 None
@@ -572,11 +594,15 @@ PARTIAL   E2      EOG
 
 _Output all variables for an individual_
 
-The `VARS` command tabulates both
+The [`VARS`](summaries.md#vars) command tabulates both
 [_run-level_](../luna/args.md#variables) and
 [_individual-level_](../luna/args.md#individual-variables) for each
 EDF/individual.  The primary value of this command is to provide a
 record of which values were used for a particular run/set of commands.
+
+<h3>Methods</h3>
+
+All currently defined variables — both run-level variables (shared across all individuals in a session) and individual-level variables (derived from the sample list or channel type inference) — are read from the internal variable store and emitted as output. The individual-level flag distinguishes variables that may differ across recordings from those that are constant across the run. This command serves primarily as a provenance record and does not modify any data.
 
 <h3>Parameters</h3>
 
@@ -594,7 +620,7 @@ Per-variable information (strata: `VAR`)
 
 <h3>Example</h3>
 
-Running `VARS` for one individual, setting the _run-level_ variable `${xyz}` on the command line:
+Running [`VARS`](summaries.md#vars) for one individual, setting the _run-level_ variable `${xyz}` on the command line:
 
 ```
 luna s.lst 1 xyz=123 -o out.db -s VARS 
@@ -657,12 +683,15 @@ string, rather than an actual `NA` character string).
 _Used to mark specific analyses in output_
 
 
-`TAG`s allow you to arbitrarily add extra levels by which output is
+[`TAG`](summaries.md#tag)s allow you to arbitrarily add extra levels by which output is
 _stratified_, which can be useful to distinguish similar commands
 performed within the same analysis-run (for example, if several rounds
 of [`MASK`s](masks.md#mask) and [`RESTRUCTURE`s](masks.md#restructure)
 are specified in one analysis).
 
+<h3>Methods</h3>
+
+A named factor–level pair is added to the global output context. All output generated by subsequent commands carries this additional stratification variable until it is explicitly cleared or overridden. This mechanism enables disambiguation of identically named outputs from the same command when it is run multiple times within a session (e.g., before and after artifact removal), without requiring separate output databases.
 
 <h3>Parameters</h3>
 
@@ -685,9 +714,9 @@ TAG .
 ```
 
 !!! hint
-    Do not select a `TAG` factor name that is already 
+    Do not select a [`TAG`](summaries.md#tag) factor name that is already 
     used by a Luna command (e.g. `F`, `CH`, `E`, `B`, etc). One safe way
-    to ensure this is by only using _lower-case_ values for `TAG` factors,
+    to ensure this is by only using _lower-case_ values for [`TAG`](summaries.md#tag) factors,
     as all internal factors are upper-case.
 
 
@@ -713,7 +742,7 @@ destrat out.db +PSD -r CH B/SIGMA
 where the syntax is `{factor}/{level}` for spectral power. How does
 this apply to tags?  Consider the following command
 [script](../luna/args.md#command-files) `cmd.txt`, which runs the
-`STATS` command (described [below](#stats)):
+[`STATS`](summaries.md#stats) command (described [below](#stats)):
 
 ```
 % Create statistics for the entire night, tagged by ALL for the RUN factor
@@ -749,7 +778,7 @@ and look at the output:
 destrat out.db 
 ```
 
-we will see that the `run` factor (specified by the `TAG` command)
+we will see that the `run` factor (specified by the [`TAG`](summaries.md#tag) command)
 appears as an additional factor:
 
 
@@ -817,6 +846,10 @@ data, adding the `epoch` option generates additional epoch-level
 output as well as the median (across epochs) of the per-epoch mean,
 median, RMS and skewness.  Results from the `epoch` option are based 
 on [_unmasked_](masks.md) epochs only.
+
+<h3>Methods</h3>
+
+Basic descriptive statistics are computed over the entire concatenated signal for each channel: arithmetic mean, median, root mean square, skewness, and minimum and maximum sample values. When epoch-level output is requested, statistics are computed separately for each unmasked epoch and the epoch-median of each statistic is additionally reported at the channel level. Optional percentile output provides quantile summaries at fixed probability levels across the whole signal.
 
 <h3>Parameters</h3>
 
@@ -900,6 +933,10 @@ clipping (the proportion of points that equal the minimum or maximum
 for that epoch), absolute maximum values and flatness
 (proportion of points of a similar value to the preceding value).
 
+<h3>Methods</h3>
+
+Hjorth parameters characterize signal dynamics in the time domain without requiring spectral transformation. Activity (H1) is the signal variance, quantifying amplitude. Mobility (H2) is the ratio of the standard deviation of the first derivative to the standard deviation of the signal, reflecting mean frequency content. Complexity (H3) is the ratio of the mobility of the first derivative to the mobility of the signal, reflecting frequency variability. These three parameters are computed over each epoch (and optionally the whole signal). Supplementary amplitude-based criteria — root mean square, proportion of clipped samples (at the ADC extremes), proportion of flat samples (near-zero successive differences), and proportion of samples exceeding a user-defined absolute threshold — can be added to provide a more complete characterization of signal quality. Optional nonlinear measures include Petrosian fractal dimension and permutation entropy, the latter computed across a range of embedding dimensions by default.
+
 <h3>Parameters</h3>
 
 Core parameters:
@@ -933,7 +970,7 @@ Per-channel whole-signal statistics (strata: `CH`)
 | `H1`    | First Hjorth parameter (activity) |
 | `H2`    | Second Hjorth parameter (mobility) |
 | `H3`    | Third Hjorth parameter (complexity) |
-| `CLIP`  | Proportion of clipped sample points |
+| [`CLIP`](manipulations.md#clip)  | Proportion of clipped sample points |
 | `MAX`   | Proportion of maxed out sample points |
 | `FLAT`  | Proportion of flat sample points |
 | `RMS`   | Signal root mean square |
@@ -946,7 +983,7 @@ Per-channel epoch-level statistics (strata: `CH` x `E`)
 | `H1`    | First Hjorth parameter (activity) |
 | `H2`    | Second Hjorth parameter (mobility) |
 | `H3`    | Third Hjorth parameter (complexity) |
-| `CLIP`  | Proportion of clipped sample points |
+| [`CLIP`](manipulations.md#clip)  | Proportion of clipped sample points |
 | `MAX`   | Proportion of maxed out sample points |
 | `FLAT`  | Proportion of flat sample points |
 | `RMS`   | Signal root mean square |
@@ -958,7 +995,11 @@ _Tabulates discrete values in a signal_
 
 Most signals in EDFs are continuously-valued; for _discrete_ signals
 (e.g. body position encoded as an integer value, or a binary 0/1
-status signal), the `TABULATE` command can provide useful summaries.
+status signal), the [`TABULATE`](summaries.md#tabulate) command can provide useful summaries.
+
+<h3>Methods</h3>
+
+All sample values in the specified channel are enumerated and grouped into a frequency table of distinct observed values. The count of samples at each unique value is reported, along with the total number of distinct values. An optional count threshold filters the output to retain only those values with at least a minimum number of observations, allowing quick identification of common versus rare signal states. Because EDF stores signals as 16-bit scaled integers, nominally integer values may appear as nearby floating-point numbers depending on the physical/digital scaling applied in the EDF header.
 
 <h3>Parameters</h3>
 
@@ -991,7 +1032,7 @@ Per-channel/value tabulation statistics (strata: `CH` x `VALUE`)
 <h3>Example</h3>
 
 Here we have an EDF with a `POSITION` channel that encodes body position
-via integer values in the EDF.  We can use `TABULATE` to give a breakdown of the observed values:
+via integer values in the EDF.  We can use [`TABULATE`](summaries.md#tabulate) to give a breakdown of the observed values:
 
 ```
 luna s.lst  -o out.db -s TABULATE sig=POSITION
@@ -1027,7 +1068,7 @@ id001  POSITION  3      13432
 
 That is, the four values are `0`, `1`, `2` and `3`.  Note that they
 can actually be any floating point values, i.e. they need not start at
-`0` or be integers, although the output of `TABULATE` is more likely
+`0` or be integers, although the output of [`TABULATE`](summaries.md#tabulate) is more likely
 to be interpretable when the signal comprises a small set of integer
 values.  Also note that the 16-bit floating-point nature of EDF encoding
 means that (depending on how the signal was encoded with respect to physical and digital min/max
@@ -1039,7 +1080,7 @@ i.e. it should be divided by the sample rate of the channel to get the
 implied duration in seconds; in this case of a 1 Hz `POSITION` signal,
 the values can be directly interpreted as seconds.
 
-As a note, the `HEADERS` or `SUMMARY` options can also show the physical min/max in the EDF - e.g. here
+As a note, the [`HEADERS`](summaries.md#headers) or [`SUMMARY`](summaries.md#summary) options can also show the physical min/max in the EDF - e.g. here
 we also see a range from 0 to 3 (although just because the EDF has a certain min/max range specified in
 the header, this does not imply that the full range is necessarily observed in the actual signal):
 
@@ -1133,6 +1174,10 @@ Comparisons are made with some epsilon value to define "different"
 identical signals). As soon as the command detects a difference it
 stops evaluating that pair of channels.
 
+<h3>Methods</h3>
+
+All pairs of channels are compared sample-by-sample using either the raw digital integer values or the physically scaled values. Two channels are classified as duplicates if the proportion of samples differing by more than a tolerance epsilon falls below a minimum proportion threshold; the comparison terminates early as soon as a sufficient number of differing samples is found, improving efficiency for long recordings. Channels are additionally classified as flat if all samples are within the tolerance of a constant value, or as invalid if the EDF header specifies no non-zero physical range.
+
 <h3>Parameters</h3>
 
 | Parameter | Example | Description |
@@ -1149,7 +1194,7 @@ Per-individual statistics (strata: _none_)
 | Variable | Description |
 | --- | --- |
 | `INVALID`  | Number of invalid channels (no non-zero physical range) |
-| `DUPES`  | Number of duplicate channel pairs |
+| [`DUPES`](summaries.md#dupes)  | Number of duplicate channel pairs |
 | `FLAT`  | Number of flat channels |
 
 Per-channel statistics (strata: `CH`)

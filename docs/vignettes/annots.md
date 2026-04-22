@@ -38,10 +38,10 @@ was an EDF):
 | Restructured but only one segment | Standard EDF if no other `EDF Annotations`, otherwise EDF+C | Time of first observed record | 
 | Restructured with more than one segment (i.e. truly discontinuous) | EDF+D | Same as original EDF start-time |
 
-These default behaviors of `WRITE` can be modified by various options:
+These default behaviors of [`WRITE`](../ref/outputs.md#write) can be modified by various options:
 
 - `force-edf` will drop any `EDF Annotations` and write as a continuous, standard EDF, i.e. ignoring any potential true discontinuities in the data
-- `EDF+D` forces `WRITE` to output a EDF+D rather than EDF+C or EDF, no matter whether there are actual discontinuities or not
+- `EDF+D` forces [`WRITE`](../ref/outputs.md#write) to output a EDF+D rather than EDF+C or EDF, no matter whether there are actual discontinuities or not
 
 ## Toy dataset
 
@@ -71,7 +71,7 @@ Processing: test01 [ #1 ]
 
  signals: 26 (of 26) selected in a standard EDF file:
 ```
-Alternatively, if working with a large number of files, the `HEADERS` command track the file type:
+Alternatively, if working with a large number of files, the [`HEADERS`](../ref/summaries.md#headers) command track the file type:
 ```
 luna s.lst -o out.db -s HEADERS
 ```
@@ -95,7 +95,7 @@ We see the `EDF_TYPE` variable is set to `EDF` (rather than `EDF+C` or `EDF+D`).
 
 ## Time-tracking in Luna
 
-Here we use the `WRITE` command to output the same EDF under different conditions, as either EDF, EDF+C or EDF+D depending
+Here we use the [`WRITE`](../ref/outputs.md#write) command to output the same EDF under different conditions, as either EDF, EDF+C or EDF+D depending
 on the state of the internal EDF (reflecting whether epochs have been masked/removed).
 
 First, we simply write the whole EDF with any changes: this will
@@ -105,8 +105,8 @@ always generate a standard EDF as output:
 luna s.lst -s 'WRITE edf-tag=v0'
 ```
 
-Second, we remove only the first epoch via a `MASK` command, and then restructure (via `RE`).  Internally, the EDF will
-be represented as discontinuous by the time Luna executes the `WRITE` command.  However, on writing Luna will see that
+Second, we remove only the first epoch via a [`MASK`](../ref/masks.md#mask) command, and then restructure (via `RE`).  Internally, the EDF will
+be represented as discontinuous by the time Luna executes the [`WRITE`](../ref/outputs.md#write) command.  However, on writing Luna will see that
 this EDF contains only a single, continuous interval of time (i.e. from epoch 2 to the final epoch) and so will write
 as a continuous EDF (as there are no other EDF Annotations channel present in the EDF, other than the _time-track_ annotation
 that restructuring implicitly adds).  Luna will change the EDF header in the new file, to represent the new start time
@@ -167,7 +167,7 @@ setting EDF starttime to null (00.00.00)
 
 ### SEGMENTS
 
-We can use the `SEGMENTS` command to describe the new files.   We'll first compile a list of the newly created EDFs using the `--build` command
+We can use the [`SEGMENTS`](../ref/outputs.md#segments) command to describe the new files.   We'll first compile a list of the newly created EDFs using the `--build` command
 but extracting only EDFs matching the new pattern (i.e. `test-v*.edf`):
 
 
@@ -276,7 +276,7 @@ __As a summary:__
 | `test01-v6.edf` | [ start-665, 667-end ] | `force-edf` | EDF | 37680s | 00.00.00 -  10.27.59 |
 
 
-Next, we can view the output of the `SEGMENTS` command, which gives the number of segments in each:
+Next, we can view the output of the [`SEGMENTS`](../ref/outputs.md#segments) command, which gives the number of segments in each:
 
 ```
 destrat out.db +SEGMENTS
@@ -321,7 +321,7 @@ test01-v6   1   10.466      628    37680       0   00.00.00   37680  10.28.00
 
 ### EPOCHs
 
-The `verbose` option of the `EPOCH` command will list the times of epochs in the new set of files. 
+The `verbose` option of the [`EPOCH`](../ref/epochs.md#epoch) command will list the times of epochs in the new set of files. 
 
 
 For the copy of the unaltered standard EDF (`v0`) everything looks
@@ -397,7 +397,7 @@ test01-v3  1256  1256  06:36:36  37680.00->37710.00  37695  37680  37710
 
 As as separate point: _within_ the operations for the same attached EDF, Luna does map
 how the new epochs map onto the "original" epochs: i.e. if rather than writing `v3` to a
-new EDF and then running `EPOCH` we combined the steps:
+new EDF and then running [`EPOCH`](../ref/epochs.md#epoch) we combined the steps:
 
 ```
 luna s.lst -o out.db -s 'MASK mask-epoch=666 & RE & EPOCH verbose'
@@ -578,7 +578,7 @@ some limitations of using the simple `.eannot` file format when
 dealing with discontinuous/restructured EDFs.
 
 To create an `.eannot` file from the existing hypnograms in the
-original file, we can use the `eannot` option of the `STAGE` command,
+original file, we can use the `eannot` option of the [`STAGE`](../ref/hypnograms.md#stage) command,
 which simply dumps out sleep stages into the file `a.eannot`:
 
 ```
@@ -743,7 +743,7 @@ N1     .      .     34    64     .
 Although there are a few workarounds possible here (e.g. setting
 epoch duration equal to 1 second, removing the first 4 seconds and
 writing a new EDF, etc), the easiest remedy is to use the new `offset`
-or `align` options for the `EPOCH` command.  Rather than always
+or `align` options for the [`EPOCH`](../ref/epochs.md#epoch) command.  Rather than always
 having epochs start at the first observed record (i.e. 0 seconds in a
 continuous EDF) this starts defining epochs at some later time, still
 shifting each epoch forward by the `inc` parameter (which by

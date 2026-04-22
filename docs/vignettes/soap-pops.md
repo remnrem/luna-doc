@@ -100,7 +100,7 @@ By default, SOAP will:
 
 !!! info
     The SOAP command requires existing stage annotation,
-    i.e. similar to the `HYPNO` command.  That is, it does _not_ predict
+    i.e. similar to the [`HYPNO`](../ref/hypnograms.md#hypno) command.  That is, it does _not_ predict
     sleep stages from scratch.  In Luna, we'll see how this different task
     can be done using the [`POPS`](../ref/pops.md) command, as described below.
 
@@ -190,7 +190,7 @@ prior to output, etc.  These things can happen...
 
 
 First we'll extract the observed stage information from the XML into a simpler text file (`obs.eannot`), with
-one stage label per epoch), using the `STAGE` command in Luna, along with the `min` option, to give _minimalistic_ output (i.e.
+one stage label per epoch), using the [`STAGE`](../ref/hypnograms.md#stage) command in Luna, along with the `min` option, to give _minimalistic_ output (i.e.
 just the stages written to the text file `obs.eannot`:
 ```
 luna s.lst -s STAGE min > obs.eannot
@@ -416,7 +416,7 @@ statistical associations).
 
 ## Aligning orphaned stage data
 
-The `PLACE` command implements a special case of using `SOAP` to align
+The [`PLACE`](../ref/soap.md#place) command implements a special case of using [`SOAP`](../ref/soap.md#soap) to align
 staging with signal data.  Specifically, this addresses the scenario
 where an EDF and a set of annotations differ in length, but one is not
 sure how they should be aligned (i.e. does the list of annotations
@@ -434,17 +434,17 @@ whereas the full EDF/staging has 1084 epochs).
 awk ' NR >= 30 && NR <= 730 ' obs.eannot > ex.eannot
 ```
 
-The `PLACE` command is essentially a wrapper around `SOAP`, which
+The [`PLACE`](../ref/soap.md#place) command is essentially a wrapper around [`SOAP`](../ref/soap.md#soap), which
 calls it multiple times, at all possible alignments of the staging and
 signal data.  (The staging may be shorter, or longer, than the EDF
-signals.) Graphically, this illustrates what `PLACE` is doing:
+signals.) Graphically, this illustrates what [`PLACE`](../ref/soap.md#place) is doing:
 
 ![img](../img/soap-pops/place.png){:width="100%"}
 
 For every placement, it calculates the SOAP kappa, and then will, at the end, select the offset with the highest kappa
 as the most likely placement.
 
-We run `PLACE` as follows:
+We run [`PLACE`](../ref/soap.md#place) as follows:
 ```
 luna a.lst -o place.db -s PLACE stages=ex.eannot
 ```
@@ -481,13 +481,13 @@ lines( d$OFFSET , d$K , type="l" ,  col="darkgreen" )
 
 We see there really is quite a marked spike at the exact true offset.
 Although it will depend on a number of factors, and there are
-certainly scenarios that could mislead `PLACE`, in general, with
-reasonably typical inputs, the `PLACE` command appears to do a good
+certainly scenarios that could mislead [`PLACE`](../ref/soap.md#place), in general, with
+reasonably typical inputs, the [`PLACE`](../ref/soap.md#place) command appears to do a good
 job of resolving alignments within a single epoch.
 
 Of course, one might say: _why not just use an automated stager,
 rather than trying to rescue partial, manual staging?_ This is also a
-reasonable idea - we could do so with `POPS` below, for example.
+reasonable idea - we could do so with [`POPS`](../ref/pops.md#pops-prediction) below, for example.
 However, there may be circumstances where the montages are very
 different (e.g. only intracranial EEG leads, or from a wearable
 device, or a non-human model system for which good staging models have
@@ -511,7 +511,7 @@ However, in practice, one wants to ensure that the original epoch durations are 
 of any smaller epoch time used: if not (e.g.  specifying a 7-second epoch, but with original 30-second
 staging), then some epochs may have more than one assigned stage.
 
-However, with the `REBASE` variant of the SOAP command, it is also
+However, with the [`REBASE`](../ref/soap.md#rebase) variant of the SOAP command, it is also
 possible to fit a model based on epoch features of one particular
 duration, but then to make predictions at a second duration.  Thus enables
 one to, for example, translate between 30-second and 20-second epoch durations,
@@ -528,7 +528,7 @@ luna s.lst -o out.db -s 'EPOCH dur=5 & REBASE dur=20'
 This command may have some utility if working with studies based on
 European/US 20/30-second staging conventions, but you wish to
 harmonize them.   As noted above, simply running automated staging with the desired epoch
-duration is also an option, e.g. using `POPS`.
+duration is also an option, e.g. using [`POPS`](../ref/pops.md#pops-prediction).
 
 Here we see posterior probability plots for a range of rebased epoch durations:
 
@@ -539,7 +539,7 @@ Here we see posterior probability plots for a range of rebased epoch durations:
 
 Finally, instead of seeding analysis on observed staging, we can
 predict stages from scratch, given a model based on _other_ PSGs.
-This is what the `POPS` command does.
+This is what the [`POPS`](../ref/pops.md#pops-prediction) command does.
 
 !!! info "LGBM & POPS development" 
     POPS implements feature-based prediction using Microsoft's
@@ -566,7 +566,7 @@ options as noted above).
 This library (`m1`) is available for download at this [Dropbox
 link](https://www.dropbox.com/s/lha9ibincmvpod3/m1.zip?dl=0).  This is
 a ZIP file (13MB) called `m1.zip`.  After downloading, expanding it will
-result in a folder called `m1` (_model 1_). You then will run `POPS`
+result in a folder called `m1` (_model 1_). You then will run [`POPS`](../ref/pops.md#pops-prediction)
 using `lib` to specify the model root (`m1`) and `path` to point to
 this folder (e.g. `~/working/sleep/pops/m1` or wherever you saved it).
 
@@ -667,7 +667,7 @@ SELECT demo1 rband1 misc1 misc2 spec1.svd vspec1.svd
 
 ### Running POPS 
 
-To run `POPS`, just invoke:
+To run [`POPS`](../ref/pops.md#pops-prediction), just invoke:
 ```
 luna s.lst -o pops.db -s POPS path=~/dropbox/pops/m1 lib=m1
 ```
@@ -677,7 +677,7 @@ This should finish quickly - it typically takes around 2 seconds to fully stage 
 of a different sample rate, Luna will first resample to obtain a 128 Hz signal. 
 
 !!! hint "POPS and LGBM support"
-    If you try to run `POPS` or similar commands and see the following:
+    If you try to run [`POPS`](../ref/pops.md#pops-prediction) or similar commands and see the following:
     ```
     error : no LGBM support compiled in
     ```

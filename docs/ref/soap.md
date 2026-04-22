@@ -2,7 +2,7 @@
 
 _Self-contained modelling and evaluation of sleep staging_
 
-SOAP (__Single Observation Accuracies and Probabilities__) fits a simple discriminant model to epoch-level EEG features and observed sleep stages, providing a self-contained check of signal and staging quality: a poor model fit (low kappa) is indicative of problems with the signal or the annotations. Beyond quality control, the SOAP framework supports two additional use cases: `REBASE` translates staging from one epoch length to another (e.g. 20- to 30-second epochs) and `PLACE` localizes stage annotations whose temporal alignment with the EDF is uncertain. See also [POPS](pops.md) for fully automated staging.
+SOAP (__Single Observation Accuracies and Probabilities__) fits a simple discriminant model to epoch-level EEG features and observed sleep stages, providing a self-contained check of signal and staging quality: a poor model fit (low kappa) is indicative of problems with the signal or the annotations. Beyond quality control, the SOAP framework supports two additional use cases: [`REBASE`](soap.md#rebase) translates staging from one epoch length to another (e.g. 20- to 30-second epochs) and [`PLACE`](soap.md#place) localizes stage annotations whose temporal alignment with the EDF is uncertain. See also [POPS](pops.md) for fully automated staging.
 
 | Command | Description | 
 | ---- | ------ | 
@@ -12,7 +12,7 @@ SOAP (__Single Observation Accuracies and Probabilities__) fits a simple discrim
 
 !!! info
     The SOAP command requires existing stage annotation,
-    i.e. similar to the `HYPNO` command (whether these existing
+    i.e. similar to the [`HYPNO`](hypnograms.md#hypno) command (whether these existing
     annotations are from manual scoring, or from an external,
     automated staging algorithm).  That is, it does _not_ predict
     sleep stages from scratch.  For automated
@@ -22,7 +22,7 @@ Overall, the _SOAP_ model can be viewed in two ways: 1) as a tool to check the
 consistency between signals & staging - implemented in the [`SOAP`](#soap) command,
 or 2) as a tool to manipulate/use the existing staging, _on the assumption that stages and signals are
 largely consistent_, i.e. as in [`PLACE`](#place) and [`REBASE`](#rebase).  In addition, the
-`SOAP` command can be used to _fill-in_ modest amounts missing staging, e.g. if a sufficient
+[`SOAP`](soap.md#soap) command can be used to _fill-in_ modest amounts missing staging, e.g. if a sufficient
 number of representative epochs have been manually scored.
 
 ## SOAP
@@ -97,7 +97,7 @@ fits a PCA and then extracts the top e.g. 10 components to be used in a
 LDA model predicting stage labels given these components.
 
 You can create a text file to specify which SOAP features to use, and
-use the `model=file.txt` argument for `SOAP` to use it. Alternatively,
+use the `model=file.txt` argument for [`SOAP`](soap.md#soap) to use it. Alternatively,
 you can use a _default_ model.  If nothing else is specified (or
 `model=_1`) this is the model used:
 
@@ -106,7 +106,7 @@ SPEC <sig> lwr=0.5 upr=25
 NC 10
 ```
 
-where `<sig>` is replaced by the value of `sig` after the `SOAP` command.   This perform spectral analysis per epoch and then summarizes the
+where `<sig>` is replaced by the value of `sig` after the [`SOAP`](soap.md#soap) command.   This perform spectral analysis per epoch and then summarizes the
 values as 10 principal components per epoch. 
 
 A second vanilla model can be used by specifying `model=_2` :
@@ -126,11 +126,14 @@ NC 10
 
 This adds a suite of additional features, but still extracts only 10 components from the final set.
 
-For most circumstances, where the goal is to use `SOAP` to spot
+For most circumstances, where the goal is to use [`SOAP`](soap.md#soap) to spot
 chronically poor stage/signal alignment, the default model appears to
 work well enough (i.e. with typically high kappa values for
 sufficiently high-quality datasets).
 
+<h3>Methods</h3>
+
+Epoch-level features are extracted from the specified EEG channel using a configurable feature set that typically includes spectral power estimates (via Welch's method), relative spectral power, spectral slope, signal moments (skewness and kurtosis), Hjorth parameters, fractal dimension, and permutation entropy. The full epoch-by-feature matrix is normalized and dimensionality-reduced via PCA, retaining a fixed number of principal components. These components are used as inputs to a linear (or quadratic) discriminant analysis (LDA/QDA) model trained on the observed stage labels from the same recording. The model produces posterior stage probabilities for each epoch, and agreement between the predicted and observed labels is quantified by Cohen's kappa and related metrics. Optional total-variation denoising of the feature time series is applied before PCA to reduce epoch-to-epoch noise. The SOAP output thus reflects the internal consistency of the stage labels with the EEG signal, rather than external validation against a reference.
 
 <h3>Parameters</h3>
 
@@ -375,6 +378,10 @@ plot( d$E , d$C4 , pch=20 , col= lstgcols( ss$PRIOR ) )
 
 _Translate existing (manual) staging between different epoch durations (e.g. from 20 second to 30 seconds epoch) using the SOAP model_
 
+<h3>Methods</h3>
+
+Stage labels from an existing manually scored epoch structure (e.g., 20-second epochs) are translated to a new epoch duration (e.g., 30-second epochs) using the SOAP model. The SOAP model is fitted at the source epoch resolution, and posterior stage probabilities are re-evaluated at the target epoch boundaries. The most probable stage at each target epoch is assigned as the re-based label. This approach handles partial overlaps between source and target epoch grids by relying on the probabilistic model rather than simple majority voting.
+
 <h3>Parameters</h3>
 
 |  Parameter | Example | Description |
@@ -397,6 +404,10 @@ See [this vignette](../vignettes/soap-pops.md) for an example.
 
 _Temporally align existing staging signal data_
 
+<h3>Methods</h3>
+
+When sleep staging annotations are temporally misaligned with the EEG recording (e.g., due to an unknown offset between the scorer's epoch grid and the EDF start time), PLACE searches for the optimal temporal offset by sliding the stage sequence across the EDF and fitting the SOAP model at each candidate alignment. The alignment that maximizes Cohen's kappa between SOAP-predicted and observed stage labels is selected. Minimum overlap requirements on both the EDF and the staging data ensure that the selected alignment spans a physiologically meaningful fraction of each.
+
 <h3>Parameters</h3>
 
 | Option | Value | Description | 
@@ -408,7 +419,7 @@ _Temporally align existing staging signal data_
 | `force` | | Force alignment, even if equal number of epochs in stage file and EDF |
 
 
-Additionally, the standard `SOAP` options can be used to modify the type of SOAP analysis used by `PLACE`.
+Additionally, the standard [`SOAP`](soap.md#soap) options can be used to modify the type of SOAP analysis used by [`PLACE`](soap.md#place).
 
 <h3>Output</h3>
 
@@ -471,7 +482,7 @@ luna s.lst 2 -o out.db -s PLACE stages=s.2 sig=EEG
   which spans 995 epochs (of 1195 in the EDF, and of 995 in the input stages)
 ```
 
-We see that `PLACE` correctly identified the offset, as `+200` epochs.  
+We see that [`PLACE`](soap.md#place) correctly identified the offset, as `+200` epochs.  
 
 ```
 destrat out.db +PLACE -r OFFSET > o.1

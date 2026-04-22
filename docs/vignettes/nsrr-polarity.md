@@ -1,5 +1,7 @@
 # Polarity issues in the NSRR 
 
+_Authors: Shaun Purcell and Michael Prerau_
+
 Many analyses of sleep EEG data are effectively agnostic to the
 _polarity_ of the EEG signal.  That is, you could _flip_ the signal
 (i.e. multiply every sample value by -1) and still obtain equivalent
