@@ -2180,7 +2180,27 @@ Current implementation notes:
 
 <h3>Methods</h3>
 
-[`INSERT`](manipulations.md#insert) operates in two distinct modes. In lag-estimation mode, each signal pair is optionally band-pass filtered before processing. The default cross-correlation method extracts matched-length windows from the secondary EDF and, for each window, searches a constrained offset range by computing the normalised cross-correlation between z-scored primary and secondary segments; the lag at the cross-correlation maximum is determined per channel pair and the median lag across pairs is taken as the window estimate. A quality gate based on the normalised peak correlation filters windows before they enter the drift model. Across accepted windows, ordinary least-squares regression of estimated offset (seconds) on window position (seconds) is performed; residuals exceeding 3 SD are removed and the regression is refit on the clean set. The slope of this regression quantifies linear clock drift between the two devices. In insert mode, a secondary EDF signal is aligned to the primary by applying a user-specified constant offset in sample points; if a drift rate is also provided, the secondary signal is first resampled via cubic spline interpolation to correct the linear time-stretch before insertion. Regions of the primary EDF not covered by the secondary signal are zero-padded.
+[`INSERT`](manipulations.md#insert) now uses cross-correlation as the standard
+alignment method. In estimation mode, matched windows are taken from the secondary
+EDF, optionally band-pass filtered, z-scored, and aligned to the primary EDF by
+cross-correlation. The per-pair lag estimates are combined by taking the median
+lag across signal pairs for each window. Each window is then quality-gated using
+the median matched-window correlation peak (`min-peak`, default `0.3`), and only
+accepted windows enter the drift model.
+
+Across accepted windows, ordinary least-squares regression of estimated waveform
+shift (seconds) on window time (seconds) is performed. Windows with residuals
+greater than 3 SD are removed and the regression is refit. The fitted intercept
+is the start-of-record waveform shift, and the fitted slope quantifies linear
+clock drift between devices in seconds per second. When valid EDF start times are
+available, `INSERT` also reports the header-derived offset and the resulting net
+offset correction after combining header timing and waveform-based alignment.
+
+In insert mode, a secondary EDF signal is aligned to the primary by applying a
+constant offset in seconds. If a drift rate is also supplied, or if one has just
+been estimated, the secondary signal is resampled by cubic spline interpolation to
+correct the linear time-stretch before insertion. Regions of the primary EDF not
+covered by the secondary signal are zero-padded.
 
 <h3>Parameters</h3>
 
@@ -2195,67 +2215,127 @@ Lag-estimation mode:
 | Parameter | Example | Description |
 |---|---|---|
 | `pairs` | `pairs=C3,C3_ref,C4,C4_ref` | Comma-delimited signal pairs: primary-channel, secondary-channel, repeated |
-| `xcorr` | | Use cross-correlation rather than the default Euclidean sliding-window method |
-| `verbose` | | Emit extra lag-profile detail |
-| `w` | `w=30` | With `xcorr`, half-width of lag search window in seconds |
-| `c` | `c=0` | With `xcorr`, center of lag search window in seconds |
-| `start` | `start=600` | With Euclidean mode, start time in the secondary EDF for the first window (seconds) |
-| `len` | `len=120` | With Euclidean mode, window length in seconds |
-| `inc` | `inc=600` | With Euclidean mode, step size between windows (default `600`) |
-| `steps` | `steps=3` | With Euclidean mode, number of windows to evaluate (default `1`) |
-| `offset-range` | `offset-range=-60,60` | With Euclidean mode, constrain candidate offsets to this range in seconds |
+| `start` | `start=900` | Window-search start time in seconds; by default `INSERT` uses a middle-of-recording heuristic |
+| `end` | `end=25200` | Window-search stop time in seconds; by default `INSERT` uses a middle-of-recording heuristic |
+| `len` | `len=300` | Window length in seconds for local alignment estimation |
+| `inc` | `inc=60` | Increment in seconds between successive windows |
+| `steps` | `steps=1000` | Maximum number of windows to evaluate |
+| `min-peak` | `min-peak=0.3` | Minimum median per-window matched-window correlation required for a window to be accepted |
+| `filt-low` | `filt-low=0.5` | Lower edge of the pre-alignment band-pass filter |
+| `filt-high` | `filt-high=15` | Upper edge of the pre-alignment band-pass filter |
+| `no-filter` | | Disable pre-alignment band-pass filtering |
+| `verbose` | | Emit extra per-window and per-pair diagnostics |
+| `full-search` | | Search the full valid lag space for each window; mutually exclusive with `offset-range` and `offset-margin` |
+| `offset-range` | `offset-range=-360,360` | Explicit absolute search interval in seconds for the secondary-vs-primary offset |
+| `offset-margin` | `offset-margin=120` | Use EDF header start times to estimate the expected offset, then search `+/-` this many seconds around that value |
+| `auto-try` | | Automatically try a short grid of window lengths down to 30 s, keeping `start` fixed and using `inc=len/5` |
+| `try-start` | `try-start=900,1200` | Try multiple window start times and keep the best fit |
+| `try-len` | `try-len=60,100,180` | Try multiple window lengths and keep the best fit |
+| `try-inc` | `try-inc=5,30,60` | Try multiple window increments and keep the best fit |
+| `warn-r2` | `warn-r2=0.5` | Emit a warning if the fitted drift regression `R2` falls below this value |
+| `warn-p-ok` | `warn-p-ok=0.5` | Emit a warning if fewer than this fraction of windows pass the quality gate |
+| `warn-peak` | `warn-peak=0.35` | Emit a warning if the median matched-window correlation falls below this value |
+| `no-warn` | | Suppress summary alignment-quality warnings |
 
 Insert mode:
 
 | Parameter | Example | Description |
 |---|---|---|
-| `sig` | `sig=ECG_ref` | Signal(s) from the secondary EDF to insert |
-| `offset` | `offset=-12.5` | Offset in seconds to apply before insertion |
-| `drift` | `drift=-10` | Optional linear drift correction in seconds over the interval specified by `secs` |
-| `secs` | `secs=28800` | Denominator for `drift`, e.g. `28800` for 8 hours |
+| `insert` | | After estimating offset and drift, splice the secondary EDF into the primary EDF in memory |
+| `sig` | `sig=ECG_ref` | Signal(s) from the secondary EDF to insert; default is `*` |
+| `offset` | `offset=-12.5` | Manual constant shift in seconds for direct insert mode, or manual override of the fitted offset when used with `insert` |
+| `drift` | `drift=-10` | Manual linear drift term for direct insert mode, or manual override of the fitted drift when used with `insert` |
+| `secs` | `secs=28800` | Denominator for manual `drift`, e.g. `28800` for 8 hours |
 | `annot` | `annot=MISSING2` | Reserved for adding missing-data annotations, but not currently implemented |
 
 <h3>Output</h3>
 
-Lag-estimation with `xcorr` writes output at `CHS` strata, and optionally at `CHS × SP`
-if `verbose` and `w` are used:
+Estimation mode writes a summary `INSERT` table plus per-window `WIN` output. It
+also writes a `CHS` table containing per-pair drift fits. If `insert` is also
+specified, these outputs are written before the in-memory EDF is modified.
+
+Summary `INSERT` output:
 
 | Variable | Description |
 |---|---|
-| `SR` | Sample rate used for the pair |
-| `L1` | Number of samples in the primary signal |
-| `L2` | Number of samples in the secondary signal |
-| `LAG_SP` | Estimated lag in sample points |
-| `LAG_SEC` | Estimated lag in seconds |
-| `MX` | Maximum cross-correlation value |
-| `T` | Lag in seconds for a sampled point in the correlation profile [`verbose`] |
-| `XC` | Cross-correlation value at that lag [`verbose`] |
+| `OKAY` | `1` if summary alignment quality passed the warning thresholds, else `0` |
+| `N_WIN_ALL` | Total number of windows evaluated before quality gating |
+| `N_WIN` | Number of accepted windows used in the summary fit |
+| `N_OUTLIER` | Number of accepted windows removed as regression outliers |
+| `P_OK` | Fraction of evaluated windows that passed the quality gate |
+| `MEDIAN_SEC` | Median waveform shift in seconds across accepted windows |
+| `MEAN_SEC` | Mean waveform shift in seconds across accepted windows |
+| `MIN_SEC` | Minimum waveform shift in seconds across accepted windows |
+| `MAX_SEC` | Maximum waveform shift in seconds across accepted windows |
+| `RANGE_SEC` | Range of waveform shifts in seconds across accepted windows |
+| `MEDIAN_PEAK` | Median matched-window correlation magnitude across evaluated windows |
+| `MEAN_PEAK` | Mean matched-window correlation magnitude across evaluated windows |
+| `MIN_PEAK` | Minimum matched-window correlation magnitude across evaluated windows |
+| `MAX_PEAK` | Maximum matched-window correlation magnitude across evaluated windows |
+| `INTERCEPT` | Fitted start-of-record waveform shift in seconds |
+| `SLOPE` | Fitted drift slope in seconds per second |
+| `SLOPE_HR` | Fitted drift slope in seconds per hour |
+| `R2` | R-squared for the fitted waveform-shift-versus-time regression |
+| `IMPLIED_SR` | Implied sample rate of the secondary EDF from the fitted drift |
+| `HDR_OFFSET` | Header-derived offset in seconds from EDF start times alone |
+| `HDR_OFFSET_VALID` | `1` if both EDF start times were valid and `HDR_OFFSET` was available |
+| `TOTAL_OFFSET` | Net offset correction in seconds after combining header timing and waveform-based alignment |
+| `USED_START_SEC` | Window start time used for the selected fit |
+| `USED_LEN_SEC` | Window length used for the selected fit |
+| `USED_INC_SEC` | Window increment used for the selected fit |
+| `AUTO_TUNED` | `1` if `auto-try` or `try-*` selected the final window settings |
 
-Lag-estimation with the default Euclidean mode writes output at `WIN` strata:
+Per-window `WIN` output:
 
 | Variable | Description |
 |---|---|
-| `SP` | Estimated offset in sample points |
-| `SEC` | Estimated offset in seconds |
+| `OK` | `1` if the window passed the quality gate, else `0` |
+| `PEAK` | Median matched-window correlation magnitude across signal pairs for that window |
+| `SP` | Estimated waveform shift in sample points for that window |
+| `SEC` | Estimated waveform shift in seconds for that window |
+| `TOT_SEC` | Estimated net offset correction in seconds after combining waveform shift and header offset |
+| `DSEC` | Change in waveform shift relative to the first accepted window |
+| `T1_SEC` | Matched primary time in seconds for that window |
+| `T2_SEC` | Secondary window start time in seconds |
+| `T1_HMS` | Matched primary wall-clock time, when EDF headers are valid |
+| `T2_HMS` | Secondary wall-clock time, when EDF headers are valid |
+| `FIT_USED` | `1` if the window entered the drift fit before outlier removal, else `0` |
+| `FIT_OUTLIER` | `1` if removed as a drift-fit outlier, `0` if retained, `-1` if not fit |
 
-Insert mode has no formal tabular output; it modifies the in-memory EDF by adding
-new zero-padded signals from the secondary EDF.
+Per-pair `CHS` output:
+
+| Variable | Description |
+|---|---|
+| `INTERCEPT` | Per-pair fitted start-of-record waveform shift in seconds |
+| `SLOPE` | Per-pair fitted drift slope in seconds per second |
+| `SLOPE_HR` | Per-pair fitted drift slope in seconds per hour |
+| `IMPLIED_SR` | Per-pair implied secondary sample rate from the fitted drift |
+| `N_OUTLIER` | Number of outlier windows removed from the per-pair fit |
+
+Direct manual insert mode with only `offset=`/`drift=` modifies the in-memory EDF
+but does not produce additional estimation tables.
 
 <h3>Examples</h3>
 
-Estimate lag by cross-correlation:
+Estimate offset and drift using the default xcorr-based workflow:
 
 ```
-INSERT edf=secondary.edf pairs=C3,C3,C4,C4 xcorr w=30
+INSERT edf=secondary.edf pairs=C3,C3,C4,C4
 ```
 
-Estimate lag by sliding Euclidean distance:
+Estimate offset and drift using shorter windows and a wider search interval:
 
 ```
-INSERT edf=secondary.edf pairs=C3,C3,C4,C4 start=600 len=120 inc=600 steps=3
+INSERT edf=secondary.edf pairs=C3,C3,C4,C4 start=600 len=120 inc=30 offset-range=-360,360
 ```
 
-Insert channels once an offset is known:
+Estimate alignment and then insert signals using the fitted offset and drift:
+
+```
+INSERT edf=secondary.edf pairs=C3,C3,C4,C4 insert sig=ECG,EMG
+```
+
+Insert channels directly once an offset is known:
 
 ```
 INSERT edf=secondary.edf sig=ECG,EMG offset=-12.5
