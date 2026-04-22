@@ -85,14 +85,15 @@ The [Commands](ref/index.md) pages list all supported functionality; main areas 
     * Multi-channel, topographical analyses
     * Interval-based analyses of event timing
     * Sample-level linear association models
+    * Predictive modeling, including biological age
     * Manipulating annotation data and meta-data
     * Visual data exploration via _LunaScope_ or _scope_
 
 !!! info "Areas of ongoing development"
     * Multi-day recordings and actigraphy metrics
-    * HRV metrics
-    * Automated PSG QC
-    * Predictive modeling, including biological age
+    * Analysis of cardiac and respiratory events
+    * Automated PSG QC       
+    * General methods development environment via Python
 
 ## Things Luna _doesn't_ aim to do
 
@@ -102,21 +103,10 @@ intersecting sleep EEG signals with other annotations.  As such, some
 areas are not well supported, or effectively outside of Luna's scope.
 
 !!! failure "Areas outside of Luna's primary focus"
-    
-    * _Methods development platform_: although the Python/R extensions
-      can support methods development, other tools (including general
-      purpose Matlab packages such as
-      [EEGLAB](https://sccn.ucsd.edu/eeglab/index.php)) will be better
-      suited for expert users interested in flexibly altering
-      and developing new analyses
-    
-    * _Analyses of cardiac and respiratory events_: most of Luna's
-    specialized sleep analyses are currently focused on EEG signals
-    (e.g. spindles and slow oscillations)
-
+   
     * _Online signal processing_: Luna is set up for all analyses
       being done offline, i.e. on the entire recording
 
-    * _Support for multiple formats_: currently, Luna is mainly based
-      around EDF and EDF+ files (as well as plain text)  
+    * _Support for multiple signal formats_: currently, Luna is mainly based
+      around EDF and EDF+ files (as well as plain text)
  
