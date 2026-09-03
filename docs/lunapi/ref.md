@@ -1332,7 +1332,7 @@ allow Python lists as well as comma-delimited strings: i.e. `cen = [
 'C3' , 'C4' ]` as well as `cen = 'C3,C4'`.
 
 See the main Luna pages for details on the Sun et al (2019) model, and on
-the [PREDICT](http://zzz.nyspi.org/luna/ref/predict/) command in general.
+the [PREDICT](http://zzz-luna.org/luna/ref/predict/) command in general.
 
 
 ### proj.silence()
@@ -2359,7 +2359,7 @@ comma-delimited strings: i.e. `cen = [ 'C3' , 'C4' ]` as well as `cen
 = 'C3,C4'`.
 
 See the main Luna pages for details on the Sun et al (2019) model, and on
-the [PREDICT](http://zzz.nyspi.org/luna/ref/predict/) command in general.
+the [PREDICT](http://zzz-luna.org/luna/ref/predict/) command in general.
 
 ### inst.hypno()
 
@@ -3220,7 +3220,7 @@ study's data-use requirements.
 
 _Initiates the scope viewer for a single instance_ 
 
-See [the scope page](scope.md) for notes on using this tool in practice. [LunaScope](https://zzz.nyspi.org/lunascope/) is a standalone desktop application built on top of _lunapi_ and is generally a better, more full-featured viewer. In contrast, `lp.scope()` is a smaller embedded viewer intended mainly for use inside JupyterLab notebooks. Basic usage is
+See [the scope page](scope.md) for notes on using this tool in practice. [LunaScope](https://zzz-luna.org/lunascope/) is a standalone desktop application built on top of _lunapi_ and is generally a better, more full-featured viewer. In contrast, `lp.scope()` is a smaller embedded viewer intended mainly for use inside JupyterLab notebooks. Basic usage is
 
 ```
 lp.scope( p )

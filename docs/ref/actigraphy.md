@@ -703,7 +703,7 @@ sleep fragmentation index SFI (lower). QC-excluded days would appear in grey.
 ![ACTIG per-day summary](../img/actig-perday.png)
 
 !!! tip "Visualising actigraphy data"
-    [LunaScope](https://zzz.nyspi.org/lunascope/) can visualise actigraphy signal
+    [LunaScope](https://zzz-luna.org/lunascope/) can visualise actigraphy signal
     data alongside ACTIG annotations. See the actigraphy section of the LunaScope
     documentation (pending) for details.
 

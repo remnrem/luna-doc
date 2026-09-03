@@ -50,7 +50,7 @@ A _clocs_ file should consist of 4 tab-delimited columns:
  - X, Y and Z Cartesian coordinates
 
 An example channel map for a standard 64-channel EEG montage is
-available [here](http://zzz.nyspi.org/dist/luna/clocs/clocs64).
+available [here](http://zzz-luna.org/dist/luna/clocs/clocs64).
 
 Blank lines and lines starting with either the `#` or `%` character
 are ignored.  All channel labels are internally converted to upper

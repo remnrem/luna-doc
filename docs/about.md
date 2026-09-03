@@ -8,7 +8,7 @@ Luna is a C/C++ library focused on the analysis of sleep studies, primarily
 encoded as EDF/EDF+ files. This is a free, open-source project. The main
 interfaces are the command-line tool ([_lunaC_](luna/args.md)), the Python
 interface ([_lunapi_](lunapi/index.md)), and the interactive GUI
-([_LunaScope_](https://zzz.nyspi.org/lunascope/)). There is also an R
+([_LunaScope_](https://zzz-luna.org/lunascope/)). There is also an R
 interface ([_lunaR_](ext/R/index.md)).
 
 ## Version
@@ -39,7 +39,7 @@ a number of colleagues:
 - Sara Mariani and Charmaine Demanuele for input on several EEG and ECG analysis components
 
 Interested to contribute (either as a colleague or as a job)? Please
-[contact me](http://zzz.nyspi.org/index.html#contact).
+[contact me](http://zzz-luna.org/index.html#contact).
 
 ## Support
 
@@ -55,7 +55,7 @@ models from cognitive neuroscience into the setting of large, sometimes noisy,
 polysomnographic datasets.
 
 My own background is primarily in
-[psychiatric genetics](http://zzz.nyspi.org/publications.html), and the
+[psychiatric genetics](http://zzz-luna.org/publications.html), and the
 development of Luna has tracked with my learning curve in how to think about
 sleep signal data. I built it using the tools I knew best, namely
 [C/C++](https://en.wikipedia.org/wiki/C%2B%2B) and

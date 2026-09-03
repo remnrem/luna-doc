@@ -5,20 +5,45 @@ all core Luna commands described [here](../ref/index.md) have similar syntax and
 many of the fundamental concepts described [here](../luna/args.md) apply here too.
 
 !!! hint "LunaScope"
-    [LunaScope](https://zzz.nyspi.org/lunascope/) is a standalone desktop viewer built on top of _lunapi_. For interactive visual review, it is generally the better and more full-featured tool; the `scope` utility described here is a smaller embedded viewer intended for use inside JupyterLab notebooks.
-
-!!! tip "Luna In Your Browser"
-    You can also try `_lunapi_` in your browser, linked to example data and
-    interactive notebooks, via this [Binder-hosted cloud
-    instance](https://mybinder.org/v2/gh/remnrem/luna-api-notebooks/HEAD?urlpath=%2Fdoc%2Ftree%2F00_overview.ipynb).
+    [LunaScope](https://zzz-luna.org/lunascope/) is a standalone desktop viewer built on top of _lunapi_. For interactive visual review, it is generally the better and more full-featured tool; the `scope` utility described here is a smaller embedded viewer intended for use inside JupyterLab notebooks.
 
 ## Installation 
 
-To obtain _lunapi_ (macOS, Linux or Windows) use `pip`:
+To obtain _lunapi_ (macOS, Linux or Windows), use `pip`:
 
 ```
 pip install lunapi
 ```
+
+_lunapi_ supports Python 3.9 through 3.14. For an isolated installation,
+create and activate a virtual environment with:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate              # macOS/Linux
+# .venv\Scripts\Activate.ps1             # Windows PowerShell
+```
+
+Then install _lunapi_ inside the environment:
+
+```
+python -m pip install --upgrade pip
+pip install lunapi
+```
+
+To leave the virtual environment, use `deactivate`.
+
+## Using lunapi as a Python module
+
+The primary way to use _lunapi_ is as a Python module for programmatic
+analysis. Import it using the conventional alias:
+
+```python
+import lunapi as lp
+```
+
+This interface provides access to Luna operations from Python scripts,
+notebooks, and other applications.
 
 ## Command-line use
 
@@ -93,12 +118,12 @@ command-line Luna and R-based _lunaR_ tools) in a single package.
  - Follow the [example](https://github.com/remnrem/luna-api-notebooks/blob/main/00_overview.ipynb) and [_lunapi_ tutorial](https://github.com/remnrem/luna-api-notebooks/blob/main/tutorial.ipynb) notebooks from [this repository](https://github.com/remnrem/luna-api-notebooks/)
 
  - See the [primary reference](ref.md) and [scope viewer](scope.md) pages
- - For a standalone desktop viewer built on top of _lunapi_, see [LunaScope](https://zzz.nyspi.org/lunascope/)
+ - For a standalone desktop viewer built on top of _lunapi_, see [LunaScope](https://zzz-luna.org/lunascope/)
 
 ## Known issues
 
  - [Jupyter Lab](https://jupyter.org/) is required for the `scope` viewer
- - For most interactive signal viewing tasks, [LunaScope](https://zzz.nyspi.org/lunascope/) is a better choice than the notebook-embedded `scope` widget
+ - For most interactive signal viewing tasks, [LunaScope](https://zzz-luna.org/lunascope/) is a better choice than the notebook-embedded `scope` widget
 
  - Using `ctrl-D` or `ctrl-C` to escape from long-running Luna
    processes may be slow

@@ -48,7 +48,7 @@ of the ECG for the middle part of the night:
 
 ![img](../img/mb5.png)
 
-See the main [LunaScope](https://zzz.nyspi.org/lunascope/) and [Luna](../ref/index.md) pages for more
+See the main [LunaScope](https://zzz-luna.org/lunascope/) and [Luna](../ref/index.md) pages for more
 detailed descriptions of the various functions.
 
 ## Uploading your own data

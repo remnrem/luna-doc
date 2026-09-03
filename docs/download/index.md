@@ -18,7 +18,7 @@ Latest stable Luna command-line tool (binaries and source):
 | _lunapi_ Python package only | `pip install lunapi` |
 | LunaScope Python package | `pip install lunascope` |
 | __Interactive GUI__ | |
-| LunaScope install instructions | [https://zzz.nyspi.org/lunascope/install/](https://zzz.nyspi.org/lunascope/install/) |
+| LunaScope install instructions | [https://zzz-luna.org/lunascope/install/](https://zzz-luna.org/lunascope/install/) |
 | __Source__| |
 | Stable Luna (all platforms)| [https://github.com/remnrem/luna-base/archive/refs/tags/v1.7.0.tar.gz](https://github.com/remnrem/luna-base/archive/refs/tags/v1.7.0.tar.gz)
 | Latest (unstable) Luna| [https://github.com/remnrem/luna-base/](https://github.com/remnrem/luna-base/) |
@@ -64,7 +64,7 @@ multiple ways to obtain Luna:
 
 ## LunaScope
 
-[LunaScope install instructions](https://zzz.nyspi.org/lunascope/install/)
+[LunaScope install instructions](https://zzz-luna.org/lunascope/install/)
 
 For installation and setup of the LunaScope interactive GUI, please use the dedicated LunaScope install page linked above.
     
@@ -72,7 +72,7 @@ For installation and setup of the LunaScope interactive GUI, please use the dedi
 ## Data resources
 
 The [data](data.md) page contains a number of resources that can be
-used with Luna on any platform, including the [tutorial](../tut/tut1.md) and [walk-through](https://zzz.nyspi.org/luna-walkthrough)
+used with Luna on any platform, including the [tutorial](../tut/tut1.md) and [walk-through](https://zzz-luna.org/luna-walkthrough)
 data.
 
 

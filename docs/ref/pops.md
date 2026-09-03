@@ -5,7 +5,7 @@ _Prediction of sleep stages_
 POPS (POPulation-level Sleep Stager) is Luna's automated sleep staging system, designed to be flexible enough to be trained on different signal types and applied to diverse datasets. In prediction mode, POPS takes one or more channels, computes a feature set, and applies a pre-trained model to generate epoch-level stage predictions. Pre-made models are available for single-channel EEG and can be applied directly via [`RUN-POPS`](#run-pops). For quality control of existing staging, see also the companion [SOAP](soap.md) command; a [vignette](../vignettes/soap-pops.md) covers both in detail.
 
 !!! tip "LunaScope"
-    [LunaScope](https://zzz.nyspi.org/lunascope/) provides a point-and-click interface
+    [LunaScope](https://zzz-luna.org/lunascope/) provides a point-and-click interface
     to POPS and can be a convenient way to apply the model to a small number of recordings.
 
 | Command | Description |
@@ -25,7 +25,7 @@ POPS (POPulation-level Sleep Stager) is Luna's automated sleep staging system, d
 
 An initial single EEG POPS model (`s2`) is hosted here:
 
-URL = [http://zzz.nyspi.org/dist/luna/pops.zip](http://zzz.nyspi.org/dist/luna/pops.zip)
+URL = [http://zzz-luna.org/dist/luna/pops.zip](http://zzz-luna.org/dist/luna/pops.zip)
 
 Currently, we only distribute a _single-EEG_ model however, although
 more will be added in the near future.
@@ -694,7 +694,7 @@ applying POPS, adding new models (e.g. including EOGs, EMGs, etc).
 
 
 !!! tip "LunaScope"
-    [LunaScope](https://zzz.nyspi.org/lunascope/) provides a point-and-click interface
+    [LunaScope](https://zzz-luna.org/lunascope/) provides a point-and-click interface
     to POPS and can be a convenient way to apply the model to a small number of recordings.
 
 ## EVAL-STAGES

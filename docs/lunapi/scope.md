@@ -4,7 +4,7 @@ _lunapi_ provides a simple viewer utility for EDFs, `scope`, designed to work
 in the JupyterLab environment.
 
 !!! info "LunaScope versus `scope`"
-    [LunaScope](https://zzz.nyspi.org/lunascope/) is a standalone desktop application built on top of _lunapi_, and is the recommended general-purpose viewer. In contrast, `scope` is a smaller embedded viewer intended primarily for inclusion in JupyterLab notebooks when working interactively with in-memory _lunapi_ objects.
+    [LunaScope](https://zzz-luna.org/lunascope/) is a standalone desktop application built on top of _lunapi_, and is the recommended general-purpose viewer. In contrast, `scope` is a smaller embedded viewer intended primarily for inclusion in JupyterLab notebooks when working interactively with in-memory _lunapi_ objects.
 
 Key features of `scope` include:
 
@@ -47,7 +47,7 @@ The top bar has a slider which can be used to move the viewing window
 over the recording.  Below it are visual indications of a) whether
 epochs are masked or not, and the current window, b) a hypnogram (if
 the recording has associated staging), and c) by default, a "Hjorth
-plot" for the first EEG channel.   (Hjorth plots are also available in [LunaScope](https://zzz.nyspi.org/lunascope/).)
+plot" for the first EEG channel.   (Hjorth plots are also available in [LunaScope](https://zzz-luna.org/lunascope/).)
 
 Below, we zoom into the main controls (top left of the window): the
 main control is _Width_ which controls the width of the display window
@@ -151,4 +151,4 @@ Scope is still under development:
 
  - toggling the _Hjorth_ checkbox does not update the top plot by itself, as it should (i.e. one needs to select a new channel as well)
 
-For most desktop viewing and signal-review workflows, [LunaScope](https://zzz.nyspi.org/lunascope/) will generally be a better option than `scope`.
+For most desktop viewing and signal-review workflows, [LunaScope](https://zzz-luna.org/lunascope/) will generally be a better option than `scope`.

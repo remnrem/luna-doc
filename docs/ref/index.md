@@ -8,7 +8,7 @@ The pages that are linked to describe the Luna command language, which can be us
 via the terminal-based [_lunaC_](../luna/args.md) tool, the Python
 [_lunapi_](../lunapi/index.md) package, or the R extension library
 [_lunaR_](../ext/R/index.md). There is also
-[_LunaScope_](https://zzz.nyspi.org/lunascope/), an interactive
+[_LunaScope_](https://zzz-luna.org/lunascope/), an interactive
 point-and-click GUI built on top of _lunapi_. Importantly, the Luna
 command language (script syntax) is the same across all these
 interfaces. Under each section, we tabulate the relevant _commands_,

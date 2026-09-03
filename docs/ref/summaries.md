@@ -1214,4 +1214,4 @@ Per-channel-pair statistics (strata: `CHS`)
 
 <h3>Example</h3>
 
-See the [Luna walk-through](https://zzz.nyspi.org/luna-walkthrough/p2/dupes) for an example. 
+See the [Luna walk-through](https://zzz-luna.org/luna-walkthrough/p2/dupes) for an example. 

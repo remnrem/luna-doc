@@ -13,7 +13,7 @@ fit for users who want explicit scripts, batch processing, reproducibility, and
 direct access to the full Luna command language. [lunapi](lunapi/index.md) is
 usually the best fit for users who prefer Python, notebooks, interactive
 analysis, and tighter integration with plotting or downstream data-science
-tools. [LunaScope](https://zzz.nyspi.org/lunascope/) is the most approachable
+tools. [LunaScope](https://zzz-luna.org/lunascope/) is the most approachable
 entry point for users who want visual review and point-and-click exploration
 before moving to scripts or notebooks. There is also an R interface
 ([lunaR](ext/R/index.md)), but this page focuses on the main current paths:
@@ -36,7 +36,7 @@ access to the full Luna command language.
    Add masks, hypnograms, artifacts, and more realistic workflows.
 5. [Concepts and syntax](luna/args.md)
    Read the core command model once the tutorial gives it context.
-6. [Walk-through](https://zzz.nyspi.org/luna-walkthrough)
+6. [Walk-through](https://zzz-luna.org/luna-walkthrough)
    Follow the more realistic end-to-end analysis path.
 7. [Command reference overview](ref/index.md)
    Use the domain pages and command docs as needed.
@@ -58,7 +58,7 @@ integration with plotting or downstream data-science tools.
    Move into the Python-specific workflow.
 6. [Concepts and syntax](luna/args.md)
    Keep the core command model in view.
-7. [Walk-through](https://zzz.nyspi.org/luna-walkthrough)
+7. [Walk-through](https://zzz-luna.org/luna-walkthrough)
    Use the main walk-through for the overall analysis logic.
 8. [lunapi reference](lunapi/ref.md)
    Look up Python details when needed.
@@ -68,7 +68,7 @@ integration with plotting or downstream data-science tools.
 For users who want point-and-click visual review and an easier first entry
 point before moving into scripts or notebooks.
 
-1. [LunaScope](https://zzz.nyspi.org/lunascope/)
+1. [LunaScope](https://zzz-luna.org/lunascope/)
    Start with the GUI and overall orientation.
 2. [Downloads and installation](download/index.md)
    Install the relevant Luna components.
@@ -80,7 +80,7 @@ point before moving into scripts or notebooks.
    Understand the Python layer that LunaScope builds on.
 6. [Concepts and syntax](luna/args.md)
    Learn the underlying Luna model behind the GUI.
-7. [Walk-through](https://zzz.nyspi.org/luna-walkthrough)
+7. [Walk-through](https://zzz-luna.org/luna-walkthrough)
    See the fuller end-to-end analysis workflow.
 8. [scope viewer](lunapi/scope.md)
    Explore the related interactive viewer documentation.
@@ -100,7 +100,7 @@ assume:
 In practice:
 
 - the [tutorial](tut/tut1.md) is the best first-pass introduction
-- the [walk-through](https://zzz.nyspi.org/luna-walkthrough) is the best
+- the [walk-through](https://zzz-luna.org/luna-walkthrough) is the best
   practical next step after that
 
 ## Concepts

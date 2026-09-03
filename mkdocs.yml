@@ -1,6 +1,6 @@
 site_name: 'Luna'
 
-site_url: http://zzz.nyspi.org/luna
+site_url: http://zzz-luna.org/luna
 
 site_description: Documentation for the Luna software
 
@@ -42,40 +42,41 @@ extra_css:
 nav:
  - Home:
      - Overview: 'index.md'
-     - Path: 'path.md'
      - Updates: 'updates.md'
+     - Installation: 'download/index.md'
      - Tutorial: 'tut/tut1.md'
      - Concepts: 'luna/args.md'
      - Commands: 'ref/index.md'
      - Python: 'lunapi/index.md'
      - lunaR: 'ext/R/index.md'     
      - Vignettes: 'vignettes/index.md'
-     - Walkthrough: 'https://zzz.nyspi.org/luna-walkthrough'
-     - Installation: 'download/index.md'
-     - FAQ: 'faq.md'
-     - Contact: 'contact.md'
-     
+    
  - Updates: 'updates.md'
+ 
+ - Install:
+    - 'Overview': 'download/index.md'
+    - 'Binaries': 'download/exec.md'
+    - 'Source': 'download/source.md'
+    - 'Docker': 'download/docker.md'
+    - 'lunapi (Python)': 'https://github.com/remnrem/luna-api-notebooks?tab=readme-ov-file#lunapi-a-python-interface-for-luna'
+    - 'LunaScope': 'https://zzz-luna.org/lunascope/install/'
+    - 'Hypnoscope': 'download/hypnoscope-install.md'
+    - 'Data': 'download/data.md'
+    - 'Notes': 'download/misc.md'
 
- - Path: 'path.md'
-
- - Tutorial: 
+ - Tutorial:
+     - 'Path': 'path.md'
      - 'Quick start': 'tut/tut1.md'
      - 'Take two': 'tut/tut2.md'
      - 'Deeper dive': 'tut/tut3.md'
      - 'Lunapi': 'https://github.com/remnrem/luna-api-notebooks/blob/main/tutorial.ipynb'
      - '/R/epeat': 'tut/tut4.md'
-     - 'Moonlight': 'tut/tut5.md'
-
- - Walkthrough: 'https://zzz.nyspi.org/luna-walkthrough'
 
  - Concepts:
     - 'Overview' : 'luna/args.md'
     - 'Output': 'luna/destrat.md'
     - 'dmerge': 'merge/merge.md'
     - 'dmerge example': 'merge/merge-example.md'
-
- - Standards: 'standards.md'
 
  - Commands:
     - 'Overview': 'ref/index.md'
@@ -115,7 +116,7 @@ nav:
     - 'Overview' : 'lunapi/index.md'
     - 'Reference' : 'lunapi/ref.md'
     - 'Scope viewer'     : 'lunapi/scope.md'
-    - 'LunaScope' : 'https://zzz.nyspi.org/lunascope/'
+    - 'LunaScope' : 'https://zzz-luna.org/lunascope/'
     - 'Notebooks' : 'https://github.com/remnrem/luna-api-notebooks/'
 
  - lunaR:
@@ -144,22 +145,7 @@ nav:
     - 'EEG polarity' : 'vignettes/nsrr-polarity.md'
     - 'UMAP clustering' : 'vignettes/nsrr-umap.md'
 
- - Install:
-    - 'Overview': 'download/index.md'
-    - 'Binaries': 'download/exec.md'
-    - 'Source': 'download/source.md'
-    - 'Docker': 'download/docker.md'
-    - 'lunapi (Python)': 'https://github.com/remnrem/luna-api-notebooks?tab=readme-ov-file#lunapi-a-python-interface-for-luna'
-    - 'LunaScope': 'https://zzz.nyspi.org/lunascope/install/'
-    - 'Hypnoscope': 'download/hypnoscope-install.md'
-    - 'Moonlight': 'download/moonlight-install.md'
-    - 'Data': 'download/data.md'
-    - 'Notes': 'download/misc.md'
-
- - FAQ: 'faq.md'
-
- - Known issues: 'known-issues.md'
-
- - About: 'about.md'
-
- - Contact: 'contact.md'
+ - About:
+     - 'About': 'about.md'
+     - 'FAQ': 'faq.md'
+     - 'Contact': 'contact.md'

@@ -48,7 +48,7 @@ _Validate all EDFs and annotation files in a project_
 
 This command checks that files can be opened correctly - e.g. spotting
 EDFs with corrupt headers or other issues.  See the [Luna walk
-through](https://zzz.nyspi.org/luna-walkthrough/p1/valid) for
+through](https://zzz-luna.org/luna-walkthrough/p1/valid) for
 some examples of using `--validate`.
 
 If invalid files are found, Luna writes a message to the console

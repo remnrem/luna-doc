@@ -9,7 +9,7 @@ and project context, see [About](about.md).
 
 Start with [Path](path.md), which gives the recommended newcomer route through
 the documentation for command-line Luna, [lunapi](lunapi/index.md), and
-[LunaScope](https://zzz.nyspi.org/lunascope/). In practice, the recommended
+[LunaScope](https://zzz-luna.org/lunascope/). In practice, the recommended
 sequence is: tutorial first, then concepts, then the walk-through, then the
 reference pages.
 
@@ -19,7 +19,7 @@ reference pages.
   sample lists, and direct access to the full command language.
 - Use [lunapi](lunapi/index.md) if you want Python, notebooks, and interactive
   downstream analysis.
-- Use [LunaScope](https://zzz.nyspi.org/lunascope/) if you want a GUI for
+- Use [LunaScope](https://zzz-luna.org/lunascope/) if you want a GUI for
   visual review and point-and-click exploration.
 
 All three sit on top of the same core library and largely the same concepts.
@@ -76,7 +76,7 @@ See [Variables and special characters when using `-s`](#variables-and-special-ch
 ## Can I use Luna without the command line?
 
 Yes. The main alternatives are [lunapi](lunapi/index.md) for Python and
-[LunaScope](https://zzz.nyspi.org/lunascope/) for GUI-based interactive work.
+[LunaScope](https://zzz-luna.org/lunascope/) for GUI-based interactive work.
 The same core documentation is still relevant, especially the tutorial,
 concepts, and reference pages.
 

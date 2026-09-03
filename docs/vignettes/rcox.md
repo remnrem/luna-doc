@@ -59,7 +59,7 @@ first one (linked mastoid reference):
 | ---- | ---- | ---- |
 | Linked mastoid EDFs (__primary__) | 6 EDFs (3 individuals for N2 & N3) | [`cox_fell_edfs_mast.zip`](https://sleepdata.org/datasets/coxfell2020/files/m/browser/cox_fell_edfs_mast.zip) |
 | Common average EDFs  | 6 EDFs (3 individuals for N2 & N3)  | [`cox_fell_edfs_ave.zip`](https://sleepdata.org/datasets/coxfell2020/files/m/browser/cox_fell_edfs_ave.zip) |
-| Surface Laplacian EDFs  | 6 EDFs (3 individuals for N2 & N3) | [`cox_fell_edfs_lap.zip`](http://zzz.nyspi.org/dist/luna/cf/cox_fell_edfs_lap.zip) - _not posted_ |
+| Surface Laplacian EDFs  | 6 EDFs (3 individuals for N2 & N3) | [`cox_fell_edfs_lap.zip`](http://zzz-luna.org/dist/luna/cf/cox_fell_edfs_lap.zip) - _not posted_ |
 
 After downloading the zip archive to your working directory, extracting the contents should generate a subfolder `edfs` containing six EDFs:
 ```
@@ -696,7 +696,7 @@ figures aren't as pretty as in _C&F_).  First, we'll load some
 coordinates for the channels:
 
 ```
-xy <- read.table( "http://zzz.nyspi.org/dist/luna/cf/xy.lay", header=T)
+xy <- read.table( "http://zzz-luna.org/dist/luna/cf/xy.lay", header=T)
 ```
 Next, we'll define a simple `ftopo()` function, which uses the `akima` library for interpolation:
 ```

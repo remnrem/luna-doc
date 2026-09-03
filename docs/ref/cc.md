@@ -184,7 +184,7 @@ To include spatial distances in correlations, it is first necessary to
 have previously attached a set of channel locations via the
 [`CLOCS`](spatial.md#clocs) command prior to running [`CORREL`](cc.md#correl).  An example map (for a
 64-channel EEG) can be found
-[here](http://zzz.nyspi.org/dist/luna/clocs/clocs64): e.g. 
+[here](http://zzz-luna.org/dist/luna/clocs/clocs64): e.g. 
 
 ```
   CLOCS clocs=clocs64
@@ -691,7 +691,7 @@ Channel pair output (option: `epoch`, strata: `E` x `CH1` x `CH2`)
 
 <h3>Example</h3>
 
-See the [walk-through](https://zzz.nyspi.org/luna-walkthrough/p5/conn) for an example application of [`PSI`](cc.md#psi).
+See the [walk-through](https://zzz-luna.org/luna-walkthrough/p5/conn) for an example application of [`PSI`](cc.md#psi).
 
 ## XCORR
 

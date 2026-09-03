@@ -34,7 +34,7 @@ We'll initially compare the two frontal channels (F3-M2 and F4-M1)
 from the Nox device with the two frontal X-trodes channels
 (approximately positioned near AF3/Fp1 and AF4/Fp2).  A cursory visual
 review of the signals (using
-[Lunascope](https://zzz.nyspi.org/lunascope)) shows nontrivial issues
+[Lunascope](https://zzz-luna.org/lunascope)) shows nontrivial issues
 in aligning these two recordings.
 
 At a broad, zoomed-out level we see the expected correspondence

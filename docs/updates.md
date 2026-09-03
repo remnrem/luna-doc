@@ -393,7 +393,7 @@ _New Luna "walk-through" didactic material_
 
  - a comprehensive step-by-step guide to using Luna as applied to
    real-life datasets; the web pages are available
-   [https://zzz.nyspi.org/luna-walkthrough/](https://zzz.nyspi.org/luna-walkthrough/)
+   [https://zzz-luna.org/luna-walkthrough/](https://zzz-luna.org/luna-walkthrough/)
    and we'll post the accompanying walk-through data on
    [NSRR](https://sleepdata.org) within the coming month.
 
@@ -1103,9 +1103,9 @@ _Internal changes/library upgrades_
 
 _Moonlight_
 
- - new interactive [_Moonlight_](apps/moonlight.md) viewer (public demonstration host: [http://remnrem.net](http://remnrem.net))
+ - new interactive _Moonlight_ viewer (public demonstration host: http://remnrem.net)
 
- - extended [tutorial](tut/tut5.md) that uses _Moonlight_ to recapitulate the prior Luna/lunaR tutorials 
+ - extended tutorial using _Moonlight_ to recapitulate the prior Luna/lunaR tutorials
 
 _Vignettes_
 

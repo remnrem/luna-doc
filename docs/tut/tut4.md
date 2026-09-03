@@ -67,7 +67,7 @@ search around.
 
 
 !!! Hint
-    For macOS and Linux users with the [luna.docker](http://zzz.nyspi.org/dist/luna/luna.docker) 
+    For macOS and Linux users with the [luna.docker](http://zzz-luna.org/dist/luna/luna.docker) 
     bash script installed, all the above can be accomplished with:
     ```
     luna.docker -rs abc123

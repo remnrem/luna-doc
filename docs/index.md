@@ -13,7 +13,7 @@ a list of changes/additions. Please direct any questions to `luna.remnrem@gmail.
 background on the project itself, see [About](about.md).
 
 !!! tip "LunaScope"
-     <a href="https://zzz.nyspi.org/lunascope/">LunaScope</a> is a new interactive GUI for Luna,
+     <a href="https://zzz-luna.org/lunascope/">LunaScope</a> is a new interactive GUI for Luna,
      built on top of <em>lunapi</em>. It provides a more full-featured point-and-click
      environment for visual review and interactive analysis.
 
@@ -27,7 +27,7 @@ implements all the [commands](ref/index.md) for working with sleep
 signal data. There are three main ways to use the library, all of which
 provide fundamentally the same basic functionality:
 
- - via [_LunaScope_](https://zzz.nyspi.org/lunascope/), an interactive
+ - via [_LunaScope_](https://zzz-luna.org/lunascope/), an interactive
    point-and-click GUI built on top of _lunapi_: this is often the easiest
    entry point for visual review and exploratory analysis
 

@@ -17,9 +17,9 @@ page contains a lot of detail, covering three main areas:
     Luna is fundamentally a console/command-line package,
     i.e. there is no _point-and-click_. Familiarity with the basic
     Unix/macOS console environment and shell scripting is recommended.
-    The walk-through tutorial contains a brief [shell orientation](https://zzz.nyspi.org/luna-walkthrough/prep/#shell-orientation) section
+    The walk-through tutorial contains a brief [shell orientation](https://zzz-luna.org/luna-walkthrough/prep/#shell-orientation) section
     that outlines some core commands useful when using Luna (or similar command-line tools).  If you want a more interactive or point-and-click workflow,
-    see [LunaScope](https://zzz.nyspi.org/lunascope/), which is built on top of Luna and provides a GUI for visual review and exploratory analysis.  If you
+    see [LunaScope](https://zzz-luna.org/lunascope/), which is built on top of Luna and provides a GUI for visual review and exploratory analysis.  If you
     want to work in Python or Jupyter notebooks rather than directly at the shell, see [_lunapi_](../lunapi/index.md).  Naturally, there is also a huge amount
     of easily accessible online tutorial information on getting started with the command shell.
 
@@ -142,7 +142,7 @@ luna -h PSD
 ```
 ```
 PSD : Power spectral density estimation (Welch) (Power spectra)
-    : http://zzz.nyspi.org/luna/ref/power-spectra/#psd
+    : http://zzz-luna.org/luna/ref/power-spectra/#psd
 
 Parameters:
 ===========
@@ -1503,7 +1503,7 @@ Internally, all coordinates are converted to spherical coordinates on
 a unit sphere, so any scaling can be used. 
 
 Here is an example file:
-[https://zzz.nyspi.org/dist/luna/clocs/clocs64](https://zzz.nyspi.org/dist/luna/clocs/clocs64).
+[https://zzz-luna.org/dist/luna/clocs/clocs64](https://zzz-luna.org/dist/luna/clocs/clocs64).
 
 If a _clocs_ file is not specified but a particular command requires one,
 Luna will use a default map, applicable for typical 64-channel

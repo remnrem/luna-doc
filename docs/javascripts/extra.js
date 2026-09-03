@@ -7,11 +7,11 @@ function installLunaHeaderLinks() {
 
   const html = [
     '<span class="luna-site-links">',
-    '<a class="luna-site-links__home" style="font-weight:700" href="https://zzz.nyspi.org/luna/">Luna</a>',
+    '<a class="luna-site-links__home" style="font-weight:700" href="https://zzz-luna.org/luna/">Luna</a>',
     '<span class="luna-site-links__sep">|</span>',
-    '<a class="luna-site-links__subtle" style="font-weight:400;opacity:0.85" href="https://zzz.nyspi.org/lunascope/">LunaScope</a>',
+    '<a class="luna-site-links__subtle" style="font-weight:400;opacity:0.85" href="https://zzz-luna.org/lunascope/">LunaScope</a>',
     '<span class="luna-site-links__sep">|</span>',
-    '<a class="luna-site-links__subtle" style="font-weight:400;opacity:0.85" href="https://zzz.nyspi.org/luna-walkthrough">Walkthrough</a>',
+    '<a class="luna-site-links__subtle" style="font-weight:400;opacity:0.85" href="https://zzz-luna.org/luna-walkthrough">Walkthrough</a>',
     '<span class="luna-site-links__sep">|</span>',
     '<a class="luna-site-links__subtle" style="font-weight:400;opacity:0.85" href="https://github.com/remnrem/luna-base">GitHub</a>',
     "</span>",

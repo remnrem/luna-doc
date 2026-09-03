@@ -13,7 +13,7 @@ input, to a model-based prediction as output.
 For example, one [`PREDICT`](predict.md#predict) model supports the prediction of the
 so-called _brain age index_ using the NREM EEG, based on a model from
 [Sun et al (2019)](https://pubmed.ncbi.nlm.nih.gov/30448611/).  This
-model has also been incorporated into [LunaScope](https://zzz.nyspi.org/lunascope/).  Over time, different models as well as
+model has also been incorporated into [LunaScope](https://zzz-luna.org/lunascope/).  Over time, different models as well as
 support for model classes beyond linear models will be compiled here.
 
    
