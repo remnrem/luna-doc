@@ -1,6 +1,6 @@
 # Interval-based analyses
 
-This page covers commands for event-locked and interval-based analyses. [`OVERLAP`](intervals.md#overlap) and `--overlap` evaluate the statistical enrichment of one set of annotations relative to another using randomization to generate empirical null distributions. [`MEANS`](intervals.md#means) computes signal averages stratified by annotation class. [`PEAKS`](intervals.md#peaks) and `Z-PEAKS` detect and cache local signal peaks for use by downstream commands. [`TLOCK`](intervals.md#tlock) performs time-locked signal averaging around cached peaks or annotation events — the standard approach for characterizing spindle, SO or other event morphology. [`S2C`](intervals.md#s2c) segments an oscillatory signal into individual cycle annotations.
+This page covers commands for event-locked and interval-based analyses. [`OVERLAP`](intervals.md#overlap) and `--overlap` evaluate the statistical enrichment of one set of annotations relative to another using randomization to generate empirical null distributions. [`MEANS`](intervals.md#means) computes signal averages stratified by annotation class. [`PEAKS`](intervals.md#peaks) and `Z-PEAKS` detect and cache local signal peaks for use by downstream commands. [`TLOCK`](intervals.md#tlock) performs time-locked signal averaging around cached peaks or annotation events — the standard approach for characterizing spindle, SO or other event morphology. [`S2C`](intervals.md#s2c) segments an oscillatory signal into individual cycle annotations. [`WAVEFORMS`](intervals.md#waveforms) dumps annotation-defined signal segments to binary `.lwf` shard files for downstream analysis; [`--waveforms`](intervals.md#-waveforms) summarises a folder of previously dumped shards.
 
 | Command | Description |
 | ----- | ----- | 
@@ -11,6 +11,8 @@ This page covers commands for event-locked and interval-based analyses. [`OVERLA
 | [`Z-PEAKS`](#z-peaks) | Detect and cache signal peaks, alternative method | 
 | [`TLOCK`](#tlock) | Time-locked (e.g. peak-locked) signal averaging |
 | [`S2C`](#s2c) | Signal-to-cycle: segment oscillatory activity into cycle annotations |
+| [`WAVEFORMS`](#waveforms) | Dump annotation-defined waveforms to binary `.lwf` shards |
+| [`--waveforms`](#-waveforms) | Summarise a folder of dumped `.lwf` shards |
 
 ## OVERLAP
 
@@ -536,9 +538,20 @@ based on detected peaks currently.
 
 <h3>Example</h3>
 
-_to be added_
+Detect positive-going peaks in `EEG` using a 5-second lag window and a z-score
+threshold of 3.5, writing results as an annotation class `zpks`:
 
+```
+luna s.lst -s 'Z-PEAKS sig=EEG w=5 th=3.5 annot=zpks'
+```
 
+Use a secondary threshold to also capture the flanking regions around each peak,
+and cache the sample-point indices for use with [`TLOCK`](#tlock):
+
+```
+luna s.lst -o out.db -s 'Z-PEAKS sig=EEG w=5 th=3.5 sec=0.1 th2=2 sec2=0.05 max=10 annot=zpks cache=c1
+                          & TLOCK cache=c1 sig=EEG w=2'
+```
 
 ## TLOCK
 
@@ -848,10 +861,10 @@ FILTER sig=EEG bandpass=0.5,4
 
 % Segment into cycles, emit summaries
 S2C sig=EEG,spindle_power seed=EEG
-    waves=SO half-waves peak-points=SO_PEAK
-    emit-seed emit-sig
-    t-min=0.8 t-max=2.5
-    emit-ph-grid emit-td-grid
+ ...   waves=SO half-waves peak-points=SO_PEAK
+ ...   emit-seed emit-sig
+ ...   t-min=0.8 t-max=2.5
+ ...   emit-ph-grid emit-td-grid
 ```
 
 Extract seed-level results and per-channel coupling:
@@ -859,3 +872,21 @@ Extract seed-level results and per-channel coupling:
 destrat out.db +S2C -r SEED
 destrat out.db +S2C -r SEED SIG
 ```
+
+---
+
+## WAVEFORMS
+
+_Dump annotation-defined waveforms to binary `.lwf` shards_
+
+!!! warning "Under development"
+    [`WAVEFORMS`](#waveforms) and [`--waveforms`](#-waveforms) are under
+    development: documentation is being written, but these commands are not
+    yet ready for general use and are highly likely to change (file format
+    and parameters).
+
+## --waveforms
+
+_Summarise a folder of dumped `.lwf` shards_
+
+See [`WAVEFORMS`](#waveforms) above — under development.

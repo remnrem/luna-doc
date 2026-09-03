@@ -182,7 +182,7 @@ of artifact or bridging, etc.
 
 To include spatial distances in correlations, it is first necessary to
 have previously attached a set of channel locations via the
-[`CLOCS`](signals.md#clocs) command prior to running [`CORREL`](cc.md#correl).  An example map (for a
+[`CLOCS`](spatial.md#clocs) command prior to running [`CORREL`](cc.md#correl).  An example map (for a
 64-channel EEG) can be found
 [here](http://zzz.nyspi.org/dist/luna/clocs/clocs64): e.g. 
 

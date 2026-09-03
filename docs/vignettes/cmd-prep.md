@@ -2,7 +2,7 @@
 
 - terminal app & bash
 - text editor
-- package manager / instaling software
+- package manager / installing software
 - network access (e.g. SSH) 
 - EDF as input
 

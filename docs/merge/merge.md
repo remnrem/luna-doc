@@ -345,7 +345,7 @@ Less complicated than it may look at first sight, here's a summary of identifier
 
 - Run with option `-v` to produce verbose output
 
-- Run with option `-s` to enfore strict mode: here all
+- Run with option `-s` to enforce strict mode: here all
    variables/factors/domains/groups present in the data folders must
    have an exact match in the data dictionary (otherwise an error is
    given and the program halted). Otherwise, in the default

@@ -78,12 +78,15 @@ Projects are _singleton classes_ that organize Luna functions and objects within
 | Command | Description |
 |----|-----|
 | __[`proj.proc()`](#projproc)__ | __Evaluate Luna commands on all sample-list individuals__ |
+| __[`proj.proc_parallel()`](#projproc_parallel)__ | __Evaluate Luna commands on all sample-list individuals using worker processes__ |
+| [`proj.procn()`](#projprocn) | Convenience alias for `proj.proc_parallel()` |
 | [`proj.silent_proc()`](#projsilent_proc) | Evaluate Luna commands silently |
-| __[`proj.strata()`](#projstrata)__ | __Return a list of command/strata pairs from a prior `proc()` run__ |
-| __[`proj.table()`](#projtable)__ | __Return a table as a dataframe from a prior `proc()` run__ |
-| [`proj.commands()`](#projcommands) | Return a list of commands executed from a prior `proc()` run | 
-| [`proj.variables()`](#projvariables) | Return the variables (table header) for a specific command/strata pair from a prior `proc()` run |
-| [`proj.empty_result_set()`](#projempty_result_set) | Indicate whether there are any results in the project results cache |
+| [`ProcResult`](#procresult-live-view) | Result object returned by all proc calls; dict-like interface; `.copy()` for snapshots |
+| __[`proj.strata()`](#projstrata)__ | __Return a list of command/strata pairs from the project results cache__ |
+| __[`proj.table()`](#projtable)__ | __Return a table as a dataframe from the project results cache__ |
+| [`proj.commands()`](#projcommands) | Return a list of commands in the project results cache | 
+| [`proj.variables()`](#projvariables) | Return the variables (table header) for a specific command/strata pair from the project results cache |
+| [`proj.empty_result_set()`](#empty_result_set) | Indicate whether the project results cache is empty |
 
 <h5>Variables</h5>
 
@@ -161,7 +164,7 @@ in the project's sample list, then any EDF and annotation files are automaticall
 | [`inst.silent_proc()`](#instsilent_proc) | Evaluate arbitrary Luna commands silently |
 | [`inst.silent_proc_lunascope()`](#instsilent_proc_lunascope) | Internal silent evaluation helper for LunaScope |
 | [`inst.variables()`](#instvariables) | Return the variables for a specific command/strata pair |
-| [`inst.empty_result_set()`](#instempty_result_set) | Indicates whether the results cache is currently non-empty |
+| [`inst.empty_result_set()`](#instempty_result_set) | Indicates whether the results cache is currently empty |
 
 <h5>Individual-level variables</h5>
 
@@ -208,7 +211,7 @@ in the project's sample list, then any EDF and annotation files are automaticall
 | Command | Description |
 |----|-----|
 | [`inst.hypno()`](#insthypno) | Plot a hypnogram given sleep stage data | 
-| [`lp.hypno_density()`](#lphypno_density) | Make a hypno-density (posterior stage probabilites) | 
+| [`lp.hypno_density()`](#lphypno_density) | Make a hypno-density (posterior stage probabilities) | 
 | [`inst.psd()`](#instpsd) | Calculate and plot a PSD curve |
 | [`inst.spec()`](#instspec) | Calculate and plot a spectrogram heatmap |
 | [`inst.tfview()`](#insttfview) | Plot an MTM spectrogram view for a selected interval |
@@ -240,6 +243,29 @@ in the project's sample list, then any EDF and annotation files are automaticall
 | [`lp.subset()`](#lpsubset) | Subsets rows and columns of a result table |
 | [`lp.concat()`](#lpconcat) | Concatenates matching tables across result collections |
 | [`lp.version()`](#lpversion) | Returns the `lunapi` and Luna versions |
+
+<h5>Output database reader</h5>
+
+| Command | Description |
+|----|-----|
+| [__`lp.destrat()`__](#lpdestrat) | __Read one or more Luna output databases__ |
+| [`lp.list_text_tables()`](#lplist_text_tables) | List tables in a Luna text-output folder |
+| [`lp.read_text_table()`](#lpread_text_table) | Read a concatenated text-output table from a Luna text-output folder |
+
+<h5>EDF utilities</h5>
+
+| Command | Description |
+|----|-----|
+| [`lp.merge_edfs()`](#lpmerge_edfs) | Concatenate EDFs in time (mirrors `luna --merge`) |
+| [`lp.bind_edfs()`](#lpbind_edfs) | Bind EDFs by adding channels (mirrors `luna --bind`) |
+| [`lp.overlap()`](#lpoverlap) | Multi-sample annotation overlap / enrichment analysis (mirrors `luna --overlap`) |
+
+<h5>BioData Catalyst</h5>
+
+| Command | Description |
+|----|-----|
+| [`lp.BDCClient`](#biodata-catalyst) | Authenticated browser/downloader for Gen3/BioData Catalyst files |
+| [`lp.bdc`](#biodata-catalyst) | Alias for `BDCClient` |
 
 ### Scope
 
@@ -348,13 +374,13 @@ simulating signals), or directly from Python objects via
 _Retire a project_
 
 ```
- proj()
+ retire()
 
     Args:
       none
 
     Returns:
-      reference to a proj object
+      backend status value
 
     Example:
       proj.retire()
@@ -372,7 +398,7 @@ _Traverses folders (recursively) to generate a lunapi sample-list_
  build( args )
 
     Args:
-      args (list)  a list of strings, either folders or special options
+      args (str or list[str])  one or more folders and/or special options
 
     Returns:
       nothing; it creates an internal sample-list
@@ -392,16 +418,16 @@ not exist, this function returns a RuntimeError.
 _Reads a sample-list from a file, or returns an existing sample-list_
 
 ```
- sample_list(x, path, df )
+ sample_list( filename = None , path = None , df = True )
 
     Args:
-      x (str, optional)     filename of the sample-list
-      path (str, optional)  path to prepend to all relative file paths when building the sample-list
-      df (boolean)          return a pandas dataframe rather than python list (default=True)
+      filename (str, optional)  filename of the sample-list
+      path (str, optional)      path to prepend to all relative file paths when building the sample-list
+      df (boolean)              return a pandas dataframe rather than python list (default=True)
 
     Returns:
       nothing, if reading a sample-list
-      a dataframe/list of (ID,EDF,set(annotation files))-tuples, if x is None
+      a dataframe/list of (ID,EDF,set(annotation files))-tuples, if filename is None
 
     Example:
       proj.sample_list( '/tutorial/s.lst' )
@@ -411,7 +437,7 @@ _Reads a sample-list from a file, or returns an existing sample-list_
 
 If the sample list uses relative paths that are not appropriate for your current directory,
 you can set the `path` argument to add a prefix to all relative paths in the sample list.  Alternatively
-(and equivalently), you can set the project variable `path` before calling `sample_list(x)` to
+(and equivalently), you can set the project variable `path` before calling `sample_list(filename)` to
 achieve the same result: `proj.var( 'path' , '/path/to/data/' )`.   For example, if the current working folder
 is `/home/joe/work1/` and the data are in `/data/proj1/`
 
@@ -441,18 +467,21 @@ and so Luna would be able to look in the correct locations.
 _Validate all files in a sample list_
 
 ```
- nobs()
+ validate()
 
     Args:
       none
 
     Returns:
-      a table of IDs, filenames and a flag for valid/invalid status
+      a dataframe with `ID`, `Filename`, and `Valid` columns
 
     Example:
       proj.sample_list( 's.lst' )
       proj.validate()
 ```
+
+This provides the same functionality as the `--validate` option of
+Luna, which is described [here](../ref/helpers.md#-validate).
 
 ### proj.reset()
 
@@ -483,9 +512,6 @@ _Re-initialize the project_
 ```
 
 This resets project-level variables and state in the underlying Luna engine without replacing the project object itself.
-
-This provides the same functionality as the `--validate` option of
-Luna, which is described [here](../ref/helpers.md#-validate).
 
 
 ### proj.nobs()
@@ -555,11 +581,11 @@ _Returns the EDF filename of a sample-list observation_
       x (str)  an ID matching a sample-list observation
 
     Returns:
-      EDF filename (str), if x is a valid index
+      annotation filename(s) (str), if x is a valid index
       NoneType, if x is not a valid index
 
     Example:
-      proj.get_edf(0)
+      proj.get_annots(0)
 
 ```
 
@@ -633,14 +659,53 @@ _Evaluate Luna commands on all sample-list individuals_
       cmdstr (str)  a valid Luna command script 
 
     Returns:
-      dict of command/strata (str) keys to dataframe values
+      ProcResult
 
     Example:
-      proj.proc( 'HEADERS' )
+      res = proj.proc( 'HEADERS' )
+      res.table( 'HEADERS' )
 
 ```
 
-`proc()` also populates the `proj` results cache, which can subsequently be queried with `proj.strata()`, `proj.table()`, etc.
+`proc()` populates the project results cache and returns a `ProcResult` object.  Results can be accessed
+either through the returned object or directly via `proj.strata()`, `proj.table()`, etc.:
+
+```
+res = proj.proc( 'HEADERS' )
+res.table( 'HEADERS' )      # via the returned ProcResult
+proj.table( 'HEADERS' )     # equivalently, directly from the project cache
+```
+
+!!! note "ProcResult is a live view, not a snapshot"
+    `ProcResult` is a lightweight wrapper that delegates all table queries to the
+    **project results cache**.  It does not hold copies of the DataFrames itself.
+    This means that calling `proc()` again overwrites the cache, and any previously
+    returned `ProcResult` will now reflect the new results.
+
+    This is a common source of confusion when calling `proc()` in a loop:
+
+    ```python
+    # BUG: all entries in res point to the same live cache
+    res = {}
+    for stage in ['N1', 'N2', 'N3', 'R']:
+        proj.var('stage', stage)
+        res[stage] = proj.silent_proc(cmdstr)   # each iteration overwrites the cache
+    res['N1']['STATS: CH_STAGE']   # silently returns R-stage results, not N1
+    ```
+
+    To capture a true snapshot, call `.copy()` on the returned `ProcResult`.
+    This produces a frozen `ProcResult` that owns its DataFrames independently
+    of the cache and supports the full `ProcResult` interface:
+
+    ```python
+    res = {}
+    for stage in ['N1', 'N2', 'N3', 'R']:
+        proj.var('stage', stage)
+        res[stage] = proj.silent_proc(cmdstr).copy()   # frozen snapshot
+    res['N1']['STATS: CH_STAGE']       # correct N1 results
+    res['N1'].table('STATS', 'CH_STAGE')
+    res['N1'].strata()
+    ```
 
 The `lp.cmdfile()` utility function can be used to pass a file-based Luna script to `proc()` (i.e.
 which will strip out comments, etc).
@@ -660,6 +725,193 @@ variables in scripts, e.g. as above (`${eeg}`).
 Note: a similar form of this command exists, `proj.silent_proc()`, which has identical syntax but suppresses console/log output.
 
 
+### proj.proc_parallel()
+
+_Evaluate Luna commands on all sample-list individuals using worker processes_
+
+```
+ proc_parallel( cmdstr, workers=None, batch_size=None, params=None, param_file=None,
+               strict=False, progress=True, out_db=None, out_text=None, in_memory=None,
+               n1=None, n2=None, ids=None, skip=None )
+
+    Args:
+      cmdstr (str)       a valid Luna command script
+      workers (int)      number of worker processes; if omitted, a conservative default is used
+                         (min(10, cpu_count // 2)).  Values are capped at the available CPU
+                         count and the number of selected records.
+      batch_size (int)   number of sample-list rows sent to each worker task
+      params (dict)      optional Luna variables to pass explicitly to workers
+      param_file (str)   optional parameter file of Luna variables to pass to workers
+      strict (bool)      raise an error if any row or worker fails
+      progress (bool)    show a progress bar while worker tasks complete (default: True)
+      out_db (str)       base path for per-worker Luna output database files.
+                         Each worker writes to '{out_db}-{slice_idx}.db'.  Results are
+                         NOT held in memory; table queries raise FileOutputModeError.
+                         Mutually exclusive with out_text.
+      out_text (str)     path to a folder for per-individual plain-text output (equivalent
+                         to the luna -t flag).  Each individual's tables are written to
+                         '{out_text}/{id}/CMD_FACTORS.txt'.  Mutually exclusive with out_db.
+      in_memory (bool)   explicitly select in-memory mode.  Defaults to True unless out_db
+                         or out_text is supplied; it cannot be combined with file output.
+      n1 (int)           first sample-list row to process (1-based, inclusive).
+                         Mirrors the luna n1 option.
+      n2 (int)           last sample-list row to process (1-based, inclusive).
+                         Mirrors the luna n2 option.
+      ids (str or list)  process only the individuals named here; a plain string
+                         is split on whitespace.  Mirrors luna id=.
+      skip (str or list) exclude the individuals named here; a plain string
+                         is split on whitespace.  Mirrors luna skip=.
+
+    Returns:
+      ProcResult
+
+    Example:
+      res = proj.proc_parallel( 'HEADERS', workers=4 )
+      res.ok
+      res.table( 'HEADERS' )
+```
+
+`proc_parallel()` is the process-based version of `proj.proc()`.  It uses separate
+Python worker processes rather than threads, which keeps each worker's Luna state
+isolated and avoids shared static resources.  After all workers complete, results are
+injected into the project's results cache, so `proj.table()` and `proj.strata()` work
+identically regardless of whether `proc()` or `proc_parallel()` was used.
+
+The returned `ProcResult` is a lightweight wrapper that delegates all table queries
+back to the project cache — no separate copy of the data is held.
+
+For example, for a command with multiple strata:
+
+```
+res = proj.proc_parallel( """
+EPOCH len=30
+PSD sig=C4 spectrum dB
+""" , workers=4 , batch_size=5 )
+
+res.ok
+res.strata()
+psd = res.table( 'PSD' , [ 'CH' , 'F' ] )
+```
+
+The list form for `strata` is order-insensitive, so `[ 'CH' , 'F' ]` and
+`[ 'F' , 'CH' ]` refer to the same table.  Results can also be accessed with
+a string key: `res[ 'HEADERS: BL' ]`.  To see what tables are available:
+
+```
+res.strata()              # DataFrame of Command/Strata pairs
+res.commands()            # unique commands
+res.table_index()         # dict: { cmd: [[factor_list], ...] }
+res.has_table( 'PSD' , 'CH_F' )
+```
+
+Numeric columns are automatically coerced to numeric types after all rows are
+collated.  The `ID` column is always kept as a string.
+
+If `strict=False` (the default), failed rows are collected in `res.errors` and
+successful rows are still returned.  `res.ok` is `True` only when there were no
+per-row errors.  If `strict=True`, any failure raises `ProcError`; the exception
+has a `result` attribute containing the partial `ProcResult`.
+
+Worker processes do not implicitly inherit project variables from the parent
+process.  Pass variables explicitly with `params`, `param_file`, or both.  If the
+same key appears in both places, the value in `params` takes precedence.
+
+**Workers on cloud/HPC nodes**: when `workers` is `None`, the default is
+`min(10, cpu_count // 2)` — a conservative cap suitable for shared laptops and
+notebooks. An explicit value is limited by the available CPU count and by the
+number of selected records.
+
+**File-output mode** (`out_db` / `out_text`): output is written directly to disk
+rather than accumulated in the project results cache.  This is useful when the
+combined in-memory result would be too large to hold at once.
+
+- `out_db` — each worker slice writes a Luna output database file named
+  `{out_db}-{slice_idx}.db`.  These can later be read with `proj.import_db()`
+  or `lp.destrat()`.
+- `out_text` — each individual's tables are written as tab-delimited text files
+  under `{out_text}/{id}/CMD_FACTORS.txt`, mirroring the `luna -t` convention.
+  Use `lp.list_text_tables()` and `lp.read_text_table()` to read the results.
+
+The two modes are mutually exclusive.  In either case the returned `ProcResult`
+carries error and records metadata but raises `FileOutputModeError` if you try to
+call `.table()` or `.strata()` on it.
+
+```python
+# Write per-worker .db files
+res = proj.proc_parallel('PSD sig=EEG spectrum', workers=8, out_db='out/run')
+# → writes out/run-1.db, out/run-2.db, ...
+db = lp.destrat('out/run-*.db')
+df = db.get('PSD', r=['B', 'CH'])
+
+# Write plain-text tables
+res = proj.proc_parallel('HEADERS', workers=4, out_text='out/txt')
+lp.list_text_tables('out/txt')
+df = lp.read_text_table('out/txt', 'HEADERS', factors='CH')
+```
+
+```
+res = proj.proc_parallel( ' EPOCH len=30 & PSD sig=${s} spectrum dB ' ,
+                          workers=4, params={ 's': 'C4' } )
+```
+
+A parameter file follows the usual Luna convention of one key/value pair per row,
+using either whitespace/tab separation or `key=value` syntax, for example:
+
+```
+sig C4
+th=3
+```
+
+**Row and ID filtering** mirrors the Luna command-line `n1`, `n2`, `id=`, and `skip=`
+options.  All four can be combined:
+
+```python
+# process rows 1–50 of the sample list
+res = proj.proc_parallel('HEADERS', workers=4, n1=1, n2=50)
+
+# process specific individuals
+res = proj.proc_parallel('HEADERS', workers=4, ids=['subj01', 'subj02'])
+
+# skip a list of individuals
+res = proj.proc_parallel('HEADERS', workers=4, skip=['subj99', 'subj100'])
+
+# combine row-range and ID exclusion
+res = proj.proc_parallel('HEADERS', workers=4, n1=1, n2=200, skip='subj99')
+```
+
+`n1`/`n2` are 1-based, inclusive row numbers that refer to the sample-list order.
+`ids` and `skip` accept a list of strings or a whitespace-separated string.
+Filtering happens before workers are dispatched, so only the matching rows consume
+worker capacity.
+
+Because Python process creation has overhead, especially in notebooks,
+`proc_parallel()` is most useful when each individual command run is non-trivial.
+Larger `batch_size` values reduce scheduling overhead but update progress less often.
+
+
+### proj.procn()
+
+_Convenience alias for `proj.proc_parallel()`_
+
+```
+ procn( cmdstr, workers=None, batch_size=None, params=None, param_file=None,
+        strict=False, progress=True, out_db=None, out_text=None, in_memory=None,
+        n1=None, n2=None, ids=None, skip=None )
+
+    Args:
+      see proj.proc_parallel()
+
+    Returns:
+      ProcResult
+
+    Example:
+      res = proj.procn( 'HEADERS', workers=4 )
+```
+
+`procn()` is a shorter name for `proj.proc_parallel()`; the behavior and return
+object are identical.
+
+
 ### proj.silent_proc()
 
 _Evaluate Luna commands on all sample-list individuals without console/log output_
@@ -671,16 +923,73 @@ _Evaluate Luna commands on all sample-list individuals without console/log outpu
       cmdstr (str)  a valid Luna command script
 
     Returns:
-      dict of command/strata (str) keys to dataframe values
+      ProcResult
 
     Example:
-      res = proj.silent_proc( 'HEADERS' )
+      proj.silent_proc( 'HEADERS' )
+      proj.table( 'HEADERS' )
 ```
+
+Identical to `proj.proc()` but suppresses console/log output for the duration of the call.
+
+
+### ProcResult { #procresult-live-view }
+
+All `proc()`, `silent_proc()`, `proc_parallel()`, and `procn()` calls return a `ProcResult`
+object.  It supports a dict-like interface over the results:
+
+```python
+res = proj.proc( 'EPOCH len=30 & PSD sig=EEG spectrum' )
+
+'PSD: B_CH' in res              # True/False
+res['PSD: B_CH']                # DataFrame
+res.table('PSD', 'B_CH')        # same
+res.strata()                    # DataFrame of Command/Strata pairs
+res.commands()                  # DataFrame of unique commands
+res.has_table('PSD', 'B_CH')    # True/False
+res.ok                          # True if no per-row errors
+res.errors                      # DataFrame of errors
+res.keys()                      # all 'CMD: STRATA' keys
+res.items()                     # (key, DataFrame) pairs
+```
+
+**`ProcResult` is a live view.**  It holds a reference to the project (or instance)
+results cache and delegates every table query there at call time.  It contains
+no copies of the data itself.  Calling `proc()` again replaces the cache, so any
+previously returned `ProcResult` immediately reflects the new results.
+
+**`.copy()` — frozen snapshot**
+
+Call `.copy()` to produce a self-contained `ProcResult` that owns its DataFrames
+independently of the cache.  This is essential when accumulating results across
+multiple `proc()` calls, for example looping over conditions:
+
+```python
+# Without .copy() — WRONG: all entries silently share the same cache
+res = {}
+for stage in ['N1', 'N2', 'N3', 'R']:
+    proj.var('stage', stage)
+    res[stage] = proj.silent_proc(cmdstr)       # live view, cache overwritten each iter
+res['N1']['STATS: CH_STAGE']    # returns R-stage data, not N1
+
+# With .copy() — correct
+res = {}
+for stage in ['N1', 'N2', 'N3', 'R']:
+    proj.var('stage', stage)
+    res[stage] = proj.silent_proc(cmdstr).copy()   # frozen snapshot
+res['N1']['STATS: CH_STAGE']    # N1 data
+res['N2'].table('STATS', 'CH_STAGE')
+res['N3'].strata()
+```
+
+A frozen `ProcResult` returned by `.copy()` supports the full interface above —
+`[]`, `.table()`, `.strata()`, `.commands()`, `in`, `.items()`, etc. — but reads
+from its own internal copy of the DataFrames rather than the live cache.
 
 
 ### proj.strata()
 
-_Return a list of command/strata pairs from a prior `proc()` run_
+_Return a list of command/strata pairs from the project results cache_
 
 ```
  strata()
@@ -697,19 +1006,20 @@ _Return a list of command/strata pairs from a prior `proc()` run_
 
 ```
 
-The project results cache stores the results of the last successful run of `proj.proc()`.
+The project results cache is populated by `proj.proc()`, `proj.proc_parallel()`, and `proj.procn()`.
 
 
 ### proj.table()
 
-_Return a table as a dataframe from a prior `proc()` run_
+_Return a table as a dataframe from the project results cache_
 
 ```
  table( cmd , strata = 'BL' )
 
     Args:
-      cmd (str)   case-sensitive command name in the project results cache
-      strata (str, optional, defaults to BL)  case-sensitive stratum in the project results cache
+      cmd (str)                           case-sensitive command name
+      strata (str or list, optional)      stratum label (default: 'BL'), or a list of
+                                          factor names resolved order-independently, e.g. ['CH','F']
 
     Returns:
       a dataframe of values associated with a specific command/strata pair in the project-level results cache
@@ -718,16 +1028,20 @@ _Return a table as a dataframe from a prior `proc()` run_
       proj.proc( 'HEADERS' )
       proj.table( 'HEADERS' )
       proj.table( 'HEADERS' , 'CH' )
+      proj.table( 'PSD' , [ 'CH' , 'F' ] )
 
 ```
 
-The project results cache stores the results of the last successful run of `proj.proc()`.  A list of available tables
-is given by `proj.strata()`.  All individuals from the sample-list are combined as different rows of the same results
-table.
+The project results cache is populated by `proj.proc()`, `proj.proc_parallel()`, and `proj.procn()`.
+A list of available tables is given by `proj.strata()`.  All individuals from the sample-list are
+combined as different rows of the same results table.
+
+The `strata` argument accepts either a string label (e.g. `'CH_F'`) or a list of factor names
+(e.g. `['CH', 'F']`); the list form is order-insensitive.
 
 ### proj.commands()
 
-_Return a list of commands executed from a prior `proc()` run_
+_Return a list of commands in the project results cache_
 
 ```
  commands()
@@ -744,7 +1058,7 @@ _Return a list of commands executed from a prior `proc()` run_
 
 ```
 
-The project results cache stores the results of the last successful run of `proj.proc()`.
+The project results cache is populated by `proj.proc()`, `proj.proc_parallel()`, and `proj.procn()`.
 
 
 
@@ -753,7 +1067,7 @@ The project results cache stores the results of the last successful run of `proj
 _Return the variables (table header) for a specific command/strata pair from a prior `proc()` run_
 
 ```
- table( cmd , strata = 'BL' )
+ variables( cmd , strata = 'BL' )
 
     Args:
       cmd (str)	  case-sensitive command name in the project results cache
@@ -772,9 +1086,9 @@ _Return the variables (table header) for a specific command/strata pair from a p
 This is similar to `proj.table()` but only returns table headers (i.e. variable names).
 
 
-### proj.empty_result_set()
+### empty_result_set()
 
-_Indicate whether there are any results in the project results cache_
+_Indicate whether the project results cache is empty_
 
 ```
  proj.empty_result_set()
@@ -939,7 +1253,9 @@ _A project-level wrapper for the POPS stager_
        do_edger = True ,
        no_filter = False ,
        do_reref = False ,
-       m = None , m1 = None , m2 = None )
+       m = None , m1 = None , m2 = None,
+       lights_off = '.' , lights_on = '.',
+       ignore_obs = False, args = '' )
 
     Args:
       s (str, optional)   central EEG channel (in single-channel mode)
@@ -956,6 +1272,10 @@ _A project-level wrapper for the POPS stager_
       m (str, optional)   mastoid reference (in single-channel mode, if do_reref == True )
       m1 (str, optional)  mastoid reference for s1 (in two-channel mode, if do_reref == True )
       m2 (str, optional)  mastoid reference for s2 (in two-channel mode, if do_reref == True )
+      lights_off (str, default='.')   lights-off clock time/marker passed to POPS
+      lights_on (str, default='.')    lights-on clock time/marker passed to POPS
+      ignore_obs (bool, default=False) ignore observation-level issues
+      args (str, default='')          extra POPS arguments
 
     Returns:
       this command populates the project results cache with POPS results
@@ -989,10 +1309,10 @@ running [`POPS`](../ref/pops.md#pops-prediction) via `proj.proc()` directly.  Se
 _A project-level wrapper for the SUN2019 biological age model_
 
 ```
- predict_SUN2019(  cen , th = '3' , path = None )`
+ predict_SUN2019( cen , th = '3' , path = None )
 
     Args:
-      cen (str)                comma-delimited list of central EEGs
+      cen (str or list[str])   comma-delimited list of central EEGs
       th (float, default=3)    SD threshold for missing-value imputation
       path (str, default=None) path to resources for this model  
 
@@ -1000,8 +1320,7 @@ _A project-level wrapper for the SUN2019 biological age model_
       populates the project results cache with results
 
     Example:
-      proj.silence()         # turn off logging
-      proj.silence( False )  # turn it back on
+      proj.predict_SUN2019( 'C3,C4' )
 ```
 
 `resources.MODEL_PATH` is set to `/build/luna-models/` (suitable for
@@ -1021,11 +1340,11 @@ the [PREDICT](http://zzz.nyspi.org/luna/ref/predict/) command in general.
 _Turns off the console/log echoing_
 
 ```
- silence( x = True , verbose = False )
+ silence( b = True , verbose = False )
 
     Args:
-      x (bool, True by default)         silence console output
-      verbose( bool, False by default)  report action to console
+      b (bool, True by default)         silence console output
+      verbose (bool, False by default) report action to console
 
     Returns:
       nothing
@@ -1041,10 +1360,10 @@ _Turns off the console/log echoing_
 _Reports on whether the console/log is silenced_
 
 ```
- is_silenced()
+ is_silenced( b = True )
 
     Args:
-      none
+      b (bool, optional)  ignored; retained for API compatibility
 
     Returns:
       True if console/log is silenced, else False
@@ -1125,10 +1444,10 @@ You cannot attach a new EDF to an existing instance.   If you want to reuse the 
 _Attach an annotation file_
 
 ```
- attach_annot( f )
+ attach_annot( annot )
 
     Args:
-      f (str)  annotation filename
+      annot (str)  annotation filename
 
     Returns:
       True if attachment was a success,	else False
@@ -1289,10 +1608,10 @@ _Alias for `inst.channels()`_
 _Returns a list of true/false values for whether certain channels exist_
 
 ```
- has_channels(x)
+ has_channels(ch)
 
     Args:
-      x  (str or list(str))   one or more channel labels to query
+      ch (str or list(str))   one or more channel labels to query
 
     Returns:
       a list of boolean values
@@ -1312,7 +1631,7 @@ Also, matches are case-insensitive.
 _Alias for `inst.has_channels()`_
 
 ```
- has(x)
+ has(ch)
 ```
 
 
@@ -1321,10 +1640,10 @@ _Alias for `inst.has_channels()`_
 _Returns a list of true/false values for the presence of certain annotation classes_
 
 ```
- has_annots(x)
+ has_annots(anns)
 
     Args:
-      x (str or list(str))   one or more annotation class labels
+      anns (str or list(str))   one or more annotation class labels
 
     Returns:
       a list of boolean values
@@ -1341,7 +1660,7 @@ Note that matching is case-sensitive and must be exact.
 _Alias for `inst.has_annots()`_
 
 ```
- has_annot(x)
+ has_annot(anns)
 ```
 
 ### inst.fetch_annots()
@@ -1364,10 +1683,11 @@ _Return annotation events as a dataframe_
 _Return full annotation events as a dataframe_
 
 ```
- fetch_fulls_annots( anns )
+ fetch_fulls_annots( anns , add_keys = False )
 
     Args:
-      anns (str or list[str])   one or more annotation class labels
+      anns (str or list[str])        one or more annotation class labels
+      add_keys (bool, optional)      include encoded annotation keys in the returned table
 
     Returns:
       a dataframe with `Class`, `Instance`, `Channel`, `Meta`, `Start`, and `Stop` columns
@@ -1524,7 +1844,7 @@ _Return the variables for a specific command/strata pair_
 
 ### inst.proc()
 
-_Evaluate arbitrary Luna commands and directly return all results_
+_Evaluate arbitrary Luna commands and return a ProcResult_
 
 ```
  proc( cmdstr )
@@ -1533,15 +1853,20 @@ _Evaluate arbitrary Luna commands and directly return all results_
       cmdstr (str)   a Luna command script
 
     Returns:
-      dict of stratum->table pairs
+      ProcResult
 
     Examples:
       res = p.proc( 'HEADERS' )
-      lp.show( res )
+      res.table( 'HEADERS' )
+      p.table( 'HEADERS' )     # equivalent: query the instance cache directly
 
 ```
 
-This is effectively the same function as `eval()` - it just varies in how it returns results: whereas `eval()` returns a table summary of the results generated (command, factor/level), as generated by `inst.strata()`; in contrast, `proc()` returns an object representing all results directly.  As with `eval()`, this also populates the internal _results cache_. which can be queried with `strata()`, `table()`, etc.
+Like `eval()`, this populates the instance results cache.  The returned `ProcResult` is a
+lightweight wrapper that delegates all table queries back to the instance cache — results can
+be accessed either through the returned object or directly via `p.strata()`, `p.table()`, etc.
+
+See the note on [live views and `.copy()`](#procresult-live-view) in the project `proc()` section — the same behaviour applies at the instance level.
 
 To turn off console logging use `proj.silence()`. Alternatively, use `inst.silent_proc()`, which is similar to `proc()` but suppresses console output.
 
@@ -1556,8 +1881,11 @@ _Evaluate Luna commands silently_
       cmdstr (str)  a Luna command script
 
     Returns:
-      dict of command/strata keys to dataframes
+      ProcResult
 ```
+
+Identical to `inst.proc()` but suppresses console/log output for the duration of the call.
+Results are accessible via the returned `ProcResult` or directly via `p.strata()`, `p.table()`, etc.
 
 ### inst.silent_proc_lunascope()
 
@@ -1570,7 +1898,7 @@ _Internal silent evaluation helper for LunaScope_
 
 ### inst.empty_result_set()
 
-_Indicates whether the results cache is currently non-empty_
+_Indicates whether the results cache is currently empty_
 
 ```
  empty_result_set()
@@ -1649,7 +1977,7 @@ This may include automatically set individual variables such as `${eeg}` based o
 _Returns an array of signal/annotation data_
 
 ```
- data(  chs = None , annots = None , time = False )
+ data( chs , annots = None , time = False )
 
      Args:
       chs (str or list[str] )               channel label(s) 
@@ -1673,7 +2001,7 @@ The presence/absence of annotations is represented as a 0/1 variable with the sa
 _Returns an array of merged signal/annotation data based on selected intervals (slices)_
 
 ```
- slice( intervals, chs , annots , time = False )
+ slice( intervals, chs , annots = None , time = False )
 
      Args:
       intervals                            list of (start,stop)-tuples in time-points
@@ -1699,7 +2027,7 @@ Unlike `inst.slices()`, this function merges all requested samples into a single
 _Returns an array of individual signal/annotation data based on selected intervals (slices)_
 
 ```
- slices( intervals, chs , annots , time = False )
+ slices( intervals, chs , annots = None , time = False )
 
      Args:
       intervals                            list of (start,stop)-tuples in time-points
@@ -1744,10 +2072,10 @@ Intervals are in _time-points_; 1 time-point is 1e-9 seconds.  This is a member 
 
 ### inst.s2i()
 
-_Helper function to convert epochs to intervals_
+_Helper function to convert seconds to intervals_
 
 ```
- e2i( secs )
+ s2i( secs )
 
      Args:
       secs      list of (start,stop) float tuples (seconds)
@@ -1831,7 +2159,7 @@ _Inserts a new signal into the in-memory EDF_
  insert_signal( label , data , sr )
 
      Args:
-      label (str)         channel label (must be unique to EDF)
+      label (str)         new channel label (must be unique to EDF)
       data (list[float])  signal data
       sr (int)            sample rate
 
@@ -1851,13 +2179,13 @@ Also, the `label` must not already exist in the EDF.
 
 ### inst.update_signal()
 
-_Inserts a new signal into the in-memory EDF_
+_Updates an existing signal in the in-memory EDF_
 
 ```
  update_signal( label , data )
 
      Args:
-      label (str)         channel label (must be unique to EDF)
+      label (str)         existing channel label
       data (list[float])  signal data
 
      Returns:
@@ -2007,15 +2335,15 @@ _Fit Sun et al (2019) brain-age prediction model_
 
     Args:
       cen (str or list[str])   comma-delimited list of central EEGs
+      age (int or float, optional) chronological age for this individual
       th (float, default=3)    SD threshold for missing-value imputation
       path (str, default=None) path to resources for this model  
 
     Returns:
-      populates the project results cache with results
+      populates the instance results cache with results
 
     Example:
-      proj.silence()         # turn off logging
-      proj.silence( False )  # turn it back on
+      p.predict_SUN2019( 'C3,C4', age = 55 )
 ```
 
 This is the `inst`-analog of `proj.predict_SUN2019()` (i.e. fits to a
@@ -2081,7 +2409,7 @@ Stage labels are assumed to be `N1`, `N2`, `N3`, `R`, `W`, `?` and `L`.   This f
 
 ### lp.hypno_density()
 
-_Make a hypno-density (posterior stage probabilites)_
+_Make a hypno-density (posterior stage probabilities)_
 
 ```
  hypno_density( probs , e = None , xsize = 20 , ysize = 2 , title = None )
@@ -2112,10 +2440,11 @@ as above).
 _Calculate and plot a PSD curve_
 
 ```
- psd( ch,  minf = None, maxf = None, minp = None, maxp = None , xlines = None , ylines = None )
+ psd( ch, var = 'PSD', minf = None, maxf = 25, minp = None, maxp = None , xlines = None , ylines = None )
 
     Args:
       ch (str)         a channel label
+      var (str, optional)      power variable to plot (default 'PSD')
       minf (float, optional)   minimum frequency (x-axis)
       maxf (float, optional)   maximum frequency (x-axis)
       minp (float, optional)   minimum power (y-axis)
@@ -2199,7 +2528,7 @@ This helper runs [`MTM`](../ref/power-spectra.md#mtm) internally over the select
 _Plot a spectrogram heatmap given prior spectral resuts_
 
 ```
- spec(df , ch = None , var = 'PSD', mine = None , maxe = None , minf = None, maxf = None, w = 0.025 )`
+ spec(df , ch = None , var = 'PSD', mine = None , maxe = None , minf = None, maxf = None, w = 0.025 )
 
     Args:
       df (dataframe)         CH/E/F-level output from PSD or MTM
@@ -2227,10 +2556,10 @@ _Make a topo-plot_
 
 ```
  topo_heat(chs, z,
-           ths = None, th=0.05,
-           topo = None, lmts= None ,
-           sz=70, colormap = "bwr", title = "", 
-           rimcolor="black", lab = "dB")
+           ths = None, th = 0.05,
+           topo = None, lmts = None,
+           sz = 70, colormap = 'bwr', title = '',
+           rimcolor = 'black', lab = 'dB')
 
     Args:
       chs (list[str])      channel labels (per channel)
@@ -2238,6 +2567,8 @@ _Make a topo-plot_
       ths (list[float])    optional, threshold values (per channel) 
       th (float)           threshold (default 0.05)
       topo (dataframe)     alternative channel locations
+      lmts (tuple, optional) color scale limits
+      sz (float)           point size
       colormap (str)       optional, default color-map (default: blue,white,red)
       title (str)          optional title
       rimcolor (str)       optional, color of rim (above threshold channels)
@@ -2257,7 +2588,7 @@ _Make a topo-plot_
 The default channel locations are from `lp.default_xy()`.  You can
 specify your own: see the format of `lp.default_xy()` output for
 details (i.e. a Pandas dataframe with three columns: `CH`, with 2D
-Cartesian co-ordinates `X` and `Y` scaled betwee -0.5 and +0.5,
+Cartesian coordinates `X` and `Y` scaled between -0.5 and +0.5,
 i.e. head is a unit circle).
 
 If `ths` is not `None`, then channels with a value for `ths` _below_
@@ -2393,6 +2724,497 @@ _Return the `lunapi` and Luna versions_
 `version()`
 
 
+---
+
+## Output database reader
+
+`lp.destrat` is a pure-Python, in-process reader for Luna output databases (`.db`
+files produced by the `luna` command-line tool with `-o`).  It replicates the functionality
+of the `destrat` command-line tool without spawning a subprocess, and supports querying
+multiple databases simultaneously via glob patterns.
+
+### lp.destrat()
+
+_Open one or more Luna output databases_
+
+```
+ destrat( pattern )
+
+    Args:
+      pattern (str or list of str)
+          A glob pattern, single file path, or list of paths/patterns.
+          Examples: 'out.db', 'results/run-*.db', ['a.db', 'b.db']
+
+    Returns:
+      a destrat object
+
+    Raises:
+      FileNotFoundError if no files are found
+
+    Example:
+      db = lp.destrat('out.db')
+      db = lp.destrat('results/run-*.db')
+      db = lp.destrat(['run1.db', 'run2.db'])
+```
+
+When more than one file is matched, `attaching N databases` is printed on
+construction.  All subsequent calls transparently query across all files and
+merge the results.
+
+Metadata (factors, strata, variables, individual IDs) is loaded once from each
+file at construction time and cached in memory.  This means `tables()`, `vars()`,
+and `get()` do not re-open the schema tables on every call.
+
+#### destrat.tables()
+
+_Summary of available command/strata/variable combinations_
+
+```
+ tables()
+
+    Args:
+      none
+
+    Returns:
+      pandas.DataFrame with columns CMD, FACTORS, N_VARS, VARIABLES
+
+    Example:
+      db = lp.destrat('out.db')
+      db.tables()
+```
+
+Each row describes one (command, factor-set) combination present in the database(s).
+`FACTORS` is a comma-separated list of row-stratifying factors, e.g. `B,CH`.  The
+special factor `E` indicates that the table has per-epoch rows (from the Luna
+timepoints table).  Baseline output (no stratification) appears as an empty
+`FACTORS` field.
+
+```
+   CMD FACTORS  N_VARS                     VARIABLES
+   PSD    B,CH       3               MTM,PSD,RSPEC
+   PSD   E,B,CH      3               MTM,PSD,RSPEC
+  STATS             13       KURT,MAX,MEAN,MIN,RMS,...
+```
+
+#### destrat.vars()
+
+_List variables present in the database(s)_
+
+```
+ vars( cmd=None )
+
+    Args:
+      cmd (str, optional)   filter to a single command; leading '+' or '#' is stripped
+
+    Returns:
+      pandas.DataFrame with columns CMD, VAR
+
+    Example:
+      db.vars()
+      db.vars('PSD')
+      db.vars('+PSD')
+```
+
+#### destrat.get()
+
+_Extract data and return a tidy DataFrame_
+
+```
+ get( cmd, r=None, v=None, ids=None, c=None )
+
+    Args:
+      cmd (str)
+          Command name.  '+PSD', '#PSD', and 'PSD' are all accepted.
+
+      r (str, list, or dict, optional)
+          Row stratifiers — each unique combination of factor levels becomes a
+          separate row.  Three equivalent forms are accepted:
+
+            Space-separated string:  r='B CH'
+            With level subset:       r='B/ALPHA,SIGMA CH'
+            List (all levels):       r=['B', 'CH']
+            Dict (explicit levels):  r={'B': ['ALPHA', 'SIGMA'], 'CH': None}
+
+          Use r='E' to add per-epoch rows (values joined from the timepoints
+          table).  Factors not in r become implicit — they must still be
+          present in the strata for the command to match, but they are not
+          expanded into separate rows.
+
+      c (str, list, or dict, optional)
+          Column stratifiers — each level combination is pivoted into its own
+          set of columns named VAR.FAC_LEVEL (matching destrat's -c behaviour).
+          Accepts the same forms as r.  A factor cannot appear in both r and c;
+          attempting this raises ValueError.
+
+      v (str or list of str, optional)
+          Variable name(s) to return.  A space-separated string is accepted.
+          None (default) returns all variables.
+
+      ids (str or list of str, optional)
+          Individual IDs to include.  A space-separated string is accepted.
+          None (default) returns all individuals.
+
+    Returns:
+      pandas.DataFrame.
+        Without c: columns are ID, row-factor columns, then variable columns.
+        With c:    variable columns are named VAR.FAC_LVL for each col-strata.
+        Missing combinations (individuals absent from some databases) yield NaN.
+
+    Raises:
+      ValueError if the same factor appears in both r and c
+
+    Examples:
+      # baseline (no stratification)
+      df = db.get('STATS')
+
+      # all PSD variables, all bands and channels
+      df = db.get('+PSD', r=['B', 'CH'])
+
+      # destrat-style string with level subset
+      df = db.get('+PSD', r='B/ALPHA,SIGMA CH', v=['PSD'])
+
+      # dict-style
+      df = db.get('+PSD', r={'B': ['ALPHA','SIGMA'], 'CH': None}, v='PSD')
+
+      # per-epoch PSD for specific individuals
+      df = db.get('+PSD', r='E B CH', v='PSD', ids=['id1', 'id2'])
+
+      # column pivot (wide format, one column per channel)
+      df = db.get('+PSD', r='B', c='CH', v='PSD')
+      # → columns: ID, B, PSD.CH_C3, PSD.CH_C4, ...
+```
+
+**Performance note**: `get()` queries only the rows that match the requested
+strata.  It does not scan entire tables and does not round-trip through text
+serialisation.  For large databases, this is substantially faster than the
+`destrat` command-line tool, which reads and holds all data in memory before
+filtering.
+
+**Multiple databases**: glob patterns or lists of files are transparently merged.
+Individual IDs present in only some databases produce `NaN` for the variables
+from the missing files.  Unlike the `destrat` command-line tool, the `c=` column
+pivot works correctly even when querying multiple databases.
+
+#### destrat.files
+
+_List of resolved file paths_
+
+```python
+db = lp.destrat('results/run-*.db')
+db.files          # ['results/run-1.db', 'results/run-2.db', ...]
+len(db)           # number of attached database files
+```
+
+---
+
+### lp.list_text_tables()
+
+_List tables available in a Luna text-output folder_
+
+```
+ list_text_tables( path, id=None )
+
+    Args:
+      path (str or Path)   root folder produced by proc_parallel(out_text=...) or luna -t
+      id (str, optional)   individual ID (subdirectory) to inspect; defaults to the first
+                           subdirectory in sorted order
+
+    Returns:
+      pandas.DataFrame with columns command, strata, file
+
+    Raises:
+      FileNotFoundError if the folder or the individual subdirectory does not exist
+
+    Example:
+      res = proj.procn('PSD sig=EEG spectrum', workers=4, out_text='out/txt')
+      lp.list_text_tables('out/txt')
+```
+
+Luna's text output (`-t`) stores each individual's results as tab-delimited files
+named `CMD_FACTOR1_FACTOR2.txt` under a per-individual subdirectory.  This function
+inspects one subdirectory and returns a summary — useful for discovering what tables
+are available before calling `read_text_table()`.
+
+```
+    command  strata           file
+    HEADERS      BL      HEADERS.txt
+    HEADERS      CH   HEADERS_CH.txt
+        PSD    B_CH   PSD_B_CH.txt
+```
+
+---
+
+### lp.read_text_table()
+
+_Read a concatenated text-output table from a Luna text-output folder_
+
+```
+ read_text_table( path, cmd_or_file, factors=None )
+
+    Args:
+      path (str or Path)   root folder produced by proc_parallel(out_text=...) or luna -t
+
+      cmd_or_file (str, tuple, or list)
+          One of:
+            - bare command name:  'HEADERS'              (baseline strata)
+            - filename:           'HEADERS_CH.txt'
+            - sequence:           ('HEADERS', 'CH')
+                                  ['PSD', ['B', 'CH']]
+
+      factors (str or list of str, optional)
+          Factor(s) when cmd_or_file is a plain command name.
+          Ignored when a filename or sequence is given.
+
+    Returns:
+      pandas.DataFrame — all individuals concatenated, with an ID column
+
+    Raises:
+      FileNotFoundError if no matching files are found
+
+    Example:
+      df = lp.read_text_table('out/txt', 'HEADERS')
+      df = lp.read_text_table('out/txt', 'HEADERS', factors='CH')
+      df = lp.read_text_table('out/txt', ('PSD', ['B', 'CH']))
+      df = lp.read_text_table('out/txt', 'PSD_B_CH.txt')
+```
+
+Finds every per-individual file matching the requested command/strata combination
+and concatenates them into a single DataFrame.  Factor ordering in the filename is
+handled automatically; both `.txt` and `.txt.gz` files are supported.
+
+This is a convenient complement to `proc_parallel(out_text=...)`: run with
+`out_text=` to write results to disk without holding everything in memory, then
+use `read_text_table()` to load just the table(s) you need.
+
+```python
+# Run and write to disk
+proj.procn('EPOCH & PSD sig=EEG spectrum dB', workers=16, out_text='out/txt')
+
+# Inspect what was written
+lp.list_text_tables('out/txt')
+
+# Load one table
+df = lp.read_text_table('out/txt', 'PSD', factors=['B', 'CH'])
+```
+
+---
+
+## EDF utilities
+
+These functions wrap the Luna command-line tools for EDF-level operations that are
+not directly exposed through the Python engine bindings.  They require that the
+`luna` binary is available on the system PATH (or supplied via `luna_bin=`).
+
+### lp.merge_edfs()
+
+_Concatenate EDFs in time (row-bind)_
+
+```
+ merge_edfs( files, edf='merged.edf', id='merged',
+             slist=None, fixed=False, luna_bin=None )
+
+    Args:
+      files (list)       EDF file paths to merge
+      edf (str)          output EDF filename (default: 'merged.edf')
+      id (str)           EDF record ID for the output file (default: 'merged')
+      slist (str)        if given, write a one-row sample-list to this path
+      fixed (bool)       if True, ignore file timestamps and concatenate in list order
+                         (default: False — sort by embedded start time)
+      luna_bin (str)     path to the luna binary; defaults to 'luna' on PATH
+
+    Returns:
+      pathlib.Path       path to the written output EDF
+
+    Example:
+      lp.merge_edfs(['night1.edf', 'night2.edf'], edf='both_nights.edf', id='subj1')
+```
+
+Mirrors `luna --merge`.  If there are gaps between the recordings the output is
+written as EDF+D (discontinuous).  Use `fixed=True` to override timestamp ordering
+and concatenate in the exact order supplied.
+
+```python
+# Merge two nights in timestamp order
+out = lp.merge_edfs(['night1.edf', 'night2.edf'], edf='combined.edf', id='p01')
+
+# Force a specific order (ignore timestamps)
+out = lp.merge_edfs(['seg1.edf', 'seg2.edf', 'seg3.edf'],
+                    edf='full.edf', id='p01', fixed=True)
+```
+
+---
+
+### lp.bind_edfs()
+
+_Bind EDFs by adding channels (column-bind)_
+
+```
+ bind_edfs( files, edf='merged.edf', id='merged',
+            slist=None, luna_bin=None )
+
+    Args:
+      files (list)       EDF file paths to bind
+      edf (str)          output EDF filename (default: 'merged.edf')
+      id (str)           EDF record ID for the output file (default: 'merged')
+      slist (str)        if given, write a one-row sample-list to this path
+      luna_bin (str)     path to the luna binary; defaults to 'luna' on PATH
+
+    Returns:
+      pathlib.Path       path to the written output EDF
+
+    Example:
+      lp.bind_edfs(['eeg.edf', 'eog.edf', 'emg.edf'], edf='psg.edf', id='subj1')
+```
+
+Mirrors `luna --bind`.  All source EDFs must share the same start time and record
+count, but channels may have different sample rates.
+
+```python
+# Add EEG, EOG and EMG channels from separate files into one EDF
+out = lp.bind_edfs(['eeg.edf', 'eog.edf', 'emg.edf'], edf='psg.edf', id='subj1')
+```
+
+---
+
+### lp.overlap()
+
+_Multi-sample annotation overlap / enrichment analysis_
+
+```
+ overlap( files, seed, other=None, bg=None, nreps=1000,
+          event_perm=False, event_perm_w=None,
+          w=None, out=None, luna_bin=None, **kwargs )
+
+    Args:
+      files              per-individual annotation files; accepted forms:
+                           dict   {'id1': 'id1.annot', 'id2': 'id2.annot', ...}
+                           list   [('id1', 'path'), ...] or plain list of file paths
+                                  (filename stem used as ID)
+                           DataFrame  first col = ID, second = annot file
+                           str    path to a Luna sample-list (ID / EDF / annot columns)
+                                  or a glob pattern for annotation files
+      seed (str or list) annotation class(es) to use as seeds — the events being tested
+      other (str or list) annotation class(es) to measure overlap against; defaults to
+                          all annotations present other than the seeds
+      bg (str or list)   background annotation class(es) defining the regions within
+                         which permutations are performed; required unless event_perm=True
+      nreps (int)        number of permutations (default: 1000)
+      event_perm (bool)  use event-based permutation instead of background-region shuffling
+      event_perm_w (float) neighbourhood window in seconds for event permutation (default 5)
+      w (float)          window size in seconds for distance-based calculations
+      out (str)          path for the output database; if omitted, a temporary file is used
+      luna_bin (str)     path to the luna binary; defaults to 'luna' on PATH
+      **kwargs           any additional luna --overlap parameters (e.g. edges=5, pileup='T')
+
+    Returns:
+      lp.destrat         output database reader; call .tables() and .get() to extract results
+
+    Example:
+      db = lp.overlap({'id1': 'id1.annot', 'id2': 'id2.annot'},
+                      seed='spindle', bg='NREM', nreps=1000)
+      db.tables()
+      db.get('OVERLAP', r='SEED')
+```
+
+Mirrors `luna --overlap`.  Individual annotation events are pooled across all
+supplied individuals into a shared timeline, then tested for non-random overlap with
+`seed` annotations by permutation.
+
+Either `bg=` or `event_perm=True` is required.  `bg=` defines the regions within
+which seed events are randomly shuffled on each permutation; `event_perm=True`
+instead shuffles the seed event positions within a local neighbourhood window.
+
+```python
+# Basic enrichment: are spindles co-occurring with slow oscillations more
+# than expected under random shuffling within NREM sleep?
+db = lp.overlap(
+    {'id1': 'id1.annot', 'id2': 'id2.annot', 'id3': 'id3.annot'},
+    seed='spindle',
+    bg='NREM',
+    other='SO',
+    nreps=1000,
+)
+db.tables()
+df_seed  = db.get('OVERLAP', r='SEED')    # per-seed-class stats
+df_other = db.get('OVERLAP', r='OTHER')   # per-other-class stats
+
+# From a sample list (tab-delimited: ID / EDF / annot)
+db = lp.overlap('cohort.lst', seed='spindle', bg='NREM', other='SO')
+
+# Glob of annotation files (filename stem becomes the ID)
+db = lp.overlap('annots/*.annot', seed='spindle', bg='NREM')
+
+# Event permutation mode
+db = lp.overlap(files_dict, seed='spindle', event_perm=True, event_perm_w=5)
+
+# Save the output database for later
+db = lp.overlap(files_dict, seed='spindle', bg='NREM', out='overlap_results.db')
+```
+
+Additional Luna `--overlap` parameters can be passed as keyword arguments using
+Python underscores or their original hyphenated names:
+
+```python
+db = lp.overlap(files, seed='spindle', bg='NREM',
+                pileup=True, edges=5, max_shuffle=30)
+```
+
+---
+
+## BioData Catalyst
+
+`lunapi` includes a small client for browsing and downloading files from a
+Gen3/BioData Catalyst commons. It is intended for obtaining recordings and
+their sidecar files for subsequent Luna processing; it does not replace the
+commons' own access-control or consent procedures.
+
+### BDCClient
+
+Create a client with the commons endpoint and either a BioData Catalyst
+API-key pair or an access token:
+
+```python
+from lunapi import BDCClient
+
+bdc = BDCClient(
+    endpoint='https://api.sb.biodatacatalyst.nhlbi.nih.gov/v2',
+    key_id='YOUR_KEY_ID',
+    api_key='YOUR_API_KEY',
+)
+```
+
+The client authenticates lazily when a request is first made. An existing
+token can instead be supplied with `token=`. The main operations are:
+
+```python
+bdc.projects()                         # projects visible to the credentials
+files = bdc.files('my-project')        # normalized file-index records
+groups = bdc.recording_groups('my-project')
+                                      # EDFs paired with matching sidecars
+
+edf = groups[0]['recording']
+path = bdc.download(edf, 'data')      # preserves relative paths
+```
+
+`files()` returns normalized dictionaries with fields including `guid`,
+`name`, `path`, `size`, `md5`, `project`, `is_edf`, and `is_sidecar`, while
+retaining the source record under `raw`. `recording_groups()` identifies EDF,
+EDF.GZ, and EDFZ recordings and pairs them with common annotation/XML/TSV
+sidecars. `download()` skips a complete existing file unless `force=True`,
+can resume partial downloads when supported by the server, and verifies the
+expected size and optional MD5 checksum. A `progress(done, total)` callback
+can be supplied for download progress.
+
+The shorthand `lp.bdc` is an alias for `BDCClient`:
+
+```python
+client = lp.bdc(endpoint='https://example-commons/v2', token='TOKEN')
+```
+
+Keep API keys and access tokens out of notebooks that will be shared. Access
+to a project remains subject to the commons' authorization and the relevant
+study's data-use requirements.
+
 
 ### lp.scope()
 
@@ -2430,7 +3252,7 @@ that most users can ignore):
    stgcols={'N1': 'blue', 'N2': 'blue', 'N3': 'navy', 'R': 'red', 'W': 'green', '?': 'gray', 'L': 'yellow'},
    stgns={'N1': -1, 'N2': -2, 'N3': -3, 'R': 0, 'W': 1, '?': 2, 'L': 2},
    sigcols=None, anncols=None,
-   throttle1_sr=100, throttle2_np=15000,
+   throttle1_sr=100, throttle2_np=5 * 30 * 100,
    summary_mins=30, height=600, annot_height=0.15,
    header_height=0.04, footer_height=0.01 )
 

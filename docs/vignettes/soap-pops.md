@@ -492,7 +492,7 @@ However, there may be circumstances where the montages are very
 different (e.g. only intracranial EEG leads, or from a wearable
 device, or a non-human model system for which good staging models have
 not been built).  If one is other confident in the quality of the
-human staging, it still may be preferrable to automated staging, and
+human staging, it still may be preferable to automated staging, and
 given it has already been performed, it makes sense to try to use it
 if you can.
 

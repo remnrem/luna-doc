@@ -634,8 +634,8 @@ transition, you would use (assuming 30-second epochs):
 MASK flanked=N2,2
 ```
 
-!!! alert "TODO:"
-    `leading` and `flanked` options are currently broken; they only apply to old-type _epoch-annotations_ 
+!!! warning "Known issue:"
+    `leading` and `flanked` options only apply to old-type _epoch-annotations_
 
 
 ### Tips on usage

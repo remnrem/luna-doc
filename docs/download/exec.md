@@ -52,7 +52,7 @@ the Windows download, there will be an additional file,
 ```
 usage: luna [sample-list|EDF] [n1] [n2] [@parameter-file] [sig=s1,s2] [v1=val1] < command-file
 ```
-To get the version numnber:
+To get the version number:
 ```
 luna -v
 ```

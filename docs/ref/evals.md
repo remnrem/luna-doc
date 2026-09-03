@@ -375,6 +375,8 @@ Some notes on these operators:
 - `&&` and `||` are only defined for Boolean and integer types
 - for text variables, the addition operator means _concatenate_
 - for addition, subtraction and multiplication, Boolean values are treated as `0` and `1` integers
+- a leading `+` or `-` acts as a unary sign and may be applied to numbers, variables, functions or parenthesised expressions (e.g. `-A`, `-sqrt(x)`, `-(A+B)`); it binds more tightly than the binary operators, so `2*-A` evaluates as `2*(-A)`
+- operators do not require surrounding whitespace: `2+3*4` is the same as `2 + 3 * 4` (and evaluates to `14`)
 - greater/less than operators for text values compare on alphabetical order
 - greater/less than operators for Boolean values are based on `1` and `0` values for `true` and `false`, and can be compared against integers and floating-point numbers
 - tests of identity (`==`) can be made between Boolean, integer and text types, but not floating point value
@@ -637,28 +639,6 @@ right-to-left associativity, so `a=b=2` sets both `b` and `a` equal to
 2), this is not possible in Luna.  All assignments return a `true`
 value, and so the above sets `b` equal to `2` but `a` equal to `true`.
 
-<h6>Unary `+` and `-` operators not accepted for variables and functions</h6>
-
-With variables or functions, you cannot write `-A` to mean `-1*A`.  Use the full form. So, although
-this is okay:
-```
-A = -2
-```
-the following is **invalid** and will give an error.
-```
-A = -sqrt(2)
-```
-Similarly, while this is okay
-```
-A = C - B
-```
-using `-` as a negative sign (rather than a subtraction operator) is **invalid**, so:
-```
-A = -B
-```
-will give an error too.   For these cases, use `A = -1*sqrt(2)` and `A = -1*B` instead...
-
-
 <h6>No lazy evaluation</h6>
 
 _All_ expressions are fully evaluated, including the two return values
@@ -774,8 +754,17 @@ new annotation class itself.
 
 <h3>Examples</h3>
 
+Create a new annotation `N2_or_REM` that marks epochs containing either N2 or REM:
 
-_to be added_
+```
+luna s.lst -s 'EVAL annot=N2_or_REM expr=# N2 || REM #'
+```
+
+Create `clean_N2` marking N2 epochs that are free of artifact:
+
+```
+luna s.lst -s 'EVAL annot=clean_N2 expr=# N2 && ifnot(artifact) #'
+```
 
 
 !!! alert 
@@ -961,7 +950,7 @@ This will set the EDF channel `SpO2` to 0 if the log of the `TcCO2` is above 10.
  command and update the (internal) EDF.  Changes to the
  `TcCO2` variable are not permanent.
 
- - if you wanted to modify multiple channels, one could use sequential [`TRANS`](evals.md#trans) commands (in the same Luna run) with differnt `sig` values: 
+ - if you wanted to modify multiple channels, one could use sequential [`TRANS`](evals.md#trans) commands (in the same Luna run) with different `sig` values: 
    ```
    TRANS sig=TcCO2 expr=" TcCO2 = log( TcCO2 ) "
    ```
@@ -1046,7 +1035,7 @@ TRANS sig=ZEEG expr=" ZEEG = ( C4 – mean( C4 ) ) / sd( C4 ) "
 ```
 
 Note that Luna does not currently explicitly flag if numerical errors
-occur within [`TRANS`](evals.md#trans) expressions: e.g. if `sd(C4)` above is infact
+occur within [`TRANS`](evals.md#trans) expressions: e.g. if `sd(C4)` above is in fact
 `0.0`.  Therefore, either use these expressions when you are confident this is not the case;  or
 make the expression check this explicitly: e.g. 
 
@@ -1166,7 +1155,7 @@ sample of `SpO2` is set to the same value (2)
 TRANS sig=SpO2 expr=" SpO2 = 2 "
 ```
 
-However, it is not permissable to assign a different length vector to a channel/vector: e.g. 
+However, it is not permissible to assign a different length vector to a channel/vector: e.g. 
 ```
 TRANS sig=SpO2 expr=" SpO2 = int(1,2,3)  " 
 ```

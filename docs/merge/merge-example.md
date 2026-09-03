@@ -213,7 +213,7 @@ purposefully not allowed by the tool: variables are _by definition_
 specific to a domain and the names should be unique to a domain.
 
 !!! hint
-    The same variable name can exist in diffferent data files within the same domain/group.
+    The same variable name can exist in different data files within the same domain/group.
     e.g. [`PSD`](../ref/power-spectra.md#psd) might exist in two files
 
     `eeg_spec_avg_B.txt`
@@ -340,7 +340,7 @@ this file.
     of the data, but also requires a second level of consistency (here
     that filenames match). The design logic is that, at the cost of a
     marginally more involved set-up, it makes it more robust
-    downstream, and less likley to have subtle errors when merging
+    downstream, and less likely to have subtle errors when merging
     across different datafiles.
     
 
@@ -353,7 +353,7 @@ mv studies/id1/d1_g2_s1_SS-N2.txt studies/id1/d1_g2_s1_F2_SS-N2.txt
 ### Fifth run: validation
 
 The fifth run will now work.    Again, that it "failed" the first four times is not reflecting
-problems with the tool -- rather, think of it as giving feedback to enfore a set of conventions that
+problems with the tool -- rather, think of it as giving feedback to enforce a set of conventions that
 help for data harmonization.
 
 ```

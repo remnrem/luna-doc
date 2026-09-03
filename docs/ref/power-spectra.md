@@ -368,7 +368,7 @@ frame()
 
 
 We can use the `peaks` option to provide one simple way of quantifying the extent of _peakedness_, by adding `peaks` to the [`PSD`](power-spectra.md#psd) command.
-By default, this would use the full spectrum to derive peak statistics: for this particular metric, it can be a good idea to avoid the lower frequenies that often contain
+By default, this would use the full spectrum to derive peak statistics: for this particular metric, it can be a good idea to avoid the lower frequencies that often contain
 true bumps/peaks, e.g. resulting from oscillatory activity at those frequencies, and so we'll use the `peaks-frq` option instead to explicitly set the frequency range
 used for the assessment of peaks: in this case 20 to 50 Hz.   We'll also add the `peaks-verbose` option to get additional output to make the plots below.  The [`PSD`](power-spectra.md#psd) command
 now reads as follows:
@@ -886,7 +886,7 @@ This command is a wrapper around the same FFT/DFT analysis performed by the `fft
 luna -d fft 100 < data.txt
 ```
 
-See [this vignette](../../vignettes/rcox/#spectral-analyses) for a description of the outputs, and an example of usage (i.e. here, the
+See [this vignette](../vignettes/rcox.md#spectral-analyses) for a description of the outputs, and an example of usage (i.e. here, the
 only difference is that [`FFT`](power-spectra.md#fft) command operates on EDF channels, whereas the example above is based on reading a text file.)
 
 

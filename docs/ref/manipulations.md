@@ -108,15 +108,36 @@ Channel labels are reassigned within the in-memory representation of the recordi
 
 | Parameter | Example | Description |
 | --- | --- | --- |
-| `sig` | `C3,C4` | List of channels to duplicate |
+| `sig` | `C3,C4` | List of channels to rename |
 | `new` | `C3_LM,C4_LM` | List of new labels (same size as `sig`) |
-| `file` | `f.txt` | File of old/new labels | 
+| `file` | `f.txt` | File of old/new labels |
+| `add-leading`, `prepend` | `_` | Text to prepend to each selected signal label |
+| `add-trailing`, `append` | `_ref` | Text to append to each selected signal label |
+| `remove-leading`, `drop-leading` | `_` | Leading text to remove from each selected signal label, when present |
+| `remove-trailing`, `drop-trailing` | `_ref` | Trailing text to remove from each selected signal label, when present |
 
 Note that you cannot use an existing channel label as a `new` label.
 
 If specifying a file, such files should be tab-delimited, containing exactly
 two fields per row (original label as per `sig`)
 and the new value as per `new`).
+
+
+As an alternative to specifying explicit `new` labels, `RENAME` can
+transform selected labels by adding or removing leading/trailing text:
+
+```
+RENAME sig=* add-leading=_
+RENAME sig=C3,C4 remove-leading=_
+RENAME sig=* remove-trailing=_ref
+```
+
+Each add/remove option takes a single literal text value. Removal
+options are conservative: if a selected label does not have the specified
+leading or trailing text, that label is left unchanged. Luna checks the
+complete set of post-rename channel labels before applying any changes;
+if a transformation would create an empty label or duplicate labels, the
+command stops with an error.
 
 
 <h3>Output</h3>
@@ -576,6 +597,78 @@ If `sig` is not specified, this command is applied to all channels.
 <h3>Output</h3>
 
 No output, other than updating the in-memory signal.
+
+## SHIFT
+
+_Circularly shift a signal by a given number of sample points_
+
+`SHIFT` advances or retards a signal by `sp` sample points. By default the shift
+is circular (the samples that fall off one end wrap around to the other); setting
+`no-wrap` replaces those positions with zeros instead.
+
+The entire trace is treated as a single flat vector, so discontinuities in
+EDF+D files are ignored.
+
+<h3>Parameters</h3>
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `sig` | `sig=C3,C4` | Signal(s) to shift |
+| `sp` | `sp=100` | Shift amount in sample points (positive = forward in time) |
+| `no-wrap` | | Fill vacated positions with zeros instead of wrapping |
+
+<h3>Output</h3>
+
+No output; the in-memory signal is updated in place.
+
+<h3>Example</h3>
+
+Shift `EEG` forward by 128 samples (e.g. 0.5 s at 256 Hz) with circular wrap:
+
+```
+luna s.lst -s 'SHIFT sig=EEG sp=128'
+```
+
+Shift without wrapping (zero-pad the leading samples):
+
+```
+luna s.lst -s 'SHIFT sig=EEG sp=128 no-wrap'
+```
+
+## SCRAMBLE
+
+_Randomly permute all sample values within a signal_
+
+`SCRAMBLE` applies a full Fisher-Yates random permutation to every sample point
+in the selected signal(s), independently per channel. The permutation operates
+across the whole trace as a single flat vector, so discontinuities in EDF+D
+files are ignored. This produces a null-distribution signal with the same
+amplitude histogram as the original but with all temporal structure destroyed.
+
+<h3>Parameters</h3>
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `sig` | `sig=C3,C4` | Signal(s) to scramble |
+
+<h3>Output</h3>
+
+No output; the in-memory signal is updated in place.
+
+<h3>Example</h3>
+
+Scramble `EEG` and then compute power spectra on the permuted signal:
+
+```
+luna s.lst -s 'SCRAMBLE sig=EEG & PSD sig=EEG'
+```
+
+The random seed can be controlled with the `srand` special variable to make
+results reproducible:
+
+```
+luna s.lst srand=42 -s 'SCRAMBLE sig=EEG & PSD sig=EEG'
+```
 
 ## TIME-TRACK
 
@@ -1044,8 +1137,9 @@ are stored) of 1 second or so.  Why might you want to change this?
 
 There are a number of points that should be borne in mind:
 
- - no subsequent commands can be issued after a `RECORD-SIZE` command;
-   rather, a new EDF will be written to disk
+ - by default, no subsequent commands can be issued after a `RECORD-SIZE` command;
+   rather, a new EDF will be written to disk (see [`continue`](#record-size-continue)
+   below for an alternative)
 
  - you should ensure that the new record size contains an integer number of samples for all signals
 
@@ -1066,13 +1160,14 @@ The low-level record (block) size of the EDF is changed by reorganizing samples 
 | `edf-dir` | `edf-dir=edfs/` | Folder for writing new EDFs |
 | `edf-tag` | `edf-tag=rec1` | Tag added to new EDFs |
 | `sample-list` | `sample-list=s2.lst` | Generate a sample-list pointing to the new EDFs |
+| `no-problem` | | Do not set the problem flag after writing (allows additional commands in the same script, at some risk) |
+| `continue` | | Restructure the in-memory EDF without writing to disk and without halting the command pipeline (see [below](#record-size-continue)) |
 
-That is, while `RECORD-SIZE` itself only takes `dur` as the single
-option, one must also specify all options for
-[`WRITE`](outputs.md#write), as `RECORD-SIZE` automatically triggers
-[`WRITE`](outputs.md#write) after changing the record size of the in-memory
-representation. (That is, as always, the original EDF file is left
-untouched.)
+By default `RECORD-SIZE` must also specify all options for
+[`WRITE`](outputs.md#write), as it automatically triggers a write
+after restructuring the in-memory EDF. (The original EDF file is
+always left untouched.) The `continue` option bypasses this
+write-then-halt behaviour; see below for details.
 
 <h3>Output</h3>
 
@@ -1154,6 +1249,57 @@ is obviously the same as before).
     Because 40,920 is not evenly divisible by 50, the last 20
     seconds has been truncated (i.e. the log will indicate a total
     duration of `11:21:40` instead of the original `11:22:00`).
+
+<h3 id="record-size-continue">The <code>continue</code> option</h3>
+
+Adding `continue` causes `RECORD-SIZE` to restructure the in-memory EDF and then
+return immediately — without writing a new file to disk and without setting the
+`problem` flag that would otherwise abort further processing. Subsequent commands
+in the same script therefore run against the restructured in-memory EDF at the
+new record size.
+
+The primary motivation for `continue` is the [`RUN-POPS`](pops.md#run-pops)
+hypnodensity workflow, which requires a 30-second EDF record duration to divide
+evenly by the 5-second posterior stride. Rather than forcing users to pre-convert
+every EDF, the record size can be adjusted on-the-fly:
+
+```
+luna s.lst -s 'RECORD-SIZE dur=30 continue
+               & EPOCH dur=30
+               & RUN-POPS hypnodensity=6 ...'
+```
+
+**What `continue` changes internally:**
+
+ - All EDF records are fully loaded from disk before restructuring, so there is no
+   risk of a subsequent lazy-read fetching data with the old record size.
+
+ - The `tp` ↔ record maps are rebuilt to reflect the new structure.
+
+ - If epochs were set prior to `RECORD-SIZE`, the entire epoch structure
+   (masks, epoch-to-record mappings, annotation-epoch mappings) is cleared and a
+   message is written to the log. You must re-run [`EPOCH`](epochs.md#epoch) before any
+   epoch-dependent commands.
+
+ - Annotation timestamps are stored in time-point units and are unaffected by the
+   record-size change.
+
+!!! warning "Why `continue` is not yet the default"
+    The original design of `RECORD-SIZE` treated it as a strictly terminal
+    operation: restructure, write a new EDF, halt. This was the safe choice
+    because once the in-memory EDF is restructured it no longer matches the
+    on-disk file, and any naïve lazy-load of an unread record would silently
+    return garbage. The `continue` option is safe _now_ because `reset_record_size()`
+    force-loads every record before restructuring, closing that gap. However,
+    because this changes long-standing pipeline semantics — and because there may
+    be edge cases in downstream commands that still assume the in-memory and
+    on-disk representations are in sync — we are being conservative about making
+    `continue` the default. We expect it to become the default behaviour in a
+    future release once we have broader confidence that the full command set
+    behaves correctly in this mode. In the meantime, `continue` is available for
+    use in contexts where the write-then-halt pattern is genuinely inconvenient,
+    with the caveat that you should re-run `EPOCH` immediately after if your
+    script depends on epoch structure.
 
 
 <!---
@@ -2002,6 +2148,21 @@ This command takes only a single option, which will be given as the variable nam
 | ---- | ---- | ---- |
 | _any valid variable name_ | `v=100` | Sets this variable (e.g. `v`) to the value `100` |
 
+!!! note "Values are evaluated as expressions"
+    The value is passed through the same expression evaluator as the
+    [`${x:=...}`](../luna/args.md#variables) form of variable assignment, rather than
+    being stored verbatim.  This means:
+
+    - _Arithmetic is performed:_ `SET-VAR v=1.2/2` sets `v` to `0.6`.
+    - _A bare word is a variable reference, not a literal string:_
+      `SET-VAR v=abc` yields `.` (undefined) unless `abc` is already
+      defined.  To assign a **literal string**, single-quote it:
+      `SET-VAR label='spont'` sets `label` to `spont`.
+    - _The value must be a single `name=value` token, so **quote any value
+      containing spaces**_ — e.g. `SET-VAR v="1.2 - 0.6"`.  Spaces are not
+      required for arithmetic, though (`SET-VAR v=1.2-0.6` works), so
+      quoting is only needed when the value itself contains whitespace.  (A
+      string literal containing spaces is not supported.)
 
 <h3>Output</h3>
 
@@ -2009,10 +2170,17 @@ None, other than a message to the console log.
 
 <h3>Example</h3>
 
-Sets an individual-level variable `var` to the text string `val`:
+Sets an individual-level variable `v` to `0.6` (the value is evaluated):
 
 ```
-luna s.lst -s 'SET-VAR var=val'
+luna s.lst -s 'SET-VAR v=1.2/2'
+```
+
+Assign a literal string `spont` (single-quoted, so it is not treated as a
+variable name):
+
+```
+luna s.lst -s "SET-VAR label='spont'"
 ```
 
 ## SET-TIMESTAMPS
@@ -2168,7 +2336,7 @@ Unlike most EDF-manipulation commands, insert mode can add channels at the
 secondary signal's own sample rate, so it is intended for merging asynchronous
 or differently sampled recordings into one in-memory EDF.
 
-Current implementation notes:
+Notes:
 
 - Both EDFs must be continuous, or at least not actually discontinuous with gaps.
 - Lag-estimation mode requires matched sample rates within each comparison pair,
@@ -2180,27 +2348,97 @@ Current implementation notes:
 
 <h3>Methods</h3>
 
-[`INSERT`](manipulations.md#insert) now uses cross-correlation as the standard
-alignment method. In estimation mode, matched windows are taken from the secondary
-EDF, optionally band-pass filtered, z-scored, and aligned to the primary EDF by
-cross-correlation. The per-pair lag estimates are combined by taking the median
-lag across signal pairs for each window. Each window is then quality-gated using
-the median matched-window correlation peak (`min-peak`, default `0.3`), and only
-accepted windows enter the drift model.
+[`INSERT`](manipulations.md#insert) uses cross-correlation as the standard
+alignment method. In estimation mode, matched windows are taken from the
+secondary EDF, optionally band-pass filtered, z-scored, and aligned to the
+primary EDF by cross-correlation. The per-pair lag estimates are combined by
+taking the median primary match across signal pairs for each window. Each window
+is then quality-gated using the median matched-window correlation peak
+(`min-peak`, default `0.3`), and only accepted windows enter the drift model.
 
 Across accepted windows, ordinary least-squares regression of estimated waveform
 shift (seconds) on window time (seconds) is performed. Windows with residuals
-greater than 3 SD are removed and the regression is refit. The fitted intercept
-is the start-of-record waveform shift, and the fitted slope quantifies linear
-clock drift between devices in seconds per second. When valid EDF start times are
+greater than `fit-outlier-sd` residual SD are removed for up to
+`fit-outlier-passes` passes, and the regression is refit. The fitted intercept is
+the start-of-record waveform shift, and the fitted slope quantifies linear clock
+drift between devices in seconds per second. When valid EDF start times are
 available, `INSERT` also reports the header-derived offset and the resulting net
 offset correction after combining header timing and waveform-based alignment.
+
+The `len` parameter controls the length of each local matching window; it does
+not control the width of the offset search. The candidate offset space is set by
+one of the following mutually exclusive modes:
+
+- By default, if both EDF headers contain valid start times, `INSERT` estimates
+  a header-derived offset and searches a narrow interval around it.
+- `offset-margin=N` also uses the header-derived offset, but searches
+  `header_offset +/- N` seconds. This is the usual choice when the EDF clocks are
+  approximately correct but may be wrong by minutes.
+- `offset-range=A,B` sets an explicit absolute search interval in seconds for
+  the secondary-vs-primary waveform shift. This range is not centered on the
+  EDF header offset. Use it when the expected absolute waveform shift is already
+  known or has been estimated from a broader run.
+- `full-search` searches the full valid primary range for each secondary window.
+  This is useful when EDF start times are missing or not trusted, but it is more
+  prone to false matches in repetitive or low-information signals.
+
+For example, if EDF headers imply `header_offset=-5106`, then
+`offset-margin=360` searches from `-5466` to `-4746` seconds. In contrast,
+`offset-range=-360,360` searches around zero and ignores the header-derived
+offset as the search center. If a broad search finds a stable solution near
+`-5413` seconds, a follow-up run such as `offset-range=-5450,-5380` can be used
+to exclude spurious local maxima.
 
 In insert mode, a secondary EDF signal is aligned to the primary by applying a
 constant offset in seconds. If a drift rate is also supplied, or if one has just
 been estimated, the secondary signal is resampled by cubic spline interpolation to
 correct the linear time-stretch before insertion. Regions of the primary EDF not
 covered by the secondary signal are zero-padded.
+
+<h3>Troubleshooting alignment</h3>
+
+Use `full-search` when EDF start times are missing or not trusted. Common
+examples include:
+
+- one or both EDFs have missing, invalid, generic or obviously wrong start times
+- both EDFs were exported with the same default timestamp, e.g. `00:00:00`
+- files were trimmed or exported and the headers no longer describe waveform
+  start
+- devices used unrelated clocks, or a device clock was manually reset
+- the header-derived offset is so wrong that centering a bounded search on it is
+  unsafe
+- the expected shift is unknown, e.g. it may be seconds, minutes or hours
+
+If the summary warning reports low `P_OK` or low `MEDIAN_PEAK`, few windows found
+a convincing match. This can mean that the compared signals are not actually
+similar, but it can also mean the search was looking in the wrong place. Check
+the reported header-derived offset and the active search mode. If the headers are
+approximately correct, increase `offset-margin`. If a prior run or external
+information gives an absolute shift, use `offset-range` around that value. If
+EDF start times are missing or not trusted, use `full-search` with `verbose` to
+inspect per-window matches, then rerun with a tighter `offset-range` around the
+stable solution.
+
+If peaks are high but `R2` is poor, the windows are finding plausible matches
+that do not fall on a single drift line. Common causes are an overly broad search
+range, repeated waveform structure, or a few bad windows near recording edges.
+Try a tighter `offset-range`, a higher `min-peak`, or inspect the per-window
+`SEC`, `PEAK`, `FIT_USED` and `FIT_OUTLIER` output. To make the residual
+trimming more or less aggressive, adjust `fit-outlier-sd`; to disable this
+trimming, set `fit-outlier-passes=0`.
+
+If the estimated shift changes systematically across the night, the recordings
+may have clock drift. Very long windows can smear the cross-correlation peak when
+drift accumulates within a window, especially for recordings with a percent-level
+sample-rate mismatch. Try a shorter `len`, a smaller `inc`, or `auto-try`. If
+the short windows are noisy, use several signal pairs and inspect the per-pair
+`CHS` fits.
+
+If all windows fail the quality gate but the maximum observed peak is near the
+threshold, lower `min-peak` temporarily or run with `verbose=1` to diagnose the
+per-window behavior. If both the peaks and accepted fraction remain low across
+wide and full searches, the two channels may not contain enough shared waveform
+structure for reliable alignment.
 
 <h3>Parameters</h3>
 
@@ -2226,7 +2464,7 @@ Lag-estimation mode:
 | `no-filter` | | Disable pre-alignment band-pass filtering |
 | `verbose` | | Emit extra per-window and per-pair diagnostics |
 | `full-search` | | Search the full valid lag space for each window; mutually exclusive with `offset-range` and `offset-margin` |
-| `offset-range` | `offset-range=-360,360` | Explicit absolute search interval in seconds for the secondary-vs-primary offset |
+| `offset-range` | `offset-range=-5450,-5380` | Explicit absolute search interval in seconds for the secondary-vs-primary offset; EDF header start times are not used as the center |
 | `offset-margin` | `offset-margin=120` | Use EDF header start times to estimate the expected offset, then search `+/-` this many seconds around that value |
 | `auto-try` | | Automatically try a short grid of window lengths down to 30 s, keeping `start` fixed and using `inc=len/5` |
 | `try-start` | `try-start=900,1200` | Try multiple window start times and keep the best fit |
@@ -2236,6 +2474,8 @@ Lag-estimation mode:
 | `warn-p-ok` | `warn-p-ok=0.5` | Emit a warning if fewer than this fraction of windows pass the quality gate |
 | `warn-peak` | `warn-peak=0.35` | Emit a warning if the median matched-window correlation falls below this value |
 | `no-warn` | | Suppress summary alignment-quality warnings |
+| `fit-outlier-sd` | `fit-outlier-sd=3` | Residual SD threshold for removing drift-fit outlier windows |
+| `fit-outlier-passes` | `fit-outlier-passes=2` | Number of residual outlier-removal passes for drift fitting; set to `0` to disable |
 
 Insert mode:
 
@@ -2262,12 +2502,26 @@ Summary `INSERT` output:
 | `N_WIN_ALL` | Total number of windows evaluated before quality gating |
 | `N_WIN` | Number of accepted windows used in the summary fit |
 | `N_OUTLIER` | Number of accepted windows removed as regression outliers |
+| `N_FIT` | Number of accepted windows retained for the final drift fit after outlier removal |
 | `P_OK` | Fraction of evaluated windows that passed the quality gate |
 | `MEDIAN_SEC` | Median waveform shift in seconds across accepted windows |
 | `MEAN_SEC` | Mean waveform shift in seconds across accepted windows |
 | `MIN_SEC` | Minimum waveform shift in seconds across accepted windows |
 | `MAX_SEC` | Maximum waveform shift in seconds across accepted windows |
 | `RANGE_SEC` | Range of waveform shifts in seconds across accepted windows |
+| `P10_SEC` | 10th percentile waveform shift in seconds across accepted windows |
+| `P25_SEC` | 25th percentile waveform shift in seconds across accepted windows |
+| `P75_SEC` | 75th percentile waveform shift in seconds across accepted windows |
+| `P90_SEC` | 90th percentile waveform shift in seconds across accepted windows |
+| `FIT_MEDIAN_SEC` | Median waveform shift in seconds across windows retained for the final drift fit |
+| `FIT_MEAN_SEC` | Mean waveform shift in seconds across windows retained for the final drift fit |
+| `FIT_MIN_SEC` | Minimum waveform shift in seconds across windows retained for the final drift fit |
+| `FIT_MAX_SEC` | Maximum waveform shift in seconds across windows retained for the final drift fit |
+| `FIT_RANGE_SEC` | Range of waveform shifts in seconds across windows retained for the final drift fit |
+| `FIT_P10_SEC` | 10th percentile waveform shift in seconds across windows retained for the final drift fit |
+| `FIT_P25_SEC` | 25th percentile waveform shift in seconds across windows retained for the final drift fit |
+| `FIT_P75_SEC` | 75th percentile waveform shift in seconds across windows retained for the final drift fit |
+| `FIT_P90_SEC` | 90th percentile waveform shift in seconds across windows retained for the final drift fit |
 | `MEDIAN_PEAK` | Median matched-window correlation magnitude across evaluated windows |
 | `MEAN_PEAK` | Mean matched-window correlation magnitude across evaluated windows |
 | `MIN_PEAK` | Minimum matched-window correlation magnitude across evaluated windows |
@@ -2284,6 +2538,8 @@ Summary `INSERT` output:
 | `USED_LEN_SEC` | Window length used for the selected fit |
 | `USED_INC_SEC` | Window increment used for the selected fit |
 | `AUTO_TUNED` | `1` if `auto-try` or `try-*` selected the final window settings |
+| `FIT_OUTLIER_SD` | Residual SD threshold used for drift-fit outlier removal |
+| `FIT_OUTLIER_PASSES` | Number of residual outlier-removal passes used for drift fitting |
 
 Per-window `WIN` output:
 
@@ -2323,10 +2579,24 @@ Estimate offset and drift using the default xcorr-based workflow:
 INSERT edf=secondary.edf pairs=C3,C3,C4,C4
 ```
 
-Estimate offset and drift using shorter windows and a wider search interval:
+Estimate offset and drift using shorter windows and a wider header-centered
+search interval:
 
 ```
-INSERT edf=secondary.edf pairs=C3,C3,C4,C4 start=600 len=120 inc=30 offset-range=-360,360
+INSERT edf=secondary.edf pairs=C3,C3,C4,C4 start=600 len=120 inc=30 offset-margin=360
+```
+
+Estimate offset and drift using a known absolute search interval:
+
+```
+INSERT edf=secondary.edf pairs=C3,C3,C4,C4 start=600 len=120 inc=30 offset-range=-5450,-5380
+```
+
+Search without an offset prior, then use the result to define a tighter
+absolute range:
+
+```
+INSERT edf=secondary.edf pairs=C3,C3,C4,C4 len=30 full-search verbose
 ```
 
 Estimate alignment and then insert signals using the fitted offset and drift:

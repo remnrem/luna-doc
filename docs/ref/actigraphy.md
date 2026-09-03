@@ -705,7 +705,7 @@ sleep fragmentation index SFI (lower). QC-excluded days would appear in grey.
 !!! tip "Visualising actigraphy data"
     [LunaScope](https://zzz.nyspi.org/lunascope/) can visualise actigraphy signal
     data alongside ACTIG annotations. See the actigraphy section of the LunaScope
-    documentation (coming soon) for details.
+    documentation (pending) for details.
 
 <h4>Other examples</h4>
 
@@ -735,7 +735,8 @@ Sleep debt analysis:
 ```
 luna actig.edf -s '
   ACTIG sig=activity score
-  debt debt-target=2024-03-15 debt-recent=2 debt-base=7'
+  ... debt debt-target=2024-03-15
+  ... debt-recent=2 debt-base=7'
 ```
 
 Period windows from a sleep diary:

@@ -7,19 +7,21 @@ introduced in terms of the _lunaC_ command-line version of Luna, almost all
 core concepts are applicable in the Python and R versions too. This
 page contains a lot of detail, covering three main areas:
 
- - [basic syntax](#luna-syntax) for invoking Luna and [specifying inputs and scripts](#inputs)
+ - [basic syntax](#luna-syntax) for invoking Luna and [specifying inputs and scripts](#input)
 
  - a list of [_special variables_](#special-variables) -- options that can be set to control the behavior of Luna
 
- - an overview of the [output mechanisms](#outputs)
+ - an overview of the [output mechanisms](#output)
  
 !!!hint "Prerequisites"
     Luna is fundamentally a console/command-line package,
     i.e. there is no _point-and-click_. Familiarity with the basic
     Unix/macOS console environment and shell scripting is recommended.
     The walk-through tutorial contains a brief [shell orientation](https://zzz.nyspi.org/luna-walkthrough/prep/#shell-orientation) section
-    that outlines some core commands useful when using Luna (or similar command-line tools).  Naturally, there is a huge amount of easily accessible online tutorial information
-    to getting started with the command shell too...
+    that outlines some core commands useful when using Luna (or similar command-line tools).  If you want a more interactive or point-and-click workflow,
+    see [LunaScope](https://zzz.nyspi.org/lunascope/), which is built on top of Luna and provides a GUI for visual review and exploratory analysis.  If you
+    want to work in Python or Jupyter notebooks rather than directly at the shell, see [_lunapi_](../lunapi/index.md).  Naturally, there is also a huge amount
+    of easily accessible online tutorial information on getting started with the command shell.
 
 ## Luna syntax
 
@@ -240,7 +242,7 @@ Special-case, secondary options:
 Luna can read EDF and EDF+ files.  The latter allow for
 discontinuities (by having an explicit time-track) and provide some
 support for annotations.  After
-[restructuring](../ref/index.md#restructure) a file (e.g. removing
+[restructuring](../ref/masks.md#restructure) a file (e.g. removing
 certain epochs), it will be represented internally in a form that
 corresponds to an EDF+ (i.e. with gaps/discontinuities).
 Luna can read a single EDF (rather than a [sample
@@ -720,7 +722,7 @@ would set `${z}` equal to `xyz_v2`.
 <h4>Expression-based variable assignment</h4>
 
 Using `:=` instead of `=` instructs Luna to evaluate the right-hand
-side as a [Luna _eval_ expression](evals.md) before assigning it.  This
+side as a [Luna _eval_ expression](../ref/evals.md) before assigning it.  This
 allows arithmetic and logical operations in variable definitions:
 
 ```
@@ -728,6 +730,9 @@ ${a=2}
 ${b:=${a}+1}    % sets ${b} to 3
 ${c:=${a}*10}   % sets ${c} to 20
 ```
+
+Standard operator precedence applies, and operators need not be surrounded
+by whitespace (e.g. `2+3*4` evaluates to `14`).
 
 Without `:=`, the right-hand side is treated as a plain string:
 
@@ -757,7 +762,7 @@ shell variable.  For example, if using `bash`, then use single quotes
 instead of double quotes.  That is, this will _not_ work:
 
 ```
- luna s.lst -s 'EPOCH & STATS sig=${eeg}' 
+ luna s.lst -s "EPOCH & STATS sig=${eeg}" 
 ```
 
 as the shell will try to expand the variable `${eeg}` before passing
@@ -1172,7 +1177,7 @@ with the EDF.  Luna accepts the following annotation formats:
 | [.annot](../ref/annotations.md#annot-files) | Generic Luna annotation format (`.txt` and `.tsv` extensions are also valid) | 
 | [.eannot](../ref/annotations.md#eannot-files) | Simple epoch-level annotation files (can also be loaded via the [`EPOCH-ANNOT`](../ref/epochs.md#epoch-annot) command) | 
 | [XML](../ref/annotations.md#nsrr-xml-files) | XML format used by the [National Sleep Research Resource](http://sleepdata.org) to distribute sleep staging, and information on manually-scored arousals, movements and artifacts |
-| [EDF+](../ref/annotations.md#edf-annotations-channel) | EDF+ Annotation channels | 
+| [EDF+](../ref/annotations.md#edf-annotations) | EDF+ Annotation channels | 
 
 ### Dates
 
@@ -1265,60 +1270,56 @@ analysed from a sample list.
 
 
 
-### EDFZs
+<a id="edfzs"></a>
+### Compressed EDFs
 
-As described in this [vignette](../vignettes/edfz.md), Luna can read
-gzipped EDF files directly.  In current Luna, these are handled as
-plain gzip-compressed EDFs rather than the older indexed BGZF-style
-format.  The [`WRITE`](../ref/outputs.md#write) command still uses the
-`edfz` option name for this, but it now writes a compressed
-`.edf.gz` file rather than creating a separate index.
+Luna supports two different compressed EDF formats.  The filename
+extension is significant:
 
-For example, taking the first [tutorial](../tut/tut1.md) EDF, we can
-write it out as a gzipped EDF:
+#### `.edfz`
+
+`.edfz` is Luna's self-contained compressed EDF container.  It stores
+the EDF data in compressed chunks and includes the record index,
+timestamps, and EDF+ annotation information inside the file.  This
+allows indexed/random access within a single file.
+
+The [`WRITE`](../ref/outputs.md#write) command writes this format when
+the `edfz` option is specified.  For example, taking the first
+[tutorial](../tut/tut1.md) EDF:
+
 ```
 luna s.lst 1 -s ' WRITE edfz edf-dir=z/ edf-tag=compressed sample-list=z.lst '
 ```
 
-If the original EDF was `file.edf`, this will create
-`z/file-compressed.edf.gz` (along with a sample list `z.lst` that
-points to it).
+If the original EDF was `file.edf`, this creates
+`z/file-compressed.edfz` (along with a sample list `z.lst` that points
+to it).  `.edfz` is a Luna-specific format; use `.edf.gz` when a
+standard gzip-compressed EDF is required for use by other software.
 
-In the above example, we see a reduction in disk space:
-```
-ls -lh z
-```
-```
-    21M  z/learn-nsrr01-compressed.edf.gz
-```
-In contrast, the original EDF is almost three times the size:
-```
-    59M  edfs/learn-nsrr01.edf
-```
+#### `.edf.gz`
 
-Although for a single PSG this saving is negligible, across thousands
-of studies, savings can become more significant.
+This is a conventional EDF file compressed with gzip.  Luna can read
+any `.edf.gz` file, whether or not it was created by Luna.  It is read
+as a sequential stream (and does not use random access).  Luna does
+not create `.edf.gz` files via
+`WRITE edfz`: that command creates `.edfz` files.  To create an
+`.edf.gz`, use the standard `gzip` tool after writing an ordinary EDF.
 
-Luna can also read any gzipped EDF directly, i.e. a file ending
-`.edf.gz` does not need to have been created by Luna.  The trade-off
-is that Luna reads gzipped EDFs as a whole stream rather than via
-random access into the compressed file.
-
-Any gzipped EDF can of course be decompressed with the standard
-`gunzip` tool.  For example:
+The file can be decompressed with standard tools, for example:
 
 ```
 gunzip file.edf.gz
 ```
 
-or equivalently:
+or:
 
 ```
 cat file.edf.gz | gunzip > file.edf
 ```
 
-Legacy `.edfz` files are still recognized on input, but the current
-recommended format is plain `.edf.gz`.
+Both formats are lossless.  The trade-offs are that `.edf.gz` is more
+portable but sequential, whereas `.edfz` supports indexed access and
+keeps all of its index information in one file.
 
 !!! hint 
     Although compression as a gzipped EDF is _lossless_ (i.e. all
@@ -1461,11 +1462,20 @@ when using certain commands that do not require signal data, e.g. the
 [`OVERLAP`](../ref/intervals.md#overlap) commands.
 
 To create an empty EDF, specify `.` (period character) as the
-sample-list/filename along with `--nr` and `--rs` to give the number
-of records (`nr`) and the EDF record size (`rs`) respectively. Luna
-will create an EDF of this duration (i.e. with headers specifying the
-length of the recording) but with no signals, i.e. a collection of
+sample-list/filename. The `--nr` and `--rs` options can be used to give
+the number of records (`nr`) and EDF record size (`rs`) explicitly.
+Luna will create an EDF of this duration (i.e. with headers specifying
+the length of the recording) but with no signals, i.e. a collection of
 empty records.
+
+For an empty EDF with no annotation files, the default is a six-hour
+EDF with one-second records. For an annotation-only empty EDF (a `.lst`
+row whose EDF field is `.` and which has one or more annotation files),
+Luna pre-scans the annotations by default and sizes the EDF to the
+detected annotation span. Annotation-only pre-scanning can be disabled
+with `detect-times=F`; if no `--nr` or `--rs` is then supplied, Luna
+uses a one-record, one-second placeholder EDF. Explicit `--nr` and
+`--rs` values always take precedence and suppress the pre-scan.
 
 ### Time points
 
@@ -1532,11 +1542,21 @@ _Controlling inputs_
 | [`order-signals`](#ordering-signals) | Force EDF signals to be in alphabetical order | 
 | [`fix-edf`](#fix-truncated-edfs) |  Attempt to correct truncated/over-long EDFs if `T` |
 | [`force-edf`](#annotations)       | Skip EDF annotations _and_ time-track from any EDF+, and force as a continuous EDF if `T`|
+| `clear-reserved` | Clear the 44-byte EDF header reserved field (while preserving `EDF+C`/`EDF+D`) and all per-signal 32-byte reserved fields on input (default: F) |
 | [`date-format`](#dates) | Set annotation date parsing format to `DMY`, `MDY`, or `YMD` |
 | [`edf-date-format`](#dates) | Set EDF header date parsing format to `DMY`, `MDY`, or `YMD` |
 | `param-spaces` | Allow spaces as delimiters in parameter files |
 | `param-equals` | Allow `=` as a delimiter in parameter files |
 | `register-specials` | Register default special variables when reading parameter files |
+
+### Clearing EDF reserved fields
+
+Set `clear-reserved=T` when reading EDF/EDF+ files to replace the main
+header's reserved bytes and every per-signal reserved field with spaces.
+For EDF+ files, the required `EDF+C` or `EDF+D` marker in the first five
+main-header bytes is retained, so continuity and discontinuity are not
+changed. This affects Luna's in-memory header and therefore subsequent
+`WRITE` output; it does not modify the input file.
 
 _Controlling outputs_
 
@@ -1560,9 +1580,12 @@ _Signals and EDF headers_
 | Special Variable | Description |
 | ---- | ---- | 
 | [`sig`](#signal-lists)| Include this signal(s) in analysis | 
+| [`drop`](#signal-lists)| Exclude this signal(s) when loading an EDF |
 | [`anon`](#anonymize-edf-headers) | Anonymize EDF headers | 
 | [`starttime`](#set-edf-start-time) | Set EDF start time |
 | [`startdate`](#set-edf-start-date) | Set EDF start date | 
+| [`start-file`](#set-edf-start-timedate-from-file) | Set EDF start date/time from an ID-keyed file |
+| [`detect-times`](#detect-annotation-times) | Detect empty-EDF start time and duration from annotations |
 | `default-starttime` | Set fallback start time used when Luna needs a default |
 | `no-default-starttime` | Disable use of the default fallback start time |
 | `default-startdate` | Set fallback start date used when Luna needs a default |
@@ -1580,7 +1603,7 @@ _Annotations_
 | [`annot-file`](#attaching-annotations) | Specify annotations to attach on the command line |
 | [`skip-annots`](#annotations) | (Or `skip-all-annots`). Same as `skip-sl-annots=T` and `skip-edf-annots=T` combined (default: F)  |
 | [`skip-sl-annots`](#annotations)  | Skip annotation files specified in the sample list (default: F) |
-| [`skip-edf-annots`](#edf+-annotations) | Skip EDF Annotations tracks from any EDF+ (default: F) |
+| [`skip-edf-annots`](#edf-annotations) | Skip EDF Annotations tracks from any EDF+ (default: F) |
 |
 | [`remap`](#remapping-annotations)| Specify an annotation remapping (cf. channel aliases) |
 | [`annot-remap`](#remapping-annotations) | Set automatic remapping of stages (default: `T`) |
@@ -1593,6 +1616,8 @@ _Annotations_
 | `ignore-annot` | Exclude these annotation classes from loading |
 | `ignore-raw-annot` | As above, but do not sanitize labels first |
 | `tab-only` | Only allow tabs (versus tabs _and spaces_) as delimiters in `.annot` files |
+| `annot-time-wrap` | For undated `.annot` clock-times, allow a time earlier than the EDF start to wrap to the next day (default: `T`); with `F`, suppress the wrapped occurrence when it falls outside the EDF |
+| `drop-annots-past-end` | During `.annot` loading, drop events whose start is at or after the EDF end (default: `T` for regular EDFs; annotation-only empty EDFs default to `F`); set `F` to retain them for later filtering with `DROP-ANNOTS` |
 |
 | [`edf-annot-class`](#edf-annotations) | Read these EDF+ (comma-delimited) labels as _classes_ (default: `N1,N2,N3,R,W,?,arousal,LM,NR`)|
 | [`edf-annot-class-all`](#edf-annotations) | Read all EDF+ labels as _classes_ (default: `F`) |
@@ -1608,8 +1633,8 @@ _Annotations_
 | `annot-segment` | Single-character label used for segment annotations from `SEGMENTS annot` |
 | `annot-gap` | Single-character label used for gap annotations from `SEGMENTS annot` |
 |
-| [`inst-hms`](#inst-hms) | Assign missing annotation instance IDs based on time |
-| [`force-inst-hms`](#inst-hms) | Always assign annotation instance IDs based on time |
+| `inst-hms` | Assign missing annotation instance IDs based on time |
+| `force-inst-hms` | Always assign annotation instance IDs based on time |
 
 
 _Annotation meta-data_
@@ -1621,10 +1646,10 @@ _Annotation meta-data_
 | `int-atype`    | As above, for integer type |
 | `txt-atype`    | As above, for string (text) type |
 | `str-atype`    | Alias for `txt-atype` |
-| `bool-atype`   | As anove, for boolean (T/F) type |
+| `bool-atype`   | As above, for boolean (T/F) type |
 | `annot-meta-delim1` | Set meta-data delimiter 1 (default `;`, e.g. `a=1;b=2` ) |
 | `annot-meta-delim2` | Set meta-data delimiter 2 (default `|`, e.g. `a=1|b=2` ) |
-| `annot-keyval` | Set _key=value_ delimiter for annotation meta-date (default `=`) |
+| `annot-keyval` | Set _key=value_ delimiter for annotation meta-data (default `=`) |
 
 
 _Remapping channel/annotation labels_
@@ -1635,18 +1660,18 @@ _Remapping channel/annotation labels_
 | [`remap`](#remapping-annotations)| Specify an annotation remapping (cf. channel aliases) |
 | `sanitize` | Change special character labels to `_` if this is set to `T` |
 | `upper` | Set all channel labels to uppercase if set to `T` | 
-| [`spaces`](#spaces-in-channel-names ) | Alternate character for space substitution in channel/annotation names |
-| [`keep-spaces`](#spaces-in-channel-names) | Retain spaces in channel/annotation names if set to true |
-| [`keep-channel-spaces`](#spaces-in-channel-names) | Retain spaces in channel names if set to true|
-| [`keep-annot-spaces`](#spaces-in-channel-names) | Retain spaces in annotation names if set to true|
+| [`spaces`](#spaces-in-channel-and-annotation-names ) | Alternate character for space substitution in channel/annotation names |
+| [`keep-spaces`](#spaces-in-channel-and-annotation-names) | Retain spaces in channel/annotation names if set to true |
+| [`keep-channel-spaces`](#spaces-in-channel-and-annotation-names) | Retain spaces in channel names if set to true|
+| [`keep-annot-spaces`](#spaces-in-channel-and-annotation-names) | Retain spaces in annotation names if set to true|
 | `retain-case` | Keep signal label case when it (case-insensitive) matches primary alias | 
 
 _Epochs and sleep staging_
 
 | Special Variable | Description |
 | ---- | ---- |
-| [`epoch-len`](#epoch-len) | Specify the default epoch duration |
-| [`no-epoch-check`](#no-epoch-check) | Do not enforce epoch check for .eannot files |
+| [`epoch-len`](#epochs-and-sleep-staging) | Specify the default epoch duration |
+| `no-epoch-check` | Do not enforce epoch check for .eannot files |
 | `epoch-check` | Set tolerance value for epoch check (default: 5) |
 | [`assume-pm-start`](#force-evening-start-time)| Force morning times (after _X_ am) to be _X_ pm  |
 | [`assume-stage-duration`](#stage-annotations) | Assume zero-duration stage labels are of epoch-length |
@@ -1661,9 +1686,9 @@ _Misc_
 | [_power bands (various)_](#spectral-power-bands)| Change default power bands (delta, theta, etc.) |
 | `band` | Set a named band with `band=LABEL,LOWER,UPPER` |
 | `srand` | Set the seed of the random number generator to this fixed value, e.g. `srand=123456` | 
-| [`ch-exact`](#ch-exact)| Add an exact match for a channel type |
-| [`ch-match`](#ch-match)| Add a partial match for a channel type |
-| [`ch-clear`](#ch-clear)| Clear all channel type mappings |
+| [`ch-exact`](#channel-types)| Add an exact match for a channel type |
+| [`ch-match`](#channel-types)| Add a partial match for a channel type |
+| [`ch-clear`](#channel-types)| Clear all channel type mappings |
 | `show-assignments` | Verbosely show variable assignments |
 | `legacy-hjorth` | Use the legacy Hjorth implementation |
 | `devel` | Enable developer mode |
@@ -1696,7 +1721,7 @@ scripts.
     
     For variables that expect true/false values:
 
-    - matches are case-insenstive
+    - matches are case-insensitive
     - values of `1` or starting with `T` (true) or `Y` (yes) are all interpreted as _true_
     - all other values are interpreted as _false_; for clarity, `0`, `F` or `N` should be used in practice
 
@@ -1724,12 +1749,35 @@ or as a comma-delimited list
 sig	EEG,ECG,EMG
 ```
 
+To exclude one or more signals/channels at EDF load, use the `drop`
+option, e.g.
+```
+luna s.lst drop=ECG,EMG -s DESC
+```
+or in a [_parameter file_](#parameter-files)
+```
+drop	ECG
+drop	EMG
+```
+or as a comma-delimited list
+```
+drop	ECG,EMG
+```
+
 !!! Note 
-    These options (when used on the command line, or via a parameter file) 
-    mean that only these channels are loaded from
-    the EDF, i.e. it is as though the other channels do not exist from
-    Luna's perspective. (One minor but virtuous side effect is that this can speed up
-    reading an EDF, if one knows that only a subset of channels is needed.)
+    These special options (when used on the command line, or via a parameter file)
+    are applied when the EDF is attached:
+
+    - `sig` means only matching channels are loaded
+    - `drop` means matching channels are excluded
+    - if both are specified, Luna first applies `sig` and then `drop`, so `drop` wins if the same channel is named by both
+    - if `sig` is not specified, Luna keeps all channels unless later excluded by `drop`
+    - if `drop` is not specified, Luna drops no channels
+
+    In all cases, channels excluded at this stage are not loaded from
+    the EDF, i.e. it is as though they do not exist from Luna's
+    perspective. One minor but virtuous side effect is that this can speed up
+    reading an EDF, if one knows that only a subset of channels is needed.
 
     This is different from the using the 
     `sig` option to modify the behavior of an individual Luna command: 
@@ -1747,13 +1795,13 @@ sig	EEG,ECG,EMG
 !!! Note
     The terms _signals_ and _channels_ are used interchangeably throughout this documentation.
 
-!!! warning "`sig` and EDF+"
-    The `sig` special option cannot be used with EDF+ files.
+!!! warning "`sig`/`drop` and EDF+"
+    The `sig` and `drop` special options cannot be used with EDF+ files.
 
 
-The `sig` option works with the `alias` options also.  For example, if the original EDF label is `CH_X001`
+The `sig` and `drop` options work with the `alias` options also.  For example, if the original EDF label is `CH_X001`
 but an [alias](#aliases) has been defined to convert it to `EEG`, we can use that aliased form
-in the `sig` statement:
+in the `sig` or `drop` statement:
 ```
 luna s.lst sig="EEG,EMG,ECG" alias="EEG|CH_X001" -s DESC
 ```
@@ -1770,7 +1818,7 @@ Signals           : EEG EMG ECG
     logical or arithmetic operators, e.g. minus, plus signs, etc.   Avoiding such characters
     makes it easier to specify channels on the command line and in scripts.
 
-    Avoding special characters in channel labels can
+    Avoiding special characters in channel labels can
     also make processing output easier, i.e. if you use [`destrat`](destrat.md)
     to produce a table that uses channel labels as 
     variable (column) names.
@@ -1783,7 +1831,7 @@ Signals           : EEG EMG ECG
 ### Ordering signals
 
 Setting `order-signals` to true (`T`, `Y` or `1`) will ensure that EDF
-channels are loaded in alpha-numeric order: e.g.
+channels are loaded in alphanumeric order: e.g.
 
 ```
 luna s.lst 1 -s DESC
@@ -1853,7 +1901,7 @@ anyway).
 The default is _not_ to preload data, as quite a few commands don't
 actually need to read any signal data from the EDF (e.g. reporting
 headers, working with annotations, or in the context of using the Luna
-library as part of an interacrive viewer, as in _lunapi's_ `scope()`,
+library as part of an interactive viewer, as in _lunapi's_ `scope()`,
 etc).
 
  
@@ -2120,6 +2168,69 @@ The related `default-starttime`, `no-default-starttime`,
 `default-startdate` and `no-default-startdate` options control the
 fallback start time/date values Luna uses when it needs defaults
 rather than explicit EDF header values.
+
+### Set EDF start time/date from file
+
+The `start-file` special variable sets the EDF start date and/or time
+from a tab-delimited file, matched by individual ID.  This is useful
+when the same start-time correction needs to be applied to many EDFs or
+annotation-only inputs.  The file should have an `ID` column first,
+followed by one or both of `START_DATE` and `START_TIME`; the two fields
+may appear in either order:
+
+```
+ID	START_DATE	START_TIME
+pats-800003-baseline	01.01.85	21.53.45
+pats-800022-baseline	01.01.85	20:44:44
+```
+
+Dates use the usual `dd.mm.yy` format.  Start times accept either
+`hh.mm.ss` or `hh:mm:ss`, but fractional seconds are not allowed.  A
+blank value, `.`, `NA` or `N/A` leaves that component unchanged; each
+row must provide at least one of the two components.  IDs ending in
+`.annot` are matched to the corresponding ID without that suffix.
+
+For example:
+
+```
+luna s.lst start-file=start-times.tsv -o out.db < commands.txt
+```
+
+The override is applied after an EDF is attached or an empty EDF is
+created, and before external annotations are loaded.  Thus it changes
+the header values used to interpret annotations.  It also works with
+annotation-only sample-list entries whose EDF field is `.`, and with a
+single EDF input.  If using `luna .`, provide the input ID with `id=...`.
+
+For annotation-only inputs, `detect-times` runs before the `start-file`
+override. Thus `start-file` changes the final EDF header date/time used
+when annotations are loaded, but does not change a duration already
+inferred by the pre-scan. Use explicit `--nr` and `--rs` when the
+duration must be controlled independently of the annotation span.
+
+### Detect annotation times
+
+For annotation-only inputs (empty EDFs with one or more annotation
+files), Luna pre-scans the annotations by default to determine a suitable
+EDF start time and duration.  This is equivalent to setting:
+
+```
+detect-times=T
+```
+
+The pre-scan is performed separately for each sample-list individual.
+It is skipped if an explicit `--date`, `--time`, `--nr`, or `--rs` is
+provided. To avoid the pre-scan for large inputs where the EDF duration
+is not relevant, use:
+
+```
+luna s.lst detect-times=F -o out.db -s '...'
+```
+
+With detection disabled and no explicit `--nr` or `--rs`, annotation-only
+inputs use the short placeholder EDF duration.  This is sufficient for
+operations that do not require an epoch timeline; specify `--nr` and
+`--rs` when a longer timeline is needed.
 
 
 ### Digital values and min/max overrides
@@ -2440,12 +2551,12 @@ failure rather than continuing.
 
 The special variables `verbose` and `silent` control the level of console output.
 
-```
-
 Two related advanced options are `show-assignments`, which makes Luna
 more verbose about variable assignment, and `devel`, which enables
 developer-oriented behavior.  The `legacy-hjorth` option switches to
 the legacy Hjorth implementation.
+
+```
 luna s.lst 1 verbose=T -o out.db -s HEADERS
 ```
 ```
@@ -2700,7 +2811,7 @@ dataset, in particular the [`PREDICT`](../ref/predict.md#predict) command.
 
 ### New EDFs
 
-Luna can output new EDFs (or EDF+ files, or [compressed EDFs](#edfz))
+Luna can output new EDFs (or EDF+ files, or [compressed EDFs](#edfzs))
 after manipulating signals, masking epochs, etc, via the
 [`WRITE`](../ref/outputs.md#write) command.
 
@@ -2708,7 +2819,7 @@ after manipulating signals, masking epochs, etc, via the
 
 Some commands, such as
 [`WRITE-ANNOTS`](../ref/annotations.md#write-annots), can produce
-[.annot files](../ref/annotations.md#annot) containing interval-based
+[.annot files](../ref/annotations.md#annot-files) containing interval-based
 annotations.  Other commands
 (e.g. [`SPINDLES`](../ref/spindles-so.md#spindles)) may generate
 annotations internally, which can be used by subsequent commands; to

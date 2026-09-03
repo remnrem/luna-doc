@@ -64,13 +64,15 @@ RESTRUCTURE                 % Apply the above mask
 
 SIGNALS keep=EEG            % Only retain the EEG signal
 
-FILTER bandpass=0.5,4.5     % Apply a bandpass filter to the signal
-       ripple=0.01
-       tw=0.5 
+FILTER
+ ... bandpass=0.5,4.5       % Apply a bandpass filter to the signal
+ ... ripple=0.01
+ ... tw=0.5 
 
-WRITE edf-dir=newx/         % Write new EDFs, to the folder newx/
-      edf-tag=v2            % add a 'v2' tag to each EDF
-      sample-list=newx.lst  % create a new sample list pointing to the new EDFs
+WRITE
+ ... edf-dir=newx/          % Write new EDFs, to the folder newx/
+ ... edf-tag=v2             % add a 'v2' tag to each EDF
+ ... sample-list=newx.lst   % create a new sample list pointing to the new EDFs
 ```
 
 Running this set of commands: 

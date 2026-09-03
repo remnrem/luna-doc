@@ -65,7 +65,7 @@ of which show some aspect of the uploaded EDF:
 
  - [_Stats_](#stats) : basic signal summary statistics (e.g. means, skewness, etc)
 
- - [_Time/freq_](#time-freq) : several whole-night representations: multi-taper spectrograms, Hjorth-plots, and epoch-level time-series clustering
+ - [_Time/freq_](#timefrequency-analyses) : several whole-night representations: multi-taper spectrograms, Hjorth-plots, and epoch-level time-series clustering
 
  - [_Manips_](#manips) : manipulations of the attached signals: resampling, rereferencing, filtering, copying, renaming, etc
 
@@ -121,7 +121,7 @@ alternatively click _Example data_ to attach the NSRR tutorial
 
 After uploading, the EDF channels will be available in the list box
 _Channels_. Multiple channels can be selected.  Selected channels
-indicate those that will be shown in the _Signals_ tab, and for cetain
+indicate those that will be shown in the _Signals_ tab, and for certain
 other panels (e.g. _Stats_).  Note that some panels have their own
 channel selection method (e.g. the _Manips_ panel, or the multi-taper
 spectrogram panel), and so they ignore this box. When signals are
@@ -294,7 +294,7 @@ Key times from [`HYPNO`](../ref/hypnograms.md#hypno) annotated in elapsed second
 Stage duration (minutes, epochs and % of sleep) as well as the number
 of bouts and the median bout length (minutes).  Stages are defined as
 `N1`, `N2`, `N3`, `R` and `W`. In addition, `S` is any sleep, `WASO`
-is wake afetr sleep onset, and `?` denotes unknown epochs.
+is wake after sleep onset, and `?` denotes unknown epochs.
 
 ![img](../img/mlref/ml-ref17.png)
 
@@ -304,7 +304,7 @@ For NREM cycles inferred from the hypnogram, this sub-panel enumerates their sta
 
 ### Epochs
 
-This sub-panel shows an epoch-level tabulation of sleep stages alongside some other key metrics from [`HYPNO`](../ref/hypnograms.md#hypno): e.g. a marker of _persistent sleep_ and WASO, as well as counts of elasped (cumulative) sleep.
+This sub-panel shows an epoch-level tabulation of sleep stages alongside some other key metrics from [`HYPNO`](../ref/hypnograms.md#hypno): e.g. a marker of _persistent sleep_ and WASO, as well as counts of elapsed (cumulative) sleep.
 
 ### Stage annotations
 
@@ -381,7 +381,7 @@ this, measures such as kappa and implied stage durations are shown,
 similar to SOAP.
 
 The _Epochs_ sub-panel lists the predicted stages along with the
-posterior probabilties and the original stages (if present).  This can
+posterior probabilities and the original stages (if present).  This can
 be copied to the Clipboard and saved.
 
 ![img](../img/mlref/ml-ref20.png)
@@ -421,7 +421,7 @@ For selected signals and annotations (from the left panel), this panel shows the
 
 One can zoom out with the _Out_ button (i.e. 1->3->5 epochs, etc) and back in with the _In_ button.   If the range is too large, raw signals will not be displayed.
 
-You can click on the condensed hypnogram above the plot to move to that postiion (a small black dot under indicates the current location).  You can also move the window forward and backward in time with the _Next_ and _Prev_ buttons. As noted above, you can also navigate around the recording by clicking on _Listed annotations_ in the left panel.   (To also see those annotations in the plot, they must also be selected in the upper _Annotations_ list in the left panel.)
+You can click on the condensed hypnogram above the plot to move to that position (a small black dot under indicates the current location).  You can also move the window forward and backward in time with the _Next_ and _Prev_ buttons. As noted above, you can also navigate around the recording by clicking on _Listed annotations_ in the left panel.   (To also see those annotations in the plot, they must also be selected in the upper _Annotations_ list in the left panel.)
 
 _Filter_  toggles on/off a bandpass filter to all displayed signals (in the view only, this does not impact the underlying signal data).
 
@@ -525,8 +525,8 @@ quick way to see the overall structure of a signal, and to zoom in on aberrant e
 
 ![img](../img/mlref/ml-ref13.png)
 
-This panel provies a series of sub-panels to perform basic
-manipulations of signals, most of which are self-explantory wrappers
+This panel provides a series of sub-panels to perform basic
+manipulations of signals, most of which are self-explanatory wrappers
 around a corresponding Luna command (e.g. [`REFERENCE`](../ref/manipulations.md#reference), [`FILTER`](../ref/fir-filters.md#filter),
 [`MASK`](../ref/masks.md#mask), [`RESAMPLE`](../ref/manipulations.md#resample), etc)
 
@@ -670,7 +670,7 @@ luna s.lst -o out.db -s ' TABULATE sig=POSITION '
 ```
 
 assuming the `s.lst` pointed to the appropriate EDF/annotation pair. After clicking _Execute_,
-the console output appers in the gray window, and any output tables (i.e. what would have been the
+the console output appears in the gray window, and any output tables (i.e. what would have been the
 contents of `out.db`) are listed in the _Tables_ tab. Selecting one of those will display it
 in the table in the lower half of the panel:
 

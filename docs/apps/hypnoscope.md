@@ -24,7 +24,7 @@ for [local download](#access).  It operates in two modes:
     studies in a whole cohort: for example, if all recordings are
     truncated at a particular clock time. See [this
     vignette](../vignettes/dataplots.md) for motivations and examples, as
-    well as the [gallery](#gallery) below.
+    well as the gallery below.
 
 
 ## Basic usage
@@ -104,7 +104,7 @@ analysis of hypnogram statistics.
     Note that unlike Luna's standard color scheme (used in the _N=1_
     mode), here (under the default view) REM is orange rather than red;
     also, wake is gray/cream rather than green.  These changes were made
-    to enchance the visual qualities of the condensed hypnogram plots.
+    to enhance the visual qualities of the condensed hypnogram plots.
 
 To change the x-axis alignment, select the _Align by_ control and pick
 _Elapsed-time_.  Now all studies are aligned such that sleep onset occurs at the same point (0 hours):
@@ -261,7 +261,7 @@ Specifically,
 
   - the first column must be `ID` (individual identifier)
 
-  - the second colum must be `E` (epoch count, always starting at epoch 1)
+  - the second column must be `E` (epoch count, always starting at epoch 1)
 
   - the entire file should have __either 4 or 5 tab-delimited columns for all rows__
 
@@ -342,7 +342,7 @@ destrat out.db +HYPNO -r E -v CLOCK_TIME CYCLE OSTAGE > data.hypnos
 !!! info "Original staging"
     Note that above we extract `OSTAGE`
     (_original_ stage) rather than [`STAGE`](../ref/hypnograms.md#stage), as the latter may be
-    slightly editted by Luna (e.g. setting lights out for
+    slightly edited by Luna (e.g. setting lights out for
     leading/trailing epochs, or setting some epochs to `?` if they
     imply excessive WASO (e.g. a single sleep epoch followed by
     several hours of wake before the main sleep period).  Either

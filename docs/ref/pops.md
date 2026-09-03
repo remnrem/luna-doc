@@ -182,7 +182,7 @@ Epoch-level confusion matrix (strata: `OBS` x `PRED`)
 | `args` |  `args="op1=val1 op2=val2"` | Pass other arguments to POPS |
 | `ignore-obs` | `T` | Ignore any observed staging (default: `F`) |
 | `filter` | `F` | Filter signals 0.3 - 35 Hz (default: `T` ) |
-| `edger` | `F` | Whether to perform [EDGER](artifacts.md#EDGER) trimming prior to prediction (default: `T`; automatically set to `F` in hypnodensity mode) |
+| `edger` | `F` | Whether to perform [EDGER](artifacts.md#edger) trimming prior to prediction (default: `T`; automatically set to `F` in hypnodensity mode) |
 | `hypnodensity` | `6` | Enable _hypnodensity mode_ with N strides per 30-s window (see [below](#hypnodensity-mode)); N must divide 30 (valid: 1,2,3,5,6,10,15,30) |
 | `prefix` | `PP` | Output channel prefix in hypnodensity mode (default: `PP`) |
 | `add-nrem123` | `T` | Add individual N1/N2/N3 posterior channels in hypnodensity mode (default: `T`) |
@@ -785,7 +785,146 @@ conceptual domains:
 
 <h3>Methods</h3>
 
-Hypnodensity analysis characterizes the continuous posterior-probability signals produced by the POPS stager at a sub-epoch temporal resolution. Sample-level mixedness is quantified by Shannon entropy, maximum-class confidence, margin (gap between the top two posteriors), and pairwise mixing coefficients between adjacent sleep states. Temporal instability is measured by total variation (TV) of the entropy signal at standard and longer lags, and by the correlation between entropy and TV. State transitions are detected either as local peaks in the TV trace that exceed a threshold (motion method), as samples where the argmax stage changes (hard method), or as the union of both (combined method). Each detected transition defines a surrounding transition zone; samples sufficiently far from any transition form the stable-core. Mixedness and instability metrics are reported separately for these regions and, when context annotations are provided (e.g. NREM cycle labels), also stratified by annotation level. Transition-aligned mean profiles of all derived signals are additionally reported.
+`HDSTATS` operates on a set of K posterior-probability signals (K = 5 for the default 5-state
+analysis, K = 3 for the optional 3-state collapsed analysis) sampled at the native hypnodensity
+resolution (e.g. one sample per epoch, or finer if the model was run at higher resolution). All
+channels must share the same sample rate. Row sums are validated to lie in [0.5, 1.5]; any row
+that deviates from 1.0 by more than 1e-4 is renormalized before further processing.
+
+**3-state collapsed posterior.** When `3state` is set, a parallel set of 3-state posteriors is
+built by summing the three NREM components: p3\_W = p\_W, p3\_NREM = p\_N1 + p\_N2 + p\_N3,
+p3\_R = p\_R. All metrics described below are computed independently for both representations.
+
+#### Per-sample derived signals
+
+All signals are computed for every sample t over the full recording. For the 5-state case the
+index k runs over W=0, N1=1, N2=2, N3=3, R=4; for 3-state over W=0, NREM=1, R=2.
+
+**Entropy (H)**
+
+$$H(t) = -\sum_k p_k(t)\,\ln p_k(t), \quad 0 \cdot \ln 0 := 0$$
+
+Shannon entropy in nats. Range: [0, ln 5] ≈ [0, 1.609] for 5-state; [0, ln 3] ≈ [0, 1.099]
+for 3-state. Zero when a single state has probability 1; maximum at the uniform distribution.
+
+**Confidence (C)** — maximum posterior: $C(t) = \max_k p_k(t)$. Range [1/K, 1].
+
+**Margin (Mg)** — gap between top two posteriors: $Mg(t) = p_{\text{max1}}(t) - p_{\text{max2}}(t)$. Range [0, 1].
+
+**Total variation — 1-step (TV)**
+
+$$TV(t) = \tfrac{1}{2}\sum_k |p_k(t) - p_k(t-1)|, \quad t \geq 1; \quad TV(0) = 0$$
+
+Half the L1 norm of the step vector between consecutive posterior samples. The factor ½
+normalises TV to [0, 1]: because the probability simplex is conserved, positive and negative
+changes in the K components must sum to the same absolute value, so the raw L1 sum is at most 2.
+TV = 1 corresponds to complete redistribution of probability mass in a single step.
+
+**Total variation — lagged (TV\_LAG)**
+
+$$TV_{\text{lag}}(t) = \tfrac{1}{2}\sum_k |p_k(t) - p_k(t - \text{lag\_smp})|, \quad t \geq \text{lag\_smp}; \quad TV_{\text{lag}}(t) = 0 \text{ for } t < \text{lag\_smp}$$
+
+where lag\_smp = round(`lag` × Fs). Captures slower posterior drift over the lag window rather
+than sample-to-sample jitter. The first lag\_smp samples receive a sentinel value of 0.
+
+**Argmax** — $\text{argmax}_k\, p_k(t)$. Ties broken in favour of the lower state index.
+
+**Pairwise mixing signals** — three min-based coefficients capture simultaneous mass on two
+states. Each has range [0, 0.5]; it is non-zero only when both states carry probability simultaneously, and is maximised at 0.5 when the two states are exactly equal.
+
+| Signal | 5-state formula | 3-state formula |
+| ---- | ---- | ---- |
+| MIX\_A | min(p\_W, p\_N1) | min(p\_W, p\_NREM) |
+| MIX\_B | min(p\_N2, p\_N3) | _(absent)_ |
+| MIX\_C | min(p\_R, p\_N1) | min(p\_NREM, p\_R) |
+
+#### Transition detection
+
+Three methods are available via the `transition` parameter. Detection runs independently for
+5-state and 3-state representations. Each detected event carries: center sample index, the
+argmax state immediately before the event (`from_st`), the argmax state at the event center
+(`to_st`), and the TV value at the event center (`peak_tv`).
+
+**Hard method** (`transition=hard`). An event is emitted at every sample t where argmax(t) ≠
+argmax(t−1). `from_st` = argmax(t−1), `to_st` = argmax(t). No post-processing.
+
+**Motion method** (`transition=motion`, default). A candidate peak is any sample t (1 ≤ t ≤
+N−2) where TV(t) ≥ `motion-th` and TV(t) is a local maximum (TV(t) ≥ TV(t−1) and TV(t) ≥
+TV(t+1)); the final sample t = N−1 is tested as a one-sided peak. Candidates are merged into
+clusters: events within win\_smp = round(`window` × Fs) samples of each other are collapsed to
+a single representative by keeping the higher-TV peak in each cluster. `from_st` and `to_st`
+are the argmax at the representative sample index minus one and at the representative sample
+itself. Note: because the argmax need not change at a TV peak, `from_st == to_st` is common
+with this method; such events are excluded from per-pair outputs.
+
+**Both method** (`transition=both`). Hard and motion event lists are merged, sorted by sample
+index, and re-merged by the same cluster logic (win\_smp window, keep higher-TV representative).
+
+#### Transition and stable masks
+
+After detection, three boolean masks are built over all N samples:
+
+- **is\_trans(t)** = true if any event center lies within ±win\_smp = round(`window` × Fs) samples of t.
+- **is\_stable(t)** = true if t lies in a contiguous run of at least stable\_smp = round(`stable-min` × Fs)
+  samples where both TV(t) < `stable-tv` and C(t) > `stable-conf`.
+- **is\_neither(t)** = true if a sample is neither transition-zone nor stable-core.
+
+Transition-zone membership takes priority: any sample marked `TRANS` is removed from `STABLE`.
+Therefore `STABLE` is not defined by distance from detected events alone; it is defined by the
+TV/confidence run criterion above, after excluding peri-event samples.
+
+Each detected event is also labeled **clean** if there is a stable-core sample immediately beyond
+the transition window on both sides of the event: at indices ci − win\_smp − 1 and
+ci + win\_smp + 1.
+
+#### Region summary statistics
+
+For each of the four region subsets — ALL, STABLE (context ∩ is\_stable), TRANS (context
+∩ is\_trans), and NEITHER — the following are computed over the included samples:
+
+- Mean, SD, and 90th percentile of H and TV. SD uses the N−1 (Bessel-corrected) denominator.
+  Percentiles use linear interpolation: for percentile p on sorted vector v of length n,
+  index = p·(n−1); result = v[⌊i⌋]·(1−frac) + v[⌊i⌋+1]·frac.
+- Mean C, mean Mg, and FRAC\_C\_LT (fraction of samples where C < `conf-th`).
+- Mean TV\_lag.
+- Pearson correlation of H and TV: r = Σ(H_i − H̄)(TV_i − TV̄) / √[Σ(H_i − H̄)² · Σ(TV_i − TV̄)²].
+- Mean pairwise mixing signals (MIX\_A, MIX\_B, MIX\_C).
+- Mean posterior probability for each state (P\_W, P\_N1, ... or P\_NR in 3-state output).
+
+A region row is suppressed if it contains fewer than `min-samples` samples.
+
+#### Transition shape statistics
+
+For each event at center sample ci, an analysis window [ci − win\_smp, ci + win\_smp] (clipped
+to recording boundaries) is examined. The transition width threshold is computed as:
+
+$$H_{\text{width\_th}} = H_{\text{baseline}} + 0.5 \times (p_{90}(H,\,\text{all context}) - H_{\text{baseline}})$$
+
+where $H_{\text{baseline}}$ is the median of H over stable-core samples within the context (falls
+back to the full-context median if no stable samples exist). Per-event scalars:
+
+- **Width** (seconds): number of samples in the window where H > H\_width\_th, divided by Fs.
+- **Peak H**: max H within the window.
+- **Min C**: min C within the window.
+- **TV area** (seconds): trapezoidal integral of TV over the window, Σ 0.5·(TV[i−1]+TV[i]) for
+  i = lo+1…hi, divided by Fs.
+
+Summary statistics are the means of these scalars over all events in the context. Transition
+density = event count / (context duration in hours). The source also tracks **clean**
+transitions, defined above, and reports their count and density.
+
+#### Transition-aligned profiles
+
+For each event with a complete window (ci − win\_smp ≥ 0 and ci + win\_smp ≤ N−1), the signals
+at positions j = 0…2·win\_smp are accumulated. The time offset at position j is:
+
+$$\text{OFFSET}(j) = \frac{j - \text{win\_smp} + 0.5}{F_s} \text{ seconds}$$
+
+The +0.5 shift places OFFSET = 0 at the inter-sample boundary between samples ci−1 and ci,
+which is where both a hard argmax change and the TV step metric are conventionally indexed. A
+profile is emitted only when ≥ `min-events` events have a complete window. Per-channel mean
+posteriors (P\_W, P\_N1, …) are included in both global and per-pair profiles. A parallel
+set of aligned profiles is also emitted for the clean-event subset under `QUAL=CLEAN`.
 
 
  - **A. Mixedness** — how diffuse (uncertain) the posterior distribution is at each sample:
@@ -801,7 +940,7 @@ Hypnodensity analysis characterizes the continuous posterior-probability signals
 The central scientific distinction preserved throughout is **stable mixed/intermediate states**
 (e.g. light NREM, persistent ambiguity between N1 and N2) versus **transitional instability**
 (brief high-entropy passages that coincide with genuine state changes). [`HDSTATS`](pops.md#hdstats) detects
-candidate transitions, labels every sample as either transition-zone or stable-core, and
+candidate transitions, labels samples as transition-zone, stable-core, or neither, and
 reports all metrics separately for each region.
 
 <h3>Background</h3>
@@ -828,9 +967,11 @@ Three transition detection strategies are available via the `transition` paramet
 | `both` | Union of `hard` and `motion` detections, with nearby events merged |
 
 Each detected transition defines a _transition zone_: all samples within `window` seconds of
-the event centre. Samples further than `stable-min` seconds from _any_ transition constitute
-the _stable-core_. The three `REGION` levels (`ALL`, `STABLE`, [`TRANS`](evals.md#trans)) allow direct
-comparison of mixedness and instability metrics between these regions.
+the event centre. Stable-core samples are then defined by contiguous runs of duration
+`stable-min` where TV remains below `stable-tv` and confidence remains above `stable-conf`,
+with transition-zone samples excluded. The four `REGION` levels (`ALL`, `STABLE`,
+[`TRANS`](evals.md#trans), and `NEITHER`) allow direct comparison of mixedness and instability
+metrics between these regions.
 
 <h3>Parameters</h3>
 
@@ -852,85 +993,117 @@ Analysis options:
 | `transition` | `motion` | Transition detection method: `motion` (default), `hard`, or `both` |
 | `motion-th` | `0.1` | TV threshold for motion-based transition detection (default: `0.1`) |
 | `window` | `60` | Transition window half-width in seconds; samples within this distance of an event are labelled [`TRANS`](evals.md#trans) (default: `60`) |
-| `lag` | `30` | Lag in seconds for the longer-lag TV metric `MEAN_TV_LAG` (default: `30`) |
-| `stable-min` | `60` | Minimum seconds from any transition event to qualify as stable-core (default: `60`) |
+| `lag` | `30` | Lag in seconds for the longer-lag TV metric `TV_LAG` (default: `30`) |
+| `stable-min` | `60` | Minimum duration in seconds for a TV-low, confidence-high run to qualify as stable-core (default: `60`) |
+| `stable-tv` | `0.05` | Per-sample TV threshold used when building stable-core runs (default: `0.05`) |
+| `stable-conf` | `0.70` | Per-sample confidence threshold used when building stable-core runs (default: `0.70`) |
 | `conf-th` | `0.8` | Confidence threshold for `FRAC_C_LT`: fraction of samples with max-posterior below this value (default: `0.8`) |
+| `min-shift` | `0.10` | Minimum pre/post posterior L1 shift required to retain a detected transition event; set `<=0` to disable this filter (default: `0.10`) |
+| `shift-win` | `30` | Pre/post window in seconds used to compute the `min-shift` filter (default: `30`) |
+| `emit-annots` | `hdtr` | Emit detected transitions and derived region masks as annotations using this class-name prefix |
 | `annot` | `cycle` | Annotation class for context stratification; one output block is emitted per unique annotation level |
-| `min-events` | `3` | Minimum number of events required to emit a transition-aligned profile (default: `3`) |
+| `min-events` | `3` | Minimum number of events with a complete window required to emit a transition-aligned profile (default: `3`) |
+| `min-samples` | `20` | Minimum number of samples required to emit a region summary row; rows below this threshold are silently suppressed (default: `20`) |
+| `hd-metrics` | `T` | Emit HD\_* hypnodensity analogs of selected HYPNO sleep-summary metrics (default: enabled) |
+| `hd-smooth` | `30` | Smoothing window in seconds for soft sleep/REM trajectories used by HD\_* metrics (default: `30`) |
+| `hd-onset-win` | `10` | Forward integrated-area window in minutes for sustained sleep/REM entry detection (default: `10`) |
+| `hd-sleep-mass-th` | `0.60` | Mean sleep-probability threshold for sustained sleep entry (default: `0.60`) |
+| `hd-rem-mass-th` | `0.30` | Mean REM-probability threshold for sustained REM entry (default: `0.30`) |
+| `hd-offset-win` | `10` | Backward integrated-area window in minutes for final sustained sleep detection (default: `10`) |
+| `hd-offset-mass-th` | `0.60` | Mean sleep-probability threshold for final sustained sleep detection (default: `0.60`) |
 | `verbose` | | Emit per-sample HDSIG time-series table (`TIME` stratum; can be large) |
 
 <h3>Output</h3>
 
 **Primary table** — mixedness and instability by region (strata: `REGION`)
 
-`REGION` takes values `ALL` (all samples), `STABLE` (stable-core), and [`TRANS`](evals.md#trans) (transition zone).
+`REGION` takes values `ALL` (all samples), `STABLE` (stable-core), [`TRANS`](evals.md#trans) (transition zone),
+and `NEITHER` (samples that satisfy neither mask).
 
 | Variable | Description |
 | ---- | ---- |
 | `N` | Number of samples in region |
-| `MEAN_H` | Mean entropy, $H = -\sum_k p_k \ln p_k$ |
+| `H` | Mean entropy, $H = -\sum_k p_k \ln p_k$ |
 | `SD_H` | SD of entropy |
 | `P90_H` | 90th percentile of entropy |
-| `MEAN_C` | Mean confidence (maximum posterior per sample) |
+| `C` | Mean confidence (maximum posterior per sample) |
 | `FRAC_C_LT` | Fraction of samples with confidence below `conf-th` |
-| `MEAN_MG` | Mean margin (largest minus second-largest posterior) |
-| `MEAN_TV` | Mean total-variation step (half the L1 distance between consecutive posteriors) |
+| `MG` | Mean margin (largest minus second-largest posterior) |
+| `TV` | Mean total-variation step (half the L1 distance between consecutive posteriors) |
 | `SD_TV` | SD of TV step |
 | `P90_TV` | 90th percentile of TV step |
-| `MEAN_TV_LAG` | Mean TV at longer lag (`lag` seconds) |
+| `TV_LAG` | Mean TV at longer lag (`lag` seconds) |
 | `CORR_H_TV` | Pearson correlation between entropy and TV |
-| `MEAN_MIX_A` | Mean W/N1 pairwise mixing (5-state: `min(p_W, p_N1)`; 3-state: `min(p_W, p_NREM)`) |
-| `MEAN_MIX_B` | Mean N2/N3 pairwise mixing: `min(p_N2, p_N3)` (5-state only) |
-| `MEAN_MIX_C` | Mean R/N1 pairwise mixing (5-state: `min(p_R, p_N1)`; 3-state: `min(p_NREM, p_R)`) |
+| `MIX_A` | Mean W/N1 pairwise mixing (5-state: `min(p_W, p_N1)`; 3-state: `min(p_W, p_NREM)`) |
+| `MIX_B` | Mean N2/N3 pairwise mixing: `min(p_N2, p_N3)` (5-state only) |
+| `MIX_C` | Mean R/N1 pairwise mixing (5-state: `min(p_R, p_N1)`; 3-state: `min(p_NREM, p_R)`) |
+| `P_W` | Mean posterior probability of Wake |
+| `P_N1` | Mean posterior for N1 (5-state only) |
+| `P_N2` | Mean posterior for N2 (5-state only) |
+| `P_N3` | Mean posterior for N3 (5-state only) |
+| `P_NR` | Mean posterior for NREM = N1+N2+N3 (3-state only) |
+| `P_R` | Mean posterior for REM |
+
+Rows are only emitted for a region if it contains ≥ `min-samples` samples.
+For `REGION=ALL` rows, three additional coverage fields are emitted: `PCT_STABLE`,
+`PCT_TRANS`, and `PCT_NEITHER`.
 
 In addition, the following region-contrast metrics are emitted at the top level (no `REGION` stratum):
 
 | Variable | Description |
 | ---- | ---- |
-| `H_RATIO_TR_ST` | Entropy ratio: `MEAN_H(TRANS)` / `MEAN_H(STABLE)` |
-| `CONF_DIFF_TR_ST` | Confidence difference: `MEAN_C(TRANS)` − `MEAN_C(STABLE)` |
-| `TV_RATIO_TR_ST` | TV ratio: `MEAN_TV(TRANS)` / `MEAN_TV(STABLE)` |
+| `H_RATIO_TR_ST` | Entropy ratio: `H(TRANS)` / `H(STABLE)` |
+| `CONF_DIFF_TR_ST` | Confidence difference: `C(TRANS)` − `C(STABLE)` |
+| `TV_RATIO_TR_ST` | TV ratio: `TV(TRANS)` / `TV(STABLE)` |
 
 **Transition summary** — overall transition structure (no stratum; emitted at top level):
 
 | Variable | Description |
 | ---- | ---- |
 | `N_TRANS` | Number of transition events detected |
+| `N_CLEAN` | Number of clean transition events |
 | `TRANS_DENS` | Transition density (events per hour) |
-| `MEAN_TRANS_W` | Mean transition width in seconds (duration where entropy exceeds the halfway point between baseline and 90th-percentile entropy) |
-| `MEAN_PEAK_H` | Mean peak entropy within each transition window |
-| `MEAN_MIN_C` | Mean minimum confidence within each transition window |
-| `MEAN_TV_AREA` | Mean area under the TV curve within each transition window (seconds) |
+| `DENS_CLEAN` | Density of clean transition events (events per hour) |
+| `TRANS_WIDTH` | Mean transition width in seconds (duration where entropy exceeds the halfway point between baseline and 90th-percentile entropy) |
+| `PEAK_H` | Mean peak entropy within each transition window |
+| `MIN_C` | Mean minimum confidence within each transition window |
+| `TV_AREA` | Mean area under the TV curve within each transition window (seconds) |
 
 **Transition-pair table** — per directed-pair statistics (strata: [`TRANS`](evals.md#trans))
 
-[`TRANS`](evals.md#trans) is a label of the form `FROM->TO` (e.g. `N2->N3`, `W->N1`). Only pairs with at
+[`TRANS`](evals.md#trans) is a label of the form `FROMtoTO` (e.g. `N2toN3`, `WtoN1`). Only pairs with at
 least one detected hard-argmax change are emitted. Contains the same variables as the
 transition summary above.
 
 **Transition-aligned profiles** (strata: `OFFSET`)
 
-Mean signals aligned to each transition centre, emitted when there are ≥ `min-events` events.
-`OFFSET` is the time offset in seconds from the event centre (positive = after transition).
+Mean signals aligned to each transition centre, emitted when there are ≥ `min-events` events
+with a complete window. `OFFSET` is seconds relative to the event centre; see Methods for the
++0.5-sample shift that aligns OFFSET = 0 with the inter-sample boundary.
 
 | Variable | Description |
 | ---- | ---- |
-| `H` | Mean entropy at offset |
-| `C` | Mean confidence at offset |
-| `MG` | Mean margin at offset |
-| [`TV`](power-spectra.md#tv) | Centred mean TV at offset (midpoint between samples) |
+| `H` | Mean entropy at this offset |
+| `C` | Mean confidence at this offset |
+| `MG` | Mean margin at this offset |
+| [`TV`](power-spectra.md#tv) | Mean centred TV at this offset: 0.5·(TV[t]+TV[t+1]) for interior samples |
+| `P_W` | Mean wake posterior at this offset |
+| `P_N1` | Mean N1 posterior (5-state only) |
+| `P_N2` | Mean N2 posterior (5-state only) |
+| `P_N3` | Mean N3 posterior (5-state only) |
+| `P_NR` | Mean NREM posterior (3-state only) |
+| `P_R` | Mean REM posterior |
 
 Transition-pair-specific aligned profiles are emitted with strata [`TRANS`](evals.md#trans) × `OFFSET` and
-additionally include per-state posterior traces:
+contain the same variables. Clean-event aligned profiles are additionally emitted under the
+`QUAL=CLEAN` stratum.
 
-| Variable | Description |
-| ---- | ---- |
-| `P_W` | Mean wake posterior at offset |
-| `P_N1` | Mean N1 posterior at offset (5-state only) |
-| `P_N2` | Mean N2 posterior at offset (5-state only) |
-| `P_N3` | Mean N3 posterior at offset (5-state only) |
-| `P_NR` | Mean NREM posterior at offset (3-state only) |
-| `P_R` | Mean REM posterior at offset |
+**Stage-conditioned region summaries** (strata: `STAGE` × `REGION`)
+
+When `STAGE` is set, the primary region-summary variables (Table 1 above) are additionally
+reported for each argmax-defined stage separately. `STAGE` takes values `W`, `N1`, `N2`, `N3`,
+`R` (5-state) or `W`, `NR`, `R` (3-state). The STAGE × REGION rows contain only the region
+summary variables; transition event stats and aligned profiles are not emitted per-stage.
 
 **Per-sample time-series** (strata: `TIME`; only with `verbose`)
 
@@ -938,20 +1111,32 @@ additionally include per-state posterior traces:
 
 | Variable | Description |
 | ---- | ---- |
-| `H` | Entropy |
-| `C` | Confidence |
-| `MG` | Margin |
-| [`TV`](power-spectra.md#tv) | Total-variation step |
-| `TV_LAG` | Total-variation at longer lag |
-| `MIX_A` | W/N1 mixing (or W/NREM in 3-state) |
-| `MIX_B` | N2/N3 mixing |
-| `MIX_C` | R/N1 mixing (or NREM/R in 3-state) |
-| `ARGMAX` | Argmax state index (0=W, 1=N1, 2=N2, 3=N3, 4=R) |
-| `IS_TRANS` | 1 if sample is in a transition zone |
-| `IS_STABLE` | 1 if sample is in stable-core |
+| `H` | 5-state entropy |
+| `C` | 5-state confidence |
+| `MG` | 5-state margin |
+| [`TV`](power-spectra.md#tv) | 5-state total-variation step; 0 at t=0 |
+| `TV_LAG` | 5-state lagged TV; 0 for t < lag\_smp |
+| `MIX_A` | min(p\_W, p\_N1) |
+| `MIX_B` | min(p\_N2, p\_N3) |
+| `MIX_C` | min(p\_R, p\_N1) |
+| `ARGMAX` | Argmax stage index: 0=W, 1=N1, 2=N2, 3=N3, 4=R |
+| `IS_TRANS` | 1 if within ±win\_smp of any 5-state event center |
+| `IS_STABLE` | 1 if in a stable-core run after transition-zone samples are excluded |
+| `IS_NEITHER` | 1 if neither transition-zone nor stable-core |
 
-When `3state` is set, the verbose table also includes `H3`, `C3`, `TV3`, `ARGMAX3`, and
-`IS_TRANS3` for the collapsed 3-state representation.
+When `3state` is set, the verbose table also includes:
+
+| Variable | Description |
+| ---- | ---- |
+| `H3` | 3-state entropy |
+| `C3` | 3-state confidence |
+| `TV3` | 3-state TV step |
+| `ARGMAX3` | Argmax in 3-state space: 0=W, 1=NREM, 2=R |
+| `IS_TRANS3` | 1 if within ±win\_smp of any 3-state event center |
+| `IS_STABLE3` | 1 if in a stable-core run after transition-zone samples are excluded |
+| `IS_NEITHER3` | 1 if neither transition-zone nor stable-core in 3-state space |
+| `MIX_A3` | min(p\_W, p\_NREM) |
+| `MIX_C3` | min(p\_NREM, p\_R) |
 
 **Annotation-stratified output** (strata: `ANNOT`)
 
@@ -962,7 +1147,7 @@ stratum, one level per unique annotation instance (e.g. one block per NREM cycle
 
 When `3state` is set, all output tables are emitted twice — once for the 5-class
 (`STATE=5`) and once for the 3-class (`STATE=3`, collapsing N1+N2+N3 → NREM) analyses.
-The `MEAN_MIX_B` (N2/N3) variable is suppressed in the 3-state output.
+The `MIX_B` (N2/N3) variable is suppressed in the 3-state output.
 
 <h3>Example</h3>
 
@@ -977,10 +1162,10 @@ luna s.lst -o out.db -s '
 Retrieve the primary region-level summary:
 
 ```
-destrat out.db +HDSTATS -r REGION -v MEAN_H P90_H MEAN_C FRAC_C_LT MEAN_TV
+destrat out.db +HDSTATS -r REGION -v H P90_H C FRAC_C_LT TV
 ```
 ```
-ID      REGION   MEAN_H   P90_H   MEAN_C   FRAC_C_LT   MEAN_TV
+ID      REGION   H        P90_H   C        FRAC_C_LT   TV
 nsrr02  ALL      0.414    1.021   0.823    0.118        0.031
 nsrr02  STABLE   0.298    0.712   0.879    0.066        0.014
 nsrr02  TRANS    0.891    1.438   0.612    0.341        0.128
@@ -989,26 +1174,26 @@ nsrr02  TRANS    0.891    1.438   0.612    0.341        0.128
 Retrieve overall transition statistics:
 
 ```
-destrat out.db +HDSTATS -v N_TRANS TRANS_DENS MEAN_TRANS_W MEAN_PEAK_H
+destrat out.db +HDSTATS -v N_TRANS TRANS_DENS TRANS_WIDTH PEAK_H
 ```
 ```
-ID      N_TRANS   TRANS_DENS   MEAN_TRANS_W   MEAN_PEAK_H
+ID      N_TRANS   TRANS_DENS   TRANS_WIDTH   PEAK_H
 nsrr02  218       30.4         44.2           1.231
 ```
 
 Retrieve the transition-pair breakdown:
 
 ```
-destrat out.db +HDSTATS -r TRANS -v N_TRANS TRANS_DENS MEAN_PEAK_H MEAN_MIN_C
+destrat out.db +HDSTATS -r TRANS -v N_TRANS TRANS_DENS PEAK_H MIN_C
 ```
 ```
-ID      TRANS     N_TRANS   TRANS_DENS   MEAN_PEAK_H   MEAN_MIN_C
-nsrr02  N2->N3    38        5.3          0.980         0.724
-nsrr02  N3->N2    41        5.7          0.975         0.719
-nsrr02  N2->W     22        3.1          1.347         0.481
-nsrr02  W->N2     19        2.6          1.301         0.512
-nsrr02  W->R      14        2.0          1.182         0.556
-nsrr02  R->W      17        2.4          1.219         0.534
+ID      TRANS     N_TRANS   TRANS_DENS   PEAK_H   MIN_C
+nsrr02  N2toN3    38        5.3          0.980    0.724
+nsrr02  N3toN2    41        5.7          0.975    0.719
+nsrr02  N2toW     22        3.1          1.347    0.481
+nsrr02  WtoN2     19        2.6          1.301    0.512
+nsrr02  WtoR      14        2.0          1.182    0.556
+nsrr02  RtoW      17        2.4          1.219    0.534
    ...
 ```
 

@@ -1,7 +1,78 @@
 
 # Updates, additions and fixes
 
-Current stable version: __v1.5.1__ (main [downloads](download/index.md) page)
+Current stable version: __v1.7.0__ (main [downloads](download/index.md) page)
+
+
+## v1.7.0 (03-September-2026)
+
+_luna-base / core engine_
+
+- added [`EPDYN`](ref/dynamics.md#epdyn) and [`EVTDYN`](ref/dynamics.md#evtdyn), replacing
+  `DYNAM`, for epoch-level (NREM-cycle/quantile) and event-level (timing/clustering)
+  dynamics respectively
+
+- merged `FILTER-DESIGN`/`FIR-DESIGN` into one command covering FIR and narrow-Gaussian
+  (`ngaus=`) filter summaries, with a new step-response output
+
+- extended [`META`](ref/annotations.md#meta) with expression evaluation (`expr=`), a
+  generalized nearest/next/prev annotation matcher (`look=`), and cross-annotation metadata
+  copying (`copy-md=`); extended [`MAKE-ANNOTS`](ref/annotations.md#make-annots) with grouped
+  `left=`/`right=`/`op=` set operations; added `mask=` to
+  [`DROP-ANNOTS`](ref/annotations.md#drop-annots) to drop only masked instances
+
+- added `continue=` to [`RECORD-SIZE`](ref/manipulations.md#record-size) to restructure
+  in-memory without writing a new EDF
+
+_Under development_
+
+Documentation is currently being written for the commands below, but they are
+**not yet ready for general use** and are highly likely to change (in name,
+options, or output) in upcoming releases:
+
+- [`DPP`](ref/dynamics.md#dpp) and `--dpp-fit` — multiscale local-feature extraction
+  (spectral power/slope, Hjorth, entropy, catch22/24, envelope, PLV, coherence, PSI) over
+  trailing causal windows on any signal, plus cohort-level model training and
+  per-recording projection of a person-level phenotype as a new time-varying signal
+  ("Dynamic Phenotype Projection")
+
+- [`LM`](ref/physio.md#lm) — leg-movement/candidate-LM/PLM detection following the
+  WASM 2016 grammar
+
+- [`RESP-LINK`](ref/physio.md#resp-link) — links respiratory events to their likely
+  SpO2 desaturation and arousal responses via a learned event-centered response template
+
+- `ORT` — runs SleepFM ONNX models on signal windows (opt-in build)
+
+- [`WAVEFORMS`](ref/intervals.md#waveforms) and `--waveforms` — dumps annotation-defined
+  raw signal segments to binary `.lwf` shards and summarizes them across a cohort
+
+- [`AROUSALS`](ref/physio.md#arousals) — candidate sleep arousal detection from EEG with
+  optional EMG support; carried over from v1.5.1 and still under active development
+
+_lunapi / Python interface_
+
+- added process-based [parallel cohort processing](lunapi/ref.md#projproc_parallel)
+  via `proj.proc_parallel()` and its `proj.procn()` alias, with configurable
+  workers and batches, progress reporting, row/ID filtering, explicit parameter
+  files, strict or partial-failure handling, and structured `ProcResult` metadata
+
+- added the [`luna.py`](lunapi/index.md#command-line-use) command-line wrapper
+  for common sample-list and single-EDF workflows, including `--build`,
+  `--validate`, row selection, parameter files, SQLite output, and plain-text output
+
+- added the [`destrat.py`](lunapi/index.md#command-line-use) command-line reader
+  and the in-process [`lp.destrat()`](lunapi/ref.md#lpdestrat) reader for querying
+  one or more Luna output databases with row/column strata and level filters
+
+- added the [BioData Catalyst client](lunapi/ref.md#biodata-catalyst), including
+  authentication, project/file discovery, recording grouping, resumable downloads,
+  and checksum/size verification
+
+These interfaces are available through the `lunapi` 1.7.0 release. The matching
+Luna command-line/library release is `luna-base` 1.7.0; the compatible LunaScope
+release is also 1.7.0.
+
 
 ## v1.5.1 (21-April-2026)
 
@@ -46,6 +117,11 @@ _Alpha / untested_
   plus insertion/alignment of channels from a secondary EDF, including simple drift
   correction
 
+_Bug fix_
+
+- fixed issue with [`HYPNO`](ref/hypnograms.md#hypno) timing of landmarks (sleep onset, sleep midpoint)
+  that impacts recordings > 12 hours with late or post-midnight start times
+
 ## v1.3.5 (19-Mar-2026)
 
 _New commands_
@@ -65,7 +141,7 @@ _New commands_
   EOG; produces per-epoch flags and channel-level `FLAGGED` designations, with
   line noise tracked separately from structural artifacts
 
-- added [`S2C`](ref/annotations.md#s2c) — signal-to-cycle: segments oscillatory
+- added [`S2C`](ref/intervals.md#s2c) — signal-to-cycle: segments oscillatory
   activity into cycle annotations, with outputs ranging from seed-level summaries
   to per-cycle and phase/time-binned metrics (half-wave durations, peak amplitudes,
   transition probabilities, cycle-locked signal averages)
@@ -507,7 +583,7 @@ _Misc additions, changes and fixes_
    register the col names for arbitrary commands yet...)
 
  - added `so-fast-trans` and `so-slow-trans` (w/ arg in Hz as trans
-   freq) to return only FS or SS (SO fast/slow swtichers)
+   freq) to return only FS or SS (SO fast/slow switchers)
 
  - added `winsor` option to [`SPINDLES`](ref/spindles-so.md#spindles); also changed the implementation of Q-score filtering; new
    `q-frq={freq},{cycles},{freq2},{cycles2}` option; also `q-verbose` and `q-verbose-all` and `q-max`
@@ -586,7 +662,7 @@ _Spectral analysis_
  - allow `skip-bands` (e.g. `skip-bands=SIGMA,GAMMA,TOTAL`) for [`PSD`](ref/power-spectra.md#psd) to omit certain bands from the output
 
  - to support ISO analyses: PSD now has an `add` option to emit
-   (currently 1Hz) values (requries `EPOCH dur=4 inc=1` and `PSD
+   (currently 1Hz) values (requires `EPOCH dur=4 inc=1` and `PSD
    segment-size=4`).  This creates a new 1 Hz time-series in the EDF.
 
  - [`COH`](ref/cc.md#coh) now allows generic epochs - _as long as they are of fixed
@@ -798,7 +874,7 @@ _Signal processing_
    i.e. `CV=sqrt(exp(s^2)-1)` where `s^2` is the natural log-scaled
    variance.
 
- - new more efficient cross-correlation [`XCORR`](ref/cc.md#XCORR) implementation and
+ - new more efficient cross-correlation [`XCORR`](ref/cc.md#xcorr) implementation and
    new outputs
 
 
@@ -1069,7 +1145,7 @@ _Major new functionality_
 
  - new [`REMAP`](ref/annotations.md#remap) command to perform annotation remapping on _already-loaded_x data;
  
- - new [`EXE`](ref/clustering.md#representative-epochs) option `representative` to extract _K_ examplar epochs via a clustering heuristic based on permutation distribution clustering
+ - new [`EXE`](ref/clustering.md#representative-epochs) option `representative` to extract _K_ exemplar epochs via a clustering heuristic based on permutation distribution clustering
  
 _Minor changes/additions_
 
@@ -1105,7 +1181,7 @@ _Minor changes/additions_
  - added the `xbg` option to specify intervals to excise certain intervals from the background in [`OVERLAP`](ref/intervals.md#overlap)
 
  - `offset` option of [`EPOCH`](ref/epochs.md#epoch) can now take _hh:mm_ and _hh:mm:ss_
-   arguments, as well as elasped seconds
+   arguments, as well as elapsed seconds
 
  - now gives an error if specified filename for a new EDF file
    (e.g. from [`WRITE`](ref/outputs.md#write)) is the same as the input EDF. (This was allowed
@@ -1321,7 +1397,7 @@ _Annotations_
 
  - for [EDF+ annotations](ref/annotations.md#edf-annotations),
    added `edf-annot-class` special variable, to make these annots
-   classes (instead of `edf_annot_t` instanes)
+   classes (instead of `edf_annot_t` instances)
    e.g. `edf-annot-class=N1,N2,N3,R,W`
 
 
@@ -1387,7 +1463,7 @@ _New functionality_
  - [`ZC`](ref/manipulations.md#zc) mean-centers signals, and [`ROBUST-NORM`](ref/manipulations.md#robust-norm)
    performs robust normalization (by median & IQR)
 
- - upated the [`EMD`](ref/power-spectra.md#emd) (empirical mode decomposition) command 
+ - updated the [`EMD`](ref/power-spectra.md#emd) (empirical mode decomposition) command 
  
  - [`--repath`](ref/helpers.md#-repath) convenience sample-list function
  
@@ -1450,7 +1526,7 @@ _EEG microstates_
 
  - [`MS`](ref/ms.md#ms) has new `add-spc-sig` option to add spatial correlations as new EDF channels (instead of 0/1 binary variable, as per `add-sig`)
 
- - [`MS`](ref/ms.md#ms) has new `canonical` option to specify a file definining canonical microstates
+ - [`MS`](ref/ms.md#ms) has new `canonical` option to specify a file defining canonical microstates
 
  - [`MS`](ref/ms.md#ms) solutions now always have a header row; you cannot extract based on sol=file,A,B,C,D; also, 'unassigned' states are labeled 1,2,3, etc not A,B,C,...
 
@@ -1511,7 +1587,7 @@ _Other fixes, minor modifications and new features_
   - [`CANONICAL`](ref/canonical.md#canonical) does not now need an explicit GROUP to be specified;
    the file must still have a first col, it is just ignored now; also,
    new `drop-originals` option to drop all original (non-CANONICAL)
-   signals after making the new signals; matches case-insentive
+   signals after making the new signals; matches case-insensitive
   
  - changed `epoch-check` to accept number of `.eannot` epochs that are
    different from expected; default is 5; only stops is absolute
@@ -1570,15 +1646,16 @@ _Other new commands/functionality_
  - Find peaks in signals and subsequently produced peak-locked averages across other channels, via the [`PEAKS` command](ref/intervals.md#peaks) 
    and the [`TLOCK` command](ref/intervals.md#tlock) 
 
- - Cross-correlation and phase synchrony metrics, via the new [`TSYNC` command](ref/cc.md#tsync)
+ - Cross-correlation and phase synchrony metrics, via the new `TSYNC` command
+   (later superseded by [`XCORR`](ref/cc.md#xcorr))
 
  - New [`A2S`](ref/annotations.md#a2s) and [`S2A` commands](ref/annotations.md#s2a)  to convert anntotations to binary EDF signals channels, and vice versa
 
  - Restructure EDFs to align records, annotations and epochs via the 
  [`ALIGN` command](ref/manipulations.md#align) 
 
- - Added the [`EDF` command](ref/manipulations.md#edf) to convert
-   EDF+C and EDF+D to standard EDF
+ - Added the `EDF` command to convert EDF+C and EDF+D to standard EDF
+   (later renamed [`EDF-MINUS`](ref/manipulations.md#edf-minus))
 
  - Added the [`LINE-DENOISE`](ref/artifacts.md#line-denoise) command, using spectrum interpolation to reduce line noise
  
@@ -1631,7 +1708,7 @@ _Minor modifications/fixes_
 - all commands that use epoch-level sleep stages ([`SOAP`](ref/soap.md#soap), [`HYPNO`](ref/hypnograms.md#hypno),
   [`STAGE`](ref/hypnograms.md#stage), etc) will note if an epoch has multiple spanning stage
   annotations (i.e. which might happen if stages and epochs are not
-  temporally well-aligned); it now reports tje `CONF` variable
+  temporally well-aligned); it now reports the `CONF` variable
   describing the overlap
 
 - fixed an issue in selecting ranges when annotations do not align
@@ -1681,13 +1758,13 @@ _Minor modifications/fixes_
  - multiple changes to the [`.annot`](ref/annotations.md#annot-files) file
    format: allow durations (+seconds); allow hh:mm:ss elapsed time
    (0+hh:mm:ss offsets); allow fractional seconds in hh:mm:ss
-   specfication; added channel labels and six-column format (but
+   specification; added channel labels and six-column format (but
    allowing reduced 3-col and 4-col formats for backwards
    compatibility); headers now optional; allow space/tab or tab-only
    delimiters; fixed an off-by-one-time-point glitch with clocktime
    specification; now fully allow 0-duration annotations [a,a); allow
    `...` in the stop field to read until the start of the next; in all
-   imports, times are scalled to 1/1000th second resolution to avoid
+   imports, times are scaled to 1/1000th second resolution to avoid
    floating-point nastiness to cause too much trouble; added
    `sep-dp=N` option to control the decimal place in `.annot` outputs;
 
@@ -1787,7 +1864,7 @@ _New options/behaviors for existing commands_
   [`STAGE`](ref/hypnograms.md#stage) and [`HYPNO`](ref/hypnograms.md#hypno), e.g. `N1=n1,NREM2`
 
  - added `epoch` and `per-spindle` options to the [`SPINDLES`](ref/spindles-so.md#spindles),
-   making this level of output optinal, and omitted by default (i.e. for `E`x`F`x`CH` and `N`x`F`x`CH`) 
+   making this level of output optional, and omitted by default (i.e. for `E`x`F`x`CH` and `N`x`F`x`CH`) 
 
  - new added `cstats` and `astats` options for [`SIGSTATS`](ref/summaries.md#sigstats)
 
@@ -1808,7 +1885,7 @@ _Other changes_
    7-bit US-ASCII range 32-126 (any character outside this range is
    changed to a `?` character)
 
- - changed behavior to replace [spaces in channel names](luna/args.md#spaces-in-channel-names)
+ - changed behavior to replace [spaces in channel names](luna/args.md#spaces-in-channel-and-annotation-names)
    with underscore (`_`) characters for ease of processing; setting the `spaces` variable
    can specify alternate replacement characters; `keep-spaces` option, if true,
    means that spaces are retained 
@@ -1890,7 +1967,7 @@ _Other changes_
    folders
 
  - added support to __read and write compressed EDF files__, via the
-   [EDFZ](luna/args.md#edfzs) format, as highlighed in [this
+   [EDFZ](luna/args.md#edfzs) format, as highlighted in [this
    vignette](vignettes/edfz.md)
 
  - __new scripting features:__ command files now allow [_conditional

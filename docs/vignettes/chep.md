@@ -265,7 +265,7 @@ final being interpolated, which is naturally undesirable.
 
 This type of trade-off seems particularly relevant for sleep EEG
 recordings, which are typically very long and so may contain both
-hours of clean data but also signifcant periods of unusable data.
+hours of clean data but also significant periods of unusable data.
 Further, the noisy periods may occur at different times for different
 channels (meaning that one cannot simply remove a small portion of the
 recording).  Rejecting hours of good EEG data seems wasteful.
@@ -378,7 +378,7 @@ parameters one can imagine using to flag bad epochs (in fact, the
 for flat signals, clipped signals, or above-threshold amplitudes).
 
 !!! hint "Epoch duration"
-    Another variable in artifact detection is epoch lengh: although this is 30 seconds by default, this can be specified
+    Another variable in artifact detection is epoch length: although this is 30 seconds by default, this can be specified
     to be any different value; e.g. it might make sense to clean data using a smaller 5-second window which would improve
     both the sensitivity to detect shorter artifacts, and decrease the amount of bad data that needs to be discarded/interpolated.
     This is achieved by adding this command to the start of the above scripts:

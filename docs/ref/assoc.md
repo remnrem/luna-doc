@@ -208,9 +208,9 @@ See the [walk-through](https://zzz.nyspi.org/luna-walkthrough) for a semi-realis
 
  - kNN [missing data imputation](#knn-imputation)
 
- - basic [QC](#qc)
+ - basic QC
 
- - individual [inclusions/exclusions](#inclusions-exclusions)
+ - individual [inclusions/exclusions](#inclusionsexclusions)
 
  - [variable selection](#variable-selection)
 
@@ -585,7 +585,7 @@ luna --gpa-prep --options make-specs \
 
 This JSON specification file now contains the same information as encoded in the inputs line.    It can be convenient to
 use this form however, and a) it can be modified to provide additional functionality, as we'll see below, including restricting inputs
-to subsets of variables/values and transforming values, and b) these files can be re-used across different cohorts (i.e. if they are being applied to the
+to subsets of variables/values and transforming values, and b) these files can be reused across different cohorts (i.e. if they are being applied to the
 same set of metrics). 
 
 ```
@@ -1553,7 +1553,7 @@ contain both `DENS` and `AMP` measures (i.e. because there is no
 general way to specify the _adjacency_ of different classes of
 variable).
 
-The approach to permutation with nuissance variables is
+The approach to permutation with nuisance variables is
 the [Freedman-Lane method](https://www.tandfonline.com/doi/abs/10.1080/07350015.1983.10509354)
 and follows an implementation described [here](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4010955/).
 
@@ -1664,7 +1664,7 @@ subj-01    AF3    2.5    38.0206381125483
 
 This file has 1,029,990 rows: one for each individual, channel and frequency combination.
 
-The file `descr.txt` has 130 rows, containing the descripive statistics (independent variables):
+The file `descr.txt` has 130 rows, containing the descriptive statistics (independent variables):
 
 ```
 ID         C1   C2   X1
@@ -1750,7 +1750,7 @@ takes approximately 17 seconds running on a single macOS laptop.
 
 The output notes that on average, each variable has about 25 'adjacent' neighbours (in both frequency
 and topographical space); no variables have 0 adjacent points.  Overall, 199 clusters are
-extracted from the original data, given a minimim t-statistic threshold of 2.
+extracted from the original data, given a minimum t-statistic threshold of 2.
 
 The point-wise (i.e. variable-by-variable) output can be extracted as follows:
 ```
@@ -1797,7 +1797,7 @@ The Luna graph command:
 ```
 ltopo.xy( c=d$CH, x=d$F, y=d$S, z=d$S, pch=20, col=rbpal, cex=0.4, xline=15, yline=c(-2,0,2), y.symm=T) 
 ```
-then produces this plot where the Y-axis and also color-scaling show this scaled verson of the empirical significance:
+then produces this plot where the Y-axis and also color-scaling show this scaled version of the empirical significance:
 
 ![img](../img/cpt1.png){width="100%"}
 

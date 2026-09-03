@@ -6,7 +6,7 @@ polysomnography data from the National Sleep Research Resource
 lists_](luna/args.md#sample-lists), [_parameter
 files_](luna/args.md#parameter-files), channel
 [_aliases_](luna/args.md#aliases) and remappings for
-[_annotations_](luna/args.md#interval-annotations).
+[_annotations_](ref/annotations.md#interval-annotations).
 
 ## NSRR sample lists 
 
@@ -15,7 +15,7 @@ Gem](https://github.com/nsrr/nsrr-gem/blob/master/README.md#prerequisites),
 as [shown here](https://sleepdata.org/datasets/shhs/files) for SHHS,
 for example), you can create
 [_sample-lists_](luna/args.md#sample-lists) using Luna's
-[`--build`](luna/args.md#build) command.
+[`--build`](luna/args.md#-build-option) command.
 
 
 ## Annotation aliases 

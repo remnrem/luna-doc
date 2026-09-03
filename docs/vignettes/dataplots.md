@@ -125,7 +125,7 @@ number of physiological and technical differences.
   midpoint (i.e. the point midway between sleep onset time and final
   wake/end of recording), e.g. assuming it might reflect chronotype,
   a naive analysis in CHAT, CCSHS and CFS would report large but
-  artifical _negative_ correlations between sleep duration and sleep
+  artificial _negative_ correlations between sleep duration and sleep
   midpoint.  That is, because of the design of the study, people who
   went to bed later will appear to have less sleep, as the recordings
   stop all around the same time in the morning.  In contrast, in SHHS
@@ -152,7 +152,7 @@ number of physiological and technical differences.
   of this aspect of the data, which could otherwise confound things.
 
   In any case, the point for our current purposes is simply to note
-  that different visualizations of datasets can bring out feautures
+  that different visualizations of datasets can bring out features
   that otherwise might not be obvious but might nonetheless be
   important for a given analysis.
 
@@ -240,7 +240,7 @@ readily apparent for both these metrics.
 
 ### Other ultradian dynamics
 
-Finally, polysomnography offers are rich set of possibities for
+Finally, polysomnography offers are rich set of possibilities for
 investigating the interplay between different body systems.  As a
 somewhat random and entirely data-driven exercise, here we look at the
 coupling between brain (EEG) and muscle activity (chin EMG), known as

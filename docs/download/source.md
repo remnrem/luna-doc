@@ -326,7 +326,7 @@ and `EXTRA_PKG_LIBS` to point to the LighGBM headers and libraries.  As a full e
  location of FFTW (via `FFTW`) and to include LightGBM (`LGBM=1`) and
  also point to its location (`LGBM_PATH`)
 
- - we also,separately need to tell the R library compilaton step about the locations of both libraries, via `EXTRA_PKG_LIBS`
+ - we also,separately need to tell the R library compilation step about the locations of both libraries, via `EXTRA_PKG_LIBS`
 
 In all:
 
@@ -338,7 +338,7 @@ FFTW="/Users/albert/fftw-3.3.10/" \
  R CMD INSTALL luna
 ```
 
-As a second example: if FFTW is avaialable system wide, but say LGBM
+As a second example: if FFTW is available system wide, but say LGBM
 has been installed outside of the system path (say from `brew install`
 on newer Macs):
 
@@ -347,4 +347,182 @@ LGBM=1 \
  LGBM_PATH="/opt/homebrew/" \
  EXTRA_PKG_LIBS="-L/opt/homebrew/lib -l_lightgbm" \
  R CMD INSTALL luna
+```
+## ONNX Runtime support
+
+ONNX Runtime (ORT) support is optional. The instructions below build a
+shared, CPU-only ORT library with the operators and features needed by the
+Luna ORT interface. These instructions use ORT version 1.29.0; use the same
+ORT version when building on each platform.
+
+The ORT source tree is only used to build the library. Luna needs the final
+shared library and headers arranged as follows:
+
+```
+onnxruntime-dist/
+  include/onnxruntime/
+  lib/
+```
+
+### macOS
+
+Install the build prerequisites:
+
+```
+brew install cmake python git
+```
+
+Download the ORT source:
+
+```
+git clone --branch v1.29.0 --depth 1 \
+  https://github.com/microsoft/onnxruntime.git ~/onnxruntime
+cd ~/onnxruntime
+```
+
+Build the shared CPU library:
+
+```
+python3 tools/ci_build/build.py \
+  --build_dir build/MacOS/ReleaseShared \
+  --config Release \
+  --build_shared_lib \
+  --skip_tests \
+  --parallel 0 \
+  --disable_contrib_ops \
+  --disable_ml_ops \
+  --no_telemetry \
+  --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
+  --target onnxruntime \
+  --cmake_generator "Unix Makefiles" \
+  --update \
+  --build
+```
+
+Stage the library and headers:
+
+```
+mkdir -p ~/onnxruntime/dist/cpu-shared/lib
+mkdir -p ~/onnxruntime/dist/cpu-shared/include
+cp build/MacOS/ReleaseShared/Release/libonnxruntime.dylib \
+  ~/onnxruntime/dist/cpu-shared/lib/
+cp -R include/onnxruntime \
+  ~/onnxruntime/dist/cpu-shared/include/
+install_name_tool -id '@rpath/libonnxruntime.dylib' \
+  ~/onnxruntime/dist/cpu-shared/lib/libonnxruntime.dylib
+```
+
+Build Luna with ORT support:
+
+```
+cd ~/luna-base
+make ARCH=MAC ORT=1 \
+  ORT_PATH=$HOME/onnxruntime/dist/cpu-shared
+```
+
+### Linux
+
+On Debian or Ubuntu, install the build prerequisites:
+
+```
+sudo apt-get update
+sudo apt-get install -y build-essential cmake python3 git
+```
+
+Download the ORT source:
+
+```
+git clone --branch v1.29.0 --depth 1 \
+  https://github.com/microsoft/onnxruntime.git ~/onnxruntime
+cd ~/onnxruntime
+```
+
+Build the shared CPU library:
+
+```
+python3 tools/ci_build/build.py \
+  --build_dir build/Linux/ReleaseShared \
+  --config Release \
+  --build_shared_lib \
+  --skip_tests \
+  --parallel 0 \
+  --disable_contrib_ops \
+  --disable_ml_ops \
+  --no_telemetry \
+  --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
+  --target onnxruntime \
+  --cmake_generator "Unix Makefiles" \
+  --update \
+  --build
+```
+
+Stage the library and headers:
+
+```
+mkdir -p ~/onnxruntime/dist/cpu-shared/lib
+mkdir -p ~/onnxruntime/dist/cpu-shared/include
+cp build/Linux/ReleaseShared/Release/libonnxruntime.so \
+  ~/onnxruntime/dist/cpu-shared/lib/
+cp -R include/onnxruntime \
+  ~/onnxruntime/dist/cpu-shared/include/
+```
+
+Build Luna with ORT support:
+
+```
+cd ~/luna-base
+make ORT=1 ORT_PATH=$HOME/onnxruntime/dist/cpu-shared
+```
+
+### Windows (MinGW)
+
+The Windows `luna-base` build uses MinGW. Build ORT with MinGW as well; an
+ORT library built with MSVC is not compatible with the MinGW Luna build.
+Run these commands from an MSYS2 MinGW shell with GCC, CMake, Python, and Git
+available:
+
+```
+git clone --branch v1.29.0 --depth 1 \
+  https://github.com/microsoft/onnxruntime.git C:/onnxruntime
+cd /c/onnxruntime
+```
+
+Build the shared CPU library:
+
+```
+python tools/ci_build/build.py \
+  --build_dir build/Windows/ReleaseShared \
+  --config Release \
+  --build_shared_lib \
+  --skip_tests \
+  --parallel 0 \
+  --disable_contrib_ops \
+  --disable_ml_ops \
+  --no_telemetry \
+  --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
+  --target onnxruntime \
+  --cmake_generator "MinGW Makefiles" \
+  --update \
+  --build
+```
+
+Stage the library, import library, and headers from the Release output:
+
+```
+mkdir -p /c/onnxruntime/dist/cpu-shared/lib
+mkdir -p /c/onnxruntime/dist/cpu-shared/include
+cp build/Windows/ReleaseShared/Release/onnxruntime.dll \
+  /c/onnxruntime/dist/cpu-shared/lib/
+cp build/Windows/ReleaseShared/Release/onnxruntime.lib \
+  /c/onnxruntime/dist/cpu-shared/lib/
+cp -R include/onnxruntime \
+  /c/onnxruntime/dist/cpu-shared/include/
+```
+
+Build Luna with ORT support from the MinGW shell:
+
+```
+cd /c/path/to/luna-base
+make ARCH=WINDOWS ORT=1 \
+  ORT_PATH=C:/onnxruntime/dist/cpu-shared
 ```

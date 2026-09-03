@@ -607,7 +607,7 @@ k <- leval( cmds )
 
 __Returns:__ a list of data-frames, in which list items are _commands_
 and sub-items are output _strata_, i.e. a similar organization to
-[_destrat_](../../luna/args.md#destrat) output databases.  The
+[_destrat_](../../luna/destrat.md#destrat) output databases.  The
 [`lx()`](#lx) function is designed to facilitate working with these lists, as
 shown below.
 
@@ -922,7 +922,7 @@ must therefore a) know what input to expect, b) appropriately perform
 any calculations and c) store results as desired.
 
 As an example: say that Luna did not have the root mean square (RMS)
-function available in [`SIGSTATS`](../../ref/artifacts.md#sigstats), but
+function available in [`SIGSTATS`](../../ref/summaries.md#sigstats), but
 we wanted to calculate it, epoch-by-epoch for `nsrr02`'s EEG channel.
 We can define a new R function `rms()` that takes a vector `x` and
 returns the root mean square:

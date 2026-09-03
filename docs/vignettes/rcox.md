@@ -77,7 +77,7 @@ the entire scripts (and see the `readMe.txt` in the code folder).  Each section
 below links to the original, full version of each script.
 
 In particular, below we consider the following, starting simple and
-then building up to more sophisticated analyses, includng empirical,
+then building up to more sophisticated analyses, including empirical,
 surrogate-based coupling and connectivity analyses:
 
  - Looking at raw signal data 
@@ -215,7 +215,7 @@ plot( (1:8000/400), scan( "cz.txt" ),
 !!! hint "Alternatively: using lunaR" 
     To simplify matters in this vignette, we are not going to use the [_lunaR_](../ext/R/index.md) package: instead, we will swap
     between command-line luna ([_lunaC_](../luna/args.md)) and the R package for any visualization, as above.  However, all the steps performed
-    here could be performed using only _lunaR_ if so desired, and in some instances this could be simpler/preferrable. For example: here we attach the correct EDF, extract
+    here could be performed using only _lunaR_ if so desired, and in some instances this could be simpler/preferable. For example: here we attach the correct EDF, extract
     a data-frame `d` that corresponds to 20-seconds of `Cz`, and then plot it:
     ```
     library(luna)

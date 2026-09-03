@@ -34,6 +34,7 @@ function](../luna/args.md#help).
 |[Artifacts](artifacts.md)         | Artifacts detection/correction routines |
 |[Physiological signal analysis](physio.md) | Heart-rate, atonia, and arousal analyses |
 |[Hypnograms](hypnograms.md)       | Characterizations of hypnograms |
+|[Dynamics](dynamics.md)           | Ultradian and temporal dynamics of signals and events |
 |[SOAP](soap.md)                   | Self-contained modelling and evaluation of sleep staging |
 |[POPS](pops.md)                   | Sleep staging & evaluation |
 |[Time/frequency analyses](power-spectra.md) | Power spectral density estimation and other T/F decompositions |
@@ -156,13 +157,20 @@ __Artifacts:__
 __Physiological signal analysis:__
 [`HRV`](physio.md#hrv): _estimate heart-rate variability metrics from ECG,_
 [`RAI`](physio.md#rai): _calculate the REM atonia index from chin EMG,_
-[`AROUSALS`](physio.md#arousals): _detect candidate sleep arousals from EEG and optional EMG,_
+[`AROUSALS`](physio.md#arousals): _detect candidate sleep arousals from EEG and optional EMG (under development),_
+[`LM`](physio.md#lm): _detect leg movements and periodic leg movements, WASM 2016 (under development),_
+[`COMBINE-EMG`](physio.md#combine-emg): _build a single continuous EMG channel from 2+ candidates (under development),_
 [`DESAT`](physio.md#desat): _oxygen desaturation (SpO2) event detection,_
+[`RESP-LINK`](physio.md#resp-link): _link respiratory events to desaturation and arousal responses (under development),_
 [`RESPBREATH`](physio.md#respbreath): _respiratory breath segmentation._
 __Hypnograms:__
 [`HYPNO`](hypnograms.md#hypno): _stage summaries,_
-[`STAGE`](hypnograms.md#stage): _dump stages,_
-[`DYNAM`](hypnograms.md#dynam): _summarize epoch-level outputs by NREM cycles._
+[`STAGE`](hypnograms.md#stage): _dump stages._
+__Dynamics:__
+[`EPDYN`](dynamics.md#epdyn): _summarize epoch-level outputs by NREM cycles,_
+[`EVTDYN`](dynamics.md#evtdyn): _temporal dynamics of annotation events,_
+[`SIGDYN`](dynamics.md#sigdyn): _temporal dynamics of a signal,_
+[`DPP`](dynamics.md#dpp): _multiscale local features & dynamic phenotype projection (under development)._
 __SOAP:__
 [`SOAP`](soap.md#soap):	_single observation & probabilities,_
 [`REBASE`](soap.md#rebase): _change epoch length,_
@@ -210,7 +218,9 @@ __Interval-based:__
 [`PEAKS`](intervals.md#peaks): _detect/cache peaks,_
 [`Z-PEAKS`](intervals.md#z-peaks): _detect/cache peaks (Z method),_
 [`TLOCK`](intervals.md#tlock): _time-locked averaging,_
-[`S2C`](intervals.md#s2c): _signal-to-cycle annotation and summaries._
+[`S2C`](intervals.md#s2c): _signal-to-cycle annotation and summaries,_
+[`WAVEFORMS`](intervals.md#waveforms): _dump annotation-defined waveforms to binary shards (under development),_
+[`--waveforms`](intervals.md#-waveforms): _summarise dumped waveform shards (under development)._
 __PSC:__
 [`--psc`](psc.md#-psc): _estimate components,_
 [`PSC`](psc.md#psc): _project new samples._
@@ -221,7 +231,9 @@ __Spatial/topographical:__
 __ICA:__
 [`ICA`](ica.md#ica): _fit ICA,_
 [`ADJUST`](ica.md#adjust): _adjust given ICs,_
-[`SVD`](ica.md#svd): _fit SVD/PCA._
+[`SVD`](ica.md#svd): _fit SVD/PCA,_
+[`GED`](ica.md#ged): _generalized eigendecomposition,_
+[`--ged-group`](ica.md#-ged-group): _build group GED solutions._
 __Microstates:__
 [`MS`](ms.md#ms): _EEG microstates,_
 [`--kmer`](ms.md#-kmer): _sequence motifs,_
@@ -235,7 +247,8 @@ __Association:__
 [`--gpa`](assoc.md#gpa): _general permutation-based association models,_
 [`CPT`](assoc.md#cpt): _association models._ 
 __Prediction:__
-[`PREDICT`](predict.md#predict): _prediction models._
+[`PREDICT`](predict.md#predict): _prediction models,_
+[`ORT`](predict.md#ort): _run an ONNX Runtime model on signal windows (under development)._
 __Simulation:__
 [`SIMUL`](simul.md#simul): _simulate signals,_
 [`SIGGEN`](simul.md#siggen): _basic signal simulation._

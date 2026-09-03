@@ -65,6 +65,7 @@ nav:
      - 'Deeper dive': 'tut/tut3.md'
      - 'Lunapi': 'https://github.com/remnrem/luna-api-notebooks/blob/main/tutorial.ipynb'
      - '/R/epeat': 'tut/tut4.md'
+     - 'Moonlight': 'tut/tut5.md'
 
  - Walkthrough: 'https://zzz.nyspi.org/luna-walkthrough'
 
@@ -73,7 +74,9 @@ nav:
     - 'Output': 'luna/destrat.md'
     - 'dmerge': 'merge/merge.md'
     - 'dmerge example': 'merge/merge-example.md'
-        
+
+ - Standards: 'standards.md'
+
  - Commands:
     - 'Overview': 'ref/index.md'
     - 'Summaries': 'ref/summaries.md'
@@ -89,14 +92,15 @@ nav:
     - 'Artifacts': 'ref/artifacts.md'
     - 'Physiological signals': 'ref/physio.md'
     - 'Hypnograms': 'ref/hypnograms.md'
+    - 'Dynamics': 'ref/dynamics.md'
     - 'SOAP': 'ref/soap.md'
     - 'POPS': 'ref/pops.md'
     - 'Time/freq. analyses': 'ref/power-spectra.md'
     - 'Spindles/SO ': 'ref/spindles-so.md'
     - 'Coupling/connectivity': 'ref/cc.md'
     - 'Interval-based': 'ref/intervals.md'
-    - 'PSC': 'ref/psc.md'
     - 'Spatial': 'ref/spatial.md'
+    - 'PSC': 'ref/psc.md'
     - 'ICA/PCA': 'ref/ica.md'    
     - 'EEG microstates': 'ref/ms.md'
     - 'Clustering': 'ref/clustering.md'
@@ -121,7 +125,9 @@ nav:
     - Plotting: 'ext/R/viz.md'
     - 'Hypnoscope' : 'apps/hypnoscope.md'
 
- - Vignettes: 
+ - NSRR: 'nsrr.md'
+
+ - Vignettes:
     - 'Index' : 'vignettes/index.md'
     - 'INSERT alignment' : 'vignettes/insert.md'
     - 'Using Luna at scale' : 'vignettes/scale.md'
@@ -146,9 +152,14 @@ nav:
     - 'lunapi (Python)': 'https://github.com/remnrem/luna-api-notebooks?tab=readme-ov-file#lunapi-a-python-interface-for-luna'
     - 'LunaScope': 'https://zzz.nyspi.org/lunascope/install/'
     - 'Hypnoscope': 'download/hypnoscope-install.md'
+    - 'Moonlight': 'download/moonlight-install.md'
     - 'Data': 'download/data.md'
     - 'Notes': 'download/misc.md'
 
  - FAQ: 'faq.md'
+
+ - Known issues: 'known-issues.md'
+
+ - About: 'about.md'
 
  - Contact: 'contact.md'

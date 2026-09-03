@@ -113,8 +113,8 @@ ltopo.topo( c = c( coh$CH1 , coh$CH2 )  , c2 = c( coh$CH2 , coh$CH1 ) , z = c( c
 
 ## `ldefault.xy()`
 
-_Default channel co-ordinates for plotting_
+_Default channel coordinates for plotting_
 
 ## `ldefault.coh.xy()`
 
-_Default channel co-ordinates for plotting connectivity maps_
+_Default channel coordinates for plotting connectivity maps_

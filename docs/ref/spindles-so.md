@@ -85,10 +85,9 @@ Hz:
 - a measure of _integrated spindle activity_ (ISA), based on the sum
   of normalized wavelet coefficients in the spindle interval
 
-- a quality measure _q_ based on the ratio of 1) the relative
-  enrichment of power in the sigma band (for the spindle compared to
-  baseline) versus 2) the comparable relative enrichment in power
-  across all bands (i.e. again for the spindle compared to baseline)
+- a quality measure _q_ based on the log2 ratio of target-frequency
+  CWT enrichment to the strongest enrichment at one or more reference
+  frequencies (by default, 6 and 35 Hz)
 
 Averaging over all spindles in a given run, Luna reports the mean
 spindle density, amplitude, duration, frequency, number of
@@ -102,7 +101,7 @@ per-spindle statistics, as well as per-epoch counts of spindles.
 
 Sleep spindles are detected using a continuous wavelet transform (CWT) approach. A complex Morlet wavelet is convolved with each EEG signal at the specified center frequency (or frequencies); the number of wavelet cycles governs the time–frequency resolution tradeoff, with more cycles yielding greater frequency specificity at the expense of temporal precision. The magnitude of the resulting wavelet coefficients is smoothed with a short sliding window and normalized by the whole-signal mean (or median, if specified) to yield a dimensionless detection statistic. A spindle candidate is called when a core interval of at least the minimum core duration exhibits a normalized wavelet magnitude exceeding the primary threshold, and the event is retained only if a flanking region of at least the minimum total duration also exceeds a secondary (lower) threshold. Candidates shorter than the minimum duration or longer than the maximum duration are discarded; candidates separated by less than the merge window are combined into a single spindle.
 
-Following detection, each spindle is characterized morphologically using the bandpass-filtered signal (centered ±2 Hz around the target frequency). Morphological metrics include: duration (of the combined core and flanking interval); oscillation count; peak-to-peak amplitude; spindle frequency estimated by counting zero-crossings and independently from the FFT modal frequency; a symmetry index reflecting the relative position of the maximum-amplitude oscillation within the spindle; a folded symmetry index; and chirp, defined as the log ratio of mean peak-to-peak intervals in the first versus second half of the spindle. Integrated spindle activity (ISA) is computed as the sum of normalized wavelet coefficients over the spindle interval, providing a composite measure of spindle amplitude, duration, and wavelet coherence. A quality metric _q_ quantifies the degree to which the spindle's power is specifically elevated in the sigma band relative to broadband power change, providing a means to exclude spindles that reflect non-specific amplitude increases rather than genuine narrowband oscillatory activity. Spindle density (events per minute) is computed over the total analysed signal duration.
+Following detection, each spindle is characterized morphologically using the bandpass-filtered signal (centered ±2 Hz around the target frequency). Morphological metrics include: duration (of the combined core and flanking interval); oscillation count; peak-to-peak amplitude; spindle frequency estimated by counting zero-crossings and independently from the FFT modal frequency; a symmetry index reflecting the relative position of the maximum-amplitude oscillation within the spindle; a folded symmetry index; and chirp, defined as the log ratio of mean peak-to-peak intervals in the first versus second half of the spindle. Integrated spindle activity (ISA) is computed as the sum of normalized wavelet coefficients over the spindle interval, providing a composite measure of spindle amplitude, duration, and wavelet coherence. A quality metric _q_ compares relative CWT enrichment at the target spindle frequency with the strongest enrichment at configurable non-spindle reference frequencies, providing a means to exclude spectrally non-specific transients. Spindle density (events per minute) is computed over the total analysed signal duration.
 
 For spindle–slow oscillation (SO) coupling analyses, the instantaneous phase of the slow oscillation is estimated using the filter–Hilbert method on the bandpass-filtered EEG (0.5–4 Hz by default). For each spindle, the SO phase at the point of maximum wavelet coefficient is extracted. Coupling magnitude is quantified as the mean resultant vector length across spindles, and the mean preferred phase angle is computed. Statistical significance is evaluated by permuting epoch labels and recomputing the coupling statistic to generate a null distribution; both empirical and asymptotic (Rayleigh test) p-values are reported. Spindles are also assessed for gross temporal overlap with detected SO intervals.
 
@@ -146,7 +145,7 @@ to reflect technical differences in recordings.
 | `th`     | `th=6`      | Multiplicative threshold for core spindle detection (default 4.5) |
 | `th2`    | `th2=3`     | Multiplicative threshold for non-core spindle detection (default=2) |
 | `median` | `median`    | Flag to indicate that the median, not mean, is used for thresholding |
-| `q`      | `q=0.3`     | Quality metric criterion for individual spindles (default 0) |
+| `q`      | `q=0.3`     | Minimum Q score: log2 target-frequency enrichment relative to the strongest reference-frequency enrichment (default 0) |
 
 
 <h6>Secondary parameters</H6>
@@ -164,6 +163,9 @@ Most users will not need to alter these.
 | `max`    | `max=2` | Maximum duration for an entire spindle (default 3 seconds) |
 | `win`    | `win=0.2` | Smoothing window for wavelet coefficients (default 0.1 seconds) |
 | `local`  | `local=120` | Use local window (in seconds) to define baseline for spindle detection | 
+| `noq` | `noq` | Disable Q-score calculation and filtering |
+| `q-frq` | `q-frq=6,5,35,7` | Reference CWT frequency/cycle pairs used by Q (default 6 Hz/5 cycles and 35 Hz/7 cycles) |
+| `q-max` | `q-max=2` | Optional upper Q-score threshold (default: none) |
 
 <h6>Cache options</h6>
 
@@ -204,13 +206,14 @@ Individual-level output (strata: `F` x `CH`)
 | `CHIRP` | Mean chirp metric per spindle |
 | `SYMM`  | Mean spindle symmetry metric |
 | `SYMM2` | Mean spindle folded-symmetry metric |
-| `Q`     | Mean spindle quality metric |
+| `Q`     | Mean Q score among retained spindles |
 | `DISPERSION` | Mean dispersion index of epoch spindle count |
 | `DISPERSION_P` | P-value for test of over-dispersion |
 | `MINS`  | Total duration of signal entered into the analysis (minutes) |
 | `NE`    | Number of epochs |
 | `N01`   | Number of spindles prior to merging |
 | `N02`   | Number of spindles post merging, prior to QC |
+| `P02`   | Proportion of post-merge candidates retained after Q filtering (`N` / `N02`) |
 
 Epoch-level output (option: `epoch`; strata: `E` x `F` x `CH`)
 
@@ -244,11 +247,11 @@ Spindle-level output (option `per-spindle`; strata: `SPINDLE` x `F` x `CH`)
 
 <h3>Example</h3>
 
-Here we estimate spindles for all NREM2 sleep for the
+Here we estimate spindles for all N2 sleep for the
 [tutorial](../tut/tut1.md) individual `nsrr02`:
 
 ```
-luna s.lst nsrr02 -o out.db -s 'MASK ifnot=NREM2 & RE & SPINDLES fc=11,15 sig=EEG'
+luna s.lst nsrr02 -o out.db -s 'MASK ifnot=N2 & RE & SPINDLES fc=11,15 sig=EEG'
 ```
 
 We see some output is sent to the console describing the process.  For
@@ -459,11 +462,11 @@ Between-class variance over range of thresholds (option: `empirical`, strata: `T
 <h3>Example</h3>
 
 Here we use this approach on the three tutorial individuals: we run a
-basic command to estimate spindles (for all NREM2 sleep, with no other
+basic command to estimate spindles (for all N2 sleep, with no other
 artifact detection in place), adding the `empirical` threshold:
 
 ```
-luna s.lst sig=EEG -o out.db -s 'MASK ifnot=NREM2 & RE & SPINDLES fc=11,15 empirical' 
+luna s.lst sig=EEG -o out.db -s 'MASK ifnot=N2 & RE & SPINDLES fc=11,15 empirical' 
 ```
 
 In [_lunaR_](../ext/R/index.md), we use [`ldb()`](../ext/R/ref.md#ldb) to load the resulting `out.db` file:
@@ -528,9 +531,10 @@ Re-running with aberrant epochs removed prior to spindle detection
 [`SIGSTATS`](summaries.md#sigstats) commands:
 
 ```
-luna s.lst sig=EEG -o out2.db -s 'MASK ifnot=NREM2 & RE \
-                                  & ARTIFACTS mask & SIGSTATS mask th=3,3,3 & RE \
-                                  & SPINDLES fc=11,15 empirical' 
+luna s.lst sig=EEG -o out2.db -s 'MASK ifnot=N2 & RE
+                                  ARTIFACTS mask & CHEP-MASK ep-th=3,3,3
+				  CHEP epochs & RE 
+                                  SPINDLES fc=11,15 empirical' 
 ```
 
 This appears to normalize the "optimal" thresholds somewhat, in that
@@ -567,62 +571,59 @@ given individual is likely to yield meaningful results.
 
 ### Quality metrics
 
-Luna calculates a simple QC metric for each spindle, by considering
-the relative increase of non-spindle activity within the spindle
-interval, relative to spindle-activity.  We use five fixed bands,
-which unlike the [`PSD`](power-spectra.md#psd) command, are _not_ altered by changing [special
-variables](../luna/args.md#spectral-power-bands).  The three
-non-spindle bands are: _delta_ (0.5-4 Hz), _theta_ (4-8 Hz), and
-_beta_ (defined here as 20-30 Hz).  The two spindle bands are _slow
-sigma_ (10-13.5 Hz) and _fast sigma_ (13.5-16 Hz).
+Luna calculates a simple spectral-specificity QC metric for each
+post-merge spindle candidate.  This Q score is separate from the
+`th`, `th2` and `th-max` thresholds used to detect candidate intervals.
 
-For each channel, Luna calculates the baseline power for each band,
-<em>P<sup>band</sup></em>.  For the interval spanning the
-<em>i<sup>th</sup></em> spindle, we calculate band power
-<em>P<sub>i</sub><sup>band</sup></em>.  We then calculate relative
-enrichment for each band (on a log10 scale), as:
+For each channel and target frequency, Luna retains the unsmoothed,
+pre-winsorized target-frequency CWT magnitude.  It also calculates CWT
+magnitudes at a set of reference frequencies.  The defaults are 6 Hz
+with a five-cycle wavelet and 35 Hz with a seven-cycle wavelet; these
+can be replaced with `q-frq`, specified as frequency/cycle pairs.
+Each target or reference CWT series is divided by its own mean over
+the analysed signal.  This makes the values frequency-specific
+enrichments relative to their respective baselines, rather than
+absolute CWT magnitudes.
 
-&nbsp; &nbsp; <em>E<sub>i</sub><sup>band</sup> = log10(P<sub>i</sub><sup>band</sup>) - log10(P<sup>band</sup>)</em>.
-
-The _Q_ score for each spindle is based on the difference between the
-largest _spindle-band_ relative enrichment versus the largest
-_non-spindle band_ relative enrichment:
+For candidate spindle _i_, let
+<em>A<sub>i,target</sub></em> be the mean normalized target-frequency
+CWT magnitude within its interval, and let
+<em>A<sub>i,r</sub></em> be the corresponding mean for reference
+frequency _r_.  Luna calculates:
 
 &nbsp; &nbsp; <em>Q<sub>i</sub> =
-max( E<sub>i</sub><sup>slow-sigma</sup> , E<sub>i</sub><sup>fast-sigma</sup> ) - 
-max( E<sub>i</sub><sup>delta</sup> , E<sub>i</sub><sup>theta</sup> , E<sub>i</sub><sup>beta</sup> )</em>
+log2(A<sub>i,target</sub>) -
+log2(max<sub>r</sub> A<sub>i,r</sub>)</em>
 
-That is, numbers less than zero indicate that a _non-spindle_ band is
-showing greater relative enrichment (relative to the _baseline_
-log-scaled power for that band) than either _spindle_ band.  Such
-spindles are more likely to reflect artifact which had a non-specific effect
-on the power spectrum. 
+Equivalently, Q is the log2 ratio of target-frequency enrichment to
+the strongest reference-frequency enrichment.  Thus, `Q=0` means
+that target enrichment equals the strongest reference enrichment;
+positive values indicate greater target-frequency specificity, and
+negative values indicate that at least one reference frequency is
+more strongly enriched.
+
+By default, candidates with `Q < 0` are removed.  The `q` parameter
+sets another minimum; for example, `q=0.3` requires a ratio of
+approximately 1.23, and `q=1` requires a ratio of 2.  An optional
+positive `q-max` also removes candidates above that upper bound.
+The `noq` flag disables Q calculation and filtering; setting `q` to
+-9 or lower also disables it.
 
 To illustrate this QC metric, we'll detect spindles for the second
 [tutorial](../tut/tut1.md) individual:
 
 ```
 luna s.lst 2 sig=EEG -o out.db \
-  -s 'MASK ifnot=NREM2 & RE & \
-      SPINDLES fc=11,15 enrich q=-9 annot=sp1 cycles=12'
+  -s ' MASK ifnot=NREM2 & RE  
+       SPINDLES fc=11,15 q=-9 annot=sp1 cycles=12 '
 ```
 
 Here, we detect both fast and slow spindles, targeting 11 and 15 Hz
 respectively; we've set _cycles_ to 12 instead of the default 7, in
-order to increase frequency-specificity.  We've added the `enrich` option to output
-<em>E<sub>i</sub><sup>slow-sigma</sup></em>
-and 
-<em>E<sub>i</sub><sup>fast-sigma</sup></em>
-along with
-<em>E<sub>i</sub><sup>delta</sup></em>
-<em>E<sub>i</sub><sup>theta</sup></em>
-and
-<em>E<sub>i</sub><sup>beta</sup></em>
-for each spindle/channel/target-frequency/band (and so stratified by
-`CH`x`F`x`SPINDLE`x`B`).  We also set `q` equal to -9, which effectively turns off any
-QC filtering, so that we can see what some spindles that would not otherwise have been called
-with the default threshold (`q=0`) look like.  Finally, the `ftr` option writes out two files
-that detail where spindles occur.
+order to increase frequency-specificity.  We also set `q` equal to -9,
+which turns off Q calculation and filtering, so that the output includes
+candidates that would not otherwise be retained with the default
+threshold (`q=0`).
 
 In [_lunaR_](../ext/R/index.md):
 ```
@@ -650,7 +651,9 @@ abline(v=0,col="red",lwd=2)
 hist( d$Q[ d$F == 15 ] , breaks=30 , main="15 Hz spindles" , xlab="Q" , xlim=c(-2,2) )
 abline(v=0,col="red",lwd=2)
 ```
-We see that most spindles (as would be expected) have quality scores greater than 0, meaning that the interval showed greater _spindle-band_ enrichment than _non-spindle-band_ enrichment.
+We see that most spindles (as would be expected) have quality scores
+greater than 0, meaning that the interval showed greater
+target-frequency enrichment than reference-frequency enrichment.
 
 ![img](../img/sqch.png){width="100%"}
 
@@ -721,9 +724,9 @@ more like canonical spindles.
 ![img](../img/sqc.png){width="100%"}
 
 Be aware that setting `q` too high may unnecessarily miss many true
-spindles though.  A value of `q=0.3` (i.e. log10(2)) requires that the
-spindle-band enrichment is at least twice non-spindle band enrichment;
-a value of `q=1` requires a 10-fold enrichment.  Considering the
+spindles though.  Because Q is on a log2 scale, `q=0.3` requires target
+enrichment to be approximately 1.23 times the strongest reference
+enrichment, whereas `q=1` requires a twofold ratio.  Considering the
 distribution of mean _Q_ over all individuals in the study may provide a good starting point,
 if you want to select non-default values.
 
@@ -1177,7 +1180,7 @@ target frequency) and slow (11 Hz target frequency) at default
 settings.  We achieve this by adding `so` to the [`SPINDLES`](spindles-so.md#spindles) command,
 along with the definition of the SO (see [below](#so)).  Here we'll
 use a relative/adaptive threshold of 1.5 times the baseline mean,
-along with othe default settings (e.g. for the duration and frequency
+along with other default settings (e.g. for the duration and frequency
 of the SO).
 
 

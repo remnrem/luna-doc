@@ -12,7 +12,7 @@ the one where `tutorial.zip` was unzipped.
 library(luna)
 ```
 
-Attach the sample-list with [`lsl()`](#lsl):
+Attach the sample-list with [`lsl()`](ref.md#lsl):
 ```
 sl <- lsl("s.lst")
 ```
@@ -20,7 +20,7 @@ sl <- lsl("s.lst")
 3 observations in s.lst 
 ```
 
-Attach just the second individual, `nsrr02`, with [`lattach()`](#lattach):
+Attach just the second individual, `nsrr02`, with [`lattach()`](ref.md#lattach):
 ```
 lattach( sl , "nsrr02" ) 
 ```
@@ -28,7 +28,7 @@ lattach( sl , "nsrr02" )
 nsrr02 : 14 signals, 10 annotations, 09:57:30 duration
 ```
 
-We will then use sequential [`leval()`](#leval) commands, to restrict
+We will then use sequential [`leval()`](ref.md#leval) commands, to restrict
 analysis to N2 epochs only, band-pass filter the EEG signal,
 automatically scan for epochs with high levels of artifact, and then
 estimate the PSD.  First, we mask out all epochs that are not N2 sleep:
@@ -58,7 +58,7 @@ Next, we apply a 0.3-35 Hz bandpass filter:
 leval( "FILTER bandpass=0.3,35 ripple=0.02 tw=0.5" )
 ```
 
-Next, we scan for artifacts.  Note, for the prior [`leval()`](#leval) commands,
+Next, we scan for artifacts.  Note, for the prior [`leval()`](ref.md#leval) commands,
 we have not been explicitly saving any returned values, as the prior
 commands typically do not return values of interest.  Here we will
 save return values (in a list named `k0`) for future use, however:
@@ -71,7 +71,7 @@ nsrr02 : 1 signals, 10 annotations, 03:19:30 duration, 368 unmasked 30-sec epoch
 ```
 
 We see that 31 epochs have been masked (out of 399).  You can examine
-the returned `k0` list (with [`lx()`](#lx) or just directly), to see
+the returned `k0` list (with [`lx()`](ref.md#lx) or just directly), to see
 the other output of these commands.  We next restructure the dataset one
 more time to remove these masked epochs:
  

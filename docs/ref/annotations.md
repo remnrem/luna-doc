@@ -56,7 +56,7 @@ Annotations can be represented in a number of different file formats, all descri
 
 - [`.annot`](#annot-files) files, where each row describes an event/interval and any associated meta-data (including times, channels, etc)
 - [`.eannot`](#eannot-files) files containing simple per-epoch labels, where each distinct label is treated as a distinct annotation _class_
-- [EDF+ Annotations](#edf-annotations-channel), where annotations are embedded in the EDF as separate channels
+- [EDF+ Annotations](#edf-annotations), where annotations are embedded in the EDF as separate channels
 - [Luna-format XML](#luna-xml-files) files 
 - [NSRR-format XML](#nsrr-xml-files) files, where each _ScoredEvent_ parent node in one XML is treated as a distinct annotation _class_
 
@@ -68,39 +68,6 @@ Annotations can be represented in a number of different file formats, all descri
     [`annot`](../luna/args.md#selecting-annotations) option works at the _class_ level
     only.  That is, either all _instances_ of a given _class_ are
     loaded in, or none are.
-
-## DROP-ANNOTS
-
-_Drop one or more loaded annotation classes_
-
-`DROP-ANNOTS` removes one or more annotation classes from the current
-in-memory EDF. This is useful for clearing temporary annotations from a prior
-step, or for discarding unwanted classes before later masking, summaries, or
-export.
-
-<h3>Methods</h3>
-
-`DROP-ANNOTS` deletes the specified annotation classes from the current Luna
-session only. It does not edit the original annotation file on disk; it simply
-removes those classes from the annotation set attached to the in-memory EDF, so
-subsequent commands no longer see them.
-
-<h3>Parameters</h3>
-
-| Parameter | Example | Description |
-| --- | --- | --- |
-| `annot` | `annot=N4,M` | Comma-delimited list of annotation classes to remove |
-
-<h3>Output</h3>
-
-No formal tabular output. The command modifies the in-memory annotation set and
-may emit notes to the console log.
-
-<h3>Example</h3>
-
-```bash
-luna s.lst -s 'DROP-ANNOTS annot=N4,M & ANNOTS'
-```
 
 ## .annot files 
 
@@ -126,7 +93,7 @@ tab-delimited fields (optionally allowing whitespace delimiters
 instead). There are numerous options and alternatives that supplement
 this basic format, as outlined below:
 
- - [Column formats](#columnformats) : full (six-column) versus reduced (3 or 4 column) formats
+ - [Column formats](#columns) : full (six-column) versus reduced (3 or 4 column) formats
  - [Headers](#headers) : optional rows prior to data rows
  - [Time-encoding specifications](#time-encoding) : different ways to specify the start/stop times of intervals/events
 
@@ -160,15 +127,15 @@ that skip certain columns. If only four columns are present, they must be as fol
 | `class` | Annotation class | Required |
 | `instance` | Instance ID | If not used, specify `.` |
 | `start` | Start time | Required: see [time-encoding specifications](#time-encoding) below |
-| `stop` | Stop time |  See [time-encoding specifications](#timeencoding) below |
+| `stop` | Stop time |  See [time-encoding specifications](#time-encoding) below |
 
 If only three columns are present, they must be as follows:
 
 | Column | Description | Default |
 |---- | ---- | ---- | 
 | `class` | Annotation class | Required |
-| `start` | Start time | Required: see [time-encoding specifications](#timeencoding) below |
-| `stop` | Stop time |  See [time-encoding specifications](#timeencoding) below |
+| `start` | Start time | Required: see [time-encoding specifications](#time-encoding) below |
+| `stop` | Stop time |  See [time-encoding specifications](#time-encoding) below |
 
 At its 3-column minimal, the `.annot` format is simply an annotation class and start/stop times: e.g.
 ```
@@ -256,12 +223,29 @@ within a single `.annot` file.
    interpreted as seconds elapsed relative from the EDF start time
    (i.e. as specified in the EDF header)
 
- - __Clock-time:__ any times with the format _hh:mm:ss_ or _hh.mm.ss_
-   are assumed to be 24-hour clock-times. These can include fractions
-   of a second, e.g. `23:03:01.524` (which is also the same as
-   `23.03.01.524`, i.e. if the EDF `.` character is used to delimit
-   hours, minutes and seconds instead of the colon (`:`) character). It is also possible to
-   specify dates as well as clock-times, i.e. as is necessary for long recordings, [see below](#date-encoding)
+ - __Clock-time:__ times with the format _hh:mm:ss_ or _hh.mm.ss_ are
+   interpreted as 24-hour clock-times. Fractions of a second are allowed,
+   e.g. `23:03:01.524` or `23.03.01.524`. In the dotted form, the first
+   two periods delimit hours, minutes, and seconds; a third period introduces
+   the fractional-seconds field. A single-period numeric value such as `10.5`
+   remains elapsed seconds, not a clock-time. Dates can also be included for
+   long recordings, [see below](#date-encoding).
+
+   For an undated clock-time, Luna normally uses the next occurrence at or
+   after the EDF start, wrapping to the next clock day when necessary. This is
+   controlled by the `annot-time-wrap` special variable. With the default
+   `annot-time-wrap=T`, a time earlier than the EDF start is mapped to the
+   following day. With `annot-time-wrap=F`, Luna does not retain that wrapped
+   occurrence when it would fall outside the EDF; it is treated as before the
+   EDF start instead.
+
+   Annotation starts are in the half-open EDF range `[0, duration)`: a point
+   event starting exactly at the EDF end is out of range. An interval stop may
+   equal the EDF end. By default, `.annot` loading drops events whose start is
+   at or after the EDF end (`drop-annots-past-end=T`), while events beginning
+   inside the EDF are not rejected merely because their stop extends past the
+   end. Set `drop-annots-past-end=F` to retain those rows for later filtering,
+   for example with `DROP-ANNOTS mask all`.
 
  - __Elapsed hh:mm:ss:__ any time starting `0+` is assumed to be an
    elapsed time specified in _hh:mm:ss_ format rather than a
@@ -604,7 +588,7 @@ individual epochs.  The format is as follows:
 - each _instance_ is assigned the same ID as the label name (i.e. same as the _class_ name)
 
 When an `.eannot` is specified in the
-[_sample-list_](#../luna/args.md#sample-lists), it is attached prior
+[_sample-list_](../luna/args.md#sample-lists), it is attached prior
 to loading the EDF.  By default, Luna assumes epochs are 30-seconds in
 duration and do not overlap when using `.eannot` files.
 
@@ -928,7 +912,7 @@ luna ma0844az_1-1+.edf -o out.db  -s  ' MASK mask-ifnot=edf_annot[HVT_00:30|HVT_
 
 _Remap annotation labels after loading_
 
-This command replicates the functionality of the [`remap`](#../luna/args.md#remapping-annotations) command, but can be applied _after_
+This command replicates the functionality of the [`remap`](../luna/args.md#remapping-annotations) command, but can be applied _after_
 a dataset is first attached.  It also allows for some flexibility in the format of the remapping file.
 
 <h3>Methods</h3>
@@ -1073,7 +1057,7 @@ one or more _query_ annotations. For each seed × query pair it reports the mean
 proportion of seed events overlapped, the mean time spanned, the mean count of
 spanning events, and the mean signed time to the nearest query event.
 
-**Compared to [`OVERLAP`](#overlap) / [`--overlap`](#-overlap):** [`OVERLAP`](intervals.md#overlap) uses a
+**Compared to [`OVERLAP`](intervals.md#overlap) / [`--overlap`](intervals.md#-overlap):** [`OVERLAP`](intervals.md#overlap) uses a
 permutation framework to assess statistical significance of enrichment across an
 entire dataset. [`AXA`](annotations.md#axa) is a faster, lighter descriptive cross-tab — no resampling,
 no sample-list required. It is the right choice when you want simple numerical
@@ -1150,6 +1134,10 @@ comparisons of existing annotations, that are:
 
  - only annotations _A_ that do not overlap annotation _B_
 
+Grouped operations can instead apply the same operation to comma-delimited
+annotation lists on the left and right sides, with `keep` and `drop` optionally
+matching on any overlap or on the start/end point of the left event.
+
 Also, there are special cases to
 
  - add annotations corresponding to epochs (and optionally, delimiting the boundaries of those epochs) (`epoch`)
@@ -1172,12 +1160,26 @@ Primary parameters
 | --- | --- | --- |
 | `annot` | `annot=N` | Name of the new annotation |
 | `expr` | `expr=A+B` | A pairwise expression of two existing annotations `A` and `B` in form `A*B`, `A|B`, `A+B`, `A-B` |
+| `left` | `left=A,B,C` | Left-hand annotation group for grouped operations |
+| `right` | `right=D,E,F` | Right-hand annotation group for grouped operations |
+| `op` | `op=keep` | Grouped operation: `union`, `intersection`, `keep`, or `drop` |
+| `match` | `match=any` | For grouped `keep`/`drop`: `any` overlap (default), or left-event `start`/`end` inside the right group |
 | `epoch` | `epoch=E` | Add a flattened annotation for all epochs | 
 | `epoch-num` | `epoch-num=E` | Add annotations of numbered epochs |
 | `flatten` | `flatten=A` | Merge contiguous or overlapping epochs ( i.e. `A|A`)
 | `split` | `split=A` | Split longer annotations into parts no longer than the underlying epochs | 
 
 _Specify_ `annot` _and either_ `expr`, `flatten`, `split`; _alternatively, specify either_ `epoch` _or_ `epoch-num`
+
+For grouped operations, specify `annot`, `left`, `right`, and `op` instead of
+`expr`. The left and right values are comma-delimited annotation lists. For
+`union`, all intervals from both groups are pooled and flattened. For
+`intersection`, every left-group interval is intersected with every
+right-group interval and the results are flattened. For `keep` and `drop`,
+the original left-group intervals are retained or excluded according to their
+relationship with the right group. `match=any` is the default; `match=start`
+keeps/tests left events whose start lies inside a right-group interval, and
+`match=end` uses the left event's end point.
 
 Pairwise expressions (arguments for `expr`)
 
@@ -1246,6 +1248,25 @@ MAKE-ANNOTS annot=C expr=A-B
 class  start    stop
 C      10.000   20.000
 ```
+
+_Grouped operations_
+
+For example, retain the complete events from any of `A`, `B`, or `C` whose
+start occurs within any event from `D`, `E`, or `F`:
+
+```
+MAKE-ANNOTS annot=OUT left=A,B,C right=D,E,F op=keep match=start
+```
+
+The corresponding grouped union and intersection are:
+
+```
+MAKE-ANNOTS annot=OUT left=A,B,C right=D,E,F op=union
+MAKE-ANNOTS annot=OUT left=A,B,C right=D,E,F op=intersection
+```
+
+The original `expr=A+B`, `expr=A-B`, `expr=A*B`, and `expr=A|B` syntax remains
+available for binary operations.
 
 _Flattening and splitting epochs_
 
@@ -1387,6 +1408,59 @@ i.e. additional `edge` annotations are added to demarcate the edges of each
 analytic interval.   The label `edge` can be changed with the `edge` option; left
 and right edges can be collapsed to one class with `collapse-edges`.
 
+## DROP-ANNOTS
+
+_Drop one or more loaded annotation classes_
+
+`DROP-ANNOTS` removes one or more annotation classes from the current
+in-memory EDF. This is useful for clearing temporary annotations from a prior
+step, or for discarding unwanted classes before later masking, summaries, or
+export. With `mask`, it instead removes individual instances while leaving
+their annotation classes in place.
+
+<h3>Methods</h3>
+
+`DROP-ANNOTS` deletes the specified annotation classes from the current Luna
+session only. It does not edit the original annotation file on disk; it simply
+removes those classes from the annotation set attached to the in-memory EDF, so
+subsequent commands no longer see them.
+
+<h3>Parameters</h3>
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `annot` | `annot=N4,M` | Comma-delimited list of annotation classes to remove |
+| `mask` | `mask` | Drop masked instances rather than whole annotation classes |
+| `any` | `mask any` | With `mask`, drop instances having no overlap with an unmasked region (default) |
+| `all` | `mask all` | With `mask`, drop instances not completely within an unmasked region |
+| `start` | `mask start` | With `mask`, drop instances whose start is in a masked region |
+
+<h3>Output</h3>
+
+No formal tabular output. The command modifies the in-memory annotation set and
+may emit notes to the console log.
+
+<h3>Example</h3>
+
+```bash
+luna s.lst -s 'DROP-ANNOTS annot=N4,M & ANNOTS'
+```
+
+To remove instances that are not completely within the available EDF range,
+use `mask all`. If no explicit `MASK` has been issued, the finite EDF range is
+used as the implicit available region. Thus this also removes intervals that
+extend beyond the EDF end, including rows retained by setting
+`drop-annots-past-end=F` while loading:
+
+```bash
+luna s.lst drop-annots-past-end=F annot-file=a.annot \
+  -s 'DROP-ANNOTS mask all & WRITE-ANNOTS file=filtered.annot'
+```
+
+If an explicit `MASK` is present, the mask predicates apply to that available
+timeline as well. The `annot=` parameter can be omitted in mask mode to process
+all loaded classes.
+
 ## WRITE-ANNOTS
 
 _Output annotations in full Luna-format_
@@ -1503,17 +1577,15 @@ standard EDF in memory (without changing the annotation times).
 
 ## META
 
-_Add meta-data to annotations based on other annotations or signals_
+_Add meta-data to annotations based on other annotations, signals, or expressions_
 
 This flexible command can add [meta-data](#meta-data) tags to existing
-(in-memory) annotations based on either the properties of signals or
-other annotations.
+(in-memory) annotations. It operates in four modes:
 
-It operates in one of two primary modes: appending new values based on 1)
-other annotations (e.g. overlap or distance to other annotation
-classes) or 2) the EDF signals that span those annotations (e.g. the
-mean value of a window around each annotation).  A further special mode
-can add meta-data based on the _duration_ of annotations.
+1. **`dur`** — attach each event's own duration as a metadata field
+2. **`sig`** — attach a signal statistic (mean, min, max, range) computed over the annotation interval
+3. **`other`** — attach relational values between the target annotation and one or more other annotation classes
+4. **`expr`** — evaluate an arbitrary expression using the instance's _existing_ metadata fields as variables, and store the result as a new field
 
 Added annotation meta-data can be exported (with
 [WRITE-ANNOTS](#write-annots)) or used to [derive](evals.md#derive)
@@ -1521,64 +1593,148 @@ other summary metrics.
 
 <h3>Methods</h3>
 
-Annotation metadata augmentation attaches numeric key–value pairs to existing annotation instances. In annotation-overlap mode, each instance of the target class is evaluated against one or more reference annotation classes; computed quantities include binary overlap indicators, count of overlapping reference events, and signed or absolute distance to the nearest reference event (based on starts, stops, or midpoints). An optional temporal window expands the target interval before evaluating overlap. In signal-mode, the EDF samples spanning each target annotation (optionally extended by a window) are extracted and summarized by their mean, minimum, maximum, or range. A dedicated duration mode simply attaches each event's own duration as a metadata field.
+**Other-annotation mode** attaches numeric or text key–value pairs to existing annotation instances by evaluating each instance of the target class against one or more reference annotation classes. This mode has two parts:
+
+1. `look=` chooses candidate annotations of the `other=` class or classes
+2. one output function writes a `flag`, `count`, signed `gap`, or copied metadata field
+
+This makes simple overlap flags, directional follow-up flags, signed timing offsets, and metadata transfer all part of the same interface.
+
+**Signal mode** extracts the EDF samples spanning each target annotation (optionally extended by a window) and summarizes them as mean, minimum, maximum, or range.
+
+**Duration mode** attaches each event's own duration in seconds.
+
+**Expression mode** iterates over each instance of the target annotation class(es) and evaluates a user-supplied expression. All existing metadata fields on the current instance are available as plain scalar variables by name. The built-in variable `dur` holds the event duration in seconds. The expression result (which may be numeric, integer, boolean, or string) is stored as a new metadata field. This is equivalent to applying a row-wise transformation to the annotation's metadata table, without requiring a separate [`DERIVE`](evals.md#derive) pass.
+
+The main `look=` strategies are:
+
+- `any` — all events that overlap the target interval after any optional window expansion
+- `overlap` — same candidate set as `any`; typically used with `flag`, `count`, or `copy-md`
+- `next` — first `other` event whose start is at or after the current event's stop
+- `prev` — most recent `other` event whose stop is at or before the current event's start
+- `nearest` — closest `other` event before, overlapping, or after the current event
+
+Anchor-specific variants allow overlapping events to participate in ordered searches:
+
+- `next-start`, `next-stop`, `next-midpoint`
+- `prev-start`, `prev-stop`, `prev-midpoint`
+
+For example, `look=next` excludes overlapping events by definition, whereas `look=next-start` asks for the first event whose **start** is at or after the current event's **start**, which can include an overlapping event.
+
+When multiple candidate events qualify, `prefer=` controls tie-breaking:
+
+- `first` — earliest start
+- `last` — latest start
+- `longest` — greatest overlap with the current event
+
+The default is `longest` for `look=any` and `look=overlap`, and `first` otherwise.
 
 <h3>Parameters</h3>
 
-Annotation mode options (`other`, i.e. meta-data reflect overlaps with other annotations):
+Common to all modes:
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `annot` | `X` | target annotation class(es) to add meta-data to |
+| `md` | `D` | key name for the new metadata field |
+
+Window parameters (applicable to all modes that support them):
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `w` | `10` | expand the target interval symmetrically by this many seconds |
+| `w-left` | `10` | expand the target interval to the left only |
+| `w-right` | `10` | expand the target interval to the right only |
+
+---
+
+**Other-annotation mode** (`other`, i.e. meta-data reflect relationships with other annotations):
 
 |  Parameter | Example | Description |
 | --- | --- | --- |
-| `annot` | `X`	| add meta-data to annotation X | 
-| `other` | `A,B,C` | one or more other annotations |
-| `md` | `D` | key name for metadata (i.e. the main _output_ of [`META`](annotations.md#meta))| 
-| `w` | 10 | optional window size around X | 
-| `w-left` | 10 | optional window size before X | 
-| `w-right` | 10 | optional window size after X | 
-| `flatten` | | make union (& join contiguous) `other` annotations | 
+| `other` | `A,B,C` | one or more reference annotation classes |
+| `flatten` | | merge contiguous/overlapping `other` annotations before computing |
+| `look` | `next-start` | how to choose candidate `other` events |
+| `prefer` | `longest` | tie-break if multiple candidates remain |
 
-Annotation mode functions: _one_ of these to be selected, determines values of meta-data:
+Functions (_exactly one_ required):
 
 | Parameter | Description |
 | --- | --- |
-|`overlap` | any overlap with 1+ other annotation  (0/1) | 
-|`complete-overlap` | is `X` completely spanned by 1+ other annotation (0/1)
-|`whole-other` | completely other completely spanned by `X` (0/1) 
-|`count` | count number of instances of other (N) | 
-|`nearest` | distance (time in sec) to nearest other (0 if overlap) | 
-|`nearest-midpoint` | as above, but based on annotation mid-points | 
-|`nearest-start` | as above, but based on annotation starts | 
-|`nearest-stop` | as above, but based on annotation stops | 
+|`flag` | 0/1 for whether any candidate event exists after applying `look=` and windowing |
+|`overlap` | alias for `flag` with `look=overlap` |
+|`complete-overlap` | is `X` completely spanned by 1+ other annotation (0/1) |
+|`whole-other` | does `X` completely span 1+ other annotation (0/1) |
+|`count` | count of candidate other annotation instances after applying `look=` and windowing |
+|`gap` | signed interval-gap in seconds to the selected event |
+|`gap-midpoint` | signed midpoint-to-midpoint gap in seconds to the selected event |
+|`gap-start` | signed start-to-start gap in seconds to the selected event |
+|`gap-stop` | signed stop-to-stop gap in seconds to the selected event |
+|`copy-md` | copy one metadata field from the selected event |
 
-Signal mode options: (`sig`, i.e. meta-data reflect summaries of spanned signals):
+Legacy shorthands `nearest`, `nearest-start`, `nearest-stop`, and `nearest-midpoint` are accepted as aliases for `gap`, `gap-start`, `gap-stop`, and `gap-midpoint` with `look=nearest`.
+
+The `copy-md` output writes the field named by `copy-md=FIELD`, e.g.
+
+```
+META annot=hypopnea other=desat look=next w-right=120 copy-md=desat_pct md=desat_pct
+```
+
+---
+
+**Signal mode** (`sig`, i.e. meta-data reflect a signal statistic over the annotation interval):
 
 | Parameter | Example | Description |
 |---|---|---|
-|`annot` | `X` | add meta-data to annotation `X` | 
-|`sig` | `S1` | a single signal | 
-|`md` | `D` | key name for metadata | 
-|`w` | 10 | optional window size around `X` | 
-|`w-left` | 10 | optional window size before `X` |
-|`w-right` | 10 | optional window size after `X` |
+|`sig` | `C3` | signal channel name |
 
-
-Signal mode functions (_one_ of these to be selected, determines values of meta-data):
+Functions (_exactly one_ required):
 
 | Parameter | Description |
 | --- | --- |
-|`mean` | mean of signal interval spanned by annotation `X` |
-|`min` | min of signal interval spanned by annotation `X` | 
-|`max` | max of signal interval spanned by annotation `X` |
-|`range` | range of signal interval spanned by annotation `X` |
+|`mean` | mean signal value over the annotation interval |
+|`min` | minimum signal value |
+|`max` | maximum signal value |
+|`range` | max minus min |
 
-Special duration mode (`dur`, i.e. meta reflects event duration)
+---
 
-|  Parameter | Example | Description |
+**Duration mode** (`dur`):
+
+| Parameter | Example | Description |
 | --- | --- | --- |
-| `annot` | `X` | Add meta-data to annotation `X` | 
-| `dur` | | Sets special mode, to add _event duration_ as the meta-data value |
-| `md` | `D` | Use key name `D` for meta-data |
+| `dur` | | store the event duration in seconds as `md` |
 
+---
+
+**Expression mode** (`expr`):
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `expr` | `#conf*dur#` | expression to evaluate; wrap in `#`; existing metadata fields and `dur` are available as variables |
+
+The expression is evaluated once per annotation instance. Variable names correspond directly to existing metadata field names (no class-name prefix). The result type (double, integer, string, boolean) is inferred from the expression and stored accordingly. If the expression fails to evaluate for a given instance, no field is added.
+
+Example expressions:
+
+```
+expr="#SpO2DeltaE > 3 ? 'severe' : 'mild'"   md=sev
+expr="#conf * dur#"                            md=weighted_conf
+expr="#ArE == 1#"                              md=has_arousal
+```
+
+---
+
+Window parameters control the search radius:
+
+| `look=` | Relevant window parameter | Meaning |
+|---------|--------------------------|---------|
+| `next`, `next-start`, `next-stop`, `next-midpoint` | `w-right=N` | candidate event must be no more than `N` seconds to the right of the relevant anchor |
+| `prev`, `prev-start`, `prev-stop`, `prev-midpoint` | `w-left=N` | candidate event must be no more than `N` seconds to the left of the relevant anchor |
+| `any`, `overlap` | `w=`/`w-left=`/`w-right=` | expand the target interval before overlap-based candidate selection |
+| `nearest` | `w=N` (or side-specific windows) | limit the nearest-neighbour search radius |
+
+If no matching event is found, no key is added to the current instance. For `gap*` outputs, the companion `md_id` field is set to `.` when no event is selected.
 
 <h3>Output</h3>
 
@@ -1794,9 +1950,10 @@ luna s.lst @param -o out.db \
  -s ' META annot=apnea,hypopnea,N2 dur md=DUR
       META annot=apnea,hypopnea flatten complete-overlap other=N2 md=N2
       META annot=apnea,hypopnea         complete-overlap other=Supine   md=Supine
-      DERIVE var=my_ahi expr=" D = sum(N2.DUR) / 3600.0 ;
-                               N = length(apnea[apnea.N2==1 && apnea.ArE==1 && apnea.SpO2DeltaE>=4 ] ) ;
-                               my_ahi = N / D  " '
+      DERIVE var=my_ahi
+       ... expr=" D = sum(N2.DUR) / 3600.0 ;
+       ...        N = length(apnea[apnea.N2==1 && apnea.ArE==1 && apnea.SpO2DeltaE>=4 ] ) ;
+       ...        my_ahi = N / D  " '
 ```
 
 The [`META`](annotations.md#meta) commands add the tags as above, that can be used in the subsequent [`DERIVE`](evals.md#derive) expression:
@@ -1837,6 +1994,52 @@ annotation meta-data is the treatment of missing values - [`DERIVE`](evals.md#de
 principle detects and handles missing values, but the logic of the
 expression may not be as expected under some conditions.  See the page
 on [eval expressions](evals.md) for more details.
+
+---
+
+**Expression mode example**
+
+Suppose hypopnea events already carry a `SpO2DeltaE` field (desaturation percent) and an `ArE` field (arousal flag), loaded from an `.annot` file. We can derive a severity category and a weighted score in a single `META` pass:
+
+```
+META annot=hypopnea  expr="#SpO2DeltaE >= 4 ? 'moderate_severe' : 'mild'"  md=sev
+META annot=hypopnea  expr="#SpO2DeltaE * dur#"                              md=desat_burden
+```
+
+The first statement creates a string `sev` field on every hypopnea; the second creates a numeric `desat_burden` field (desaturation percent × event duration). Both can then be used directly in a subsequent [`DERIVE`](evals.md#derive) or exported with [`WRITE-ANNOTS`](#write-annots).
+
+Note: metadata fields loaded from `.annot` files are typed as text by default unless the recording has explicit type declarations or `set num-atype=SpO2DeltaE` has been issued. Use `set num-atype=FIELD1,FIELD2` to ensure numeric fields are available as numbers in expressions.
+
+---
+
+**Copy mode example**
+
+A common respiratory scoring scenario: hypopnea events are annotated in one annotation class, and separately-detected oxygen desaturation events (with their own metadata such as `spo2_nadir` and `desat_pct`) sit in a `desat` class. The following chain attaches the desaturation depth from the _next_ desaturation event to each hypopnea, then classifies severity:
+
+```
+META annot=hypopnea  other=desat  look=next  w-right=120  copy-md=desat_pct  md=desat_pct
+META annot=hypopnea  expr="#desat_pct >= 4 ? 'moderate_severe' : 'mild'"    md=sev
+```
+
+The first statement looks for the first `desat` event whose start falls within 120 seconds after each hypopnea ends, and copies its `desat_pct` field. Hypopneas with no following desaturation within the window receive no `desat_pct` key.
+
+The second statement then computes severity from that copied field. Hypopneas where `desat_pct` was never set will produce an undefined result in the expression, which is silently skipped.
+
+For a desaturation that _overlaps_ the hypopnea rather than following it, use `look=overlap`:
+
+```
+META annot=hypopnea  other=desat  look=overlap  copy-md=spo2_nadir  md=nadir_spo2
+```
+
+When multiple desaturation events overlap a single hypopnea, the default `prefer=longest` selects the one with the greatest intersection. Use `prefer=first` or `prefer=last` to select by chronological order instead.
+
+To allow an overlapping event to count as the ordered match, switch to an anchor-based selector such as `look=next-start`:
+
+```
+META annot=hypopnea  other=desat  look=next-start  w-right=120  copy-md=spo2_nadir  md=nadir_or_next_spo2
+```
+
+That differs from `look=next`, which only considers desaturations whose start is at or after the hypopnea's stop.
 
 
 ## SPANNING

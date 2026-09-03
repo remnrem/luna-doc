@@ -131,21 +131,11 @@ every subject in the `s.lst` and appends the GPF peaks to the end of
 
 
 ```
-luna s.lst -s ' MS sig=${eeg} peaks=peaks.edf gfp-max=3 gfp-min=1 gfp-kurt=1 npeaks=2500 pmin=-250 pmax=250 '
-```
-
-If copying-and-pasting from the code block, the text must be on one line;  the core [`MS`](../ref/ms.md#ms) command from above is shown here below, formatted
-differently, just to make it easier to read:
-
-```
-MS sig=${eeg}
-   peaks=peaks.edf
-   gfp-max=3
-   gfp-min=1
-   gfp-kurt=1
-   npeaks=2500
-   pmin=-250
-   pmax=250 '
+luna s.lst -s ' MS sig=${eeg}
+  ... peaks=peaks.edf
+  ... gfp-max=3 gfp-min=1 gfp-kurt=1
+  ... npeaks=2500
+  ... pmin=-250 pmax=250 '
 ```
 
 Stepping through the key parameters:
@@ -300,7 +290,7 @@ This command also writes out the sequences of states for each individual, as tex
 mkdir states
 luna s.lst -o fit.db -s 'MS sig=${eeg} min-msec=20 backfit=maps_renamed.txt write-states=states/states-^'
 ```
-As above, here we reformat the core [`MS`](../ref/ms.md#ms) command for readbility:
+As above, here we reformat the core [`MS`](../ref/ms.md#ms) command for readability:
 ```
 MS sig=${eeg}
    backfit=maps_renamed.txt
@@ -324,7 +314,7 @@ subject1        CBABABABABABDBABABDABDADBAB....
 ## Microstate statistics
 
 The previous _backfitting_ step also calculates a number of statistics that describe
-the distribution of microstates for that individial.   We can extract them from the `fit.db`
+the distribution of microstates for that individual.   We can extract them from the `fit.db`
 [output database](../luna/args.md#output-databases)
 
 The following command extracts, for each of the four states:
@@ -675,7 +665,7 @@ you want to search for. Setting `k1=2` and `k2=4` would search for all
 the k-mers with the lengths of 2, 3 or 4. Here we set `k1=4` and
 `k2=4` to study only the k-mers of length 4
 
- - `nreps` is the numner of random permutations (shuffling of
+ - `nreps` is the number of random permutations (shuffling of
    sequences) to perform (these are performed within each individual)
 
 Looking at the output generated:
@@ -741,7 +731,7 @@ ID  L   S       EXP     OBS     P       RAT     Z
 ```
 we see that, for example, `ABAB` is enriched (Z = 5.45, p < 0.01). In other words, whereas we'd expect a rate of `ABAB` occurrence to be 0.012 (`EXP`), the observed rate was `0.015` (`OBS`), a 1.24-fold `RAT` increase (note, you might not get the exact same results because GFP peaks are randomly selected each time and statistical outputs are generated based on random permutations but in general the results should look similar). 
 Likewise, `BABA` shows similar enrichment.  Both sequences belong to
-the equivalance group `ABAB`, and the output stratified by `-r L SG`
+the equivalence group `ABAB`, and the output stratified by `-r L SG`
 also shows this group is enriched:
 
 ```
@@ -756,7 +746,7 @@ ID  L   SG      EXP     OBS     P       RAT     Z
 .   4   ABCD    0.208   0.177   0.0099  0.85   -11.56
 
 ```
- In contrast, the equivalance group
+ In contrast, the equivalence group
 `ABCD` (i.e any k-mer that has all four states, in any order) appears
 under-represented, Z = -11.56 (expected 0.208, observed 0.177).
 

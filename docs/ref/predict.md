@@ -22,6 +22,7 @@ support for model classes beyond linear models will be compiled here.
 | [Overview](#overview)   | Overview of the PREDICT framework | 
 | [`PREDICT`](#predict)   | Make a prediction given a model and pre-calculated features |
 | [Models](#models)       | Currently supported models |
+| [`ORT`](#ort)           | Run an ONNX Runtime model on signal windows |
 
 ## Overview
 
@@ -130,7 +131,7 @@ which will be defined for a given channel `CH`.  By default, any
 strata, `B1`, `B2` and `CH`: e.g. `B1=DELTA`, `B2=ALPHA` and
 `CH=C3_M2`.  Here, we additionally specify a stratifying factor of
 `STG`, corresponding to sleep stage. This is a user-defined strata
-specified via the [`TAG` command](../summaries.md#tag), used to track
+specified via the [`TAG` command](summaries.md#tag), used to track
 N2 versus N3 metrics calculated in the same script.  The tag makes N2
 and N3 metrics distinct, otherwise new calls to [`MTM`](power-spectra.md#mtm) would overwrite
 the output associated with previous ones in the same run.
@@ -337,7 +338,7 @@ the bias-adjusted value _y1_ is simply defined as
 ```
 
 If [`PREDICT`](predict.md#predict) is given the above terms in the model file (along with
-the observed value `A`), it will automaticall calculate and output
+the observed value `A`), it will automatically calculate and output
 `Y1` as well as `Y`.
 
 ### Reference data
@@ -770,3 +771,11 @@ NREM sleep EEG features to provide a robust estimate of "brain age".
 The difference between predicted and observed age is labelled the
 _brain age index_.  The model was trained on over 2,500 adults aged 18
 to 80.
+
+## ORT
+
+_Run an ONNX Runtime model on signal windows_
+
+!!! warning "Under development"
+    `ORT` is under development: documentation is being written, but the
+    command is not yet ready for general use and is highly likely to change.

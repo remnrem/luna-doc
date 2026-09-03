@@ -2,14 +2,17 @@
 
 _Commands for cardiovascular, muscle-tone, arousal, oximetry, and respiratory analyses_
 
-These commands analyse non-EEG physiological channels commonly recorded in PSG. [`HRV`](physio.md#hrv) detects R-peaks in an ECG channel and computes a standard set of time-domain and frequency-domain heart-rate variability metrics, optionally by epoch or by annotation class. [`RAI`](physio.md#rai) quantifies muscle tone suppression during REM sleep by computing the REM Atonia Index from a chin EMG channel. [`AROUSALS`](physio.md#arousals) detects candidate sleep arousals from EEG spectral power and optional EMG signals, without requiring pre-scored annotations. [`DESAT`](physio.md#desat) detects oxygen desaturation events from SpO2 signals, and [`RESPBREATH`](physio.md#respbreath) segments respiratory signals into breath-level intervals for downstream timing and phase-locking analyses.
+These commands analyse non-EEG physiological channels commonly recorded in PSG. [`HRV`](physio.md#hrv) detects R-peaks in an ECG channel and computes a standard set of time-domain and frequency-domain heart-rate variability metrics, optionally by epoch or by annotation class. [`RAI`](physio.md#rai) quantifies muscle tone suppression during REM sleep by computing the REM Atonia Index from a chin EMG channel. [`AROUSALS`](physio.md#arousals) detects candidate sleep arousals from EEG spectral power and optional EMG signals, without requiring pre-scored annotations. [`LM`](physio.md#lm) detects leg movements and periodic leg movements from anterior-tibialis EMG following the WASM 2016 event grammar. [`DESAT`](physio.md#desat) detects oxygen desaturation events from SpO2 signals, [`RESP-LINK`](physio.md#resp-link) links respiratory events to likely desaturation and arousal responses, and [`RESPBREATH`](physio.md#respbreath) segments respiratory signals into breath-level intervals for downstream timing and phase-locking analyses.
 
 | Command | Description |
 | ---- | ------ |
 | [`HRV`](#hrv) | Estimate heart-rate variability metrics from ECG |
 | [`RAI`](#rai) | Calculate the REM atonia index from chin EMG |
 | [`AROUSALS`](#arousals) | Detect candidate sleep arousals from EEG and optional EMG |
+| [`LM`](#lm) | Detect leg movements and periodic leg movements (WASM 2016) |
+| [`COMBINE-EMG`](#combine-emg) | Build a single continuous EMG channel from 2+ candidate channels |
 | [`DESAT`](#desat) | Detect oxygen desaturation events from SpO2 |
+| [`RESP-LINK`](#resp-link) | Link respiratory events to desaturation and arousal responses |
 | [`RESPBREATH`](#respbreath) | Segment respiratory channels into breath events |
 
 ## [`HRV`](physio.md#hrv)
@@ -160,64 +163,67 @@ _Detect candidate sleep arousals from EEG and optional EMG_
     [`AROUSALS`](physio.md#arousals) is under development. Defaults, heuristics, and output details
     may still evolve.
 
-[`AROUSALS`](physio.md#arousals) detects candidate arousals from EEG and optional EMG channels using short overlapping windows and a small set of derived features. In the current active implementation, Luna re-epochs the record into overlapping windows, derives EEG and EMG feature summaries, applies a heuristic event classifier, writes summary counts and feature means by class, adds annotation tracks for detected events, and can optionally add derived channels.
+[`AROUSALS`](physio.md#arousals) detects candidate arousals from EEG and optional EMG channels using short overlapping windows and a small set of derived features. It writes stage-stratified summary counts and feature means by class, adds annotation tracks for detected events, and can optionally add derived channels. With `manual=<annotation>`, it also summarizes an existing manual event annotation and, when automated events are available, reports one-to-one event-level comparison statistics.
 
 <h3>Methods</h3>
 
-[`AROUSALS`](physio.md#arousals) segments the recording into short overlapping windows (default 1-second duration, 0.5-second increment) and computes a multi-dimensional feature vector for each window from the provided EEG and optional EMG channels. Per-channel EEG features comprise total broadband log-power, relative beta-band power, relative sigma-band power, and a complexity index (Hjorth parameter H3); the EMG feature is the root-mean-square amplitude thresholded against a whole-night median-absolute-deviation (MAD) estimate. All per-channel features are baseline-corrected by subtracting a 2-minute median filter, then averaged across channels and robustly normalized — using the median and 1.4826 × MAD computed over sleep-only windows — to produce a normalized feature matrix. The normalized features are clipped to ±6 standard deviations. Candidate arousal events are detected from NREM windows: windows are first flagged as artifact if they show implausible broadband power with low beta or extreme complexity. Among non-artifact windows, local beta-power peaks exceeding a primary threshold are identified; each peak is expanded backward and forward using a hysteresis threshold, subject to a sigma-band veto that suppresses spindle activity from being misclassified as arousal. Contiguous expanded regions form candidate arousal events; events below a duration threshold are classified as micro-arousals.
+[`AROUSALS`](physio.md#arousals) segments the recording into short overlapping windows (default 4-second duration, 0.5-second increment) and computes EEG/EMG rise features for each window. Candidate events are seeded by local EEG fast-frequency increases relative to a preceding baseline, with optional EMG-only NREM candidates and independent EMG confirmation for REM. Large local delta increases are reported as artifacts, and candidates below the standard duration threshold are discarded. Remaining events are reported as standard or long arousals.
 
 <h3>Primary parameters</h3>
 
 | Parameter | Example | Description |
 | ---- | ---- | ---- |
 | `eeg` | `C3,C4` | EEG channels used to derive arousal features |
-| `emg` | `EMG` | Optional EMG channels used to augment detection |
-| `win` | `1.0` | Window length in seconds for feature extraction; default `1.0` |
+| `emg` | `EMG` | Optional EMG channels used to derive EMG-rise features |
+| `win` | `4.0` | Window length in seconds for feature extraction; default `4.0` |
 | `inc` | `0.5` | Window increment in seconds; default `0.5` |
-| `winsor` | `0.005` | Winsorization fraction for outlier handling |
-| `no-winsor` |  | Disable winsorization |
 | `add` | `a_` | Add derived feature channels using this prefix |
+| `manual` | `man_arousal` | Existing annotation class containing manual arousal events; can be used without EEG/EMG to summarize manual events |
+| `manual-min-overlap` | `0` | Minimum positive overlap in seconds for a comparison match; matching is one-to-one |
 
 <h3>Secondary parameters</h3>
 
 | Parameter | Example | Description |
 | ---- | ---- | ---- |
-| `annot` | `l` | Annotation prefix registered for detected events |
-| `prefix` | `ar_` | Registered prefix for newly derived feature channels |
-| `per-channel` | `T` | Retain channel-specific feature metrics when adding channels |
+| `broad` | `T` | Use broader EEG seed thresholds |
+| `nrem-emg-only` | `T` | Allow EMG-only NREM candidates (use cautiously) |
+| `arousal-dur` | `3` | Minimum duration for reporting a standard event |
+| `long-dur` | `30` | Maximum duration for long event classification |
 
 <h3>Outputs</h3>
 
 | Table | Variable | Description |
 | ---- | ---- | ---- |
-| `BL` | `MINS` | Total analyzed duration in minutes |
-| `BL` | `N` | Number of detected arousals |
-| `BL` | `AI` | Arousal index per hour |
-| `BL` | `DUR` | Mean duration of detected arousals |
-| `BL` | `N_MICRO` | Number of detected micro-arousals |
-| `BL` | `AI_MICRO` | Micro-arousal index per hour |
-| `BL` | `DUR_MICRO` | Mean duration of detected micro-arousals |
-| `BL` | `N_ART` | Number of detected artifact events |
-| `BL` | `AI_ART` | Artifact-event index per hour |
-| `CLS` | `NE` | Number of windows assigned to this class |
-| `CLS` | `PWR` | Mean total-power feature for this class |
-| `CLS` | `BETA` | Mean relative beta feature for this class |
-| `CLS` | `EMG` | Mean EMG feature for this class |
-| `CLS` | `SIGMA` | Mean sigma-band feature for this class |
-| `CLS` | `CMPLX` | Mean complexity feature for this class |
+| `SS` | `N`, `AI`, `DUR` | Standard automated event count, index, and mean duration by NREM/REM stage |
+| `SS` | `N_ALL`, `N_LONG` | Automated standard/long and long event counts |
+| `SS` | `N_MAN`, `AI_MAN`, `DUR_MAN` | Manual event count, index, and mean duration when `manual=` is supplied |
+| `SS,CLS=manual` | `NE`, `AI`, `DUR` | Manual event summary class by stage |
+| `COMP=1,SS` | `N_AUTO`, `N_MANUAL`, `TP`, `FP`, `FN` | Automated/manual event counts and one-to-one matches |
+| `COMP=1,SS` | `PRECISION`, `RECALL`, `F1` | Event-level comparison metrics |
+| `COMP=1,SS` | `OVERLAP_SEC` | Total overlap duration for matched pairs |
+| `COMP=1,SS` | `UNION_ALL_SEC` | Duration of the union of all automated and manual intervals |
+| `COMP=1,SS` | `OVERLAP_UNION_ALL` | Matched-pair `OVERLAP_SEC` divided by the union of all automated and manual intervals |
+| `COMP=1,SS` | `UNION_SEC`, `OVERLAP_UNION` | Union duration and intersection/union fraction for matched automated/manual pairs |
+| `COMP=1,SS` | `P_AUTO`, `P_MANUAL` | Mean fraction of matched automated/manual event duration covered by the other event |
+| `COMP=1,SS` | `START_D`, `START_DABS` | Mean signed and absolute automated-minus-manual onset difference in seconds |
+| `COMP=1,SS` | `DUR_D` | Mean signed automated-minus-manual duration difference in seconds |
 
 <h3>Notes</h3>
 
-- The current implementation resets epochs internally using `win` and `inc`, and requires EDF record durations that are a multiple of 1 second.
+- The implementation resets epochs internally using `win` and `inc`, and requires EDF record durations that are a multiple of 1 second for signal-based detection.
 - EEG sample rates must be sufficiently high and consistent across EEG channels; the current code rejects EEG sample rates below 60 Hz.
-- The active implementation currently analyzes NREM windows only and emits heuristic event classes including arousal, micro-arousal, and artifact.
-- In the active heuristic code path, annotations are written with fixed names such as `arousal_nrem`, `micro_arousal_nrem`, and `art_nrem`.
-- When `add` is used, Luna can write derived feature channels representing total power, beta, EMG, sigma, and complexity-like summaries.
+- Automated events are emitted as `arousal_nrem/rem`, `arousal_long_nrem/rem`, and aggregate classes such as `arousal_all_nrem/rem`.
+- Manual events are assigned to NREM or REM by the stage with the greatest temporal overlap. Events with no sleep-stage overlap are not included in stage-stratified manual summaries.
+- Comparison uses `arousal_all_nrem/rem` versus the manual annotation, any positive overlap by default, and greedy one-to-one matching. `manual-min-overlap` can require a larger overlap. `START_D` is automated start minus manual start, so positive values mean the automated event starts later; `DUR_D` is automated duration minus manual duration.
+- If no EEG or EMG signal is available, `manual=<annotation>` still produces the manual summaries; comparison fields then have zero automated events.
 
 <h3>Example</h3>
 
 ```bash
-luna s.lst -s 'AROUSALS eeg=C3,C4 emg=EMG add=a_'
+luna s.lst -s 'AROUSALS eeg=C3,C4 emg=EMG manual=man_arousal add=a_'
+
+# Manual-only summary (no EEG/EMG required)
+luna s.lst -s 'AROUSALS manual=man_arousal'
 ```
 
 ## [`DESAT`](physio.md#desat)
@@ -303,90 +309,111 @@ summary variables such as `N2`, `N3`, `N4`, `ODI2`, `ODI3`, `ODI4`, and
 luna s.lst -s 'DESAT sig=SpO2 drop=3 dur=10'
 ```
 
-## [`RESPBREATH`](physio.md#respbreath)
+## [`RESP-LINK`](physio.md#resp-link)
 
-_Segment respiratory channels into breath events_
+_Link respiratory events to likely desaturation and arousal responses_
 
 !!! warning "Under development"
-    [`RESPBREATH`](physio.md#respbreath) is under development. Interfaces and defaults may still change
-    as the implementation is exercised on more respiratory channel types.
+    [`RESP-LINK`](physio.md#resp-link) is under development: documentation is
+    being written, but the command is not yet ready for general use and is
+    highly likely to change (template learning, fallback timing, and linkage
+    thresholds may still evolve).
+
+## [`RESPBREATH`](physio.md#respbreath)
+
+_Respiratory breath segmentation for timing / phase-locking analyses_
+
+!!! note "Reconstructed section"
+    This section was rebuilt from the `RESPBREATH` command definition in
+    `cmddefs.cpp` after the original prose was accidentally deleted during an
+    editing pass; please review it against the actual command behavior.
 
 [`RESPBREATH`](physio.md#respbreath) detects individual breaths from one or more respiratory PSG
-channels, such as nasal cannula, thermistor, or effort-belt signals, and emits
-breath-level annotations plus summary timing statistics. The primary use case is
-to obtain robust breath timing for downstream event-locking or phase/coupling
-analyses against EEG or other signals.
+channels (nasal cannula, thermistor, effort belt) and emits breath-level timing
+annotations plus summary statistics. The primary goal is robust breath timing
+for downstream phase-locking / coupling analyses with EEG or other signals.
 
 <h3>Methods</h3>
 
-Each contiguous EDF segment is processed independently. For each respiratory
-channel, Luna applies a Butterworth band-pass filter and light smoothing, then
-either infers or accepts a user-specified polarity so that inspiration is
-upward. The algorithm identifies alternating troughs and peaks, filters them by
-prominence and physiologic timing constraints, and uses accepted
-trough-peak-trough triplets to define breaths. Regions with unreliable timing
-are annotated as respiratory artifact. If multiple respiratory channels are
-provided, Luna can select a primary channel and fuse evidence across channels so
-that secondary channels increase confidence or rescue timing when the primary
-channel is poor.
+Each contiguous EDF segment is processed independently (no bridging across
+gaps). Each channel is bandpass-filtered (Butterworth IIR) and lightly
+smoothed, and signal polarity is auto-detected or user-specified so that
+inspiration is upward. Alternating local extrema (troughs and peaks) are then
+detected and filtered by prominence and physiologic timing constraints; each
+accepted trough-peak-trough triplet defines one breath. Regions with no
+reliable timing are annotated as `RESP_ART`. With multiple channels, results
+are fused: the best-quality channel is primary and secondary channels boost
+confidence or rescue timing where the primary fails.
 
 <h3>Primary parameters</h3>
 
 | Parameter | Example | Description |
 | ---- | ---- | ---- |
-| `sig` | `NASAL,THOR` | Required respiratory channel or channels |
-| `hp` | `0.03` | High-pass cutoff for band-pass filtering |
-| `lp` | `1.5` | Low-pass cutoff for band-pass filtering |
-| `smooth` | `0.20` | Smoothing half-window in seconds |
-| `flip` | `auto` | Polarity handling: auto, yes, or no |
+| `sig` | `NASAL,THOR` | _(Required)_ Comma-separated list of respiratory channel labels |
+| `primary` | `auto` | Primary channel: `first`, `auto` (best quality), or a channel label |
+| `fuse` | `yes` | Perform multi-channel fusion when multiple `sig=` channels are given |
+| `fuse-window` | `0.75` | Time window (s) for matching breath peaks across channels during fusion |
 
-<h3>Timing and quality parameters</h3>
-
-| Parameter | Example | Description |
-| ---- | ---- | ---- |
-| `min-half-cycle` | `0.40` | Minimum inspiratory or expiratory half-cycle duration |
-| `max-half-cycle` | `6.0` | Maximum inspiratory or expiratory half-cycle duration |
-| `min-cycle` | `0.80` | Minimum total breath duration |
-| `max-cycle` | `12.0` | Maximum total breath duration |
-| `prom-z` | `1.0` | Minimum extremum prominence relative to local MAD |
-| `amp-rel` | `0.15` | Minimum amplitude relative to recent good breaths |
-| `conf` | `0.40` | Threshold below which breaths are flagged low-confidence |
-
-<h3>Artifact, fusion, and annotation parameters</h3>
+<h3>Preprocessing parameters</h3>
 
 | Parameter | Example | Description |
 | ---- | ---- | ---- |
-| `recover` | `2.0` | Artifact recovery window in seconds |
-| `merge-art` | `1.0` | Gap threshold used to merge nearby artifact intervals |
-| `min-art` | `2.0` | Minimum artifact duration to annotate |
-| `min-seg` | `5.0` | Minimum segment duration required to attempt detection |
-| `primary` | `auto` | Primary channel: first, auto, or an explicit label |
-| `fuse` | `yes` | Enable multi-channel fusion |
-| `fuse-window` | `0.75` | Matching window used when fusing channels |
-| `annot-breath` | `BREATH` | Breath-interval annotation label |
-| `annot-insp` | `INSP` | Inspiratory sub-interval label |
-| `annot-exp` | `EXP` | Expiratory sub-interval label |
-| `annot-art` | `RESP_ART` | Artifact / unusable interval label |
+| `hp` | `0.03` | High-pass cutoff for bandpass filter (Hz) |
+| `lp` | `1.5` | Low-pass cutoff for bandpass filter (Hz) |
+| `smooth` | `0.20` | Box-car smoothing half-window (s) applied after filtering |
+| `flip` | `auto` | Polarity: `auto` (inferred), `yes` (invert), `no` (keep as-is) |
+
+<h3>Timing-constraint parameters</h3>
+
+| Parameter | Example | Description |
+| ---- | ---- | ---- |
+| `min-half-cycle` | `0.40` | Minimum inspiratory or expiratory half-cycle duration (s) |
+| `max-half-cycle` | `6.00` | Maximum inspiratory or expiratory half-cycle duration (s) |
+| `min-cycle` | `0.80` | Minimum total breath cycle duration (s) |
+| `max-cycle` | `12.0` | Maximum total breath cycle duration (s) |
+
+<h3>Quality and artifact parameters</h3>
+
+| Parameter | Example | Description |
+| ---- | ---- | ---- |
+| `prom-z` | `1.0` | Minimum extremum prominence (signal / local MAD) |
+| `amp-rel` | `0.15` | Minimum breath amplitude relative to recent-good-breath median |
+| `conf` | `0.40` | Confidence threshold below which a breath is flagged low-confidence |
+| `recover` | `2.0` | Artifact recovery window (s): breaths within this distance of artifact are flagged |
+| `merge-art` | `1.0` | Gap (s) between artifact intervals to merge into one |
+| `min-art` | `2.0` | Minimum duration (s) for an artifact interval to be annotated |
+| `min-seg` | `5.0` | Minimum segment duration (s) required to attempt breath detection |
+
+<h3>Other parameters</h3>
+
+| Parameter | Example | Description |
+| ---- | ---- | ---- |
+| `use-hilbert` | `no` | Use Hilbert envelope for amplitude/noise estimation (currently a placeholder) |
+| `verbose` | `no` | Verbose logging |
+| `annot-breath` | `BREATH` | Annotation label for breath intervals |
+| `annot-insp` | `INSP` | Annotation label for inspiratory sub-intervals (omit to suppress) |
+| `annot-exp` | `EXP` | Annotation label for expiratory sub-intervals (omit to suppress) |
+| `annot-art` | `RESP_ART` | Annotation label for artifact/unusable intervals |
 
 <h3>Outputs</h3>
 
-Recording-level summary variables include:
+Individual-level summary (all segments combined):
 
 | Variable | Description |
 | ---- | ---- |
-| `N_BREATH` | Total detected breaths |
-| `BREATH_RATE` | Breaths per minute over valid time |
-| `MEAN_TTOT` | Mean total cycle duration |
-| `MEDIAN_TTOT` | Median total cycle duration |
-| `SD_TTOT` | SD of total cycle duration |
-| `CV_TTOT` | Coefficient of variation of total cycle duration |
-| `MEDIAN_TINSP` | Median inspiratory duration |
-| `MEDIAN_TEXP` | Median expiratory duration |
-| `IE_RATIO` | Median inspiratory:expiratory ratio |
-| `MEDIAN_AMP` | Median breath amplitude |
-| `LOWCONF_PCT` | Percent of breaths flagged low confidence |
-| `ARTIFACT_PCT` | Percent of recording time annotated as respiratory artifact |
-| `FUSED_PCT` | Percent of breaths supported by multiple channels |
+| `N_BREATH` | Total number of detected breaths |
+| `BREATH_RATE` | Breaths per minute (over total valid recording time) |
+| `MEAN_TTOT` | Mean total cycle duration (s) |
+| `MEDIAN_TTOT` | Median total cycle duration (s) |
+| `SD_TTOT` | SD of total cycle duration (s) |
+| `CV_TTOT` | CV of total cycle duration (SD/mean) |
+| `MEDIAN_TINSP` | Median inspiratory duration (s) |
+| `MEDIAN_TEXP` | Median expiratory duration (s) |
+| `IE_RATIO` | Median I:E ratio (`TINSP` / `TEXP`) |
+| `MEDIAN_AMP` | Median breath amplitude (symmetric: peak - mean adjacent troughs) |
+| `LOWCONF_PCT` | Percentage of breaths flagged as low confidence |
+| `ARTIFACT_PCT` | Percentage of recording time covered by `RESP_ART` |
+| `FUSED_PCT` | Percentage of breaths supported by multiple channels |
 
 Per-breath output (strata: `CH,N`) includes `START`, `PEAK`, `END`, `TINSP`,
 `TEXP`, `TTOT`, `AMP_INSP`, `AMP_EXP`, `AMP_SYM`, `CONF`, `LOW_CONF`,
@@ -400,3 +427,21 @@ including `PRIMARY_USED_PCT`.
 ```bash
 luna s.lst -s 'RESPBREATH sig=NASAL,THOR primary=auto fuse=yes'
 ```
+
+## [`LM`](physio.md#lm)
+
+_Detect leg movements and periodic leg movements (WASM 2016)_
+
+!!! warning "Under development"
+    [`LM`](physio.md#lm) is under development: documentation is being written,
+    but the command is not yet ready for general use and is highly likely to
+    change (detection methods, parameters, and output format).
+
+## [`COMBINE-EMG`](physio.md#combine-emg)
+
+_Build a single continuous EMG channel from 2+ candidate channels_
+
+!!! warning "Under development"
+    [`COMBINE-EMG`](physio.md#combine-emg) is under development: documentation
+    is being written, but the command is not yet ready for general use and is
+    highly likely to change.

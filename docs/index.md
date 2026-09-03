@@ -1,5 +1,5 @@
 
-# Luna: software for the analysis of sleep signal data
+# Luna: tools for the analysis of sleep signal data
 
 Luna is an open-source C/C++ software package for manipulating and
 analyzing polysomnographic recordings, with a focus on the sleep EEG.
@@ -8,7 +8,7 @@ Originally oriented around command-line scripting
 including the [Python](http://python.org) module
 [_lunapi_](lunapi/index.md) and the [_lunaR_](ext/R/index.md) library
 for the [R](https://www.r-project.org/) statistical package. The
-__current release is v1.5.1__ (21-April-2026): see [here](updates.md) for
+__current release is v1.7.0__ (03-Sep-2026): see [here](updates.md) for
 a list of changes/additions. Please direct any questions to `luna.remnrem@gmail.com`. For
 background on the project itself, see [About](about.md).
 

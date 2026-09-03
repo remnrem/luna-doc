@@ -566,7 +566,7 @@ See [merge](../merge/merge.md) for more details.
     available) values when that option wasn't specified. Whereas the
     database output only lists what it observes, text-table output
     mode has to force the columns of the output file _before_ it knows
-    what analyses will be performed; this will occassionally mean that
+    what analyses will be performed; this will occasionally mean that
     extra variables are included.
 
     - In certain instances (e.g. especially for the [`SPINDLES`](../ref/spindles-so.md#spindles) command

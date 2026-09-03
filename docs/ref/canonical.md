@@ -36,8 +36,20 @@ The types of requirements may include:
 The [`CANONICAL`](canonical.md#canonical) command takes one or more _canonical signal definition
 files_ and tries to make as many _canonical signals_ as it can, by
 following the set of rules. Rules are followed sequentially, and once
-a particular canonical signal has been generated, Luna will skip all
+a particular canonical signal has been satisfied, Luna will skip all
 subsequent definitions.
+
+A canonical signal is considered satisfied if the EDF already contains
+a channel with the target canonical label before [`CANONICAL`](canonical.md#canonical)
+is run, or if an earlier rule has created that label.  In this case,
+[`CANONICAL`](canonical.md#canonical) will not replace, overwrite or drop the existing
+channel in order to create a new signal with the same label.  For
+example, if an EDF already contains `ECG`, then a later rule targeting
+`ECG` from `ECG3` referenced to `ECG1` will be skipped, because `ECG`
+is already satisfied.  If the existing `ECG` channel should not be
+retained, drop or rename it before running [`CANONICAL`](canonical.md#canonical), e.g.
+with `SIGNALS drop=ECG`, or define the derived canonical under a
+different label.
 
 Note that the purpose of the CANONICAL command is not necessarily to
 map every signal in an EDF: rather, it is to guarantee that any newly
@@ -457,8 +469,6 @@ apply: EEG_template2 C3 F3 O1 ${ref=A2,M2}
 
 This will generate six rules, for C4-M1, F4-M1, O2-M1 and C3-M2, F3-M2 and O1-M2.
 
-__TODO__: give C3 C4 etc but target labels are different, e.g. C3_M2 F4_M1 etc...  e.g. pass a target label when `define:` ?
-
 That is, `$${ref}` (note the double-`$`) is not defined before use in
 defining the template.  Effectively, the first `$` is stripped off,
 and the string `${ref}` is then given when an `apply:` statement is
@@ -773,7 +783,7 @@ or more definition files on a set of PSGs, use the [`CANONICAL`](canonical.md#ca
 
 <h3>Methods</h3>
 
-One or more canonical signal definition files are parsed in the order listed. Variable assignments (using `${var=value}` syntax) and template definitions (`define:` / `apply:` blocks) are expanded by text substitution on a first pass, yielding a flat list of rules in their canonical form. Each rule specifies a target canonical label together with optional sub-sections: `group:` (cohort-specific applicability), `unless:` (skip if a named canonical signal has already been created), `req:` (requirements that must be satisfied), and `set:` (transformations to apply). Rules are processed sequentially. For each rule, [`CANONICAL`](canonical.md#canonical) first checks whether the target label has already been satisfied; if so, the rule is skipped. It then checks group membership (if `group:` is present), `unless:` conditions, and `closed:` directives, bailing out of the rule if any check fails. The requirements under `req:` are then evaluated against the EDF header: a primary signal (`sig`) must be present (the first listed matching channel is selected), an optional reference signal (`ref`) must be present (linked-mastoid references, given in quotes as a comma-delimited list, require all named channels to exist), and any specified `trans:`, `unit:`, sample-rate (`sr-min`, `sr-max`), and `scale` constraints must be met by the matched primary signal. Wildcard values (`.` for an empty field, `*` for any non-empty value) are supported for `unit` and `trans` fields. If all requirements are satisfied, the new canonical signal is constructed: the primary signal is copied (and optionally re-referenced against the matched reference channel using a simple subtraction, or against a linked average of multiple reference channels) and added to the in-memory EDF under the canonical label. If `set: sr` is specified, the new signal is resampled to the target rate; if `set: unit` is specified and the current unit indicates a different voltage scale (V, mV, or uV), the signal is rescaled accordingly and the EDF physical dimension field is updated. All matched channel labels and their output dispositions are reported at the individual level.
+One or more canonical signal definition files are parsed in the order listed. Variable assignments (using `${var=value}` syntax) and template definitions (`define:` / `apply:` blocks) are expanded by text substitution on a first pass, yielding a flat list of rules in their canonical form. Each rule specifies a target canonical label together with optional sub-sections: `group:` (cohort-specific applicability), `unless:` (skip if a named canonical signal has already been created), `req:` (requirements that must be satisfied), and `set:` (transformations to apply). Rules are processed sequentially. For each rule, [`CANONICAL`](canonical.md#canonical) first checks whether the target label has already been satisfied, meaning either that the EDF already contains a channel with that label or that an earlier rule has created it; if so, the rule is skipped and existing channels are not overwritten by later canonical rules. It then checks group membership (if `group:` is present), `unless:` conditions, and `closed:` directives, bailing out of the rule if any check fails. The requirements under `req:` are then evaluated against the EDF header: a primary signal (`sig`) must be present (the first listed matching channel is selected), an optional reference signal (`ref`) must be present (linked-mastoid references, given in quotes as a comma-delimited list, require all named channels to exist), and any specified `trans:`, `unit:`, sample-rate (`sr-min`, `sr-max`), and `scale` constraints must be met by the matched primary signal. Wildcard values (`.` for an empty field, `*` for any non-empty value) are supported for `unit` and `trans` fields. If all requirements are satisfied, the new canonical signal is constructed: the primary signal is copied (and optionally re-referenced against the matched reference channel using a simple subtraction, or against a linked average of multiple reference channels) and added to the in-memory EDF under the canonical label. If `set: sr` is specified, the new signal is resampled to the target rate; if `set: unit` is specified and the current unit indicates a different voltage scale (V, mV, or uV), the signal is rescaled accordingly and the EDF physical dimension field is updated. All matched channel labels and their output dispositions are reported at the individual level.
 
 <h3>Parameters</h3>
 

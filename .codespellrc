@@ -1,0 +1,22 @@
+[codespell]
+check-filenames =
+count =
+skip =
+    ./.git,
+    ./site,
+    ./html,
+    ./docs/img,
+    ./docs/resources,
+    ./.claude,
+    ./.DS_Store,
+    *.DS_Store,
+    *.gz,
+    *.idx,
+    *.jpg,
+    *.jpeg,
+    *.map,
+    *.pdf,
+    *.png,
+    *.sample,
+    *.zip
+ignore-words-list = abd,alse,apon,ist,sme,strat,trough,ths

@@ -4,7 +4,7 @@ _lunaR_ is a package for the [R statistical software
 environment](https://www.r-project.org), which aims to provide a
 simple interface for the Luna library.  Primary use cases are 1) for
 working with individual sleep studies/EDFs, and 2) as a convenient way
-to work with [_destrat_](../../luna/args.md#destrat) output databases.
+to work with [_destrat_](../../luna/destrat.md#destrat) output databases.
 For larger projects, the command-line version of Luna
 ([_lunaC_](../../luna/args.md)) will likely be a better option.
 
@@ -15,10 +15,10 @@ For larger projects, the command-line version of Luna
 
 ## Overview
 
-This page gives an overview of the core [functions](#functions)
+This page gives an overview of the core [functions](#commands)
 provided by this package, followed by [examples](example.md) and
 descriptions of some additional [convenience
-functions](#convenience-functions).  All examples on the page use the
+functions](ref.md#convenience-functions).  All examples on the page use the
 [tutorial dataset](../../tut/tut1.md), especially the second individual
 (`nsrr02`).  The Luna tutorial also includes [a
 section](../../tut/tut4.md) in which all steps are performed in _lunaR_
@@ -81,9 +81,9 @@ be roughly grouped as follows:
 - __convenience/misc:__ [`lstgcols()`](ref.md#lstgcols), [`lbands()`](ref.md#lbands), [`llog()`](ref.md#llog),
   [`le2i`](ref.md#le2i), [`lsanitize()`](ref.md#lsanitize), [`ldenoise()`](ref.md#ldenoise), 
 
-- __plotting functions__: [`lheatmap()`](ref.md#lheatmap), [`ltopo.heat()`](ref.md#ltopo.heat), [`ltopo.rb()`](ref.md#ltopo.rb) ,
-  [`ltopo.xy()`](ref.md#ltopo.xy) ,  [`ltopo.heat2()`](ref.md#ltopo.heat2) , [`ltopo.topo()`](ref.md#ltopo.topo) ,
-   [`ltopo.conn()`](ref.md#ltopo.conn) , [`ltopo.dconn()`](ref.md#ltopo.dconn) 
+- __plotting functions__: [`lheatmap()`](viz.md#lheatmap), [`ltopo.heat()`](viz.md#ltopoheat), [`ltopo.rb()`](viz.md#ltoporb) ,
+  [`ltopo.xy()`](viz.md#ltopoxy) , `ltopo.heat2()` , [`ltopo.topo()`](viz.md#ltopotopo) ,
+   [`ltopo.conn()`](viz.md#ltopoconn) , [`ltopo.dconn()`](viz.md#ltopodconn) 
 
 
 The index below gives a listing of all major _lunaR_ functions:
@@ -115,7 +115,7 @@ The index below gives a listing of all major _lunaR_ functions:
 | [`lid()`](ref.md#lid)           | Extract a particular individual from a returned data frame |
 | [`ltxttab()`](ref.md#ltxttab)   | Loads and conconcatenates multiple text-table output files |
 | [`lstgcols()`](ref.md#lstgcols) | Maps typical stage labels to colors (for plotting) |
-| [`lbands()`](ref.md#lands)      | Splits a signal into five band-pass filtered signals |
+| [`lbands()`](ref.md#lbands)      | Splits a signal into five band-pass filtered signals |
 | [`llog()`](ref.md#llog)         | Turns Luna's typical console messages on/off | 
 | [`le2i()`](ref.md#le2i)         | Converts epochs to intervals |
 | [`lsanitize()`](ref.md#lsanitize) | Cleans syntax of command, factor/level and channel names |
@@ -124,11 +124,9 @@ The index below gives a listing of all major _lunaR_ functions:
 | [`ltopo.heat()`](viz.md#ltopoheat) | Topoplot (sensor-level) |
 | [`ltopo.rb()`](viz.md#ltoporb) | Topoplot (sensor-level) with red-white-blue |
 | [`ltopo.xy()`](viz.md#ltopoxy) | Topoplot (sensor-level) X-Y plots |
-| [`ltopo.heat2()`](viz.md#ltopoheat2) | Topoplot (sensor-level) of X-Y-Z heatmaps |
+| `ltopo.heat2()` | Topoplot (sensor-level) of X-Y-Z heatmaps |
 | [`ltopo.conn()`](viz.md#ltopoconn) | Topoplot (sensor-level) of pairwise connectivity |
 | [`ltopo.dconn()`](viz.md#ltopodconn) | Topoplot (sensor-level) of single-sensor seeded connectivity |
-| [`ltopo.topo()`](viz.md#ltopotopo) | Topoplot (sensor-level) of topoplots |
-| [`ltopo.topo()`](viz.md#ltopotopo) | Topoplot (sensor-level) of topoplots |
 | [`ltopo.topo()`](viz.md#ltopotopo) | Topoplot (sensor-level) of topoplots |
 | [`ldefault.xy()`](viz.md#ldefaultxy) | Default XY channel locations for plotting |
 | [`ldefault.coh.xy()`](viz.md#ldefaultcohxy) | Default XY channel locations for coherence/connectivity plots |

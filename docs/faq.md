@@ -39,7 +39,7 @@ using Luna helper commands such as [`--build`](ref/helpers.md#-build).
 The usual first step is to look at headers and signal descriptions. See:
 
 - [HEADERS](ref/summaries.md#headers)
-- [DESC](luna/args.md#signal-selection)
+- [DESC](ref/summaries.md#desc)
 - [Quick start](tut/tut1.md)
 
 ## How do I get results out of Luna?
@@ -56,12 +56,12 @@ See [output and destratification](luna/destrat.md) for the core model.
 
 By default, Luna sanitizes labels to make command-line and downstream processing
 easier. Spaces are usually converted to underscores, and some other special
-characters are also normalized. See [spaces in channel and annotation names](luna/args.md#spaces-in-channel-names).
+characters are also normalized. See [spaces in channel and annotation names](luna/args.md#spaces-in-channel-and-annotation-names).
 
 If you want more control, see:
 
-- [`sanitize`](luna/args.md#spaces-in-channel-names)
-- [`keep-spaces`](luna/args.md#spaces-in-channel-names)
+- [`sanitize`](luna/args.md#spaces-in-channel-and-annotation-names)
+- [`keep-spaces`](luna/args.md#spaces-in-channel-and-annotation-names)
 - [`alias`](luna/args.md#aliases)
 - [`remap`](luna/args.md#remapping-annotations)
 
@@ -71,7 +71,7 @@ Usually because the shell is interpreting characters such as `&`, `|`, `*`, or
 `$` before Luna sees them. In most cases, wrap the full Luna expression in
 single quotes when using `-s`.
 
-See [Variables and special characters when using `-s`](#variables-and-special-characters-when-using--s).
+See [Variables and special characters when using `-s`](#variables-and-special-characters-when-using-s).
 
 ## Can I use Luna without the command line?
 
@@ -164,7 +164,7 @@ MASK if="REM sleep|5"
 Alternatively, you can alias or remap labels as they are initially
 read by Luna, to control more explicitly any renaming meaning that
 Luna does not have to do this automatically. For example, to change a signal `REF X1` to simply `REF`, one can 
-set an signal [`alias`](luna/args.md#alias) in a [_parameter
+set an signal [`alias`](luna/args.md#aliases) in a [_parameter
 file_](luna/args.md#parameter-files):
 
 ```
@@ -172,7 +172,7 @@ file_](luna/args.md#parameter-files):
 ```
 
 Note how we put `REF X1` in quotes, to assist the parsing of this
-term.  All subequent commands can now reference `REF` instead of `REF
+term.  All subsequent commands can now reference `REF` instead of `REF
 X1`.
 
 Paralleling the use of `alias` for channels, you can
@@ -237,7 +237,7 @@ to write d$"C3-M2", or find other work-arounds, etc).
 To avoid this, use [_aliases_](luna/args.md#aliases).
 
 PS. for other reasons, always good advice to avoid special characters
-in IDs too... just stick to alpha-numeric characters and underscores.
+in IDs too... just stick to alphanumeric characters and underscores.
 In particular, the `^` character which is the reserved symbol
 (meaning, within a script, "swap in the ID").
 
@@ -263,7 +263,7 @@ By using single-quotes, this tells the shell not to interpret the
 characters there in any way.  As such, the input to Luna will be what
 you'd expect, i.e. the text written _as is_ above.
 
-One possbile exception is if you want to include shell variables in a
+One possible exception is if you want to include shell variables in a
 Luna script.   It is important to understand this distinction between _shell_
 variables and _Luna_ variables, as they have similar syntax (`${var}`).  However,
 these are distinct entities, even if they share the same label.

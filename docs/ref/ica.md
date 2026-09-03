@@ -1,14 +1,16 @@
-# Independent components and principal component analyses
+# Independent components and multi-channel decomposition
 
-_An implementation of the fastICA algorithm_
+_ICA, PCA/SVD and GED analyses_
 
-Independent Component Analysis (ICA) decomposes multi-channel EEG into statistically independent components, most commonly used to identify and remove stereotyped artifacts (ocular, cardiac, muscular) from the signal. [`ICA`](ica.md#ica) fits the fastICA algorithm to one or more channels and adds the resulting independent components as new EDF signals for inspection. [`ADJUST`](ica.md#adjust) subtracts specified components from the original channels to produce a cleaned signal. [`SVD`](ica.md#svd) applies singular value decomposition (PCA) to multi-channel data as a related alternative, useful for dimensionality reduction.
+Independent Component Analysis (ICA) decomposes multi-channel EEG into statistically independent components, most commonly used to identify and remove stereotyped artifacts (ocular, cardiac, muscular) from the signal. [`ICA`](ica.md#ica) fits the fastICA algorithm to one or more channels and adds the resulting independent components as new EDF signals for inspection. [`ADJUST`](ica.md#adjust) subtracts specified components from the original channels to produce a cleaned signal. [`SVD`](ica.md#svd) applies singular value decomposition (PCA) to multi-channel data as a related alternative, useful for dimensionality reduction. [`GED`](ica.md#ged) estimates spatial filters that maximize contrast between two covariance definitions, for example event-locked versus reference activity.
 
 | Command | Description | 
 | ---- | ------ | 
 | [`ICA`](#ica)      | Fit ICA model to signal data |
 | [`ADJUST`](#adjust)  | Adjust original signals given one or more ICs |
 | [`SVD`](#svd) | Apply time-series PCA to multiple channels | 
+| [`GED`](#ged) | Generalized eigendecomposition spatial filters |
+| [`--ged-group`](#-ged-group) | Build a group GED solution from saved covariance files |
 
 ## ICA
 
@@ -260,3 +262,97 @@ Component weights (right singular vectors) (strata: `C` x `FTR`)
 | Variable | Description |
 | --- | --- |
 | `V` | Weight/right singular vector value |
+
+## GED
+
+_Generalized eigendecomposition_
+
+[`GED`](ica.md#ged) finds multichannel spatial filters that maximize a contrast
+between two covariance matrices, conventionally an S matrix of target activity
+and an R matrix of reference activity. This is useful for extracting components
+that emphasize event-locked or narrowband activity while still retaining a
+topographic map and component time series.
+
+<h3>Methods</h3>
+
+All input channels must share a sample rate. Luna builds S and R covariance
+matrices from the requested channels, optionally after transforming the input
+to narrowband data or an amplitude envelope. Annotation windows can define the
+S matrix (`a1`, `w1`) and R matrix (`a2`, `w2`), with `x1` and `x2` inverting
+the corresponding window selection. The generalized eigendecomposition solves
+for components ranked by the S/R power ratio. Individual runs can append a
+component time series to the EDF, compute epoch-level discriminant power, and
+save covariance matrices for later group analysis.
+
+<h3>Parameters</h3>
+
+| Parameter | Example | Description |
+| ---- | ---- | ---- |
+| `sig` | `C3,C4,F3,F4` | Channels to include; all must share the same sample rate |
+| `a1` | `spindles` | Annotation label for S-matrix time-locking |
+| `w1` | `0.5` | Half-window around each `a1` event |
+| `x1` |  | Exclude, rather than include, `a1` windows |
+| `a2` | `NREM2` | Annotation label for R-matrix windows; absent means whole trace |
+| `w2` | `0` | Half-window around each `a2` event |
+| `x2` |  | Exclude `a2` windows |
+| `input` | `raw` | Input transform: `raw`, `nb`, or `env` |
+| `nb-f` | `13.5` | Narrowband center frequency |
+| `nb-fwhm` | `2` | Narrowband Gaussian FWHM |
+| `env-lwr` | `12` | Envelope bandpass lower frequency |
+| `env-upr` | `15` | Envelope bandpass upper frequency |
+| `env-ripple` | `0.02` | Kaiser ripple for envelope bandpass FIR |
+| `env-tw` | `1.0` | Transition width for envelope bandpass FIR |
+| `z` |  | Z-score each channel before covariance estimation |
+| `reg` | `0.01` | Tikhonov regularization alpha for R |
+| `nc` | `3` | Number of components to output; `-1` means all |
+| `ts` | `GED_COMP` | Add a component time series as a new EDF channel |
+| `ts-comp` | `1` | Component number to use for `ts` |
+| `stages` |  | Also run stage-stratified GED after a prior `STAGE` command |
+| `clocs` | `locs.txt` | Channel locations file for spatial indices |
+| `win` | `30` | Epoch window for temporal instability; `0` uses existing epochs |
+| `save-cov` | `group.bin` | Append per-individual S/R covariance matrices to a binary file |
+| `load` | `group.ged` | Load a pre-computed group solution and project this individual |
+
+<h3>Outputs</h3>
+
+Whole-recording summaries include `N_S`, `N_R`, `EPOW_MEAN`, `EPOW_SD`, and
+`EPOW_CV`. Per-component output (strata: `COMP`) includes `LAMBDA`,
+`LAMBDA_R`, `LAMBDA_RANK`, `FOC`, `AP`, `LAT`, `POWER`, and `POWER_R`.
+
+Per-component channel output (strata: `COMP,CH`) reports the spatial filter
+weight `W` and forward model coefficient `MAP`. With `stages`, Luna emits
+stage-stratified component output (strata: `COMP,SS`) including `LAMBDA`,
+`LAMBDA_R`, `N_S`, and `N_R`. Epoch-level discriminant power output (strata:
+`E`) includes `EPOW` and, when available, `EPOW_SS`.
+
+<h3>Example</h3>
+
+```bash
+luna s.lst -s 'STAGE & GED sig=C3,C4,F3,F4 a1=spindles w1=0.5 a2=NREM2 stages ts=GED_COMP'
+```
+
+## --ged-group
+
+_Build a group GED solution_
+
+`--ged-group` is a standalone helper that reads per-individual covariance
+matrices written by [`GED`](ica.md#ged) with `save-cov`, computes group-average
+S and R matrices, runs GED, and writes a group solution file for later
+projection with `GED load=`.
+
+<h3>Parameters</h3>
+
+| Parameter | Example | Description |
+| ---- | ---- | ---- |
+| `dat` | `group.bin` | Binary accumulation file written by `GED save-cov` |
+| `sol` | `group.ged` | Output group solution file |
+| `trace-norm` |  | Trace-normalize each individual's covariance before averaging |
+| `reg` | `0.01` | Tikhonov regularization alpha for group R |
+| `nc` | `-1` | Number of components to save; `-1` means all |
+| `min-n` | `5` | Minimum number of individuals required |
+
+<h3>Example</h3>
+
+```bash
+luna --ged-group dat=group.bin sol=group.ged min-n=5
+```

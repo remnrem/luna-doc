@@ -139,7 +139,7 @@ luna s.lst -s 'MASK mask-epoch=1-8,666,777 & RE & WRITE edf-tag=v4'
 ```
 
 The final two examples demonstrate using the `force-edf` option to force writing as a standard EDF, i.e.
-dropping any EDF Annotations and the time-track, so that the resulting output is a continuos recording that
+dropping any EDF Annotations and the time-track, so that the resulting output is a continuous recording that
 ignores any potential discontinuities.
 
 Luna still checks whether the recording is _truly_ discontinuous (i.e. has more than one segment), and handles the new EDF header start time accordingly.
@@ -153,7 +153,7 @@ luna s.lst -s 'MASK mask-epoch=1 & RE & WRITE edf-tag=v5 force-edf'
 resetting EDF start time from 20.08.36 to 20.09.06
 ```
 
-However, if the output is truly discontinous, this means that clock-times are effectively invalid for that file when it is forced to be a standard EDF.
+However, if the output is truly discontinuous, this means that clock-times are effectively invalid for that file when it is forced to be a standard EDF.
 In this scenario, Luna
 notes it is setting the EDF start to a null value (midnight), which effectively makes all times into elapsed hh:mm:ss past the EDF start time,
 ignoring any gaps:
@@ -254,7 +254,7 @@ Finally, the `v6` file was similar to `v4` but was generated with the
 EDF.  However, note that because this is a truly discontinuous file,
 Luna resets the EDF clock time to a _null_ value of `00.00.00`
 (i.e. midnight), and notes this in the log.  Luna does this as
-clock-time information is no longer valid if a truly discontinous
+clock-time information is no longer valid if a truly discontinuous
 EDF+D is converted to a standard EDF.
 
 ```
@@ -456,7 +456,7 @@ test01-v5  1255  1255  06:36:06  37620.00->37650.00  37635  37620  37650
 test01-v5  1256  1256  06:36:36  37650.00->37680.00  37665  37650  37680
 ```
 
-Finally, here we forced a truly discontinuous EDF+D file (with multipe segments) to be
+Finally, here we forced a truly discontinuous EDF+D file (with multiple segments) to be
 written as a standard EDF.  This violates the use of clocktime (or indeed any meaningful tracking of
 when the segments occurred with respect to the original recording).  Luna therefore purposely
 denotes this fact by arbitrarily forcing the EDF start time to be `00:00:00`.
@@ -616,7 +616,7 @@ luna test01.edf annot-file=a.eannot -s DESC
 !!! info "Note on the annotation instance counts"
     Note that the number of each class of annotation is different here
     (e.g. 27 `NREM1` annotations versus what is listed in the log (only 15)
-    when attaching the orignial
+    when attaching the original
     XML).  This simply reflects that fact that NSRR XML annotations
     may contain intervals longer than 30 seconds, i.e. if contiguous
     epochs have the same annotation.  Any output that actually uses these

@@ -41,7 +41,7 @@ from 2 minutes into the recording until 2 minutes and 30 seconds):
 | ---- | ---- | ----- | ----|
 | `x`  | `x`  | `120`, `150` | Elapsed seconds from EDF start for both start & stop |  
 | `x`  | `+x` | `120`, `+30` | Using _duration_ to specify a 30-second interval starting at 120 seconds past EDF start | 
-| `hh:mm:ss` | `hh:mm:ss` | `22:30:15`, `22:30:45` | Using clock-time to specify start & stop (note: a `.` delimiter can be used instead of `:`) |
+| `hh:mm:ss` or `hh.mm.ss` | `hh:mm:ss` or `hh.mm.ss` | `22.30.15`, `22.30.45` | Using 24-hour clock-time to specify start & stop; colon delimiters are also accepted |
 | `hh:mm:ss` | `+x` | `22:30:15`, `+30` | As above, but using a _duration_ rather than explicit stop time |
 | `dd-mm-yy-hh:mm:ss` | `dd-mm-yy-hh:mm:ss` | `04-08-18-22:30:15`, `04-08-18-22:30:45` | Explicit date-time strings (date delimiters `-` or `/`); year can be `2015` or `15`; month can be `Aug`, `8` or `08` | 
 | `0+hh:mm:ss` | `0+hh:mm:ss` | `0+00:02:00`, `0+00:02:30` | Elapsed _hh:mm:ss_ times from EDF start (rather than clock-times) |
@@ -49,14 +49,14 @@ from 2 minutes into the recording until 2 minutes and 30 seconds):
 
 
 !!! note "Delimiters"
-    For annotation files, Luna requires a colon
-    (`:`) as the delimiter for times, e.g. `hh:mm:ss`.  (For EDF
-    headers, either `.` or `:` can be used; and Luna may output times
-    with period delimiters in some cases because of this.)  For dates,
-    `-` is the preferred delimiter in annotation files, although `/`
-    is also accepted: for a date-time string `dd-mm-yy-hh:mm:ss` is
-    the canonical format.  (Note that Luna uses _European_ date
-    formats with day, then month, then year as per EDF spec.
+    In `.annot` files, both `hh:mm:ss` and the EDF-style dotted form
+    `hh.mm.ss` are accepted. Fractions can follow the seconds component,
+    e.g. `20.33.30.50` means `20:33:30.50`. A single-period numeric value
+    (e.g. `10.5`) is still elapsed seconds; the dotted clock-time form is
+    specifically `hh.mm.ss[.fraction]`. For dates, `-` is preferred,
+    although `/` is also accepted: `dd-mm-yy-hh:mm:ss` is the canonical
+    form. Luna uses European date order by default (day, month, year), as in
+    the EDF specification.
 
 ## Examples
 
@@ -73,15 +73,15 @@ a01   .   e:5                 .
 a02   .   e:5                 e:5
 a03   .   120                 150
 a04   .   120                 +30
-a05   .   21:25:23            21:25:53
+a05   .   21.25.23            21.25.53
 a06   .   9:25:23pm           9:25:53pm
 a07   .   9:25:23 pm          9:25:53 pm
-a08   .   21:25:23            +30
+a08   .   21.25.23            +30
 a09   .   0+00:02:00          0+00:02:30
 a10   .   0+00:02:00          +30
-a11   .   29-07-16-21:25:23   29-07-16-21:25:53
-a12   .   29-07-16-21:25:23   +30
-a13   .   21:25:23            ...
+a11   .   29-07-16-21.25.23   29-07-16-21.25.53
+a12   .   29-07-16-21.25.23   +30
+a13   .   21.25.23            ...
 a00   .   21:25:53            21:25:53
 a98   .   28-07-16-21:25:23   28-07-16-21:25:53
 a99   .   30-07-16-21:25:23   30-07-16-21:25:53
@@ -110,8 +110,8 @@ the identical period in the recording__.
 The file contains two other events that test the effect of shifting
 the date field either a day earlier (`a98`) or later (`a99`).  Thus,
 `a98` occurs _before_ the start of the EDF (and so should be
-ignored); in contrast, `a99` occurs 24 hours after all the other
-events.
+ignored); `a99` resolves 24 hours after the other events, beyond this
+short EDF.
 
 To test this, we will load the annotations and use `WRITE-ANNOTS` to output the file using a uniform format (by default, elapsed seconds) called `a2.annot`:
 
@@ -141,12 +141,24 @@ As expected, the _dummy_ interval `a00` is at 150 seconds exactly:
 ```
 a00  . 150.000  150.000  .
 ```
-Finally, `a98` is not present - it is ignored as it occurred prior to the EDF start (one day earlier). In contrast, `a99` (starting one day later)
-is:
+Finally, `a98` is not present - it is ignored as it occurred prior to the EDF start (one day earlier). `a99` is also absent with the current default:
+
 ```
-a99  . 86520.000  86550.000
+a99  .  (dropped: annotation start is at/after the EDF end)
 ```
-i.e. which as one day is 24 x 60 x 60 = 86400 seconds, is 120 + 86400 = 86520 and 150 + 86400 = 86550 seconds for start and stop times respectively, as expected.
+Although it resolves to 86,520 seconds (120 + 24 x 60 x 60), it is outside
+the 32,206-second EDF and is dropped while loading by
+`drop-annots-past-end=T`. Set `drop-annots-past-end=F` to retain such rows
+for an explicit post-load decision, such as `DROP-ANNOTS mask all`.
+
+For undated clock-times, an earlier time normally wraps to the next day. For
+example, with an EDF starting at `20.33.32`, `20.00.00` resolves to the next
+day at 84,388 seconds. With the default `drop-annots-past-end=T`, that
+past-end start is dropped while loading. Set `annot-time-wrap=F` when the
+wrapped occurrence should instead be treated as before the EDF and excluded;
+this also suppresses a wrapped occurrence beyond the EDF when past-end
+dropping has been disabled. An event starting exactly at the EDF end is out of
+range, although an interval stop may equal the EDF end.
 
 
 ## Modifying the EDF start 

@@ -102,7 +102,7 @@ automatically rescaled. Assessment uses 30 s non-overlapping epochs.
 
 Criteria: **Out of range** (≥ 10% of samples outside 50–100%), **Flatline**
 (constant signal for ≥ `oxy-flat-k` consecutive epochs), **Jump** (epoch-to-epoch
-change > `oxy-jump-th`%, default 4%), **Missing** (≥ 10% of samples at or below
+change > `oxy-jump-th`%, default 20%), **Missing** (≥ 10% of samples at or below
 the invalid floor).
 
 <h4>EEG</h4>
@@ -112,8 +112,8 @@ Welch PSD (4 s segments, 50% overlap).
 
 Criteria: **Flatline** (SD < 2 µV or ≥ 80% of derivatives near-zero),
 **Clipping** (≥ 1% of samples at ADC limits), **Extreme amplitude** (≥ 5%
-of samples exceed |500 µV|), **HF contamination** (P[20–40 Hz] / P[0.5–20 Hz]
-> 1.5), **Spectral peakedness** (SPK > 15 or KURT > 5 on detrended log-PSD
+of samples exceed |500 µV|), **HF contamination** (P[20–40 Hz] / P[0.5–20 Hz] > 1.5),
+**Spectral peakedness** (SPK > 15 or KURT > 5 on detrended log-PSD
 residuals 2–28 Hz), **Hjorth outlier** (|robust z| > 10 on bandpass-filtered
 signal 0.5–40 Hz). Line noise tracked separately.
 
@@ -135,13 +135,13 @@ Global R-peak detection is performed before any per-epoch analysis. The
 _mpeakdetect2_ algorithm handles inverted ECG polarity automatically.
 
 Criteria: **Flatline** (SD < 0.02 mV), **Clipping** (≥ 1% at ADC limits),
-**HR implausibility** (mean HR from clean RR intervals outside 25–220 bpm),
-**RR implausibility** (> 20% of RR intervals outside 300–2000 ms),
-**Insufficient beats** (< 5 R-peaks detected).
+**HR implausibility** (mean HR from clean RR intervals outside 40–140 bpm),
+**RR implausibility** (> 5% of RR intervals outside 430–1500 ms),
+**Insufficient beats** (< 10 R-peaks detected per epoch).
 Line noise tracked separately.
 
 Use `ecg-add-peaks` to attach detected R-peak locations as EDF+ annotations
-(label `qc-ecg-peak`) for downstream HRV or arrhythmia analysis.
+(one annotation per beat, label `Rpk_{CH}`) for downstream HRV or arrhythmia analysis.
 
 <h4>EOG</h4>
 
@@ -151,15 +151,31 @@ wider amplitude tolerance (|700 µV|), lower frequency band (0.3–20 Hz), Hjort
 pre-filtering restricted to 0.5–20 Hz.
 
 Criteria: **Flatline** (SD < 3 µV), **Clipping**, **Extreme amplitude** (≥ 5%
-of samples exceed |700 µV|), **HF contamination** (P[20–40 Hz] / P[0.3–20 Hz]
-> 1.5), **Hjorth outlier** (|robust z| > 10, bandpass 0.5–20 Hz).
+of samples exceed |700 µV|), **HF contamination** (P[20–40 Hz] / P[0.3–20 Hz] > 1.5),
+**Hjorth outlier** (|robust z| > 10, bandpass 0.5–20 Hz).
 Line noise tracked separately.
-
-<h3>Annotations</h3>
 
 <h3>Methods</h3>
 
-Automated signal quality assessment is performed independently across up to six physiological signal domains (respiratory effort, pulse oximetry, EEG, EMG, ECG, and EOG), each evaluated with domain-appropriate criteria. Per-epoch quality flags are generated using criteria including flatline detection (standard deviation or derivative-based), amplitude clipping at ADC limits, gross amplitude excursions, and spectral measures such as high-frequency-to-broadband power ratios and narrowband spectral peakedness. For EEG and EOG, Hjorth parameters (activity, mobility, complexity) are computed on a bandpass-filtered signal and outliers are identified by robust z-score relative to the recording-level distribution. ECG R-peak detection is performed globally on the full recording using a bandpass-differentiate-square-integrate algorithm before per-epoch HR and RR-interval plausibility metrics are derived. Line noise (50/60 Hz) is assessed independently from structural artifact criteria and does not contribute to primary channel-level flagging. A channel is designated as globally flagged when either the proportion of bad epochs exceeds a threshold or the longest contiguous bad run meets a minimum duration criterion.
+Automated signal quality assessment is performed independently across
+up to six physiological signal domains (respiratory effort, pulse
+oximetry, EEG, EMG, ECG, and EOG), each evaluated with
+domain-appropriate criteria. Per-epoch quality flags are generated
+using criteria including flatline detection (standard deviation or
+derivative-based), amplitude clipping at ADC limits, gross amplitude
+excursions, and spectral measures such as high-frequency-to-broadband
+power ratios and narrowband spectral peakedness. For EEG and EOG,
+Hjorth parameters (activity, mobility, complexity) are computed on a
+bandpass-filtered signal and outliers are identified by robust z-score
+relative to the recording-level distribution. ECG R-peak detection is
+performed globally on the full recording using a
+bandpass-differentiate-square-integrate algorithm before per-epoch HR
+and RR-interval plausibility metrics are derived. Line noise (50/60
+Hz) is assessed independently from structural artifact criteria and
+does not contribute to primary channel-level flagging. A channel is
+designated as globally flagged when either the proportion of bad
+epochs exceeds a threshold or the longest contiguous bad run meets a
+minimum duration criterion.
 
 <h3>Annotations</h3>
 
@@ -229,7 +245,7 @@ of that type):
 | `oxy-range-prop` | 0.10 | Epoch flagged if this fraction of samples are out of range |
 | `oxy-flat-th` | 0.2 % | Flatline SD threshold |
 | `oxy-flat-k` | 10 | Minimum run length in epochs before flatline flagging |
-| `oxy-jump-th` | 4.0 % | Maximum permitted epoch-to-epoch SpO2 change |
+| `oxy-jump-th` | 20.0 % | Maximum permitted epoch-to-epoch SpO2 change |
 | `oxy-invalid-floor` | 0.0 % | Values at or below this are treated as missing |
 | `oxy-missing-prop` | 0.10 | Epoch flagged if this fraction of samples are missing |
 | `oxy-flag-prop` | 0.5 | Channel FLAGGED if this fraction of epochs are bad |
@@ -285,14 +301,14 @@ of that type):
 | `ecg-flat-th` | 0.02 mV | Epoch flagged if SD below this |
 | `ecg-flat-prop` | 0.80 | Epoch flagged if this fraction of derivatives are near-zero |
 | `ecg-clip-prop` | 0.01 | Epoch flagged if this fraction of samples at ADC limits |
-| `ecg-hr-min` | 25 bpm | Minimum plausible heart rate |
-| `ecg-hr-max` | 220 bpm | Maximum plausible heart rate |
-| `ecg-rr-min` | 300 ms | Minimum plausible RR interval |
-| `ecg-rr-max` | 2000 ms | Maximum plausible RR interval |
-| `ecg-rr-prop` | 0.20 | Epoch flagged if this fraction of RR intervals are implausible |
-| `ecg-min-beats` | 5 | Epoch flagged if fewer than this many R-peaks detected |
+| `ecg-hr-min` | 40 bpm | Minimum plausible heart rate |
+| `ecg-hr-max` | 140 bpm | Maximum plausible heart rate |
+| `ecg-rr-min` | 430 ms | Minimum plausible RR interval |
+| `ecg-rr-max` | 1500 ms | Maximum plausible RR interval |
+| `ecg-rr-prop` | 0.05 | Epoch flagged if this fraction of RR intervals are implausible |
+| `ecg-min-beats` | 10 | Epoch flagged if fewer than this many R-peaks detected |
 | `ecg-ln-th` | 0.40 | Line noise epoch flagged if max(P50, P60) / P[5–25 Hz] exceeds this |
-| `ecg-add-peaks` | off | Attach R-peak locations as EDF+ annotations (`qc-ecg-peak`) |
+| `ecg-add-peaks` | off | Attach R-peak locations as EDF+ annotations (`Rpk_{CH}`, one per beat) |
 | `ecg-flag-prop` | 0.5 | Channel FLAGGED if this fraction of epochs are bad |
 | `ecg-flag-run` | 3600 s | Channel FLAGGED if contiguous bad run ≥ this many seconds |
 
@@ -318,48 +334,205 @@ of that type):
 
 <h3>Output</h3>
 
-Output strata: `CH × DOMAIN` (summary), `CH × DOMAIN × WIN` (per-epoch, with `epoch` option)
+`QC` writes multiple output tables depending on which domains are active and whether `epoch` is set.
 
-<h4>Cross-domain summary (CH × DOMAIN)</h4>
+<h4>Cross-domain summary (strata: `CH` × `DOMAIN`)</h4>
+
+One row per channel per active domain. `DOMAIN` takes values `RESP`, `OXY`, `EEG`, `EMG`, `ECG`, `EOG`.
 
 | Variable | Description |
 |---|---|
 | `FLAGGED` | Channel flagged as bad in this domain (0/1) |
-| `LOW_SR` | Channel skipped due to insufficient sample rate (RESP only; implies FLAGGED=1) |
+| `LOW_SR` | Channel skipped due to insufficient sample rate (RESP only; implies `FLAGGED=1`) |
 | `N_FLAG_EPOCH` | Number of flagged epochs |
 | `MAX_FLAG_RUN` | Longest contiguous run of flagged epochs (seconds) |
-| `LN_FLAG` | Channel flagged for line noise (0/1); EEG/EMG/ECG/EOG only |
-| `MAX_LN_RUN` | Longest contiguous line-noise run (seconds) |
+| `LN_FLAG` | Channel flagged for excessive line noise (0/1); EEG/EMG/ECG/EOG only |
+| `MAX_LN_RUN` | Longest contiguous line-noise run (seconds); EEG/EMG/ECG/EOG only |
 
-<h4>EEG channel summary (CH × EEG)</h4>
+<h4>RESP channel summary (strata: `CH` × `RESP`)</h4>
+
+| Variable | Description |
+|---|---|
+| `FLAGGED` | Channel flagged as bad (0/1); only emitted if `LOW_SR` |
+| `LOW_SR` | Channel skipped due to SR below `resp-hard-min-sr` (0/1) |
+| `N_EPOCH` | Number of 30 s reference epochs |
+| `N_VALID_WIN` | Number of overlapping analysis windows with valid spectral estimates |
+| `P_VALID_WIN` | Proportion of valid windows |
+| `P_FLAG_EPOCH` | Proportion of 30 s epochs flagged as bad |
+| `P_FLAT` | Proportion of windows with flatline |
+| `P_CLIP` | Proportion of windows with clipping |
+| `P_JUMP` | Proportion of windows with jump artifact |
+| `P_NOISE1` | Proportion of samples in noise level 1 (criteria < 0.25) |
+| `P_NOISE2` | Proportion of samples in noise level 2 (criteria < 0.125) |
+| `P_NOISE3` | Proportion of samples in noise level 3 (criteria < 0.0625) |
+
+<h4>OXY channel summary (strata: `CH` × `OXY`)</h4>
+
+| Variable | Description |
+|---|---|
+| `RESCALED` | Signal was auto-rescaled from 0–1 to 0–100 (0/1) |
+| `P_FLAG_EPOCH` | Proportion of epochs flagged as bad |
+| `P_RANGE` | Proportion of epochs with out-of-range values |
+| `P_FLAT` | Proportion of epochs with flatline |
+| `P_JUMP` | Proportion of epochs with jump artifact |
+| `P_MISSING` | Proportion of epochs with excessive missing/invalid samples |
+
+<h4>EEG channel summary (strata: `CH` × `EEG`)</h4>
 
 | Variable | Description |
 |---|---|
 | `FLAGGED` | Channel flagged as bad (0/1) |
+| `N_FLAG_EPOCH` | Number of flagged epochs |
+| `PROP_FLAG` | Proportion of flagged epochs |
+| `MAX_FLAG_RUN` | Longest contiguous run of flagged epochs (seconds) |
 | `P_FLAT` | Proportion of flatline epochs |
 | `P_CLIP` | Proportion of clipped epochs |
 | `P_AMP` | Proportion of extreme-amplitude epochs |
 | `P_HF` | Proportion of HF-contamination epochs |
-| `P_PEAK` | Proportion of spectral peakedness flagged epochs |
+| `P_PEAK` | Proportion of spectral-peakedness flagged epochs |
 | `P_HJORTH` | Proportion of Hjorth outlier epochs |
-| `P_LN` | Proportion of line-noise epochs (does not affect FLAGGED) |
+| `P_LN` | Proportion of line-noise epochs (does not affect `FLAGGED`) |
+| `MAX_LN_RUN` | Longest contiguous line-noise run (seconds) |
 | `LN_FLAG` | Channel flagged for excessive line noise (0/1) |
 
-<h4>EEG per-epoch (CH × EEG × WIN)</h4>
+<h4>EMG channel summary (strata: `CH` × `EMG`)</h4>
+
+| Variable | Description |
+|---|---|
+| `FLAGGED` | Channel flagged as bad (0/1) |
+| `N_FLAG_EPOCH` | Number of flagged epochs |
+| `PROP_FLAG` | Proportion of flagged epochs |
+| `MAX_FLAG_RUN` | Longest contiguous run of flagged epochs (seconds) |
+| `P_FLAT` | Proportion of flatline epochs |
+| `P_CLIP` | Proportion of clipped epochs |
+| `P_HI_RMS` | Proportion of high-broadband-RMS epochs |
+| `P_IMP` | Proportion of impulse-artifact epochs |
+| `P_LN` | Proportion of line-noise epochs (does not affect `FLAGGED`) |
+| `MAX_LN_RUN` | Longest contiguous line-noise run (seconds) |
+| `LN_FLAG` | Channel flagged for excessive line noise (0/1) |
+
+<h4>ECG channel summary (strata: `CH` × `ECG`)</h4>
+
+| Variable | Description |
+|---|---|
+| `FLAGGED` | Channel flagged as bad (0/1) |
+| `N_PEAKS` | Total R-peaks detected across the full recording |
+| `N_FLAG_EPOCH` | Number of flagged epochs |
+| `PROP_FLAG` | Proportion of flagged epochs |
+| `MAX_FLAG_RUN` | Longest contiguous run of flagged epochs (seconds) |
+| `P_FLAT` | Proportion of flatline epochs |
+| `P_CLIP` | Proportion of clipped epochs |
+| `P_RR` | Proportion of epochs flagged for implausible HR/RR |
+| `P_LN` | Proportion of line-noise epochs (does not affect `FLAGGED`) |
+| `MAX_LN_RUN` | Longest contiguous line-noise run (seconds) |
+| `LN_FLAG` | Channel flagged for excessive line noise (0/1) |
+
+<h4>EOG channel summary (strata: `CH` × `EOG`)</h4>
+
+| Variable | Description |
+|---|---|
+| `FLAGGED` | Channel flagged as bad (0/1) |
+| `N_FLAG_EPOCH` | Number of flagged epochs |
+| `PROP_FLAG` | Proportion of flagged epochs |
+| `MAX_FLAG_RUN` | Longest contiguous run of flagged epochs (seconds) |
+| `P_FLAT` | Proportion of flatline epochs |
+| `P_CLIP` | Proportion of clipped epochs |
+| `P_AMP` | Proportion of extreme-amplitude epochs |
+| `P_HF` | Proportion of HF-contamination epochs |
+| `P_HJORTH` | Proportion of Hjorth outlier epochs |
+| `P_LN` | Proportion of line-noise epochs (does not affect `FLAGGED`) |
+| `MAX_LN_RUN` | Longest contiguous line-noise run (seconds) |
+| `LN_FLAG` | Channel flagged for excessive line noise (0/1) |
+
+<h4>RESP per-window (strata: `CH` × `RESP` × `WIN`, requires `epoch`)</h4>
+
+| Variable | Description |
+|---|---|
+| `P1` | Respiratory band power (0.1–1 Hz) for this window |
+| `SNR` | Spectral SNR (P1/P2) for this window |
+| `CRIT` | Combined quality criterion (P1/P1scale × SNR) |
+| `FLAT` | Flatline flag for this window (0/1) |
+| [`CLIP`](manipulations.md#clip) | Clipping flag for this window (0/1) |
+| `JUMP` | Jump artifact flag for this window (0/1) |
+| `FLAG_EPOCH` | Window flagged as bad (0/1) |
+
+<h4>OXY per-window (strata: `CH` × `WIN` × `OXY`, requires `epoch`)</h4>
+
+| Variable | Description |
+|---|---|
+| `RANGE` | Out-of-range flag for this window (0/1) |
+| `FLAT` | Flatline flag for this window (0/1) |
+| `JUMP` | Jump artifact flag for this window (0/1) |
+| `MISSING` | Excessive missing/invalid samples flag (0/1) |
+| `FLAG_EPOCH` | Window flagged as bad (0/1) |
+
+<h4>EEG per-window (strata: `CH` × `WIN` × `EEG`, requires `epoch`)</h4>
 
 | Variable | Description |
 |---|---|
 | `SD` | Epoch standard deviation (µV) |
+| `DERIV` | Proportion of near-zero derivatives |
 | `HF_RATIO` | Ratio of HF band to signal band power |
 | `LN_RATIO` | Ratio of line-noise band to broadband power |
 | `SPK` | Spectral peakedness: total variation of detrended log-PSD residuals |
 | `KURT` | Spectral kurtosis: excess kurtosis of detrended log-PSD residuals |
 | `ACT` | Hjorth activity on bandpass-filtered signal |
 | `CPLX` | Hjorth complexity on bandpass-filtered signal |
-| `FLAT` / [`CLIP`](manipulations.md#clip) / `AMP` / `HF` / `LN` / `PEAK` / `HJORTH` | Per-criterion flags (0/1) |
+| `FLAT` | Flatline flag (0/1) |
+| [`CLIP`](manipulations.md#clip) | Clipping flag (0/1) |
+| `AMP` | Extreme-amplitude flag (0/1) |
+| `HF` | HF-contamination flag (0/1) |
+| `LN` | Line-noise flag (0/1) |
+| `PEAK` | Spectral-peakedness flag (0/1) |
+| `HJORTH` | Hjorth outlier flag (0/1) |
 | `FLAG_EPOCH` | Epoch flagged as bad (0/1); excludes line noise |
 
-ECG per-epoch additionally includes `NP` (R-peak count), `HR` (bpm), `RR` (mean RR in ms), `P_RR` (fraction implausible RR), and `RR_FLAG`.
+<h4>EMG per-window (strata: `CH` × `WIN` × `EMG`, requires `epoch`)</h4>
+
+| Variable | Description |
+|---|---|
+| `SD` | Epoch standard deviation (µV) |
+| `DERIV` | Proportion of near-zero derivatives |
+| `RMS` | Epoch broadband RMS (µV) |
+| `LN_RATIO` | Ratio of line-noise band to broadband power |
+| `FLAT` | Flatline flag (0/1) |
+| [`CLIP`](manipulations.md#clip) | Clipping flag (0/1) |
+| `HI_RMS` | High-broadband-RMS flag (0/1) |
+| `HI_LN` | Line-noise flag (0/1) |
+| `IMP` | Impulse-artifact flag (0/1) |
+| `FLAG_EPOCH` | Epoch flagged as bad (0/1); excludes line noise |
+
+<h4>ECG per-window (strata: `CH` × `WIN` × `ECG`, requires `epoch`)</h4>
+
+| Variable | Description |
+|---|---|
+| `NP` | Number of R-peaks detected in this epoch |
+| `HR` | Heart rate (bpm) estimated from clean RR intervals |
+| `RR` | Mean RR interval (ms) across all beats |
+| `P_RR` | Proportion of RR intervals outside the plausible range |
+| `FLAT` | Flatline flag (0/1) |
+| [`CLIP`](manipulations.md#clip) | Clipping flag (0/1) |
+| `RR_FLAG` | HR/RR implausibility or insufficient-beats flag (0/1) |
+| `LN` | Line-noise flag (0/1) |
+| `FLAG_EPOCH` | Epoch flagged as bad (0/1); excludes line noise |
+
+<h4>EOG per-window (strata: `CH` × `WIN` × `EOG`, requires `epoch`)</h4>
+
+| Variable | Description |
+|---|---|
+| `SD` | Epoch standard deviation (µV) |
+| `DERIV` | Proportion of near-zero derivatives |
+| `HF_RATIO` | Ratio of HF band to signal band power |
+| `LN_RATIO` | Ratio of line-noise band to broadband power |
+| `ACT` | Hjorth activity on bandpass-filtered signal |
+| `CPLX` | Hjorth complexity on bandpass-filtered signal |
+| `FLAT` | Flatline flag (0/1) |
+| [`CLIP`](manipulations.md#clip) | Clipping flag (0/1) |
+| `AMP` | Extreme-amplitude flag (0/1) |
+| `HF` | HF-contamination flag (0/1) |
+| `LN` | Line-noise flag (0/1) |
+| `HJORTH` | Hjorth outlier flag (0/1) |
+| `FLAG_EPOCH` | Epoch flagged as bad (0/1); excludes line noise |
 
 <h3>Example</h3>
 
@@ -367,8 +540,7 @@ ECG per-epoch additionally includes `NP` (R-peak count), `HR` (bpm), `RR` (mean 
 % Re-reference EEG and EOG channels
 REFERENCE sig=C3 ref=A2
 REFERENCE sig=C4 ref=A1
-REFERENCE sig=LOC ref=A2
-REFERENCE sig=ROC ref=A2
+REFERENCE sig=LOC,ROC ref=A2
 
 % Set channel variables
 ${eeg=C3,C4}

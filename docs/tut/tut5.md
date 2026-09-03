@@ -83,7 +83,7 @@ the length of the recording.
 
 !!! hint "Channel/annotation alias/remapping"
     In the original tutorial, we used several options to specify
-    channel lable aliases, that were applied on first loading new data.
+    channel label aliases, that were applied on first loading new data.
     However, unlike command-line
     Luna, it is not possible to specify [_parameter
     files_](../luna/args.md#parameter-files) when uploading files
@@ -248,7 +248,7 @@ available via the other _Hypnogram_ sub-panels.
 To see how Luna masks are applied, it can be useful to
 use _Moonlight_ to check that are doing what we assume they should:
 To this end, we will reproduce [these
-steps](tut3.md#epoch-level-masks) from the orignal tutorial, which involved
+steps](tut3.md#epoch-level-masks) from the original tutorial, which involved
 selecting epochs for the first individual that:
 
   - were in persistent sleep (at least 10 minutes of sleep prior)
@@ -478,7 +478,7 @@ into the _Luna_ panel, and select _Execute_ (note - the panel scrolls, so not al
 
 ![img](../img/ml/ml-tut35s.png)
 
-This produces all of the same output as the orignal Luna run, which is
+This produces all of the same output as the original Luna run, which is
 accessible via the _Tables_ embedded in this page.  Here we see that five
 tables have been generated.  By default, the first is automatically selected and shown: in this case, output
 from [`ARTIFACTS`](../ref/artifacts.md#artifacts) stratified by `CH` (channel):
@@ -486,7 +486,7 @@ from [`ARTIFACTS`](../ref/artifacts.md#artifacts) stratified by `CH` (channel):
 ![img](../img/ml/ml-tut36s.png)
 
 
-Looking at the other tables present, we can see that the `DUMP-MASK` command flags the mask epochs (not shown here).   As in the orignal tutorial,
+Looking at the other tables present, we can see that the `DUMP-MASK` command flags the mask epochs (not shown here).   As in the original tutorial,
 we flagged a particular epoch (220) for visual review.  Indeed, if we look at the `DUMP-MASK` outputs, we'd see that epoch 220 is indeed
 flagged as an artifact.    We can then directly use the viewer to look at this signal - i.e. giving the same view of the original tutorial:
 
@@ -548,7 +548,7 @@ mouse).
     Unlike other parts of _Moonlight_,
     where it know the structure
     of the expected output and can easily
-    format it nicely, the _Luna_ tab generates arbitary tables in
+    format it nicely, the _Luna_ tab generates arbitrary tables in
     terms of the columns, rows and header labels.  As such, it is not
     as straightforward to automatically format items for neat display.
 

@@ -2,13 +2,12 @@
 
 _Commands to show and summarize elements of sleep macro architecture_
 
-These commands characterize the sleep hypnogram — the epoch-by-epoch sleep stage record — at multiple levels of detail, and require sleep stage annotations to be present. [`HYPNO`](hypnograms.md#hypno) is the main command, computing a comprehensive set of individual-level summary statistics (total sleep time, stage percentages, latencies, cycle structure, bout lengths, transition probabilities) as well as epoch-level metrics and optionally NREM cycle annotations. [`STAGE`](hypnograms.md#stage) outputs the stage label for each epoch in a simple tabular format. [`DYNAM`](hypnograms.md#dynam) takes epoch-level output from other commands and summarizes it as a function of NREM cycles.
+These commands characterize the sleep hypnogram — the epoch-by-epoch sleep stage record — at multiple levels of detail, and require sleep stage annotations to be present. [`HYPNO`](hypnograms.md#hypno) is the main command, computing a comprehensive set of individual-level summary statistics (total sleep time, stage percentages, latencies, cycle structure, bout lengths, transition probabilities) as well as epoch-level metrics and optionally NREM cycle annotations. [`STAGE`](hypnograms.md#stage) outputs the stage label for each epoch in a simple tabular format. Commands for summarizing signals and events as a function of NREM cycles are on the [Dynamics](dynamics.md) page.
 
 |Command |Description | 
 |---|---|
 | [`HYPNO`](#hypno) | Sleep macro-architecture summaries |
 | [`STAGE`](#stage) | Output sleep stages per epoch |
-| [`DYNAM`](#dynam) | Summarize epoch-level outputs by NREM cycles | 
 
 ## HYPNO
 
@@ -374,6 +373,7 @@ _Epoch-level annotations_
 |`h_persistent_sleep`| Epoch is in persistent sleep |
 |`h_post_sleep_wake`| Epoch is post-sleep wake |
 |`h_pre_sleep_wake`| Epoch is pre-sleep wake |
+|`h_sleep_period_2m`| Sleep onset to final wake, padded 2 minutes each side (truncated to the recording bounds); single interval, not per-epoch |
 |`h_N2_asc`| Epoch is in ascending N2 |
 |`h_N2_dsc`| Epoch is in descending N2 |
 
@@ -1074,21 +1074,3 @@ The [`lstages()`](../ext/R/ref.md#lstages) function in
 [_lunaR_](../ext/R/index.md) provides a quick way to run the [`STAGE`](hypnograms.md#stage) command
 for a single EDF, returning just a vector of stage names.
 
-## DYNAM
-
-_Summarize outputs from other commands (or inputs from a file) in terms of hypnogram-derived NREM cycle dynamics_
-
-
-This command will typically be invoked by adding `dynam` as an option
-to one of the following commands that currently supports it: [`PSD`](power-spectra.md#psd),
-[`COH`](cc.md#coh), [`SPINDLES`](spindles-so.md#spindles), [`SO`](spindles-so.md#so), [`PSI`](cc.md#psi), [`CORREL`](cc.md#correl).  Alternatively, epoch-level
-inputs can be specified from a file, in which case this functionality
-is directly invoked via the [`DYNAM`](hypnograms.md#dynam) command.  The same functions are
-executed in either case.
-
-This command requires that [`HYPNO`](hypnograms.md#hypno) has previously been run, as it
-relies on knowing the NREM cycle structure of a recording.
-
-<h3>Methods</h3>
-
-Epoch-level metrics are summarized within and across NREM sleep cycles as identified by the Feinberg–Floyd heuristic applied during a prior hypnogram analysis. For each cycle, statistics are computed separately for ascending and descending NREM phases (the N2 periods bracketing the N3 core of the cycle), enabling characterization of how measures such as spectral power, spindle density, or slow-oscillation rate evolve over the course of the night. Cycle-normalized time positions allow within-cycle dynamics to be averaged across cycles or individuals in a common temporal reference frame.

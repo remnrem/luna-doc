@@ -509,7 +509,7 @@ i.e. the original XML contained terms such as `SpO2 artifact` but these were (au
 
 ## TYPES
 
-Displays curret channel [_type_](../luna/args.md#channel-types) definitions, either based
+Displays current channel [_type_](../luna/args.md#channel-types) definitions, either based
 on the default set (internal to Luna) or user-specified (via
 `ch-match`, `ch-exact` and/or `ch-clear`).
 

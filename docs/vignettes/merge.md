@@ -640,7 +640,7 @@ Record  Time
 !!! note
     Note, instead of using `SET-TIMESTAMPS` we could have simply
     generated an EDF+D file using a _mask_ and _restructuring_ an
-    in-memory dataset, as after any restucturing Luna's in-memory EDF
+    in-memory dataset, as after any restructuring Luna's in-memory EDF
     is effectively an EDF+D, i.e. in that it explicitly represents
     gaps by tracking the start time of each EDF record explicitly.
     For example (noting that we need to set a smaller epoch size here,

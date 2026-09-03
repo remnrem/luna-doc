@@ -1,6 +1,6 @@
 # Aligning recordings from independent sensors
 
-Luna's [`INSERT`](../ref/exp.md#insert) command exists for a practical
+Luna's [`INSERT`](../ref/manipulations.md#insert) command exists for a practical
 reason: independent recording systems rarely agree perfectly about
 time.  This can make aligning concurrently recorded signals -- for
 example, from a wearable and a traditional PSG performed on the same
@@ -42,8 +42,8 @@ between devices: the two Nox frontal channels are shown in the lower
 two traces, and the two X-trodes channels are shown in the top two
 traces. Here, we've delta-band filtered the signals to highlight the
 ultradian variation in slow wave sleep over the night, making their
-correspondence clearer (note the high-amplitude noise at the start/end of the Nox recording while
-X-trodes was not recording reflect movement during the pre-lights out period):
+correspondence clearer (note that the high-amplitude noise at the start/end of the Nox recording,
+while X-trodes was not recording, likely reflects movement during the pre-lights out period):
 
 ![img](../img/vig/insert1.png)
 
@@ -204,17 +204,19 @@ luna r0.edf -o out.db -s INSERT edf=r-copy.edf pairs=O1,O1
 ```
   header-derived offset: -0 seconds (negative = edf2 starts after edf1)
   using header-derived offset-range: -60 to 60 seconds
-  method: xcorr, bandpass 0.5-30 Hz;  300s windows every 60s,  range 3603-32427s
+  method: xcorr, bandpass 0.5-15 Hz;  300s windows every 60s,  range 3603-32427s
 
   summary across 481 window(s):
     quality          accepted=481/481 (100%)  peak median=1  mean=1  min=1  max=1
-    waveform_shift   median=0s  mean=0s  min=0s  max=0s  range=0s
-    offset           -0s (waveform_shift=0s, header_offset=-0s)
+    waveform_shift   median=0s  mean=0s  p10=0s  p90=0s  min=0s  max=0s  range=0s
+    fit_shift        used=481/481  median=0s  mean=0s  p10=0s  p90=0s  min=0s  max=0s  range=0s
+    offset           -0s (start_shift=0s, header_offset=-0s)
     drift            slope=0 s/s  (0 s/hr)  intercept=0s  R2=1
     implied SR of secondary: 200 Hz  (nominal: 200 Hz)
     (positive slope = secondary clock running faster than primary)
   per-pair drift:
     O1..O1:  slope=0 s/s (0 s/hr)  intercept=0s  implied SR=200 Hz
+
 ```
 
 As noted in the console log, by default [`INSERT`](../ref/manipulations.md#insert) looks at 300s windows spaced
@@ -241,11 +243,12 @@ Re-running [`INSERT`](../ref/manipulations.md#insert) between `r0.edf` and `r-fl
 ```
   header-derived offset: -0 seconds (negative = edf2 starts after edf1)
   using header-derived offset-range: -60 to 60 seconds
-  method: xcorr, bandpass 0.5-30 Hz;  300s windows every 60s,  range 3603-32427s
-  summary across 438 window(s):
-    quality          accepted=438/481 (91.0603%)  peak median=0.75  mean=0.67  min=0.20  max=0.90
-    waveform_shift   median=0s  mean=0s  min=0s  max=0s  range=0s
-    offset           -0s (waveform_shift=0s, header_offset=-0s)
+  method: xcorr, bandpass 0.5-15 Hz;  300s windows every 60s,  range 3603-32427s
+  summary across 437 window(s):
+    quality          accepted=437/481 (90.8524%)  peak median=0.75  mean=0.67  min=0.20  max=0.92
+    waveform_shift   median=0s  mean=0s  p10=0s  p90=0s  min=0s  max=0s  range=0s
+    fit_shift        used=437/437  median=0s  mean=0s  p10=0s  p90=0s  min=0s  max=0s  range=0s
+    offset           -0s (start_shift=0s, header_offset=-0s)
     drift            slope=0 s/s  (0 s/hr)  intercept=0s  R2=1
     implied SR of secondary: 200 Hz  (nominal: 200 Hz)
     (positive slope = secondary clock running faster than primary)
@@ -275,33 +278,36 @@ Re-running [`INSERT`](../ref/manipulations.md#insert) with this noise comparison
 ```
   header-derived offset: -0 seconds (negative = edf2 starts after edf1)
   using header-derived offset-range: -60 to 60 seconds
-  method: xcorr, bandpass 0.5-30 Hz;  300s windows every 60s,  range 3603-32427s
-  summary across 5 window(s):
-    quality          accepted=5/481 (1.0395%)  peak median=0.096  mean=0.11  min=0.07  max=0.36
-    waveform_shift   median=0.57s  mean=0.503s  min=0.235s  max=0.57s  range=0.335s
-    offset           -30.9914s (waveform_shift=30.9914s, header_offset=-0s)
-    drift            slope=-0.00111667 s/s  (-4.02 s/hr)  intercept=30.9914s  R2=0.5
-    implied SR of secondary: 199.777 Hz  (nominal: 200 Hz)
+  method: xcorr, bandpass 0.5-15 Hz;  300s windows every 60s,  range 3603-32427s
+  summary across 481 window(s):
+    quality          accepted=481/481 (100%)  peak median=0.708022  mean=0.711173  min=0.59971  max=0.964224
+    waveform_shift   median=0.565s  mean=0.0135031s  p10=-0.565s  p90=0.565s  min=-0.57s  max=0.575s  range=1.145s
+    fit_shift        used=481/481  median=0.565s  mean=0.0135031s  p10=-0.565s  p90=0.565s  min=-0.57s  max=0.575s  range=1.145s
+    offset           0.0221875s (start_shift=-0.0221875s, header_offset=-0s)
+    drift            slope=1.98248e-06 s/s  (0.00713694 s/hr)  intercept=-0.0221875s  R2=0.00085602
+    implied SR of secondary: 200 Hz  (nominal: 200 Hz)
     (positive slope = secondary clock running faster than primary)
-  warning: alignment quality may be poor: P_OK=0.010395 < 0.5; median peak=0.0962119 < 0.35
-  hint: try a smaller len window; also try a wider offset-range (e.g. offset-range=-360,360) or full-search
+  warning: alignment quality may be poor: R2=0.00085602 < 0.5
+  hints:
+    - try a smaller len window (current len=300s)
+    - use offset-margin to search around the header-derived offset (current default margin=60s; effective range=-60 to 60s)
+    - set an absolute offset-range around the expected shift (current offset-range=unset; effective range=-60 to 60s)
+    - use full-search when EDF start times are missing or not trusted (current full-search=no)
+    - add verbose=1 to diagnose per-window results (current verbose=no)
   per-pair drift:
-    O1..O1:  slope=-0.00111667 s/s (-4.02 s/hr)  intercept=30.9914s  implied SR=199.777 Hz
+    O1..O1:  slope=1.98248e-06 s/s (0.00713694 s/hr)  intercept=-0.0221875s  implied SR=200 Hz
 ```
 
 Of note:
 
- - most significantly, only 5 (of 481) windows met the default
-   criteria for showing a sufficient correlation:
+ - all windows met the default
+   criteria for showing a sufficient correlation
+
+ - however -- and most significantly -- the drift estimate `R2` (which also tracks the consistency of the offset estimates)
+   is effectively zero
 
  - because of this, we see a warning is issued (`warning: alignment
    quality may be poor`)
-
- - there is a range of offsets in those 5 windows
-
- - there is a nonzero slope (for the estimate of potential drift) but
-   this has a relatively low `R2` of 0.5 and, most importantly,
-   is only based on the 5 windows, and so should not be trusted
 
 It is possible for this type of message to reflect two
 recordings that are extremely misaligned (e.g. with an offset
@@ -335,11 +341,12 @@ luna r0.edf -o out.db -s ' INSERT edf=r-offset.edf pairs=O1,O1 '
 ```
   header-derived offset: -12 seconds (negative = edf2 starts after edf1)
   using header-derived offset-range: -72 to 48 seconds
-  method: xcorr, bandpass 0.5-30 Hz;  300s windows every 60s,  range 3603-32427s
-  summary across 438 window(s):
-    quality          accepted=438/481 (91.0603%)  peak median=0.75  mean=0.66  min=0.20  max=0.89
-    waveform_shift   median=0s  mean=0s  min=0s  max=0s  range=0s
-    offset           -12s (waveform_shift=0s, header_offset=-12s)
+  method: xcorr, bandpass 0.5-15 Hz;  300s windows every 60s,  range 3603-32427s
+  summary across 437 window(s):
+    quality          accepted=437/481 (90.9%)  peak median=0.76  mean=0.67  min=0.20  max=0.92
+    waveform_shift   median=0s  mean=0s  p10=0s  p90=0s  min=0s  max=0s  range=0s
+    fit_shift        used=437/437  median=0s  mean=0s  p10=0s  p90=0s  min=0s  max=0s  range=0s
+    offset           -12s (start_shift=0s, header_offset=-12s)
     drift            slope=0 s/s  (0 s/hr)  intercept=0s  R2=1
     implied SR of secondary: 200 Hz  (nominal: 200 Hz)
     (positive slope = secondary clock running faster than primary)
@@ -365,8 +372,8 @@ luna r-flt.edf -s ' SET-HEADERS start-time=22.01.00
 That is, the EDF header is shifted now 59 seconds forward (from `22.00.01` to
 `22.01.00`) but we also chop off the first epoch. Luna's [`WRITE`](../ref/outputs.md#write) will
 adjust the EDF header time by a further +30 seconds to account for
-this - so `r-offset.edf` will have a final time start of `22.01.30` ,
-but will _actually_ start at `22.00.31`, i.e the _true_ time (based on
+this - so `r-offset.edf` will have a final start time of `22.01.30`,
+but will _actually_ start at `22.00.31`, i.e. the _true_ time (based on
 the original signal) for the start of the second epoch.
 
 Now re-running [`INSERT`](../ref/manipulations.md#insert):
@@ -374,11 +381,12 @@ Now re-running [`INSERT`](../ref/manipulations.md#insert):
 ```
   header-derived offset: -89 seconds (negative = edf2 starts after edf1)
   using header-derived offset-range: -149 to -29 seconds
-  method: xcorr, bandpass 0.5-30 Hz;  300s windows every 60s,  range 3600-32400s
-  summary across 437 window(s):
-    quality          accepted=437/481 (90.8524%)  peak median=0.75  mean=0.67  min=0.20  max=0.89
-    waveform_shift   median=-30s  mean=-30s  min=-30s  max=-30s  range=0s
-    offset           -59s (waveform_shift=-30s, header_offset=-89s)
+  method: xcorr, bandpass 0.5-15 Hz;  300s windows every 60s,  range 3600-32400s
+  summary across 436 window(s):
+    quality          accepted=436/481 (90.6%)  peak median=0.76  mean=0.68  min=0.20  max=0.92
+    waveform_shift   median=-30s  mean=-30s  p10=-30s  p90=-30s  min=-30s  max=-30s  range=0s
+    fit_shift        used=436/436  median=-30s  mean=-30s  p10=-30s  p90=-30s  min=-30s  max=-30s  range=0s
+    offset           -59s (start_shift=-30s, header_offset=-89s)
     drift            slope=0 s/s  (0 s/hr)  intercept=-30s  R2=1
     implied SR of secondary: 200 Hz  (nominal: 200 Hz)
     (positive slope = secondary clock running faster than primary)
@@ -395,6 +403,11 @@ at these outputs in too much detail, but briefly:
  - `waveform_shift` is the additional correction still needed after
   accounting for that header difference, estimated from the signals themselves by cross-correlation
 
+ - `fit_shift` is similar to `waveform_shift` but based only on the
+    subset of accepted windows that are not rejected by outlier removal 
+    at the drift fit step (controlled by `fit-outlier-sd` and
+    `fit-outlier-passes`, by default 3 SD and 2 passes); here it is identical to `waveform_shift`
+ 
  - `offset` is the net timing correction (these two previous offsets combined) that must be applied to the
    secondary recording to align it to the primary. Negative means shift the secondary
    earlier; positive means shift it later
@@ -431,35 +444,48 @@ luna r0.edf -o out.db -s ' INSERT edf=r-drift.edf pairs=O1,O1 '
 ```
   header-derived offset: -0 seconds (negative = edf2 starts after edf1)
   using header-derived offset-range: -60 to 60 seconds
-  method: xcorr, bandpass 0.5-15 Hz;  300s windows every 60s,  range 3603-32427s
+  method: xcorr, bandpass 0.5-15 Hz;  300s windows every 60s,  range 3601.8-32416.2s
   summary across 4 window(s):
-    quality          accepted=4/481 (0.831601%)  peak median=0.18  mean=0.18 min=0.008  max=0.33
-    waveform_shift   median=14.27s  mean=13.2975s  min=10.365s  max=14.69s  range=4.325s
-    offset           -0.199976s (start_shift=0.199976s, header_offset=-0s)
-    drift            slope=0.000494937 s/s  (1.78177 s/hr)  intercept=0.199976s  R2=0.999552
+    quality          accepted=4/481 (0.831601%)  peak median=0.19  mean=0.19  min=0.066  max=0.33
+    waveform_shift   median=-16.15s  mean=-17.8s  p10=-19.6s  p90=-15.87s  min=-19.65s  max=-15.75s  range=3.89s
+    fit_shift        used=4/4  median=-16.15s  mean=-17.78s  p10=-19.6s  p90=-15.87s  min=-19.65s  max=-15.75s  range=3.89s
+    offset           29.8517s (start_shift=-29.8517s, header_offset=-0s)
+    drift            slope=0.000495468 s/s  (1.78369 s/hr)  intercept=-29.8517s  R2=0.999822
     implied SR of secondary: 200.099 Hz  (nominal: 200 Hz)
     (positive slope = secondary clock running faster than primary)
-  warning: alignment quality may be poor: P_OK=0.00831601 < 0.5; median peak=0.189887 < 0.35
-  hint: try a smaller len window; also try a wider offset-range (e.g. offset-range=-360,360) or full-search
+  warning: alignment quality may be poor: P_OK=0.00831601 < 0.5; median peak=0.191101 < 0.35
+  hints:
+    - try a smaller len window (current len=300s)
+    - use offset-margin to search around the header-derived offset (current default margin=60s; effective range=-60 to 60s)
+    - set an absolute offset-range around the expected shift (current offset-range=unset; effective range=-60 to 60s)
+    - use full-search when EDF start times are missing or not trusted (current full-search=no)
+    - add verbose=1 to diagnose per-window results (current verbose=no)
   per-pair drift:
-    O1..O1:  slope=0.000494937 s/s (1.78177 s/hr)  intercept=0.199976s  implied SR=200.099 Hz
+    O1..O1:  slope=0.000495468 s/s (1.78369 s/hr)  intercept=-29.8517s  implied SR=200.099 Hz
 ```
 
 It closely estimates the slope (reflecting drift implying a
 sampling rate of 200.099 Hz, instead of true 200.1 Hz), but it only
-considers 4 valid windows to do this.  The drop out of windows is
-actually driven by the relatively large simulated drift effect here.
-That is, at 200.1 Hz, even within a single 300s window (the default
-unit of the cross correlation analyses) there can be non-negligible
-drift (0.15s, or 30 samples) which can attenuate cross
-correlations.
+considers 4 valid windows to do this.  (Remember this is a simulated example to
+illustrate the principles behind the approach, in which the second signal is a
+filtered version of the first; as we'll see, things are less clear-cut in
+practice.)
 
+The drop out of windows is actually driven by the relatively large
+simulated drift effect here.  That is, at 200.1 Hz, even within a
+single 300s window (the default unit of the cross correlation
+analyses) there can be non-negligible drift (0.15s, or 30 samples)
+which can attenuate cross correlations.
+
+Despite the high `R2` for the drift fit, one would rightly be suspicious about an estimate based on only 4 windows. 
 [`INSERT`](../ref/manipulations.md#insert)'s behavior can be modified to handle these "low quality"
-situations better: in this case, a) using a shorter window, and/or b)
+situations better: in this case, a) using a shorter window, b)
 excluding high-frequency content, as it will be more impacted by
-drift (by default, [`INSERT`](../ref/manipulations.md#insert) pre-filters signals using a passband of  0.5 - 15 Hz).
-Either change "fixes" the issue here, we'll just present the
-results for the combined set:
+drift (by default, [`INSERT`](../ref/manipulations.md#insert) pre-filters signals using a passband of  0.5 - 15 Hz),
+or c) allowing low-quality windows to contribute to the fit, but being more stringent within outlier removal at the
+second stage (fitting the linear drift slope), rather than excluding windows up front. 
+
+In this example, all of these approaches "fix" the issue. First, we'll just present the results for the first and second combined:
 
 ```
 luna r0.edf -o out.db -s ' INSERT edf=r-drift.edf pairs=O1,O1 filt-high=4 len=30 '
@@ -468,22 +494,23 @@ luna r0.edf -o out.db -s ' INSERT edf=r-drift.edf pairs=O1,O1 filt-high=4 len=30
   header-derived offset: -0 seconds (negative = edf2 starts after edf1)
   using header-derived offset-range: -60 to 60 seconds
   method: xcorr, bandpass 0.5-4 Hz;  30s windows every 60s,  range 3603-32427s
-  summary across 444 window(s):
-    quality          accepted=444/481 (92.3077%)  peak median=0.57  mean=0.54  min=0.03  max=0.77
-    waveform_shift   median=9.305s  mean=9.15167s  min=1.84s  max=16.205s  range=14.365s
-    offset           -0.00796436s (start_shift=0.00796436s, header_offset=-0s)
-    drift            slope=0.000499825 s/s  (1.79937 s/hr)  intercept=0.00796436s  R2=1
+  summary across 445 window(s) (2 outlier(s) removed from slope fit):
+    quality          accepted=445/481 (92.5156%)  peak median=0.574727  mean=0.548914  min=0.172722  max=0.776581
+    waveform_shift   median=9.275s  mean=9.07199s  p10=3.137s  p90=14.808s  min=-25.445s  max=16.2s  range=41.645s
+    fit_shift        used=443/445  median=9.305s  mean=9.15079s  p10=3.161s  p90=14.814s  min=1.84s  max=16.2s  range=14.36s
+    offset           -0.00738022s (start_shift=0.00738022s, header_offset=-0s)
+    drift            slope=0.00049 s/s  (1.79 s/hr)  intercept=0.0073s  R2=1
     implied SR of secondary: 200.1 Hz  (nominal: 200 Hz)
     (positive slope = secondary clock running faster than primary)
   per-pair drift:
-    O1..O1:  slope=0.000499825 s/s (1.79937 s/hr)  intercept=0.00796436s  implied SR=200.1 Hz
+    O1..O1:  slope=0.00049 s/s (1.79 s/hr)  intercept=0.0073s  implied SR=200.1 Hz  [2 outlier(s) removed]
 ```
 
 We now see the vast majority of windows are included, and the estimate
 of the sample rate is 200.1 Hz exactly.  Importantly, the `drift` line
 in the console output above shows the R2 of the fit of offset by time
-over the night is very high (`1.0`).  This indicates that the change
-in offset really does reflect a linear change over the night -
+over the night is very high (`1.0`), but is still based on a large number of windows (443).
+This indicates that the change in offset really does reflect a linear change over the night -
 i.e. drift.  We can see this most clearly by plotting the offsets (and other information)
 window-by-window.  We can extract as a text file (some columns removed for clarity):
 ```
@@ -508,13 +535,60 @@ Plotting `PEAK` (Cross correlation) and `TOT_SEC` (Offset) against window (Time 
 ![img](../img/vig/insert6.png)
 
 The left panel shows the cross-correlation per window.  Those in red are "low quality" and
-excluded from the drift slope fit.   The panel on the left shows the high quality window
+excluded from the drift slope fit.   The panel on the right shows the high quality window
 offset estimates as a function of time; here the red points also include those flagged as outliers
 in the residual space after regressing on time (this 3SD outlier step is repeated twice).
 Despite the offsets being independently estimated, there is a very clear - almost perfect -
 linear trend - which points to linear drift accumulating steadily across the night (as we know to
 be true in this simulated example). Note that it does not start exactly at 0s offset, as we have excluded the
 initial (and ending) parts of the recording, given the default value of the `start` argument.
+
+As noted above, an alternative and complementary approach might
+instead be to retain the longer, low-quality windows (setting
+`min-peak=0.1` instead of the default of 0.3), but instead be more
+stringent in the second stage of window exclusion: instead of removing
+windows based on residuals (after fitting the slope) of 3 SD units
+(performed twice), we now use a threshold of 2 SD units (repeating
+this four times):
+
+```
+luna r0.edf -o out.db -s ' INSERT edf=r-drift.edf pairs=O1,O1
+                                  min-peak=0.1
+                                  fit-outlier-sd=2
+                                  fit-outlier-passes=4 '
+```
+```
+  header-derived offset: -0 seconds (negative = edf2 starts after edf1)
+  using header-derived offset-range: -60 to 60 seconds
+  method: xcorr, bandpass 0.5-15 Hz;  300s windows every 60s,  range 3603-32427s
+  summary across 471 window(s) (15 outlier(s) removed from slope fit):
+    quality          accepted=471/481 (97.9%)  peak median=0.19  mean=0.19  min=0.064  max=0.34
+    waveform_shift   median=8.91s  mean=8.98s  p10=3.31s  p90=14.75s  min=1.84s  max=16.29s  range=14.45s
+    fit_shift        used=456/471  median=8.79s  mean=8.94s  p10=3.22s  p90=14.76s  min=1.84s  max=16.29s  range=14.45s
+    offset           -0.076s (start_shift=0.076s, header_offset=-0s)
+    drift            slope=0.00049 s/s  (1.79 s/hr)  intercept=0.076s  R2=0.999
+    implied SR of secondary: 200.1 Hz  (nominal: 200 Hz)
+    (positive slope = secondary clock running faster than primary)
+  warning: alignment quality may be poor: median peak=0.19 < 0.35
+  hints:
+    - try a smaller len window (current len=300s)
+    - use offset-margin to search around the header-derived offset (current default margin=60s; effective range=-60 to 60s)
+    - set an absolute offset-range around the expected shift (current offset-range=unset; effective range=-60 to 60s)
+    - use full-search when EDF start times are missing or not trusted (current full-search=no)
+    - add verbose=1 to diagnose per-window results (current verbose=no)
+  per-pair drift:
+    O1..O1:  slope=0.00049 s/s (1.79 s/hr)  intercept=0.076s  implied SR=200.1 Hz  [15 outlier(s) removed]
+```
+
+Now, we accept 471 of 481 windows based on the peak cross-correlation
+of at least 0.1, instead of 4 windows based on the default value of
+0.3.  As we'd imagine these lower quality fits may include more false
+positives, we are more stringent at the fit stage: this removes 15
+windows, and gives a very high `R2` and exactly recovers the true
+sample rate of 200.1 Hz.  Here, seeing a high `R2` based on many
+windows (indicating consistent estimates of offset) alleviates
+concerns about the average lower quality of the individual window
+cross-correlations.
 
 
 ### Gap/jump
@@ -543,18 +617,20 @@ luna r0.edf -o out.db -s ' INSERT edf=r-gap.edf pairs=O1,O1 '
 Reviewing the output - it looks _similar_ to the previous case (which also accrued an offset of over 10 seconds by the end of the night),
 but there are some subtle differences:
 ```
+
   header-derived offset: -0 seconds (negative = edf2 starts after edf1)
   using header-derived offset-range: -60 to 60 seconds
   method: xcorr, bandpass 0.5-15 Hz;  300s windows every 60s,  range 3603-32427s
   summary across 437 window(s):
-    quality          accepted=437/481 (90.8524%)  peak median=0.76  mean=0.67  min=0.19  max=0.92
-    waveform_shift   median=0s  mean=5.90389s  min=0s  max=12s  range=12s
+    quality          accepted=437/481 (90.8%)  peak median=0.76  mean=0.68  min=0.20  max=0.92
+    waveform_shift   median=0s  mean=5.9s  p10=0s  p90=12s  min=0s  max=12s  range=12s
+    fit_shift        used=437/437  median=0s  mean=5.9s  p10=0s  p90=12s  min=0s  max=12s  range=12s
     offset           5.1157s (start_shift=-5.1157s, header_offset=-0s)
-    drift            slope=0.00062 s/s  (2.23 s/hr)  intercept=-5.12s  R2=0.754
+    drift            slope=0.00061 s/s  (2.22 s/hr)  intercept=-5.1s  R2=0.754
     implied SR of secondary: 200.124 Hz  (nominal: 200 Hz)
     (positive slope = secondary clock running faster than primary)
   per-pair drift:
-    O1..O1:  slope=0.000619329 s/s (2.22958 s/hr)  intercept=-5.1157s  implied SR=200.124 Hz
+    O1..O1:  slope=0.000619 s/s (2.22 s/hr)  intercept=-5.1s  implied SR=200.124 Hz
 ```
 
 While it suggests an accelerated clock (200.124 Hz), most importantly,
@@ -604,51 +680,53 @@ In summary we have:
  - one recording has an effective sample rate of 200.1 Hz (or 199.9 Hz) instead of 200 Hz exactly
 
 How does [`INSERT`](../ref/manipulations.md#insert) do?  As before, the default run points to low
-quality alignments, so we run all analyses a) using shorter windows,
-and b) expanding the search-window of allowable offsets (to account
-for possibly large differences resulting from these multiple sources
-of offset):
-
-```
-  len=30 offset-range=-360,360 
-```
+quality alignments, so we run all analyses using shorter windows (`len=30`):
 
 For the 200.1 Hz example:
 ```
   header-derived offset: 42 seconds (negative = edf2 starts after edf1)
+  using header-derived offset-range: -18 to 102 seconds
   method: xcorr, bandpass 0.5-15 Hz;  30s windows every 60s,  range 3603-32427s
-  summary across 390 window(s):
-    quality          accepted=390/481 (81.0811%)  peak median=0.70  mean=0.60  min=0.018  max=0.91
-    waveform_shift   median=7.835s  mean=12.7193s  min=1.81s  max=27.66s  range=25.85s
-    offset           48.0691s (start_shift=-6.06914s, header_offset=42s)
-    drift            slope=0.00119159 s/s  (4.28971 s/hr)  intercept=-6.06914s  R2=0.881854
-    implied SR of secondary: 200.239 Hz  (nominal: 200 Hz)
+  summary across 469 window(s):
+    quality          accepted=469/481 (97.50%)  peak median=0.79  mean=0.73  min=0.16  max=0.94
+    waveform_shift   median=21.03s  mean=15.05s  p10=3.2s  p90=26.7s  min=1.8s  max=28.1s  range=26.3s
+    fit_shift        used=469/469  median=21.03s  mean=15.05s  p10=3.2s  p90=26.7s  min=1.8s  max=28.1s  range=26.3s
+    offset           47.1782s (start_shift=-5.17818s, header_offset=42s)
+    drift            slope=0.0011 s/s  (4.03 s/hr)  intercept=-5.17s  R2=0.906
+    implied SR of secondary: 200.225 Hz  (nominal: 200 Hz)
     (positive slope = secondary clock running faster than primary)
   per-pair drift:
-    O1..O1:  slope=0.00119159 s/s (4.28971 s/hr)  intercept=-6.06914s  implied SR=200.239 Hz
+    O1..O1:  slope=0.0011s/s (4.038 s/hr)  intercept=-5.17s  implied SR=200.225 Hz
 ```
 The slope/SR estimate of course confounds the drift and gap together, but visualizing the offset dynamics makes this clearer:
 
 ![img](../img/vig/insert8.png)
 
-That is, this clearly picks up a) the initial header offset, b) the increased speed (i.e. the leads to the lag being reduced) and c) the gap
+That is, this clearly picks up a) the initial header offset, b) the increased speed (i.e. leading to the lag being reduced) and c) the gap
 of 12 seconds midway.
 
 And for the 199.9 Hz case:
 ```
   header-derived offset: 42 seconds (negative = edf2 starts after edf1)
+  using header-derived offset-range: -18 to 102 seconds
   method: xcorr, bandpass 0.5-15 Hz;  30s windows every 60s,  range 3602.3-32420.7s
   summary across 471 window(s):
-    quality          accepted=471/481 (97.921%)  peak median=0.78  mean=0.73  min=0.14  max=0.92
-    waveform_shift   median=-3.04s  mean=-3.02235s  min=-8.98s  max=2.99s  range=11.97s
-    offset           47.2273s (start_shift=-5.22733s, header_offset=42s)
-    drift            slope=0.000122834 s/s  (0.442202 s/hr)  intercept=-5.22733s  R2=0.104502
+    quality          accepted=471/481 (97.9%)  peak median=0.79  mean=0.73  min=0.14  max=0.93
+    waveform_shift   median=-3.04s  mean=-3.02s  p10=-7.5s  p90=1.55s  min=-8.98s  max=2.99s  range=11.97s
+    fit_shift        used=471/471  median=-3.04s  mean=-3.02s  p10=-7.5s  p90=1.55s  min=-8.98s  max=2.99s  range=11.97s
+    offset           47.2s (start_shift=-5.22s, header_offset=42s)
+    drift            slope=0.00012 s/s  (0.44 s/hr)  intercept=-5.22s  R2=0.104
     implied SR of secondary: 200.025 Hz  (nominal: 200 Hz)
     (positive slope = secondary clock running faster than primary)
-  warning: alignment quality may be poor: R2=0.104502 < 0.5
-  hint: try a smaller len window; also try a wider offset-range (e.g. offset-range=-360,360) or full-search
+  warning: alignment quality may be poor: R2=0.104461 < 0.5
+  hints:
+    - try a smaller len window (current len=30s)
+    - use offset-margin to search around the header-derived offset (current default margin=60s; effective range=-18 to 102s)
+    - set an absolute offset-range around the expected shift (current offset-range=unset; effective range=-18 to 102s)
+    - use full-search when EDF start times are missing or not trusted (current full-search=no)
+    - add verbose=1 to diagnose per-window results (current verbose=no)
   per-pair drift:
-    O1..O1:  slope=0.000122834 s/s (0.442202 s/hr)  intercept=-5.22733s  implied SR=200.025 Hz
+    O1..O1:  slope=0.00012 s/s (0.44 s/hr)  intercept=-5.22s  implied SR=200.025 Hz
 ```
 
 Note the warning stating that the `R2` of the drift estimate is very
@@ -661,7 +739,7 @@ the drift effectively 'cancel out':
 
 ## Real data example
 
-Now we've oriented ourselves to the [`INSERT`](../ref/manipulations.md#insert) command, we can return to the real world Nox/X-trodes example.
+Now we've oriented ourselves to the [`INSERT`](../ref/manipulations.md#insert) command, we can return to the real-world Nox/X-trodes example.
 
 We'll run this with two pairs of channels: `F3` with `AF3` and `F4`
 with `AF4`. This has the advantage of reporting alignment statistics
@@ -673,25 +751,27 @@ signal - we might expect the results to be noisier.
 luna nox.edf -o out.db -s ' INSERT edf=xtrodes.edf pairs=F3,AF3,F4,AF4 '
 ```
 ```
+
   header-derived offset: -1568 seconds (negative = edf2 starts after edf1)
   using header-derived offset-range: -1628 to -1508 seconds
   method: xcorr, bandpass 0.5-15 Hz;  300s windows every 60s,  range 3220-28980s
-  summary across 370 window(s) (20 outlier(s) removed from slope fit):
-    quality          accepted=370/430 (86.0465%)  peak median=0.45  mean=0.44  min=0.072  max=0.65
-    waveform_shift   median=-1594.02s  mean=-1593.67s  min=-1602.95s  max=-1582.07s  range=20.89s
-    offset           31.8992s (start_shift=-1599.9s, header_offset=-1568s)
-    drift            slope=0.000412497 s/s  (1.48499 s/hr)  intercept=-1599.9s  R2=0.998052
+  summary across 373 window(s) (22 outlier(s) removed from slope fit):
+    quality          accepted=373/430 (86.7%)  peak median=0.45  mean=0.44  min=0.10  max=0.65
+    waveform_shift   median=-1594.04s  mean=-1593.7s  p10=-1597.9s  p90=-1589.3s  min=-1608.7s  max=-1582.0s  range=26.6s
+    fit_shift        used=351/373  median=-1594.1s  mean=-1593.8s  p10=-1597.7s  p90=-1589.5s  min=-1598.6s  max=-1587.9s  range=10.7s
+    offset           31.9038s (start_shift=-1599.9s, header_offset=-1568s)
+    drift            slope=0.000412976 s/s  (1.48671 s/hr)  intercept=-1599.9s  R2=0.998
     implied SR of secondary: 200.083 Hz  (nominal: 200 Hz)
     (positive slope = secondary clock running faster than primary)
   per-pair drift:
-    F3..AF3:  slope=0.000412535 s/s (1.48513 s/hr)  intercept=-1599.87s  implied SR=200.083 Hz  [13 outlier(s) removed]
-    F4..AF4:  slope=0.000395787 s/s (1.42483 s/hr)  intercept=-1599.51s  implied SR=200.079 Hz  [17 outlier(s) removed]
+    F3..AF3:  slope=0.000412 s/s (1.483 s/hr)  intercept=-1599.86s  implied SR=200.082 Hz  [14 outlier(s) removed]
+    F4..AF4:  slope=0.000402 s/s (1.449 s/hr)  intercept=-1599.68s  implied SR=200.081 Hz  [24 outlier(s) removed]
 ```
 
-Most windows (86%) are accepted as high quality.  Here we see an
+Most windows (87%) are accepted as high quality.  Here we see an
 implied drift of around __200.08 Hz__, consistent across both channel
 pairs -- and in fact identical to the estimate we made simply by
-looking at the top apparent landmarks at the start of this vignette!
+looking at the two apparent landmarks at the start of this vignette!
 The `R2` for the drift slope is very high (0.998). In addition -- as
 noted in the plots -- we see an average offset around 30 seconds,
 suggesting that the EDF headers (which we knew were set at different
@@ -705,10 +785,10 @@ For this recording, the fit was:
 
 - header-derived offset: `-1568` s
 - median signal-based lag: `-1593.94` s
-- extra lag beyond the header offset: about `30.6` s early in the night and `23.0` s near `04:26`
-- fitted drift: `0.000417` s/s, or `1.501` s/hr
+- extra lag beyond the header offset: about `31` s early in the night and `23` s near `04:26`
+- fitted drift: `0.000413` s/s, or `1.487` s/hr
 - implied X-trodes sample rate after correction: `200.083` Hz
-- accepted windows: `370/430` with `R2=0.998052`
+- accepted windows: `373/430` with `R2=0.998`
 
 The point is not only that there is a start offset, but that the
 residual offset changes across the night. Even after accounting for
@@ -776,57 +856,69 @@ Re-running with `pairs=C3,AF3,C4,AF4` gives:
   header-derived offset: -1568 seconds (negative = edf2 starts after edf1)
   using header-derived offset-range: -1628 to -1508 seconds
   method: xcorr, bandpass 0.5-15 Hz;  300s windows every 60s,  range 3220-28980s
-  summary across 236 window(s) (17 outlier(s) removed from slope fit):
-    quality          accepted=236/430 (54.8837%)  peak median=0.31  mean=0.30  min=0.068  max=0.65
-    waveform_shift   median=-1594.47s  mean=-1594.14s  min=-1618.38s  max=-1582.12s  range=36.27s
-    offset           31.7927s (start_shift=-1599.79s, header_offset=-1568s)
-    drift            slope=0.000394674 s/s  (1.42083 s/hr)  intercept=-1599.79s  R2=0.868484
-    implied SR of secondary: 200.079 Hz  (nominal: 200 Hz)
+  summary across 242 window(s) (13 outlier(s) removed from slope fit):
+    quality          accepted=242/430 (56.2791%)  peak median=0.315217  mean=0.310662  min=0.0709152  max=0.694037
+    waveform_shift   median=-1594.52s  mean=-1594.41s  p10=-1598.5s  p90=-1589.2s  min=-1618.39s  max=-1582.12s  range=36.28s
+    fit_shift        used=229/242  median=-1594.46s  mean=-1594.17s  p10=-1598.09s  p90=-1589.71s  min=-1604.95s  max=-1586.45s  range=18.5s
+    offset           31.9633s (start_shift=-1599.96s, header_offset=-1568s)
+    drift            slope=0.000402523 s/s  (1.44908 s/hr)  intercept=-1599.96s  R2=0.699277
+    implied SR of secondary: 200.081 Hz  (nominal: 200 Hz)
     (positive slope = secondary clock running faster than primary)
-  warning: alignment quality may be poor: median peak=0.311815 < 0.35
-  hint: try a smaller len window; also try a wider offset-range (e.g. offset-range=-360,360) or full-search
+  warning: alignment quality may be poor: median peak=0.315217 < 0.35
+  hints:
+    - try a smaller len window (current len=300s)
+    - use offset-margin to search around the header-derived offset (current default margin=60s; effective range=-1628 to -1508s)
+    - set an absolute offset-range around the expected shift (current offset-range=unset; effective range=-1628 to -1508s)
+    - use full-search when EDF start times are missing or not trusted (current full-search=no)
+    - add verbose=1 to diagnose per-window results (current verbose=no)
   per-pair drift:
-    C3..AF3:  slope=0.000416638 s/s (1.4999 s/hr)  intercept=-1599.92s  implied SR=200.083 Hz  [20 outlier(s) removed]
-    C4..AF4:  slope=0.000476251 s/s (1.71451 s/hr)  intercept=-1600.06s  implied SR=200.095 Hz  [14 outlier(s) removed]
+    C3..AF3:  slope=0.000415154 s/s (1.49455 s/hr)  intercept=-1599.91s  implied SR=200.083 Hz  [23 outlier(s) removed]
+    C4..AF4:  slope=0.000529584 s/s (1.9065 s/hr)  intercept=-1600.78s  implied SR=200.106 Hz  [8 outlier(s) removed]
 ```
 
 ![img](../img/vig/insert-cen.png)
 
-Only 50% of windows are deemed to be good here, which is worse than the frontal case.  We'll skip it here, but you can
+Only 56% of windows are deemed to be good here, which is worse than the frontal case.  We'll skip it here, but you can
 alter the parameters in search of a better fit: the `auto-try` command and its variants can be helpful by scanning across
 different parameter values. Here we see that shorter windows (but longer than 30s) may be helpful:
 
 ```
-    start=3220s len=30s inc=6s  accepted=732/4294  P_OK=0.17047  peak=0.210921  R2=0.0762092  score=0.00274016
-    start=3220s len=75s inc=15s  accepted=1069/1718  P_OK=0.622235  peak=0.334893  R2=0.996392  score=0.20763
-    start=3220s len=150s inc=30s  accepted=526/859  P_OK=0.61234  peak=0.329588  R2=0.993572  score=0.200523
-    start=3220s len=300s inc=60s  accepted=236/430  P_OK=0.548837  peak=0.311815  R2=0.868484  score=0.148629
+    start=3220s len=30s inc=6s  accepted=3232/4294  P_OK=0.752678  peak=0.365709  R2=0.27623   score=0.076035
+    start=3220s len=75s inc=15s  accepted=1172/1718  P_OK=0.682189  peak=0.34891  R2=0.959133  score=0.228295
+    start=3220s len=150s inc=30s  accepted=544/859  P_OK=0.633295  peak=0.334924  R2=0.951135  score=0.201741
+    start=3220s len=300s inc=60s  accepted=242/430  P_OK=0.562791  peak=0.315217  R2=0.699277  score=0.124053
 ```
 
 For the occipital channels, as expected, the ability to align studies diminishes - but not completely:
 
 ![img](../img/vig/insert-occ.png)
 
+Even here, altering parameters can increase the consistency of the estimates under a linear-drift model
+(i.e. high `R2`) while retaining a sufficiently large number of windows. Running with:
+```
+  fit-outlier-passes=4 fit-outlier-sd=2 len=60 min-peak=0.2
+```
+gives `R2=0.99` based on 231 windows. 
 
-Overall, the ranking is exactly what you expected: frontal performed best, central was usable but clearly weaker, and occipital was poor.
+
+Overall, the ranking is exactly what we would expect: frontal performed best, central was usable but clearly weaker, and occipital was poor.
 
 - Frontal (F3/F4 vs AF3/AF4) was the strongest run: high acceptance
-  (370/430, 86%), the best median peak (0.457), and an excellent drift
+  (373/430, 87%), the best median peak (0.45), and an excellent drift
   fit (R2=0.998).  The implied SR was also very consistent at about
   200.083 Hz, and the two pairwise slopes matched closely.
 
 - Central (C3/C4 vs AF3/AF4) degraded substantially: acceptance
-  dropped to 55%, median peak fell to 0.312, and R2 dropped to 0.868,
+  dropped to 56%, median peak fell to 0.32, and R2 dropped to 0.7,
   enough to trigger the low-peak warning. The overall offset/drift
   estimate stayed in the same ballpark, but the fit was clearly less
   stable and the pairwise SR estimates spread more.
 
 - Occipital (O1/O2 vs AF3/AF4) was weak enough to be unreliable:
-  only 19% of windows were accepted, median peak was just 0.154, and
-  R2 fell to 0.437, with warnings on all three quality criteria. The
-  offset estimate still landed near the same value, but that looks
-  more like the constrained search plus the shared long-timescale
-  trend than a trustworthy channel match.
+  under default parameter settings, only 20% of windows were accepted, median peak was just 0.15, and
+  R2 fell to 0.42, with warnings on all three quality criteria. Nonetheless, the
+  offset estimate still landed near the same value, and changing parameter
+  settings improved performance.
 
 Even for the occipital case, visual review of the offset over time
 was strongly suggestive of the same drift that we saw for the other
@@ -846,21 +938,42 @@ signals differ a lot, or the clocks are substantially off, it helps to
 try a range of settings:
 
 - `pairs=`: the most important choice. Use the most similar channels you can.
-- `offset-margin=`: when EDF header times are roughly right, search around that implied offset.
+- `offset-margin=`: when EDF header times are roughly right, search around that implied offset (default +/-60s).
 - `offset-range=`: use this when the header is unreliable and you need a wider absolute search window.
-- `len=`: shorter windows can tolerate larger local drift; longer windows can sharpen the xcorr peak when the mismatch is small.
+- `len=`: shorter windows (e.g. 30s) can tolerate larger local drift (default 300s); longer windows can sharpen the xcorr peak when the mismatch is small.
 - `start=`: skipping the start of the file can avoid unstable initial segments.
+- `min-peak=`: lower from the default of 0.3 to allow a greater number of low-quality windows, but then you may want to compensate with more stringent outlier detection at the linear fit stage.
+- `fit-outlier-sd=`: decrease (from 3) to be more stringent in excluding windows at the linear fit stage.
+- `fit-outlier-passes=`: increase (from 2) to be more stringent in excluding windows at the linear fit stage.
 - `inc=`: smaller increments give more windows and a denser fit, at the cost of more computation.
+- `full-search`: if clocks are very miscalibrated (e.g. off by many minutes, hours) this can be useful: it is much slower, so increase `inc` to reduce the number
+of windows; also run with `verbose=1` to see the window-by-window alignments more clearly.
 - `auto-try`: useful when you expect that one fixed `start/len/inc` choice may not be optimal.
 
-In general, if the offset is large, begin by broadening `offset-range`
-or `offset-margin`; if the xcorr peaks are smeared by drift, shorten
+In general, if the offset is large, begin by broadening `offset-margin`
+or `offset-range`; if the xcorr peaks are smeared by drift, shorten
 `len`; if the fit is unstable, try more similar channels, move `start`
 away from noisy leading segments, or let `auto-try` search a local
-grid.
+grid. If still not aligning, try `full-search`.   Remember, it is also useful to
+view e.g. EEG spectrograms for both studies, to assess by eye whether these look like
+the same night with similar ultradian structure and sufficiently high-quality signals.
 
 ## Conclusion
 
-[`INSERT`](../ref/manipulations.md#insert) is most useful when two recordings are clearly related but do not share a trustworthy timeline. In the examples above, it distinguishes simple header offsets from continuous drift and from discrete gaps, and it shows when a single linear correction is likely to be valid. In practice, the workflow is straightforward: choose the most comparable channel pairs, inspect the quality metrics and offset-by-time plots, and then apply the empirical correction only when the fit is coherent.
+[`INSERT`](../ref/manipulations.md#insert) is most useful when two
+recordings are clearly related but do not share a trustworthy
+timeline. In the examples above, it distinguishes simple header
+offsets from continuous drift and from discrete gaps, and it shows
+when a single linear correction is likely to be valid. In practice,
+the workflow is straightforward: choose the most comparable channel
+pairs, inspect the quality metrics and offset-by-time plots, and then
+apply the empirical correction only when the fit is coherent.  It is
+crucially important to inspect the diagnostic outputs: do not try to
+run this command blindly and expect magic to happen...
 
-The key limitation is also clear from these examples: [`INSERT`](../ref/manipulations.md#insert) can correct a start offset and linear drift, but it does not by itself resolve non-linear timing problems such as gaps or jumps. When those are present, the diagnostic plots are still informative, but correction needs to be done in pieces rather than through one automatic alignment step.
+The key limitation is also clear from these examples:
+[`INSERT`](../ref/manipulations.md#insert) can correct a start offset
+and linear drift, but it does not by itself resolve non-linear timing
+problems such as gaps or jumps. When those are present, the diagnostic
+plots are still informative, but correction needs to be done in pieces
+rather than through one automatic alignment step.
