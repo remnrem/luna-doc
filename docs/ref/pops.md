@@ -182,11 +182,12 @@ Epoch-level confusion matrix (strata: `OBS` x `PRED`)
 | `args` |  `args="op1=val1 op2=val2"` | Pass other arguments to POPS |
 | `ignore-obs` | `T` | Ignore any observed staging (default: `F`) |
 | `filter` | `F` | Filter signals 0.3 - 35 Hz (default: `T` ) |
-| `edger` | `F` | Whether to perform [EDGER](artifacts.md#edger) trimming prior to prediction (default: `T`; automatically set to `F` in hypnodensity mode) |
-| `hypnodensity` | `6` | Enable _hypnodensity mode_ with N strides per 30-s window (see [below](#hypnodensity-mode)); N must divide 30 (valid: 1,2,3,5,6,10,15,30) |
-| `prefix` | `PP` | Output channel prefix in hypnodensity mode (default: `PP`) |
-| `add-nrem123` | `T` | Add individual N1/N2/N3 posterior channels in hypnodensity mode (default: `T`) |
-| `add-nrem` | `F` | Add a summed `NR`=N1+N2+N3 posterior channel in hypnodensity mode (default: `F`) |
+| `edger` | `F` | Whether to perform [EDGER](artifacts.md#edger) trimming prior to prediction (default: `T`; automatically set to `F` in `resolution=5` mode) |
+| `resolution` | `5` | Run staggered 30-second POPS windows every 5 seconds and generate the 5-second posterior stream (see [below](#hypnodensity-mode)); default: `30` |
+| `emit-pp` | `T` | Write the 5-second posterior stream to in-memory EDF signals; requires `resolution=5` |
+| `prefix` | `PP` | Prefix for emitted posterior channels (default: `PP`) |
+| `add-nrem123` | `T` | Add individual N1/N2/N3 posterior channels when emitting 5-second posteriors (default: `T`) |
+| `add-nrem` | `F` | Add a summed `NR`=N1+N2+N3 posterior channel when emitting 5-second posteriors (default: `F`) |
 
 <h3>Outputs</h3>
 
@@ -356,15 +357,14 @@ continuous signals at a higher temporal resolution, making the full time course 
 uncertainty directly available for downstream analysis with [`HDSTATS`](#hdstats), interactive
 visualisation in LunaScope, or any other Luna signal-processing pipeline.
 
-Hypnodensity mode is enabled by passing `hypnodensity` (or `hypnodensity=N`) to `RUN-POPS`.
+Hypnodensity mode is enabled with `resolution=5 emit-pp` on `RUN-POPS`.
 
 <h3>How it works</h3>
 
-The standard POPS model produces one posterior per non-overlapping 30-second epoch. To
-increase the temporal resolution, hypnodensity mode runs the model N times, each time
-shifting the epoch grid by one stride (stride = 30/N seconds). The N resulting posterior
-distributions — one per stride per original 30-second window — are placed at staggered time
-positions and then assembled into a continuous time series by zero-order hold:
+The standard POPS model produces one posterior per non-overlapping 30-second epoch.
+`resolution=5` instead runs staggered 30-second windows every 5 seconds. The resulting six
+posterior distributions per original 30-second window are placed at staggered time positions
+and assembled into a continuous time series by zero-order hold:
 
  - **Leading edge**: samples before the first valid posterior are filled with the globally first valid
    posterior
@@ -372,8 +372,9 @@ positions and then assembled into a continuous time series by zero-order hold:
  - **Edge annotation**: the filled leading and trailing regions are marked with a
    `{prefix}/edge` annotation so they can be excluded from downstream analyses if desired
 
-The output signals have a sample rate of N/30 Hz (e.g. N=6 → 0.2 Hz, one sample every 5 seconds). Because the EDF record duration must be divisible by the stride, 1-second EDF records may
-require a prior `RECORD-SIZE dur=30` before calling `RUN-POPS hypnodensity`.
+The output signals have a sample rate of 0.2 Hz (one sample every 5 seconds). Because the EDF
+record duration must be divisible by the 5-second stride, 1-second EDF records may require a
+prior `RECORD-SIZE dur=30 continue` before calling `RUN-POPS resolution=5`.
 
 !!! note
     Hypnodensity mode requires a 5-class model. It is not compatible with the `3-class` POPS option.
@@ -399,38 +400,25 @@ The `{prefix}/edge` annotation marks any leading or trailing zero-order-hold-fil
 
 <h3>Example</h3>
 
-Run hypnodensity mode with 6 strides (default, stride = 5 s, output rate = 0.2 Hz):
+Run hypnodensity mode (5-second stride, output rate = 0.2 Hz):
 
 ```
 luna s.lst -o out.db -s '
-  RUN-POPS path=pops sig=C3_M2 hypnodensity
+  RUN-POPS path=pops sig=C3_M2 resolution=5 emit-pp
   HDSTATS
   WRITE edf-dir=hd/ sample-list=hd.lst'
-```
-
-To produce 30-second (1/30 Hz) resolution — i.e. the same granularity as standard POPS but
-expressed as continuous signals — use `hypnodensity=1`:
-
-```
-luna s.lst -s 'RUN-POPS path=pops sig=C3_M2 hypnodensity=1'
-```
-
-For the finest available resolution (one sample per second), use `hypnodensity=30`:
-
-```
-luna s.lst -s 'RUN-POPS path=pops sig=C3_M2 hypnodensity=30'
 ```
 
 With two equivalence EEG channels and a custom prefix:
 
 ```
-luna s.lst -s 'RUN-POPS path=pops sig=C3_M2,C4_M1 hypnodensity=6 prefix=HD'
+luna s.lst -s 'RUN-POPS path=pops sig=C3_M2,C4_M1 resolution=5 emit-pp prefix=HD'
 ```
 
 To suppress the individual N1/N2/N3 channels but keep only the summed NREM trace:
 
 ```
-luna s.lst -s 'RUN-POPS path=pops sig=C3_M2 hypnodensity add-nrem123=F add-nrem=T'
+luna s.lst -s 'RUN-POPS path=pops sig=C3_M2 resolution=5 emit-pp add-nrem123=F add-nrem=T'
 ```
 
 ---
@@ -777,457 +765,266 @@ luna --eval-stages --opt file=stages1.txt file2=stages2.txt
 
 ## HDSTATS
 
-_Hypnodensity signal analysis_
+_Posterior-based sleep dynamics, stability, transitions, and soft sleep timing_
 
-[`HDSTATS`](pops.md#hdstats) analyses the per-stage posterior-probability signals generated by `RUN-POPS` in
-[hypnodensity mode](#hypnodensity-mode). It characterises the hypnodensity along four
-conceptual domains:
+`HDSTATS` analyses five posterior-probability signals: Wake, N1, N2, N3, and REM. It works at their native sampling interval, whether one posterior row per conventional 30-second epoch or a finer stream such as 5-second posteriors. It treats each sample as a probability distribution rather than first reducing it to a hard stage call. The command reports posterior mixedness, sample-to-sample movement, stable and unstable periods, directional transitions, settled bout-to-bout changes, soft sleep-timing measures, and transition-aligned profiles.
 
-<h3>Methods</h3>
-
-`HDSTATS` operates on a set of K posterior-probability signals (K = 5 for the default 5-state
-analysis, K = 3 for the optional 3-state collapsed analysis) sampled at the native hypnodensity
-resolution (e.g. one sample per epoch, or finer if the model was run at higher resolution). All
-channels must share the same sample rate. Row sums are validated to lie in [0.5, 1.5]; any row
-that deviates from 1.0 by more than 1e-4 is renormalized before further processing.
-
-**3-state collapsed posterior.** When `3state` is set, a parallel set of 3-state posteriors is
-built by summing the three NREM components: p3\_W = p\_W, p3\_NREM = p\_N1 + p\_N2 + p\_N3,
-p3\_R = p\_R. All metrics described below are computed independently for both representations.
-
-#### Per-sample derived signals
-
-All signals are computed for every sample t over the full recording. For the 5-state case the
-index k runs over W=0, N1=1, N2=2, N3=3, R=4; for 3-state over W=0, NREM=1, R=2.
-
-**Entropy (H)**
-
-$$H(t) = -\sum_k p_k(t)\,\ln p_k(t), \quad 0 \cdot \ln 0 := 0$$
-
-Shannon entropy in nats. Range: [0, ln 5] ≈ [0, 1.609] for 5-state; [0, ln 3] ≈ [0, 1.099]
-for 3-state. Zero when a single state has probability 1; maximum at the uniform distribution.
-
-**Confidence (C)** — maximum posterior: $C(t) = \max_k p_k(t)$. Range [1/K, 1].
-
-**Margin (Mg)** — gap between top two posteriors: $Mg(t) = p_{\text{max1}}(t) - p_{\text{max2}}(t)$. Range [0, 1].
-
-**Total variation — 1-step (TV)**
-
-$$TV(t) = \tfrac{1}{2}\sum_k |p_k(t) - p_k(t-1)|, \quad t \geq 1; \quad TV(0) = 0$$
-
-Half the L1 norm of the step vector between consecutive posterior samples. The factor ½
-normalises TV to [0, 1]: because the probability simplex is conserved, positive and negative
-changes in the K components must sum to the same absolute value, so the raw L1 sum is at most 2.
-TV = 1 corresponds to complete redistribution of probability mass in a single step.
-
-**Total variation — lagged (TV\_LAG)**
-
-$$TV_{\text{lag}}(t) = \tfrac{1}{2}\sum_k |p_k(t) - p_k(t - \text{lag\_smp})|, \quad t \geq \text{lag\_smp}; \quad TV_{\text{lag}}(t) = 0 \text{ for } t < \text{lag\_smp}$$
-
-where lag\_smp = round(`lag` × Fs). Captures slower posterior drift over the lag window rather
-than sample-to-sample jitter. The first lag\_smp samples receive a sentinel value of 0.
-
-**Argmax** — $\text{argmax}_k\, p_k(t)$. Ties broken in favour of the lower state index.
-
-**Pairwise mixing signals** — three min-based coefficients capture simultaneous mass on two
-states. Each has range [0, 0.5]; it is non-zero only when both states carry probability simultaneously, and is maximised at 0.5 when the two states are exactly equal.
-
-| Signal | 5-state formula | 3-state formula |
-| ---- | ---- | ---- |
-| MIX\_A | min(p\_W, p\_N1) | min(p\_W, p\_NREM) |
-| MIX\_B | min(p\_N2, p\_N3) | _(absent)_ |
-| MIX\_C | min(p\_R, p\_N1) | min(p\_NREM, p\_R) |
-
-#### Transition detection
-
-Three methods are available via the `transition` parameter. Detection runs independently for
-5-state and 3-state representations. Each detected event carries: center sample index, the
-argmax state immediately before the event (`from_st`), the argmax state at the event center
-(`to_st`), and the TV value at the event center (`peak_tv`).
-
-**Hard method** (`transition=hard`). An event is emitted at every sample t where argmax(t) ≠
-argmax(t−1). `from_st` = argmax(t−1), `to_st` = argmax(t). No post-processing.
-
-**Motion method** (`transition=motion`, default). A candidate peak is any sample t (1 ≤ t ≤
-N−2) where TV(t) ≥ `motion-th` and TV(t) is a local maximum (TV(t) ≥ TV(t−1) and TV(t) ≥
-TV(t+1)); the final sample t = N−1 is tested as a one-sided peak. Candidates are merged into
-clusters: events within win\_smp = round(`window` × Fs) samples of each other are collapsed to
-a single representative by keeping the higher-TV peak in each cluster. `from_st` and `to_st`
-are the argmax at the representative sample index minus one and at the representative sample
-itself. Note: because the argmax need not change at a TV peak, `from_st == to_st` is common
-with this method; such events are excluded from per-pair outputs.
-
-**Both method** (`transition=both`). Hard and motion event lists are merged, sorted by sample
-index, and re-merged by the same cluster logic (win\_smp window, keep higher-TV representative).
-
-#### Transition and stable masks
-
-After detection, three boolean masks are built over all N samples:
-
-- **is\_trans(t)** = true if any event center lies within ±win\_smp = round(`window` × Fs) samples of t.
-- **is\_stable(t)** = true if t lies in a contiguous run of at least stable\_smp = round(`stable-min` × Fs)
-  samples where both TV(t) < `stable-tv` and C(t) > `stable-conf`.
-- **is\_neither(t)** = true if a sample is neither transition-zone nor stable-core.
-
-Transition-zone membership takes priority: any sample marked `TRANS` is removed from `STABLE`.
-Therefore `STABLE` is not defined by distance from detected events alone; it is defined by the
-TV/confidence run criterion above, after excluding peri-event samples.
-
-Each detected event is also labeled **clean** if there is a stable-core sample immediately beyond
-the transition window on both sides of the event: at indices ci − win\_smp − 1 and
-ci + win\_smp + 1.
-
-#### Region summary statistics
-
-For each of the four region subsets — ALL, STABLE (context ∩ is\_stable), TRANS (context
-∩ is\_trans), and NEITHER — the following are computed over the included samples:
-
-- Mean, SD, and 90th percentile of H and TV. SD uses the N−1 (Bessel-corrected) denominator.
-  Percentiles use linear interpolation: for percentile p on sorted vector v of length n,
-  index = p·(n−1); result = v[⌊i⌋]·(1−frac) + v[⌊i⌋+1]·frac.
-- Mean C, mean Mg, and FRAC\_C\_LT (fraction of samples where C < `conf-th`).
-- Mean TV\_lag.
-- Pearson correlation of H and TV: r = Σ(H_i − H̄)(TV_i − TV̄) / √[Σ(H_i − H̄)² · Σ(TV_i − TV̄)²].
-- Mean pairwise mixing signals (MIX\_A, MIX\_B, MIX\_C).
-- Mean posterior probability for each state (P\_W, P\_N1, ... or P\_NR in 3-state output).
-
-A region row is suppressed if it contains fewer than `min-samples` samples.
-
-#### Transition shape statistics
-
-For each event at center sample ci, an analysis window [ci − win\_smp, ci + win\_smp] (clipped
-to recording boundaries) is examined. The transition width threshold is computed as:
-
-$$H_{\text{width\_th}} = H_{\text{baseline}} + 0.5 \times (p_{90}(H,\,\text{all context}) - H_{\text{baseline}})$$
-
-where $H_{\text{baseline}}$ is the median of H over stable-core samples within the context (falls
-back to the full-context median if no stable samples exist). Per-event scalars:
-
-- **Width** (seconds): number of samples in the window where H > H\_width\_th, divided by Fs.
-- **Peak H**: max H within the window.
-- **Min C**: min C within the window.
-- **TV area** (seconds): trapezoidal integral of TV over the window, Σ 0.5·(TV[i−1]+TV[i]) for
-  i = lo+1…hi, divided by Fs.
-
-Summary statistics are the means of these scalars over all events in the context. Transition
-density = event count / (context duration in hours). The source also tracks **clean**
-transitions, defined above, and reports their count and density.
-
-#### Transition-aligned profiles
-
-For each event with a complete window (ci − win\_smp ≥ 0 and ci + win\_smp ≤ N−1), the signals
-at positions j = 0…2·win\_smp are accumulated. The time offset at position j is:
-
-$$\text{OFFSET}(j) = \frac{j - \text{win\_smp} + 0.5}{F_s} \text{ seconds}$$
-
-The +0.5 shift places OFFSET = 0 at the inter-sample boundary between samples ci−1 and ci,
-which is where both a hard argmax change and the TV step metric are conventionally indexed. A
-profile is emitted only when ≥ `min-events` events have a complete window. Per-channel mean
-posteriors (P\_W, P\_N1, …) are included in both global and per-pair profiles. A parallel
-set of aligned profiles is also emitted for the clean-event subset under `QUAL=CLEAN`.
-
-
- - **A. Mixedness** — how diffuse (uncertain) the posterior distribution is at each sample:
-   entropy, confidence, margin, and pairwise mixing between adjacent states
- - **B. Instability** — how rapidly the posterior moves over time: total variation (TV),
-   longer-lag TV, and the correlation between entropy and TV
- - **C. Transition structure** — what happens near probable state boundaries: automated
-   detection of transition events, their density, width, and peak entropy; transition-aligned
-   mean profiles of all derived signals and posteriors
- - **D. Context** — how A/B/C vary across user-defined annotation strata (e.g. NREM cycles,
-   lights-on/off periods)
-
-The central scientific distinction preserved throughout is **stable mixed/intermediate states**
-(e.g. light NREM, persistent ambiguity between N1 and N2) versus **transitional instability**
-(brief high-entropy passages that coincide with genuine state changes). [`HDSTATS`](pops.md#hdstats) detects
-candidate transitions, labels samples as transition-zone, stable-core, or neither, and
-reports all metrics separately for each region.
-
-<h3>Background</h3>
-
-A hypnodensity displays the
-full posterior distribution of sleep-stage probabilities for each time point as a stacked
-colour band, giving a richer representation of sleep architecture than a conventional
-hypnogram. Rather than committing each epoch to a single state, the hypnodensity encodes the
-model's _confidence_ in that assignment — distinguishing a clean, unambiguous wake period from
-a fragmented or transitional one, and revealing when N2 and N3 are nearly equiprobable even
-though a hard N2 label is emitted.
-
-[`HDSTATS`](pops.md#hdstats) operationalises this concept with computable metrics derived from the continuous
-posterior traces written by `RUN-POPS hypnodensity`.
-
-<h3>Transition detection methods</h3>
-
-Three transition detection strategies are available via the `transition` parameter:
-
-| Method | Description |
-| ---- | ---- |
-| `motion` (default) | Detect local peaks in the total-variation (TV) trace that exceed `motion-th`; nearby peaks are merged within one `window` width |
-| `hard` | Detect samples where the argmax state changes |
-| `both` | Union of `hard` and `motion` detections, with nearby events merged |
-
-Each detected transition defines a _transition zone_: all samples within `window` seconds of
-the event centre. Stable-core samples are then defined by contiguous runs of duration
-`stable-min` where TV remains below `stable-tv` and confidence remains above `stable-conf`,
-with transition-zone samples excluded. The four `REGION` levels (`ALL`, `STABLE`,
-[`TRANS`](evals.md#trans), and `NEITHER`) allow direct comparison of mixedness and instability
-metrics between these regions.
-
-<h3>Parameters</h3>
-
-Input channels (defaults match `RUN-POPS hypnodensity` default prefix `PP`):
-
-| Parameter | Example | Description |
-| ---- | ---- | ---- |
-| `W` | `PP_W` | Channel name for wake posterior (default: `PP_W`) |
-| `N1` | `PP_N1` | Channel name for N1 posterior (default: `PP_N1`) |
-| `N2` | `PP_N2` | Channel name for N2 posterior (default: `PP_N2`) |
-| `N3` | `PP_N3` | Channel name for N3 posterior (default: `PP_N3`) |
-| `R` | `PP_R` | Channel name for REM posterior (default: `PP_R`) |
-
-Analysis options:
-
-| Parameter | Example | Description |
-| ---- | ---- | ---- |
-| `3state` | | Also compute 3-state (W / NREM / REM) summaries alongside 5-state; when set, all output tables gain a `STATE` stratum (5 or 3) |
-| `transition` | `motion` | Transition detection method: `motion` (default), `hard`, or `both` |
-| `motion-th` | `0.1` | TV threshold for motion-based transition detection (default: `0.1`) |
-| `window` | `60` | Transition window half-width in seconds; samples within this distance of an event are labelled [`TRANS`](evals.md#trans) (default: `60`) |
-| `lag` | `30` | Lag in seconds for the longer-lag TV metric `TV_LAG` (default: `30`) |
-| `stable-min` | `60` | Minimum duration in seconds for a TV-low, confidence-high run to qualify as stable-core (default: `60`) |
-| `stable-tv` | `0.05` | Per-sample TV threshold used when building stable-core runs (default: `0.05`) |
-| `stable-conf` | `0.70` | Per-sample confidence threshold used when building stable-core runs (default: `0.70`) |
-| `conf-th` | `0.8` | Confidence threshold for `FRAC_C_LT`: fraction of samples with max-posterior below this value (default: `0.8`) |
-| `min-shift` | `0.10` | Minimum pre/post posterior L1 shift required to retain a detected transition event; set `<=0` to disable this filter (default: `0.10`) |
-| `shift-win` | `30` | Pre/post window in seconds used to compute the `min-shift` filter (default: `30`) |
-| `emit-annots` | `hdtr` | Emit detected transitions and derived region masks as annotations using this class-name prefix |
-| `annot` | `cycle` | Annotation class for context stratification; one output block is emitted per unique annotation level |
-| `min-events` | `3` | Minimum number of events with a complete window required to emit a transition-aligned profile (default: `3`) |
-| `min-samples` | `20` | Minimum number of samples required to emit a region summary row; rows below this threshold are silently suppressed (default: `20`) |
-| `hd-metrics` | `T` | Emit HD\_* hypnodensity analogs of selected HYPNO sleep-summary metrics (default: enabled) |
-| `hd-smooth` | `30` | Smoothing window in seconds for soft sleep/REM trajectories used by HD\_* metrics (default: `30`) |
-| `hd-onset-win` | `10` | Forward integrated-area window in minutes for sustained sleep/REM entry detection (default: `10`) |
-| `hd-sleep-mass-th` | `0.60` | Mean sleep-probability threshold for sustained sleep entry (default: `0.60`) |
-| `hd-rem-mass-th` | `0.30` | Mean REM-probability threshold for sustained REM entry (default: `0.30`) |
-| `hd-offset-win` | `10` | Backward integrated-area window in minutes for final sustained sleep detection (default: `10`) |
-| `hd-offset-mass-th` | `0.60` | Mean sleep-probability threshold for final sustained sleep detection (default: `0.60`) |
-| `verbose` | | Emit per-sample HDSIG time-series table (`TIME` stratum; can be large) |
-
-<h3>Output</h3>
-
-**Primary table** — mixedness and instability by region (strata: `REGION`)
-
-`REGION` takes values `ALL` (all samples), `STABLE` (stable-core), [`TRANS`](evals.md#trans) (transition zone),
-and `NEITHER` (samples that satisfy neither mask).
-
-| Variable | Description |
-| ---- | ---- |
-| `N` | Number of samples in region |
-| `H` | Mean entropy, $H = -\sum_k p_k \ln p_k$ |
-| `SD_H` | SD of entropy |
-| `P90_H` | 90th percentile of entropy |
-| `C` | Mean confidence (maximum posterior per sample) |
-| `FRAC_C_LT` | Fraction of samples with confidence below `conf-th` |
-| `MG` | Mean margin (largest minus second-largest posterior) |
-| `TV` | Mean total-variation step (half the L1 distance between consecutive posteriors) |
-| `SD_TV` | SD of TV step |
-| `P90_TV` | 90th percentile of TV step |
-| `TV_LAG` | Mean TV at longer lag (`lag` seconds) |
-| `CORR_H_TV` | Pearson correlation between entropy and TV |
-| `MIX_A` | Mean W/N1 pairwise mixing (5-state: `min(p_W, p_N1)`; 3-state: `min(p_W, p_NREM)`) |
-| `MIX_B` | Mean N2/N3 pairwise mixing: `min(p_N2, p_N3)` (5-state only) |
-| `MIX_C` | Mean R/N1 pairwise mixing (5-state: `min(p_R, p_N1)`; 3-state: `min(p_NREM, p_R)`) |
-| `P_W` | Mean posterior probability of Wake |
-| `P_N1` | Mean posterior for N1 (5-state only) |
-| `P_N2` | Mean posterior for N2 (5-state only) |
-| `P_N3` | Mean posterior for N3 (5-state only) |
-| `P_NR` | Mean posterior for NREM = N1+N2+N3 (3-state only) |
-| `P_R` | Mean posterior for REM |
-
-Rows are only emitted for a region if it contains ≥ `min-samples` samples.
-For `REGION=ALL` rows, three additional coverage fields are emitted: `PCT_STABLE`,
-`PCT_TRANS`, and `PCT_NEITHER`.
-
-In addition, the following region-contrast metrics are emitted at the top level (no `REGION` stratum):
-
-| Variable | Description |
-| ---- | ---- |
-| `H_RATIO_TR_ST` | Entropy ratio: `H(TRANS)` / `H(STABLE)` |
-| `CONF_DIFF_TR_ST` | Confidence difference: `C(TRANS)` − `C(STABLE)` |
-| `TV_RATIO_TR_ST` | TV ratio: `TV(TRANS)` / `TV(STABLE)` |
-
-**Transition summary** — overall transition structure (no stratum; emitted at top level):
-
-| Variable | Description |
-| ---- | ---- |
-| `N_TRANS` | Number of transition events detected |
-| `N_CLEAN` | Number of clean transition events |
-| `TRANS_DENS` | Transition density (events per hour) |
-| `DENS_CLEAN` | Density of clean transition events (events per hour) |
-| `TRANS_WIDTH` | Mean transition width in seconds (duration where entropy exceeds the halfway point between baseline and 90th-percentile entropy) |
-| `PEAK_H` | Mean peak entropy within each transition window |
-| `MIN_C` | Mean minimum confidence within each transition window |
-| `TV_AREA` | Mean area under the TV curve within each transition window (seconds) |
-
-**Transition-pair table** — per directed-pair statistics (strata: [`TRANS`](evals.md#trans))
-
-[`TRANS`](evals.md#trans) is a label of the form `FROMtoTO` (e.g. `N2toN3`, `WtoN1`). Only pairs with at
-least one detected hard-argmax change are emitted. Contains the same variables as the
-transition summary above.
-
-**Transition-aligned profiles** (strata: `OFFSET`)
-
-Mean signals aligned to each transition centre, emitted when there are ≥ `min-events` events
-with a complete window. `OFFSET` is seconds relative to the event centre; see Methods for the
-+0.5-sample shift that aligns OFFSET = 0 with the inter-sample boundary.
-
-| Variable | Description |
-| ---- | ---- |
-| `H` | Mean entropy at this offset |
-| `C` | Mean confidence at this offset |
-| `MG` | Mean margin at this offset |
-| [`TV`](power-spectra.md#tv) | Mean centred TV at this offset: 0.5·(TV[t]+TV[t+1]) for interior samples |
-| `P_W` | Mean wake posterior at this offset |
-| `P_N1` | Mean N1 posterior (5-state only) |
-| `P_N2` | Mean N2 posterior (5-state only) |
-| `P_N3` | Mean N3 posterior (5-state only) |
-| `P_NR` | Mean NREM posterior (3-state only) |
-| `P_R` | Mean REM posterior |
-
-Transition-pair-specific aligned profiles are emitted with strata [`TRANS`](evals.md#trans) × `OFFSET` and
-contain the same variables. Clean-event aligned profiles are additionally emitted under the
-`QUAL=CLEAN` stratum.
-
-**Stage-conditioned region summaries** (strata: `STAGE` × `REGION`)
-
-When `STAGE` is set, the primary region-summary variables (Table 1 above) are additionally
-reported for each argmax-defined stage separately. `STAGE` takes values `W`, `N1`, `N2`, `N3`,
-`R` (5-state) or `W`, `NR`, `R` (3-state). The STAGE × REGION rows contain only the region
-summary variables; transition event stats and aligned profiles are not emitted per-stage.
-
-**Per-sample time-series** (strata: `TIME`; only with `verbose`)
-
-`TIME` is elapsed seconds from the start of the recording.
-
-| Variable | Description |
-| ---- | ---- |
-| `H` | 5-state entropy |
-| `C` | 5-state confidence |
-| `MG` | 5-state margin |
-| [`TV`](power-spectra.md#tv) | 5-state total-variation step; 0 at t=0 |
-| `TV_LAG` | 5-state lagged TV; 0 for t < lag\_smp |
-| `MIX_A` | min(p\_W, p\_N1) |
-| `MIX_B` | min(p\_N2, p\_N3) |
-| `MIX_C` | min(p\_R, p\_N1) |
-| `ARGMAX` | Argmax stage index: 0=W, 1=N1, 2=N2, 3=N3, 4=R |
-| `IS_TRANS` | 1 if within ±win\_smp of any 5-state event center |
-| `IS_STABLE` | 1 if in a stable-core run after transition-zone samples are excluded |
-| `IS_NEITHER` | 1 if neither transition-zone nor stable-core |
-
-When `3state` is set, the verbose table also includes:
-
-| Variable | Description |
-| ---- | ---- |
-| `H3` | 3-state entropy |
-| `C3` | 3-state confidence |
-| `TV3` | 3-state TV step |
-| `ARGMAX3` | Argmax in 3-state space: 0=W, 1=NREM, 2=R |
-| `IS_TRANS3` | 1 if within ±win\_smp of any 3-state event center |
-| `IS_STABLE3` | 1 if in a stable-core run after transition-zone samples are excluded |
-| `IS_NEITHER3` | 1 if neither transition-zone nor stable-core in 3-state space |
-| `MIX_A3` | min(p\_W, p\_NREM) |
-| `MIX_C3` | min(p\_NREM, p\_R) |
-
-**Annotation-stratified output** (strata: `ANNOT`)
-
-When `annot` is specified, all output tables are additionally repeated with an `ANNOT`
-stratum, one level per unique annotation instance (e.g. one block per NREM cycle).
-
-**3-state outputs** (strata: `STATE`)
-
-When `3state` is set, all output tables are emitted twice — once for the 5-class
-(`STATE=5`) and once for the 3-class (`STATE=3`, collapsing N1+N2+N3 → NREM) analyses.
-The `MIX_B` (N2/N3) variable is suppressed in the 3-state output.
-
-<h3>Example</h3>
-
-The simplest workflow runs `RUN-POPS` in hypnodensity mode and pipes directly into [`HDSTATS`](pops.md#hdstats):
+The usual workflow creates 5-second posterior signals with `RUN-POPS resolution=5 emit-pp`, then runs `HDSTATS` in the same script.
 
 ```
 luna s.lst -o out.db -s '
-  RUN-POPS path=pops sig=C3_M2 hypnodensity
+  RUN-POPS path=pops sig=C3_M2 resolution=5 emit-pp
   HDSTATS'
 ```
 
-Retrieve the primary region-level summary:
+<h3>Methods</h3>
+
+<h4>Overview</h4>
+
+HDSTATS first derives continuous measures of posterior uncertainty and movement from every sample. It then classifies samples into stable core or unstable periods, detects directional posterior transitions, and identifies longer settled bouts and the changes between them.
+
+Stable core consists of sustained low-`PS`, high-`CONF` samples. `TRANS` marks a window around each directional posterior change, while `BOUT_TRANS` marks a window around a change between two sufficiently long, settled, dominant-stage bouts. The stable/unstable summaries describe the full recording or an annotation-defined context; event and profile outputs quantify transitions and bout transitions separately, including their direction, local shape, and posterior time course.
+
+<h4>Inputs and validation</h4>
+
+By default, the input signals are `PP_W`, `PP_N1`, `PP_N2`, `PP_N3`, and `PP_R`. They must have the same sampling rate and come from a single uninterrupted EDF segment. Use `W=`, `N1=`, `N2=`, `N3=`, and `R=` to supply different labels.
+
+If the matching invalidity signal is present (normally `PP_INVALID`), samples with a value of at least 0.5 are excluded from summaries. This prevents the zero-order-hold edge fill produced by `RUN-POPS resolution=5 emit-pp` from being treated as observed posterior data. `VALID=` overrides the inferred invalidity-signal label.
+
+Posterior rows are checked for gross errors and normalized when their sum differs from one by more than 1e-4. The unstratified output reports `N_VALID`, `PCT_VALID`, and, when applicable, the leading, trailing, and interior invalid counts.
+
+`emit-nr-pp` can create an NREM posterior channel before analysis by summing whichever of N1, N2, and N3 are available. It writes `PP_NR` by default, or the label supplied by `NR=`.
+
+<h4>State representations and per-sample quantities</h4>
+
+All primary analyses are computed for the five states W/N1/N2/N3/R. `3state` is enabled by default and also computes an independent collapsed representation: W/NR/R, where NR is N1+N2+N3. Output rows use `NSS=5` and `NSS=3` to identify the representation. Set `3state=F` to suppress the collapsed analysis.
+
+For a posterior vector $p(t)$, HDSTATS derives:
+
+| Quantity | Definition | Meaning |
+| ---- | ---- | ---- |
+| `H` | $-\sum_k p_k(t)\ln p_k(t)$ | Entropy; higher values indicate a more diffuse posterior. |
+| `CONF` | $\max_k p_k(t)$ | Confidence in the most likely state. |
+| `MG` | Largest posterior minus the second-largest posterior | Separation of the leading state from its competitor. |
+| `PS` | $\tfrac12\sum_k\lvert p_k(t)-p_k(t-1)\rvert$ | One-sample posterior shift. `PS=0` at the first sample. |
+| `PS_LAG` | $\tfrac12\sum_k\lvert p_k(t)-p_k(t-L)\rvert$ | Posterior shift over `lag` seconds, where $L=\max(1,\mathrm{round}(lag\times F_s))$. It is zero before sample $L$. |
+| `ARGMAX` | $\operatorname*{argmax}_k p_k(t)$ | Most likely state; five-state codes are 0=W, 1=N1, 2=N2, 3=N3, 4=R. |
+
+Ties in the argmax resolve to the lower state index. `H3`, `CONF3`, `PS3`, `PS3_LAG`, and `ARGMAX3` are available in verbose output when `3state` is enabled; the three-state codes are 0=W, 1=NR, and 2=R.
+
+<h4>Stable samples, transitions, and bouts</h4>
+
+`IS_STABLE` identifies stable-core samples. A sample belongs to stable core only when it is in a contiguous run lasting at least `stable-min` seconds in which `PS < stable-ps` and `CONF > stable-conf`. Defaults are 30 seconds, 0.05, and 0.70 respectively.
+
+Directional transition events are found from weighted posterior support on the left and right of every possible sample boundary. The left and right support windows each span `shift-win` seconds; weights increase toward the boundary. A candidate must meet all of these conditions:
+
+- Its half-L1 left/right posterior shift is at least `min-shift`.
+- The dominant left and right states differ, and each side has a dominance margin of at least half `min-shift`.
+- It is a local maximum of shift among candidates with the same direction within `shift-win` seconds.
+
+Nearby events with the same direction are consolidated, retaining the larger shift (then the larger local `PS`). The minimum separation is the larger of `shift-win` and `window`. Each accepted event has a direction such as `N2toR`.
+
+An event is marked as having stable flanks when both adjacent `stable-min` windows are stable-core and carry its respective left and right dominant states. `IS_TRANS` marks every sample within ±`window` seconds of any directional event. Transition-zone membership removes those samples from `IS_STABLE`, so the summaries form a binary `STABLE=1` versus `STABLE=0` partition.
+
+HDSTATS also identifies longer settled bouts. For this step only, `PS` and `CONF` are centered-smoothed with a half-window of `bout-smooth` seconds (default 15 seconds) before applying the stable criterion. Stable runs are assigned their most frequent argmax state, adjacent same-state runs separated by at most `bout-gap` seconds are merged, and a merged span must last at least `bout-min` seconds (defaults: 30 and 120 seconds). A `BOUT_TRANS` is a change between adjacent qualifying bouts. It is anchored at the strongest directional transition event in the gap, or at the highest-PS sample when the gap contains none. `IS_BOUT_TRANS` marks its ±`window`-second neighbourhood.
+
+<h4>Summary measures</h4>
+
+For every analysis context, HDSTATS reports an overall row and, when each has at least `min-samples` samples (default 20), `STABLE=1` and `STABLE=0` rows. The core quantities are `N`, `H`, `H_P90`, `CONF`, `FRAC_LOW_CONF`, `MG`, `PS`, `PS_P90`, `PS_LAG`, and mean posterior values (`P_W`, `P_N1`, `P_N2`, `P_N3`, `P_R`, or `P_W`, `P_NR`, `P_R` for three-state).
+
+The overall context also reports `CORR_H_PS`, `PCT_STABLE`, and the stable-versus-unstable contrasts `H_RATIO_UN_ST`, `CONF_DIFF_UN_ST`, and `PS_RATIO_UN_ST`. Stage-conditioned rows use `SS` for the most likely state and provide the same core summary measures. `annot=CLASS` repeats the summaries within each level of an annotation class, under the `ANNOT` stratum.
+
+Transition summaries report `TRANS_N`, `TRANS_DENS` (events/hour), `TRANS_DUR`, `TRANS_PEAK_H`, `TRANS_MIN_CONF`, and `TRANS_TOT_PS`. The latter four are averages over ±`window` seconds around each event. Transition duration is the time above an entropy threshold halfway between the context's stable-core median entropy and its 90th-percentile entropy. `TRANS_N_MATCHED` and `TRANS_PCT_MATCHED` show how many detected events occur in a gap between matching settled bouts. Direction-specific rows use `TRANS`, for example `TRANS=N2toR`.
+
+Bout summaries report `BOUT_TRANS_N` and `BOUT_TRANS_DENS`. A low `TRANS_PCT_MATCHED` indicates that many directional crossings occur outside a settled bout-to-bout change, which is useful for characterising fragmented dynamics.
+
+<h4>Soft sleep timing and mixing</h4>
+
+With `hd-metrics=T` (the default), HDSTATS integrates posterior mass to produce soft sleep timing. It reports expected minutes (`HD_MINS`) for W, N1, N2, N3, R, NR, and sleep (`S`), plus `HD_PCT` and `HD_DENS` under the `SS` stratum.
+
+Sleep onset is the first sample whose forward `hd-onset-win` minute average of smoothed sleep mass reaches `hd-sleep-mass-th`. The final sustained sleep point uses the corresponding backward average and `hd-offset-mass-th`. These define `HD_SOL`, `HD_SPT`, `HD_WASO`, and `HD_SME`. REM onset uses smoothed REM mass and `hd-rem-mass-th`, producing `HD_REM_LAT` and `HD_REM_LAT2`. The smoothing window is `hd-smooth` seconds. A measure is omitted when its required onset, offset, or REM event cannot be identified.
+
+The `MIX` table integrates the minimum posterior across a state set, as expected jointly ambiguous minutes (`HD_MINS`). Five-state sets include every pair plus N1/N2/N3 and W/N1/R; three-state sets include every pair and W/NR/R. `HD_DENS` is also reported for an unstratified context when soft timing is available.
+
+<h4>Transition-aligned profiles</h4>
+
+The `SEC` table contains a pooled mean profile of `H`, `CONF`, `MG`, and `PS` around all bout-to-bout transitions. `BOUT_TRANS,SEC` provides the same profile separately for each bout transition direction and also includes mean posterior values. Profile rows are emitted only when at least `min-events` transitions have a complete ±`window`-second window; the default is 3. The offset is centered on the boundary between samples, so zero lies halfway between the preceding and following sample.
+
+<h3>Parameters</h3>
+
+| Parameter | Default | Description |
+| ---- | ---- | ---- |
+| `W`, `N1`, `N2`, `N3`, `R` | `PP_W`, `PP_N1`, `PP_N2`, `PP_N3`, `PP_R` | Input posterior channels. |
+| `VALID` | inferred from channel prefix | Invalidity channel; values ≥0.5 are excluded. |
+| `3state` | `T` | Also compute W/NR/R results. |
+| `lag` | `30` | Longer-lag `PS_LAG` interval in seconds. |
+| `conf-th` | `0.8` | Threshold used by `FRAC_LOW_CONF`. |
+| `stable-min` | `30` | Required duration of a stable-core flank, in seconds. |
+| `stable-ps` | `0.05` | Maximum `PS` for stable core. |
+| `stable-conf` | `0.70` | Minimum `CONF` for stable core. |
+| `min-shift` | `0.10` | Minimum left/right posterior shift for a directional event. |
+| `shift-win` | `30` | Left and right support-window duration, in seconds. |
+| `window` | `60` | Transition and profile half-width, in seconds. |
+| `bout-min` | `120` | Minimum duration of a settled bout, in seconds. |
+| `bout-gap` | `30` | Maximum gap for merging same-state stable runs into a bout, in seconds. |
+| `bout-smooth` | `15` | Centered smoothing half-window for bout formation only; 0 disables it. |
+| `min-samples` | `20` | Minimum samples required for a summary row. |
+| `min-events` | `3` | Minimum complete events required for an aligned profile. |
+| `annot` | empty | Annotation class used to create `ANNOT`-stratified summaries. |
+| `hd-metrics` | `T` | Emit soft sleep timing and state-mass measures. |
+| `hd-smooth` | `30` | Centered smoothing window for soft timing, in seconds. |
+| `hd-onset-win`, `hd-offset-win` | `10`, `10` | Forward and backward soft sleep support windows, in minutes. |
+| `hd-sleep-mass-th`, `hd-offset-mass-th` | `0.60`, `0.60` | Soft sleep-mass thresholds for onset and final sleep. |
+| `hd-rem-mass-th` | `0.30` | Soft REM-mass threshold for REM onset. |
+| `emit-nr-pp` | `F` | Create the `NR` channel by summing available N1/N2/N3 channels. |
+| `emit-stats` | `T` | Emit normal summaries and tables; set `F` to use only `emit-nr-pp`. |
+| `emit-sigs` | empty | Add derived signals as `{prefix}_PS`, `{prefix}_H`, and `{prefix}_CONF`; also `PS3`, `H3`, and `CONF3` when applicable. Bare `emit-sigs` uses `hd`. |
+| `emit-annots` | empty | Add event and interval annotations with this class-name prefix; bare uses `hd`. |
+| `emit-annots-by-type` | `F` | Put each directional event type in a separate annotation class. |
+| `emit-hypnogram` | empty | Emit five-state hard-call annotations pooled to 30-second epochs; a value prefixes their class names. |
+| `verbose` | `F` | Emit the per-sample `TIME` table. |
+
+<h3>Outputs</h3>
+
+<h4>Emitted signals and annotations</h4>
+
+`emit-sigs=hd` adds `hd_PS`, `hd_H`, and `hd_CONF`; with `3state`, it also adds `hd_PS3`, `hd_H3`, and `hd_CONF3`. Existing signal labels are left unchanged.
+
+`emit-annots=hd` adds point-event classes `hd_trans_event` and `hd_bout_trans_event`, plus interval classes `hd_stable`, `hd_trans`, and `hd_bout_trans`. Three-state mode adds matching `hd_3_*` classes. Point-event instances carry directions such as `N2toR`; stable intervals carry their dominant-state label. `emit-annots-by-type=T` incorporates the direction into the point-event class name.
+
+`emit-hypnogram=hd` writes `hd_W`, `hd_N1`, `hd_N2`, `hd_N3`, and `hd_R` annotations. Calls are made from the mean posterior in each 30-second epoch, so they remain aligned with conventional staging epochs.
+
+<h4>Output strata</h4>
+
+`NSS` identifies the posterior representation: `5` for W/N1/N2/N3/R and `3` for W/NR/R. `ANNOT` is present only with `annot=`. `SS` is a stage label, `STABLE` is 1 or 0, and `SEC` is the time offset in seconds.
+
+Unstratified output (strata: _none_)
+
+| Variable | Description |
+| ---- | ---- |
+| `N_VALID`, `PCT_VALID` | Number and percentage of valid posterior samples. |
+| `N_INVALID_LEAD`, `N_INVALID_TRAIL`, `N_INVALID_MID` | Invalid sample counts at the leading edge, trailing edge, or within the recording; emitted only when non-zero. |
+| `HD_SOL` | Soft sleep latency from recording start (minutes). |
+| `HD_SPT` | Soft sleep-period time from first to final sustained sleep (minutes). |
+| `HD_WASO` | Posterior-weighted wake after soft sleep onset (minutes). |
+| `HD_SME` | Soft sleep-maintenance efficiency (%). |
+| `HD_REM_LAT` | Soft REM latency from sleep onset (minutes). |
+| `HD_REM_LAT2` | Soft REM latency measured as accumulated sleep mass (minutes). |
+
+Overall posterior summaries (strata: `NSS`; also `ANNOT,NSS` with `annot=`)
+
+| Variable | Description |
+| ---- | ---- |
+| `N` | Number of included samples. |
+| `H`, `H_P90` | Mean and 90th percentile posterior entropy. |
+| `CONF`, `FRAC_LOW_CONF` | Mean maximum posterior and fraction below `conf-th`. |
+| `MG` | Mean difference between the largest and second-largest posterior. |
+| `PS`, `PS_P90`, `PS_LAG` | Mean, 90th percentile, and longer-lag posterior shift. |
+| `P_W`, `P_R` | Mean Wake and REM posterior probability. |
+| `P_N1`, `P_N2`, `P_N3` | Mean N1, N2, and N3 posterior probability (`NSS=5`). |
+| `P_NR` | Mean NREM posterior probability (`NSS=3`). |
+| `CORR_H_PS` | Pearson correlation of entropy and posterior shift. |
+| `PCT_STABLE` | Percentage of the context classified as stable core. |
+| `H_RATIO_UN_ST` | Mean entropy ratio, unstable divided by stable. |
+| `CONF_DIFF_UN_ST` | Mean confidence difference, unstable minus stable. |
+| `PS_RATIO_UN_ST` | Mean posterior-shift ratio, unstable divided by stable. |
+| `TRANS_N`, `TRANS_DENS` | Directional transition count and density per hour. |
+| `BOUT_TRANS_N`, `BOUT_TRANS_DENS` | Settled bout-to-bout transition count and density per hour. |
+| `TRANS_DUR` | Mean duration above the transition entropy threshold (seconds). |
+| `TRANS_PEAK_H`, `TRANS_MIN_CONF` | Mean peak entropy and minimum confidence in transition windows. |
+| `TRANS_TOT_PS` | Mean posterior-shift area in a transition window (seconds). |
+| `TRANS_N_MATCHED`, `TRANS_PCT_MATCHED` | Event count and percentage corroborated by a matching settled bout-to-bout change. |
+
+Stable/unstable summaries (strata: `STABLE,NSS`; also `STABLE,ANNOT,NSS`)
+
+| Variable | Description |
+| ---- | ---- |
+| `N`, `H`, `H_P90`, `CONF`, `FRAC_LOW_CONF`, `MG`, `PS`, `PS_P90`, `PS_LAG` | The corresponding overall posterior-summary measures within `STABLE=1` or `STABLE=0`. |
+| `P_W`, `P_R`, `P_N1`, `P_N2`, `P_N3`, `P_NR` | Mean state posteriors within the stable or unstable subset; the applicable variables depend on `NSS`. |
+
+Stage-conditioned posterior summaries (strata: `NSS,SS`; also `ANNOT,NSS,SS`, `STABLE,NSS,SS`, and `STABLE,ANNOT,NSS,SS`)
+
+| Variable | Description |
+| ---- | ---- |
+| `N`, `H`, `H_P90`, `CONF`, `FRAC_LOW_CONF`, `MG`, `PS`, `PS_P90`, `PS_LAG` | Posterior-summary measures restricted to samples whose argmax is `SS`. |
+| `P_W`, `P_R`, `P_N1`, `P_N2`, `P_N3`, `P_NR` | Mean state posterior values in that argmax-defined subset; the applicable variables depend on `NSS`. |
+
+Soft stage durations (strata: `SS`)
+
+| Variable | Description |
+| ---- | ---- |
+| `HD_MINS` | Expected duration from posterior mass (minutes). |
+| `HD_PCT` | Expected duration as a percentage of total recording time for W and S, or total sleep mass for N1/N2/N3/NR/R. |
+| `HD_DENS` | Expected duration as a proportion of `HD_SPT`. |
+
+Directional transition summaries (strata: `NSS,TRANS`; also `ANNOT,NSS,TRANS`)
+
+| Variable | Description |
+| ---- | ---- |
+| `TRANS_N`, `TRANS_DENS` | Count and density per hour for the directional pair in `TRANS`, such as `N2toR`. |
+| `TRANS_DUR` | Mean transition duration (seconds). |
+| `TRANS_PEAK_H`, `TRANS_MIN_CONF` | Mean peak entropy and minimum confidence in transition windows. |
+| `TRANS_TOT_PS` | Mean posterior-shift area in a transition window (seconds). |
+| `TRANS_N_MATCHED`, `TRANS_PCT_MATCHED` | Count and percentage of events that fall in a matching settled bout-to-bout gap. |
+
+Joint mixing (strata: `NSS,MIX`; also `ANNOT,NSS,MIX`)
+
+| Variable | Description |
+| ---- | ---- |
+| `HD_MINS` | Expected minutes jointly ambiguous across the state set in `MIX`, calculated from the minimum posterior across that set. |
+| `HD_DENS` | `HD_MINS` as a proportion of `HD_SPT`; emitted only for unstratified `NSS,MIX` rows when soft timing is available. |
+
+Pooled bout-transition profiles (strata: `NSS,SEC`; also `ANNOT,NSS,SEC`)
+
+| Variable | Description |
+| ---- | ---- |
+| `H`, `CONF`, `MG`, `PS` | Mean entropy, confidence, margin, and posterior shift at the `SEC` offset across all qualifying bout-to-bout transitions. |
+
+Pair-specific bout-transition profiles (strata: `NSS,BOUT_TRANS,SEC`; also `ANNOT,NSS,BOUT_TRANS,SEC`)
+
+| Variable | Description |
+| ---- | ---- |
+| `H`, `CONF`, `MG`, `PS` | Mean entropy, confidence, margin, and posterior shift at the `SEC` offset for the directional pair in `BOUT_TRANS`. |
+| `P_W`, `P_R`, `P_N1`, `P_N2`, `P_N3`, `P_NR` | Mean posterior values at that offset; the applicable variables depend on `NSS`. |
+
+Per-sample output (strata: `TIME`; `verbose` only)
+
+| Variable | Description |
+| ---- | ---- |
+| `H`, `CONF`, `MG`, `PS`, `PS_LAG`, `ARGMAX` | Five-state per-sample derived values. |
+| `IS_TRANS`, `IS_BOUT_TRANS`, `IS_STABLE` | Five-state transition-zone, bout-transition-zone, and stable-core indicators. |
+| `H3`, `CONF3`, `PS3`, `PS3_LAG`, `ARGMAX3` | Three-state per-sample derived values. |
+| `IS_TRANS3`, `IS_BOUT_TRANS3`, `IS_STABLE3` | Three-state transition-zone, bout-transition-zone, and stable-core indicators. |
+
+<h3>Examples</h3>
+
+Run the full default analysis and retain derived signals:
 
 ```
-destrat out.db +HDSTATS -r REGION -v H P90_H C FRAC_C_LT TV
-```
-```
-ID      REGION   H        P90_H   C        FRAC_C_LT   TV
-nsrr02  ALL      0.414    1.021   0.823    0.118        0.031
-nsrr02  STABLE   0.298    0.712   0.879    0.066        0.014
-nsrr02  TRANS    0.891    1.438   0.612    0.341        0.128
+luna s.lst -o out.db -s '
+  RUN-POPS path=pops sig=C3_M2 resolution=5 emit-pp
+  HDSTATS emit-sigs=hd'
 ```
 
-Retrieve overall transition statistics:
+Create transition annotations and inspect the primary five-state summary:
 
 ```
-destrat out.db +HDSTATS -v N_TRANS TRANS_DENS TRANS_WIDTH PEAK_H
-```
-```
-ID      N_TRANS   TRANS_DENS   TRANS_WIDTH   PEAK_H
-nsrr02  218       30.4         44.2           1.231
+luna s.lst -o out.db -s '
+  RUN-POPS path=pops sig=C3_M2 resolution=5 emit-pp
+  HDSTATS emit-annots=hd'
+
+destrat out.db +HDSTATS -r NSS -v H CONF PS PCT_STABLE TRANS_N BOUT_TRANS_N
 ```
 
-Retrieve the transition-pair breakdown:
-
-```
-destrat out.db +HDSTATS -r TRANS -v N_TRANS TRANS_DENS PEAK_H MIN_C
-```
-```
-ID      TRANS     N_TRANS   TRANS_DENS   PEAK_H   MIN_C
-nsrr02  N2toN3    38        5.3          0.980    0.724
-nsrr02  N3toN2    41        5.7          0.975    0.719
-nsrr02  N2toW     22        3.1          1.347    0.481
-nsrr02  WtoN2     19        2.6          1.301    0.512
-nsrr02  WtoR      14        2.0          1.182    0.556
-nsrr02  RtoW      17        2.4          1.219    0.534
-   ...
-```
-
-Also compute 3-state (W/NREM/REM) summaries alongside the 5-state analysis, stratified by
-annotated NREM cycles:
+Stratify by an existing annotation class and retrieve direction-specific transitions:
 
 ```
 luna s.lst -o out.db annot-file=cycles.annot -s '
-  RUN-POPS path=pops sig=C3_M2 hypnodensity
-  HDSTATS 3state annot=cycle'
-```
+  RUN-POPS path=pops sig=C3_M2 resolution=5 emit-pp
+  HDSTATS annot=cycle'
 
-Request verbose per-sample output for a single recording (can be large):
-
+destrat out.db +HDSTATS -r ANNOT NSS TRANS -v TRANS_N TRANS_DENS TRANS_PCT_MATCHED
 ```
-luna s.lst 1 -o out.db -s '
-  RUN-POPS path=pops sig=C3_M2 hypnodensity
-  HDSTATS verbose'
-```
-```
-destrat out.db +HDSTATS -r TIME -v H C TV IS_TRANS IS_STABLE | head
-```
-```
-ID      TIME     H       C       TV      IS_TRANS   IS_STABLE
-nsrr02  0.0      0.182   0.942   0.000   0          1
-nsrr02  5.0      0.195   0.936   0.012   0          1
-nsrr02  10.0     0.231   0.921   0.028   0          1
-nsrr02  15.0     0.441   0.831   0.049   0          0
-nsrr02  20.0     0.712   0.661   0.183   1          0
-nsrr02  25.0     1.032   0.511   0.241   1          0
-   ...
-```
-
-
 ## POPS (training)
 
 _Flexibly specify and train new POPS models_
