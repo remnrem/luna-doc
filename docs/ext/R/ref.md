@@ -85,6 +85,7 @@ by `p$proc()`.
 | --- | --- |
 | `p$proc(cmdstr)` | Run commands across the sample list; return a saved `ProcResult` |
 | `p$silent_proc(cmdstr)` | The same run with console output suppressed |
+| `p$procn(cmdstr, ...)` / `p$proc_parallel(cmdstr, ...)` | Process the sample list with worker processes; collect tables in memory or write them directly to disk |
 | `p$strata()` | Available `Command`/`Strata` pairs for current project output, or `NULL` if none |
 | `p$table(cmd, strata = "BL")` | Retrieve one current project table as a data frame |
 | `p$variables(cmd, strata = "BL")` | Variable names in a current project table |
@@ -99,10 +100,10 @@ r$strata()
 head(r$table("PSD", "CH_F"))
 ```
 
-Run `p$validate()` before a cohort analysis. As in serial lunapi, an
-input that cannot be loaded stops the run. The native R `proc()` method
-does not provide Python's parallel/partial-failure processing options;
-see [accessing lunapi directly](#accessing-lunapi-directly).
+Run `p$validate()` before a cohort analysis. With serial `p$proc()`, an
+input that cannot be loaded stops the run. For worker processes,
+per-record error reporting, and direct file output, use
+[`p$procn()` / `p$proc_parallel()`](#parallel-project-processing).
 
 Import an existing `luna -o` SQLite output database:
 
@@ -115,6 +116,184 @@ db_psd <- p$table("PSD", "CH_F")
 Use `p$import_db("out.db", s = c("nsrr01", "nsrr02"))` to restrict IDs.
 Importing results does not attach their EDFs. For large databases, see
 also the Python [`destrat` reader](../../lunapi/ref.md#lpdestrat).
+
+### Parallel project processing
+
+`p$procn()` and `p$proc_parallel()` are equivalent native R methods.
+They run Luna commands across a file-backed sample list using separate
+worker processes, each with its own Luna engine. Both return an R
+`ProcResult`; direct reticulate calls are unnecessary.
+
+```r
+p$procn(cmdstr, workers = NULL, batch_size = NULL,
+        params = NULL, param_file = NULL, strict = FALSE,
+        progress = TRUE, out_db = NULL, out_text = NULL,
+        in_memory = NULL, n1 = NULL, n2 = NULL,
+        ids = NULL, skip = NULL)
+# p$proc_parallel() accepts the same arguments.
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `cmdstr` | Luna commands, separated by `&`, newlines, or supplied as a character vector |
+| `workers` | Number of worker processes. By default, half the available CPUs, capped at 10; the actual count is also capped by available CPUs and selected records |
+| `batch_size` | Records per submitted batch. By default, the selected records are split into roughly one batch per worker. Smaller batches give more frequent completion updates and can improve load balancing |
+| `params` | Named list of Luna variables applied in each worker before each recording; overrides matching keys in `param_file` |
+| `param_file` | Luna-style parameter file; blank lines and `%` comments are skipped |
+| `strict` | With `FALSE`, return successful outputs and collect failures. With `TRUE`, raise `luna_proc_error` if any record or worker fails; the condition contains the partial result |
+| `progress` | `TRUE` for a progress bar, `FALSE` to disable it, or an R callback receiving progress event lists |
+| `out_db` | Output database prefix, producing one SQLite `.db` file per batch |
+| `out_text` | Root directory for text output, with one subdirectory per individual |
+| `in_memory` | Defaults to `TRUE` without file output and `FALSE` when `out_db` or `out_text` is supplied. Simultaneous memory and file output is unsupported |
+| `n1`, `n2` | First and last sample-list rows to include, 1-based and inclusive |
+| `ids` | IDs to include, as a character vector or whitespace-separated string |
+| `skip` | IDs to exclude, as a character vector or whitespace-separated string |
+
+#### Collecting tables in memory
+
+```r
+p$sample_list("tutorial/s.lst", path = "tutorial")
+r <- p$procn("HEADERS & PSD sig=EEG spectrum max=30", workers = 2)
+r$ok
+r$errors
+r$records
+r$strata()
+psd <- r$table("PSD", "CH_F")
+```
+
+With no output path, worker outputs are collected into the project
+cache and saved in the returned R result. The usual `r$table()`,
+`r$tables`, and `p$table()` accessors work. A saved R result retains its
+tables after later runs; R data frames are converted when first accessed.
+Large runs still need memory for the combined outputs, even if you do
+not request a data frame immediately.
+
+#### Writing large outputs directly to disk
+
+**Use `out_db` or `out_text` when outputs are too large to collect in
+memory**, for example spectra for every epoch, channel, and frequency
+across a large cohort. Workers write result values directly to disk
+instead of building and returning all output tables. The R result keeps
+record/error metadata and output paths, without loading those tables.
+
+For SQLite output:
+
+```r
+dir.create("out", showWarnings = FALSE, recursive = TRUE)
+db_run <- p$procn("EPOCH & PSD sig=EEG epoch-spectrum max=30",
+              workers = 4, out_db = "out/spectra")
+db_run$ok
+db_run$errors
+db_run$out_paths
+# out/spectra-1.db, out/spectra-2.db, ...
+```
+
+`out_db` is a **prefix**, not the name of a single merged database.
+There is one database per submitted batch, so an explicit `batch_size`
+can produce more files than workers. Use `db_run$out_paths` to find the actual
+files. Existing database files with the same generated names are
+replaced; choose a separate prefix for each run you want to retain.
+
+For text output:
+
+```r
+text_run <- p$proc_parallel("EPOCH & PSD sig=EEG epoch-spectrum max=30",
+                     workers = 4, out_text = "out/spectra-text")
+text_run$out_paths
+lp$list_text_tables("out/spectra-text")
+```
+
+Text output follows Luna's `-t` layout: an individual directory under
+the output root, containing command/strata tables. Both output options
+set `in_memory = FALSE` automatically; you may also supply it explicitly.
+Supply only one of `out_db` and `out_text`. Setting `in_memory = FALSE`
+alone does not select a file destination.
+
+In file-output mode, `r$table()`, `r$strata()`, `r$tables`, and other
+table accessors raise `luna_file_output`. `r$ok`, `r$errors`, `r$records`,
+`r$workers`, and `r$out_paths` remain available. `r$has_table()` returns
+`FALSE` and `r$get()` returns its default. The run does not populate the
+project cache with its output tables.
+
+Read back only what you need. For example, import one database,
+optionally restricted to selected IDs:
+
+```r
+p$import_db(db_run$out_paths[1], s = c("nsrr01", "nsrr02"))
+p$strata()
+```
+
+For a text run, select a particular command/strata table:
+
+```r
+lp$list_text_tables("out/spectra-text", id = "nsrr01")
+epoch_psd <- lp$read_text_table("out/spectra-text", "PSD",
+                                factors = c("E", "CH", "F"))
+```
+
+Importing a database or reading a text table brings those selected
+results back into memory. `read_text_table()` combines the requested
+table across individuals; for a table that is itself too large, read
+individual text files with your preferred file reader instead.
+
+For serial execution with disk output, use
+`p$procn(cmdstr, workers = 1, out_db = "out/run")`.
+`p$proc()` and `p$silent_proc()` collect outputs in memory and have no
+`out_db` or `out_text` argument.
+
+#### Variables, record selection, and failures
+
+Workers load recordings from the sample list. Parent-session variables
+are not implicitly inherited, and edits to an already open instance are
+not used. Pass required variables explicitly:
+
+```r
+r <- p$procn("EPOCH len=${epoch_len} & PSD sig=${s} spectrum",
+              workers = 4,
+              params = list(s = "EEG", epoch_len = 30),
+              n1 = 1, n2 = 100, skip = c("bad-recording"))
+
+r <- p$procn("HEADERS", workers = 2,
+              ids = c("nsrr01", "nsrr02"), progress = FALSE)
+```
+
+Row ranges refer to the original sample-list positions. ID inclusion
+and exclusion filters are applied in addition to the row range.
+
+By default, failures are collected while other recordings continue:
+
+```r
+r <- p$procn("HEADERS", workers = 4)
+if (!r$ok) print(r$errors)
+r$records
+r$stdout
+```
+
+With `strict = TRUE`, catch `luna_proc_error` to inspect partial results:
+
+```r
+r <- tryCatch(
+  p$procn("HEADERS", workers = 4, strict = TRUE),
+  luna_proc_error = function(e) e$result
+)
+r$errors
+```
+
+Strict mode reports failures after processing; it does not stop at the
+first failed record. File outputs from a failed run may contain partial
+results, so check `r$errors` before using them.
+
+#### Performance considerations
+
+Parallel processing helps when each recording requires substantial
+computation. Worker startup and result collection can outweigh the
+benefit for short commands. Each worker still needs memory for its
+recording and intermediate calculations: direct disk output removes
+accumulated result tables, not the analysis memory requirements. Choose
+`workers` to fit RAM as well as CPU capacity. Disk output can be limited
+by storage throughput, particularly with many workers or many small
+text files. Smaller batches improve scheduling flexibility but produce
+more database files and more batch overhead.
 
 ### Variables and parameters
 
@@ -333,9 +512,11 @@ settings.
 
 ## Saved results: `ProcResult`
 
-Both project and instance `proc()` methods return a `ProcResult`.
-It holds a snapshot of that run's tables, so later commands do not
-change the saved result. Data frames are converted when requested.
+Project `proc()`, `procn()`, and `proc_parallel()`, and instance `proc()`
+return a `ProcResult`. In memory mode it holds a snapshot of that run's
+tables, so later commands do not change the saved result. Data frames
+are converted when requested. In file-output mode it holds metadata and
+paths instead; see [parallel project processing](#parallel-project-processing).
 
 ```r
 r <- i$proc("PSD sig=EEG spectrum max=30")
@@ -360,12 +541,18 @@ head(r$table("PSD", "CH_F"))
 | `r$get(key, default = NULL)` | Table by key, or `default` if absent |
 | `r$tables` / `r$items()` | Named list of all data frames |
 | `r$values()` | Unnamed list of all data frames |
-| `r$ok` | `TRUE` for a returned native R result; failures raise R errors |
-| `r$errors` | Empty `ID`/`error` data frame for native R results |
-| `r$workers` | `1` for native R processing |
+| `r$ok` | `TRUE` if no per-record errors were collected; serial failures raise R errors |
+| `r$errors` | Per-record errors; empty for successful runs |
+| `r$records` | Per-record processing metadata for parallel runs |
+| `r$stdout` | Captured per-record log output, where available |
+| `r$workers` | Number of worker processes used; `1` for serial processing |
+| `r$out_paths` | Output file paths or text-output root for disk runs |
 
-`r$tables` is a property, without parentheses. The Python parallel-result
-metadata and `.copy()` method do not apply to the native R snapshot.
+`r$tables` is a property, without parentheses. In file-output mode,
+table access raises `luna_file_output`; use `r$out_paths` to locate results.
+Parallel failures are collected by default; `strict = TRUE` raises an R
+condition carrying the partial result. The Python `.copy()` method does
+not apply to the native R snapshot.
 
 ## Results helpers
 
@@ -402,7 +589,8 @@ combined <- lp$concat(list(to20 = r1, to30 = r2), "PSD: CH_F", add_index = "RUN"
 | `lp$list_text_tables(path, id = NULL)` | Inspect one individual's tables under a Luna text-output root |
 | `lp$read_text_table(path, cmd_or_file, factors = NULL)` | Read the requested table across individuals into one data frame |
 
-For a folder produced by command-line `luna -t`:
+For a folder produced by command-line `luna -t` or
+`p$procn(..., out_text = "out/txt")`:
 
 ```r
 lp$list_text_tables("out/txt")
@@ -446,8 +634,9 @@ existing R data. See [plotting](viz.md) for signatures and examples.
 ## Accessing lunapi directly
 
 The main R workflow uses the methods above. Additional Python facilities,
-such as `destrat`, EDF utilities, waveform extraction, and parallel cohort
-processing, can be reached through reticulate. Use the
+such as `destrat`, EDF utilities, and waveform extraction, can be reached
+through reticulate. Parallel cohort processing is available directly via
+[`p$procn()`](#parallel-project-processing). Use the
 [lunapi reference](../../lunapi/ref.md) for those Python APIs.
 
 | R member | Underlying Python object |

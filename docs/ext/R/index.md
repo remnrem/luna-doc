@@ -85,7 +85,15 @@ tutorials through annotations, masks, EDF writing, and spindle analysis.
 | Extract signals into R | `i$data("EEG", time = TRUE)` |
 | Extract one data frame per epoch | `i$slices(i$e2i(1:3), "EEG")` |
 | Run commands across the sample list | `r <- p$proc("HEADERS & PSD sig=EEG spectrum")` |
+| Process recordings with worker processes | `r <- p$procn("PSD sig=EEG spectrum", workers = 4)` |
+| Write large outputs directly to disk | `r <- p$procn("PSD sig=EEG spectrum", workers = 4, out_db = "results")` |
 | Plot a recording | `i$hypno()`, `i$psd("EEG")`, `i$spec("EEG")` |
+
+For cohort processing, `p$procn()` and `p$proc_parallel()` are equivalent.
+They collect results in memory by default; use `out_db` or `out_text` to
+write directly to disk when outputs are large. See the
+[parallel processing guide](ref.md#parallel-project-processing) for
+arguments, examples, memory use, and error handling.
 
 The [R reference](ref.md) covers projects, instances, results, and helper
 methods. The [plotting page](viz.md) covers the base R graphics functions.
