@@ -1,147 +1,179 @@
-# lunaR : example usage
+# R worked example
 
-Here, we will briefly step through some of the same steps of the
-[tutorial](../../tut/tut3.md#spectral-and-spindle-analyses) using _lunaR_
-instead of `luna`.  See also [this tutorial page](../../tut/tut4.md) for a
-fuller application of _lunaR_ to the tutorial data.
+This example uses the **1.8.0** project/instance API to inspect tutorial
+data, analyze N2 EEG, extract signals, and collect results across a
+sample list. See [installation](../../download/lunar.md) if you have not
+yet installed the R package `luna`.
 
-We assume that you are running R and the current working directory is
-the one where `tutorial.zip` was unzipped.
+## Open the tutorial data
 
-```
+Download and extract the [tutorial data](../../download/data.md), then
+start R in the directory containing the `tutorial` folder. The sample
+list is `tutorial/s.lst`, with EDFs and annotations under `tutorial/edfs/`.
+
+```r
 library(luna)
+p <- lp$proj()
+p$sample_list("tutorial/s.lst", path = "tutorial")
+p$sample_list()
+p$nobs()
+p$validate()
 ```
 
-Attach the sample-list with [`lsl()`](ref.md#lsl):
-```
-sl <- lsl("s.lst")
-```
-```
-3 observations in s.lst 
+Check that `Valid` is `TRUE` for the inputs before processing them.
+The `path` argument tells Luna where to resolve relative paths in the
+sample list.
+
+Open the second recording by ID:
+
+```r
+i <- p$inst("nsrr02")
+i$desc()
+i$chs()
+i$annots()
+headers <- i$headers()
+headers[, c("CH", "SR")]
 ```
 
-Attach just the second individual, `nsrr02`, with [`lattach()`](ref.md#lattach):
-```
-lattach( sl , "nsrr02" ) 
-```
-```
-nsrr02 : 14 signals, 10 annotations, 09:57:30 duration
+Use the labels returned by `chs()` and `annots()` in commands. In this
+dataset, the primary EEG channel is `EEG`, N2 sleep is labeled `N2`, and
+the arousal annotation is `Arousal`. Annotation names are case-sensitive.
+
+## Epochs, stages, and raw signals
+
+Set 30-second epochs and inspect the staging:
+
+```r
+i$epoch("len=30")
+epochs <- i$epochs()
+stages <- i$stages()
+head(epochs)
+table(stages$STAGE)
 ```
 
-We will then use sequential [`leval()`](ref.md#leval) commands, to restrict
-analysis to N2 epochs only, band-pass filter the EEG signal,
-automatically scan for epochs with high levels of artifact, and then
-estimate the PSD.  First, we mask out all epochs that are not N2 sleep:
+Get the first five seconds of EEG as a data frame, with a time column:
 
-```
-leval( "MASK ifnot=N2" )
-```
-```
-nsrr02 : 14 signals, 10 annotations, 09:57:30 duration, 399 unmasked 30-sec epochs, and 796 masked
-```
-Next, we [restructure](../../ref/masks.md#restructure) the dataset, to actually remove the non-N2 epochs:
-```
-leval( "RE" )
-```
-```
-nsrr02 : 14 signals, 10 annotations, 03:19:30 duration, 399 unmasked 30-sec epochs, and 0 masked
-```
-Next, we restrict analyses to the EEG channel, by dropping all other channels:
-```
-leval( "SIGNALS keep=EEG" )
-```
-```
-nsrr02 : 1 signals, 10 annotations, 03:19:30 duration, 399 unmasked 30-sec epochs, and 0 masked
-```
-Next, we apply a 0.3-35 Hz bandpass filter:
-```
-leval( "FILTER bandpass=0.3,35 ripple=0.02 tw=0.5" )
+```r
+interval <- i$s2i(c(0, 5))
+raw <- i$slice(interval, "EEG", time = TRUE)
+head(raw)
+plot(raw$T, raw$EEG, type = "l", xlab = "Seconds", ylab = "EEG")
 ```
 
-Next, we scan for artifacts.  Note, for the prior [`leval()`](ref.md#leval) commands,
-we have not been explicitly saving any returned values, as the prior
-commands typically do not return values of interest.  Here we will
-save return values (in a list named `k0`) for future use, however:
+`s2i()` converts start/stop seconds into the time-point intervals needed
+by `slice()`. Use `e2i()` for epoch numbers. `slices()` returns a list
+with one data frame per interval:
 
-```
-k0 <- leval( "ARTIFACTS mask & CHEP-MASK ep-th=3,3,3 & CHEP epochs" ) 
-```
-```
-nsrr02 : 1 signals, 10 annotations, 03:19:30 duration, 368 unmasked 30-sec epochs, and 31 masked
-```
-
-We see that 31 epochs have been masked (out of 399).  You can examine
-the returned `k0` list (with [`lx()`](ref.md#lx) or just directly), to see
-the other output of these commands.  We next restructure the dataset one
-more time to remove these masked epochs:
- 
-```
-leval( "RE" )
-```
-```
-nsrr02 : 1 signals, 10 annotations, 03:04:00 duration, 368 unmasked 30-sec epochs, and 0 masked
-```
-Finally, we run the [`PSD`](../../ref/power-spectra.md#psd) command, with the `spectrum` option:
-
-```
-k <- leval( "PSD spectrum max=30" ) 
-```
-The returned list has three distinct strata, or data-frames:
-```
-lx(k)
-```
-```
-PSD : CH B_CH CH_F 
+```r
+by_epoch <- i$slices(i$e2i(1:3), "EEG", annots = "Arousal", time = TRUE)
+head(by_epoch[[1]])
+rms <- vapply(by_epoch, function(d) sqrt(mean(d$EEG^2)), numeric(1))
+rms
 ```
 
-Of primary interest, is spectral power ([`PSD`](../../ref/power-spectra.md#psd) variable) stratified by
-frequency (`F`) and channel (`CH`, although note that in this
-particular analysis we only have a single channel, `EEG`):
+The `Arousal` column marks samples inside arousal events with 1 and
+other samples with 0. These operations read signals into R; they do not
+change the recording.
 
-```
-k$PSD$CH_F
-```
-```
-        ID  CH     F         PSD
-1   nsrr02 EEG  0.50 48.48646744
-2   nsrr02 EEG  0.75 62.55672251
-3   nsrr02 EEG  1.00 63.13289104
-4   nsrr02 EEG  1.25 47.72029434
-5   nsrr02 EEG  1.50 41.14412948
-6   nsrr02 EEG  1.75 38.76472567
-7   nsrr02 EEG  2.00 35.13171657
-8   nsrr02 EEG  2.25 29.76887124
-9   nsrr02 EEG  2.50 23.13801428
-10  nsrr02 EEG  2.75 19.24464783
-11  nsrr02 EEG  3.00 20.59488426
-12  nsrr02 EEG  3.25 17.46907997
-13  nsrr02 EEG  3.50 12.77704547
-14  nsrr02 EEG  3.75 11.49771701
-15  nsrr02 EEG  4.00 13.68299939
-16  nsrr02 EEG  4.25 11.95281293
-17  nsrr02 EEG  4.50  8.79124308
-18  nsrr02 EEG  4.75  8.02781760
-19  nsrr02 EEG  5.00  8.94853303
-20  nsrr02 EEG  5.25  8.07366985
-21  nsrr02 EEG  5.50  6.72716982
-22  nsrr02 EEG  5.75  6.19444000
-23  nsrr02 EEG  6.00  6.56810384
-24  nsrr02 EEG  6.25  6.10237343
-25  nsrr02 EEG  6.50  5.60697017
-...
-```
-Plotting this:
-```
-d <- k$PSD$CH_F
-plot( d$F , log(d$PSD) , xlab = "Frequency (Hz)" , ylab = "Power" , col="blue" , lwd=2 , type="l" )
+## Restrict to N2 and filter
+
+Save the current state so that you can return to it later:
+
+```r
+i$freeze("original")
 ```
 
-![img](../../img/r-psd.png){width="100%"}
+Keep N2 epochs, remove other signals from the in-memory recording, and
+apply a bandpass filter:
 
+```r
+i$eval(c(
+  "MASK ifnot=N2",
+  "RE",
+  "SIGNALS keep=EEG",
+  "FILTER sig=EEG bandpass=0.3,35 ripple=0.02 tw=0.5"
+))
+```
 
-That completes our simple introduction to using _lunaR_.  As noted
-above, see the final [tutorial page](../../tut/tut4.md) for a fuller set
-of examples of using _lunaR_.  The [next page](ref.md) contains
-reference documentation for each _lunaR_ function.
+`RE` removes masked epochs from subsequent analyses. Commands change
+the in-memory recording; they do not overwrite the source EDF.
 
+## Check artifacts
 
+Run artifact checks and keep their output:
+
+```r
+qc <- i$proc("ARTIFACTS sig=EEG mask & CHEP-MASK sig=EEG ep-th=3,3,3 & CHEP epochs")
+qc$strata()
+```
+
+Inspect the tables listed by `qc$strata()` to see what was flagged.
+These settings illustrate a workflow; choose artifact criteria for your
+signals and study. Remove the flagged epochs before estimating power:
+
+```r
+i$eval("RE")
+i$epochs()
+```
+
+If all epochs have been excluded, review the annotations and artifact
+settings before continuing.
+
+## Calculate and save a spectrum
+
+```r
+r <- i$proc("PSD sig=EEG spectrum max=30")
+r$strata()
+psd <- r$table("PSD", "CH_F")
+head(psd)
+```
+
+The spectrum has columns including `ID`, `CH`, `F`, and `PSD`: individual,
+channel, frequency in Hz, and power spectral density. Band-level results
+are available separately:
+
+```r
+bands <- r$table("PSD", "B_CH")
+head(bands)
+lp$psd(psd, "EEG", dB = TRUE)
+write.csv(psd, "nsrr02-N2-psd.csv", row.names = FALSE)
+```
+
+`dB = TRUE` converts this linear spectrum to decibels for plotting.
+The [PSD reference](../../ref/power-spectra.md#psd) explains the analysis
+options and outputs. The saved result `r` remains available after later
+commands.
+
+## Restore the recording
+
+Return to the state saved before masking and filtering:
+
+```r
+i$thaw("original")
+i$chs()
+i$empty_freezer()
+```
+
+For a file-backed instance, `i$refresh()` instead reloads the original
+EDF and annotations from disk.
+
+## Process the whole sample list
+
+`p$proc()` loads each recording in the sample list and runs the same
+commands. It starts from each source EDF, so the edits to `i` above do
+not carry over into this run:
+
+```r
+cohort <- p$proc("EPOCH & MASK ifnot=N2 & RE & PSD sig=EEG spectrum max=30")
+cohort$strata()
+cohort_psd <- cohort$table("PSD", "CH_F")
+table(cohort_psd$ID)
+write.csv(cohort_psd, "cohort-N2-psd.csv", row.names = FALSE)
+```
+
+For a larger workflow, put the Luna commands in a text file and pass
+`lp$cmdfile("commands.txt")` to `p$proc()`.
+
+See the [R reference](ref.md) for the full method list, saved results,
+variables, and output-database import; see [plotting](viz.md) for
+hypnograms, spectrograms, and scalp maps.

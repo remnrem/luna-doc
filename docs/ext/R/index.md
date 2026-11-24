@@ -1,132 +1,132 @@
-# lunaR 
+# Luna in R
 
-_lunaR_ is a package for the [R statistical software
-environment](https://www.r-project.org), which aims to provide a
-simple interface for the Luna library.  Primary use cases are 1) for
-working with individual sleep studies/EDFs, and 2) as a convenient way
-to work with [_destrat_](../../luna/destrat.md#destrat) output databases.
-For larger projects, the command-line version of Luna
-([_lunaC_](../../luna/args.md)) will likely be a better option.
+The R package **`luna` 1.8.0** brings Luna's sleep-signal analysis commands
+into R through [lunapi](../../lunapi/index.md). It follows the Python
+interface: create a project, open a recording, run commands, and retrieve
+results as R data frames.
 
-!!! hint
-    To install _lunaR_, see the main [installation pages](../../download/index.md), or try using the
-    [Dockerized](../../download/docker.md) version of Luna.
+The package lives at [`remnrem/lunaR`](https://github.com/remnrem/lunaR)
+and is loaded with `library(luna)`.
 
+## Installation
 
-## Overview
+In R 4.1 or later:
 
-This page gives an overview of the core [functions](#commands)
-provided by this package, followed by [examples](example.md) and
-descriptions of some additional [convenience
-functions](ref.md#convenience-functions).  All examples on the page use the
-[tutorial dataset](../../tut/tut1.md), especially the second individual
-(`nsrr02`).  The Luna tutorial also includes [a
-section](../../tut/tut4.md) in which all steps are performed in _lunaR_
-as well as _lunaC_.
+```r
+install.packages("pak")
+pak::pak("remnrem/lunaR")
+library(luna)
+p <- lp$proj()
+luna_config()
+```
 
-_lunaR_ is simply an interface to the identical C/C++ library that
-underlies the _lunaC_ command line tool: as such, _lunaC_ and _lunaR_
-are fundamentally similar in most core respects.  The different
-interfaces do mean that some aspects of the workflow differ between the
-two tools, however.  For example, like _lunaC_, _lunaR_ operates on a
-single EDF at a time; unlike the command line tool, however, _lunaR_
-is more interactive, in the sense that the modifiable, _in-memory_
-representation of the EDF typically persists between different _lunaR_
-commands.  We discuss these differences below in more detail.
+For the pinned R release, replace the `pak::pak()` line with
+`pak::pak("remnrem/lunaR@v1.8.0")`. See the
+[version-pinning instructions](../../download/lunar.md#specifying-particular-versions)
+to pin the Python engine too.
 
-!!! note 
-    In this documentation, we refer to Luna's R interface as
-    _lunaR_ to distinguish it from the base Luna library and
-    command-line tool, which we're calling _lunaC_.  The actual R package is named `luna`
-    however (as a `lunar` package already exists in
-    [CRAN](https://cran.r-project.org/)), as is the command line
-    you'll actually type (i.e. `luna`) to run _lunaC_.
+First use sets up Python and lunapi automatically. If you already have a
+Python environment you want to use, select it before loading Luna.
+See [installation](../../download/lunar.md) for those steps, help with
+setup errors, and a pinned 1.8.0 route.
 
-## lunaR web-apps
+## A first analysis
 
-We have built web-based applications on top of Luna, including:
+Download and extract the [tutorial data](../../download/data.md). Run R
+from the directory containing the extracted `tutorial` folder:
 
- - [Hypnoscope](../../apps/hypnoscope.md) - a tool for viewing many hypnograms,
-   with different options to sort, align and filter
+```r
+library(luna)
+p <- lp$proj()
+p$sample_list("tutorial/s.lst", path = "tutorial")
+i <- p$inst("nsrr02")
+i$chs()
+i$annots()
+i$headers()
+```
 
+Here `p` represents the project and its sample list. `i` represents one
+recording, selected by ID. You can also use `p$inst(2)` for the second
+sample-list entry.
 
+Run a spectral analysis on N2 sleep and retrieve the spectrum:
 
-## Commands
+```r
+r <- i$proc("EPOCH & MASK ifnot=N2 & RE & PSD sig=EEG spectrum max=30")
+r$strata()
+psd <- r$table("PSD", "CH_F")
+head(psd)
+```
 
-The _L_-functions (i.e. all starting with the letter `l` for Luna) can
-be roughly grouped as follows:
+`CH_F` means one row for each channel/frequency combination. The result
+is an ordinary R data frame: use it with base R, dplyr, ggplot2, or your
+usual analysis tools. For a spectrum plot:
 
-- __attaching an EDF:__ [`lsl()`](ref.md#lsl), [`lattach()`](ref.md#lattach),
-  [`ledf()`](ref.md#ledf), [`lstat()`](ref.md#lstat), [`ldrop()`](ref.md#ldrop),
-  [`lrefresh()`](ref.md#lrefresh)
+```r
+lp$psd(psd, "EEG", dB = TRUE)
+```
 
-- __extracting data:__ [`lchs()`](ref.md#lchs), [`ldata()`](ref.md#ldata),
-  [`ldata.intervals()`](ref.md#ldataintervals)  
+Follow the [worked example](example.md) for filtering, artifact handling,
+signal extraction, and processing all recordings in a sample list.
+The full [/R/epeat tutorial](../../tut/tut4.md) follows the command-line
+tutorials through annotations, masks, EDF writing, and spindle analysis.
 
-- __working with annotations:__ [`lannots()`](ref.md#lannots),
-  [`lepoch()`](ref.md#lepoch), [`letable()`](ref.md#letable),
-  [`lstages()`](ref.md#lstages), [`ladd.annot()`](ref.md#laddannot),
-  [`ladd.annot.file()`](ref.md#laddannotfile)
+## Finding the right method
 
-- __running commands:__ [`leval()`](ref.md#leval), [`lcmd()`](ref.md#lcmd),
-  [`leval.project()`](ref.md#levalproject), 
-  [`literate()`](ref.md#literate)
+| Task | R interface |
+| --- | --- |
+| Start a project | `p <- lp$proj()` |
+| Read a sample list | `p$sample_list("tutorial/s.lst", path = "tutorial")` |
+| Open a recording | `i <- p$inst(1)` or `i <- p$inst("nsrr02")` |
+| Inspect signals and annotations | `i$chs()`, `i$headers()`, `i$annots()` |
+| Run commands on that recording | `i$eval("PSD sig=EEG spectrum")` |
+| Keep the results of a run | `r <- i$proc("PSD sig=EEG spectrum")` |
+| Retrieve an output table | `r$table("PSD", "CH_F")` |
+| Extract signals into R | `i$data("EEG", time = TRUE)` |
+| Extract one data frame per epoch | `i$slices(i$e2i(1:3), "EEG")` |
+| Run commands across the sample list | `r <- p$proc("HEADERS & PSD sig=EEG spectrum")` |
+| Plot a recording | `i$hypno()`, `i$psd("EEG")`, `i$spec("EEG")` |
 
-- __working with output:__ [`ldb()`](ref.md#ldb), [`lx()`](ref.md#lx),
-  [`lx2()`](ref.md#lx2), [`lid()`](ref.md#lid), [`ltxttab()`](ref.md#ltxttab)
+The [R reference](ref.md) covers projects, instances, results, and helper
+methods. The [plotting page](viz.md) covers the base R graphics functions.
+Luna commands and their options are shared across R, Python, and the
+command line; look these up in the [command reference](../../ref/index.md).
 
-- __setting variables:__ [`lset()`](ref.md#lset), [`lvar()`](ref.md#lvar),
-  [`lreset()`](ref.md#lreset)
+## Translating lunapi examples
 
-- __convenience/misc:__ [`lstgcols()`](ref.md#lstgcols), [`lbands()`](ref.md#lbands), [`llog()`](ref.md#llog),
-  [`le2i`](ref.md#le2i), [`lsanitize()`](ref.md#lsanitize), [`ldenoise()`](ref.md#ldenoise), 
+Replace Python's `.` method access with `$`, use `TRUE`/`FALSE`/`NULL`,
+and use R vectors for channel names or epoch numbers:
 
-- __plotting functions__: [`lheatmap()`](viz.md#lheatmap), [`ltopo.heat()`](viz.md#ltopoheat), [`ltopo.rb()`](viz.md#ltoporb) ,
-  [`ltopo.xy()`](viz.md#ltopoxy) , `ltopo.heat2()` , [`ltopo.topo()`](viz.md#ltopotopo) ,
-   [`ltopo.conn()`](viz.md#ltopoconn) , [`ltopo.dconn()`](viz.md#ltopodconn) 
+| Python | R |
+| --- | --- |
+| `import lunapi as lp` | `library(luna)` |
+| `p = lp.proj()` | `p <- lp$proj()` |
+| `i = p.inst(1)` | `i <- p$inst(1)` |
+| `i.eval('PSD sig=EEG spectrum')` | `i$eval("PSD sig=EEG spectrum")` |
+| `i.table('PSD', 'CH_F')` | `i$table("PSD", "CH_F")` |
+| `i.data(['EEG', 'EMG'], time=True)` | `i$data(c("EEG", "EMG"), time = TRUE)` |
+| `r['PSD: CH_F']` | `r[["PSD: CH_F"]]` |
 
+A few differences matter when translating:
 
-The index below gives a listing of all major _lunaR_ functions:
+- Signal extraction returns data frames directly. There is no separate
+  pair of column names and a NumPy matrix to unpack.
+- `p$get_n()`, `p$get_id()`, `p$get_edf()`, and `p$get_annots()` use
+  **1-based** sample-list positions in R; those Python helpers use 0-based
+  positions. `inst(1)` selects the first recording in both interfaces.
+- A saved R `ProcResult` keeps its tables after later commands. Project
+  and instance `table()` methods query their current results instead.
+- Missing output tables and unknown signal/annotation names raise R
+  errors. Use `strata()`, `chs()`, and `annots()` to see available names.
+- R plotting methods use base graphics. See [plotting](viz.md) for sizing
+  and data requirements.
 
-| Function     | Description |
-| ----         | ---- |  
-| [`lsl()`](ref.md#lsl)           | Loads a sample list | 
-| [`lattach()`](ref.md#lattach)   | Attaches an EDF from a sample list |
-| [`ledf()`](ref.md#ledf)         | Attaches an EDF directly |
-| [`lstat()`](ref.md#lstat)        | Reports on the currently attached EDF |
-| [`ldrop()`](ref.md#ldrop)       | Detaches the current EDF |
-| [`lrefresh()`](ref.md#lrefresh) | Reverts to the original attached EDF |
-| [`lchs()`](ref.md#lchs)         | Returns a vector of channel names for the attached EDF |
-| [`ldata()`](ref.md#ldata)       | Extracts signal (and annotation) data from an EDF for one or more epochs |
-| [`ldata.intervals()`](ref.md#ldataintervals)  | Extracts signal (and annotation) data from an EDF for one or more intervals |
-| [`lannots()`](ref.md#lannots)   | Returns a vector of annotation class names for the attached EDF |
-| [`lepoch()`](ref.md#lepoch)     | Epochs the data |
-| [`letable()`](ref.md#letable)   | Returns an _epoch-table_ with information about epochs, masks and annotations |
-| [`lstages()`](ref.md#lstages)   | Return vector of sleep stages from annotations |
-| [`ladd.annot()`](ref.md#laddannot) | Attaches an new annotation from an R interval list |
-| [`ladd.annot.file()`](ref.md#laddannotfile) | Attaches an new annotation from an file |
-| [`leval()`](ref.md#leval)       | Evaluates an arbitrary set of Luna commands |
-| [`leval.project()`](ref.md#levalproject)       | Evaluates an arbitrary set of Luna commands for all members of a project |
-| [`lcmd()`](ref.md#lcmd)         | Reads and parses a Luna command script from a file |
-| [`literate()`](ref.md#literate) | Applies an arbitrary R function to signal data, one epoch or interval at a time |
-| [`ldb()`](ref.md#ldb)           | Imports data from an [output database](../../luna/destrat.md) as an R list object |
-| [`lx()`](ref.md#lx)             | Extracts table(s) from objects returned by `ldb()`, `leval()` or `leval.project() |
-| [`lx2()`](ref.md#lx2)           | Like `lx()` but for lists of returned objects |
-| [`lid()`](ref.md#lid)           | Extract a particular individual from a returned data frame |
-| [`ltxttab()`](ref.md#ltxttab)   | Loads and conconcatenates multiple text-table output files |
-| [`lstgcols()`](ref.md#lstgcols) | Maps typical stage labels to colors (for plotting) |
-| [`lbands()`](ref.md#lbands)      | Splits a signal into five band-pass filtered signals |
-| [`llog()`](ref.md#llog)         | Turns Luna's typical console messages on/off | 
-| [`le2i()`](ref.md#le2i)         | Converts epochs to intervals |
-| [`lsanitize()`](ref.md#lsanitize) | Cleans syntax of command, factor/level and channel names |
-| [`ldenoise()`](ref.md#ldenoise) | 1D total variation denoiser |
-| [`lheatmap()`](viz.md#lheatmap) | Plots heatmaps, e.g. for spectrograms | 
-| [`ltopo.heat()`](viz.md#ltopoheat) | Topoplot (sensor-level) |
-| [`ltopo.rb()`](viz.md#ltoporb) | Topoplot (sensor-level) with red-white-blue |
-| [`ltopo.xy()`](viz.md#ltopoxy) | Topoplot (sensor-level) X-Y plots |
-| `ltopo.heat2()` | Topoplot (sensor-level) of X-Y-Z heatmaps |
-| [`ltopo.conn()`](viz.md#ltopoconn) | Topoplot (sensor-level) of pairwise connectivity |
-| [`ltopo.dconn()`](viz.md#ltopodconn) | Topoplot (sensor-level) of single-sensor seeded connectivity |
-| [`ltopo.topo()`](viz.md#ltopotopo) | Topoplot (sensor-level) of topoplots |
-| [`ldefault.xy()`](viz.md#ldefaultxy) | Default XY channel locations for plotting |
-| [`ldefault.coh.xy()`](viz.md#ldefaultcohxy) | Default XY channel locations for coherence/connectivity plots |
+The R interface wraps the main project/instance workflow, rather than
+all Python convenience functions. For Python-only functionality, see
+[accessing lunapi directly](ref.md#accessing-lunapi-directly).
+
+## Moving from the old R package
+
+For scripts written before 1.8.0, `library(luna)` stays the same but
+the analysis calls need updating. See the
+[migration table](ref.md#migrating-old-r-scripts) for their replacements.

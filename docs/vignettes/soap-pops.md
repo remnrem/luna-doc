@@ -34,25 +34,17 @@ This creates the text file `s.lst`, linking EDF, annotations and ID (here coded 
 shhs1-0000	./shhs1-0000.edf	./shhs1-0000-nsrr.xml
 ```
 
-We can view the manually-scored hypnogram using the R `lhypno()`
-function in [LunaR](../ext/R/index.md):
+View the manually scored hypnogram with the R package `luna`:
 
-```
+```r
 library(luna)
-sl <- lsl( "s.lst" )
-lattach( sl , 1 )
-```
-```
-shhs1-0000 : 5 (of 5) signals, 10 annotations, 09.02.00.000 duration
-```
-
-Via lunaR, we can call the [HYPNO](../ref/hypnograms.md#hypno) command to get a table of stages by epoch:
-```
-k <- leval( "HYPNO epoch" )
-```
-and plot the resulting hypnogram with `lhypno()`:
-```
-lhypno( k$HYPNO$E$STAGE ) 
+p <- lp$proj()
+p$sample_list("s.lst")
+inst <- p$inst(1)
+inst$epoch("len=30")
+k <- inst$proc("HYPNO epoch")
+hypnogram <- k$table("HYPNO", "E")
+lp$hypno(hypnogram$STAGE, e = hypnogram$E - 1)
 ```
 
 ![img](../img/soap-pops/hypno-orig.png){:width="100%"}
@@ -331,16 +323,18 @@ and the console indicates that now many epochs are unstaged:
 Based on the observed data, SOAP will effectively try to fill in the remaining, unstaged epochs: in this case, it
 appears to do quite a good job:
 ```
-# full original
-k <- ldb( "soap1.db" )
+p <- lp$proj()
+# Save the table before importing the next database.
+p$import_db("soap1.db")
+original <- p$table("SOAP", c("CH", "E"))
+p$import_db("soap3.db")
+completed <- p$table("SOAP", c("CH", "E"))
 
-# completed (missing after epoch 600)
-m <- ldb( "soap3.db" )
-
-par(mfcol=c(3,1) , mar=c(1,3,0.5,0.5) )
-lhypno( k$SOAP$E$PRIOR )
-lhypno( m$SOAP$E$PRIOR )
-lhypno( m$SOAP$E$PRED )
+par(mfrow = c(3, 1), mar = c(3, 4, 1, 1))
+lp$hypno(original$PRIOR, e = original$E - 1)
+lp$hypno(completed$PRIOR, e = completed$E - 1)
+lp$hypno(completed$PRED, e = completed$E - 1)
+par(mfrow = c(1, 1))
 ```
 
 ![img](../img/soap-pops/soap-compl.png){:width="100%"}
@@ -563,19 +557,21 @@ of the vanilla single-EEG model.  The only requirement is a central
 EEG (or equivalent) channel labelled `C4_M1` (you can use the `alias`
 options as noted above).
 
-This library (`m1`) is available for download at this [Dropbox
-link](https://www.dropbox.com/s/lha9ibincmvpod3/m1.zip?dl=0).  This is
-a ZIP file (13MB) called `m1.zip`.  After downloading, expanding it will
-result in a folder called `m1` (_model 1_). You then will run [`POPS`](../ref/pops.md#pops-prediction)
-using `lib` to specify the model root (`m1`) and `path` to point to
-this folder (e.g. `~/working/sleep/pops/m1` or wherever you saved it).
+Download current POPS models from the latest
+[luna-resources-pops.zip](https://github.com/remnrem/luna-resources/releases/latest/download/luna-resources-pops.zip).
+The worked example below retains the historical `m1` (_model 1_) prototype,
+including its feature specification and results. Do not assume the current
+package uses the same model name or configuration; see the
+[current model reference](../ref/pops.md#models) for setup instructions.
+For the historical example, `lib=m1` specifies the model root and `path`
+points to the folder containing its files.
 
 The `m1.ftr` file defines the set of _features_ extracted per epoch,
 upon which the model is trained.  Naturally, this is also necessary
 when using the model for prediction, as Luna needs to be able to
 derive the same set of features in new data.  The details aren't
-important here, but this is the current prototype version of the
-default single-EEG model:
+important here, but this is the prototype feature specification used for
+this example:
 
 ```
 % --------------------------------------------------------------------------------
@@ -667,11 +663,11 @@ SELECT demo1 rband1 misc1 misc2 spec1.svd vspec1.svd
 
 ### Running POPS 
 
-To run [`POPS`](../ref/pops.md#pops-prediction), just invoke:
+For the historical `m1` model, the [`POPS`](../ref/pops.md#pops-prediction) command used here is:
 ```
 luna s.lst -o pops.db -s POPS path=~/dropbox/pops/m1 lib=m1
 ```
-where `path` points to where you downloaded the `m1` folder (see above).
+where `path` points to the folder containing the historical `m1` model files.
 
 This should finish quickly - it typically takes around 2 seconds to fully stage a study.  If the signal is
 of a different sample rate, Luna will first resample to obtain a 128 Hz signal. 
@@ -793,10 +789,13 @@ shhs1-0000    9  0.996   0.000   0.002   0.002   0.000   0.000   0.996   W      
 Using lunaR, we can plot the observed and POPS-predicted hypnograms:
 
 ```
-k <- ldb("pops.db")
-> par(mfrow=c(2,1))
-> lhypno( k$POPS$E$PRIOR )
-> lhypno( k$POPS$E$PRED )
+p <- lp$proj()
+p$import_db("pops.db")
+predicted <- p$table("POPS", "E")
+par(mfrow = c(2, 1))
+lp$hypno(predicted$PRIOR, e = predicted$E - 1)
+lp$hypno(predicted$PRED, e = predicted$E - 1)
+par(mfrow = c(1, 1))
 ```
 
 ![img](../img/soap-pops/pops-hypno.png){:width="100%"}
@@ -807,7 +806,7 @@ spectrogram for visual reference:  i.e. we separately extracted that here:
 ```
 luna a.lst -t mtm -s MTM sig=C4_M1 nw=15 epoch
 ```
-And load in in R:
+And load it in R:
 ```
 d <- read.table( "mtm/shhs1-0000/MTM_F_CH_SEG.txt.gz" , header=T, stringsAsFactors=F )
 ```

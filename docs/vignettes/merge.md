@@ -812,19 +812,19 @@ luna --build . | grep new.edf > s.lst
 For reference, here was the R code to generate this figure:
 
 ```
-lattach( lsl( "s.lst" ) , 1 )
-d <- ldata( 1 , "S1" , "A" )
+proj <- lp$proj()
+proj$sample_list("s.lst")
+inst <- proj$inst(1)
+inst$epoch("len=30")
+d <- inst$slice(inst$e2i(1), "S1", annots = "A", time = TRUE)
 png( file = "edfplus-f4.png" , width=800 , height=300 , units="px" , res=100)
-plot( d$SEC , d$S1  , type="l" , ylim=c(0,2) , lwd=2 , col="blue" , xlab = "Seconds" , ylab = "S1 / A" , yaxt='n' ) 
-points( d$SEC[ d$A == 1 ]  , d$A[ d$A == 1 ]+0.2  , type="p" , pch="|" , col = "red" )
-abline( v = unique( unlist( lannots( "gap" ))) , lty=2, col="gray" )
-segs <- lannots( "segment" )
-for (s in 1:length(segs) ) {
- seg <- segs[[s]]
- rect( seg[1] , 1.5 + s/8 , seg[2] , 1.6+s/8 , col=s+2 ,border=NA)
+plot( d$T , d$S1  , type="l" , ylim=c(0,2) , lwd=2 , col="blue" , xlab = "Seconds" , ylab = "S1 / A" , yaxt='n' )
+points( d$T[ d$A == 1 ]  , d$A[ d$A == 1 ]+0.2  , type="p" , pch="|" , col = "red" )
+gaps <- inst$fetch_annots("gap")
+abline(v = unique(c(gaps$Start, gaps$Stop)), lty = 2, col = "gray")
+segs <- inst$fetch_annots("segment")
+for (s in seq_len(nrow(segs))) {
+ rect(segs$Start[s], 1.5 + s/8, segs$Stop[s], 1.6 + s/8, col = s + 2, border = NA)
 }
 dev.off()
 ```
-
-
-

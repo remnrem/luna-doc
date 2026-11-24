@@ -219,7 +219,7 @@ F2     0.913384    0.356978   1.13398    0.556686
 ```
 
 We can visualize these maps using the following R code (which uses default channel
-locations) and the [`ltopo.rb()`](../ext/R/viz.md#ltoporb): 
+locations) and the [`lp$topo_heat()`](../ext/R/viz.md#channel-maps):
 
 ```
 library("luna")
@@ -229,7 +229,7 @@ png( "maps.png", height=400, width=340 * 4 )
 par(mfcol=c(1,4))
 for (K in c("X1","X2","X3","X4")){
     print(K)
-    ltopo.rb(data$CH, data[,K], sz=5)
+    lp$topo_heat(data$CH, data[, K], title = K, lab = "Map value")
 }
 dev.off()
 ```
@@ -238,7 +238,7 @@ Below are the visualization of the maps.
 
 ![img](../img/msvig-maps.png){:width="100%"} 
 
-These maps maps are broadly similar to the four canonical microstate
+These maps are broadly similar to the four canonical microstate
 maps reported in the literature. They are in this order: from left to right, they
 are D, C, B and A respectively.
 
@@ -448,7 +448,7 @@ d <- read.table("maps_indiv.txt",header=T, stringsAsFactors=F )
 par( mfrow=c(6,4) , mar=c(0,0,0,0) )
 for (id in unique( d$ID ) )
  for (i in 1:4 )
-  ltopo.rb( d$CH[ d$ID == id ] , d[ d$ID == id , 3 + i ] ) 
+  lp$topo_heat(d$CH[d$ID == id], d[d$ID == id, 3 + i], title = paste(id, i), lab = "Map value")
 ```
 
 ![img](../img/msvig-imaps.png){width="100%"}

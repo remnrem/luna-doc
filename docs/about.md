@@ -13,7 +13,9 @@ interface ([_lunaR_](ext/R/index.md)).
 
 ## Version
 
-The current version is __v1.7.0 (03-September-2026)__.
+The current stable version is __v1.8.0__ for `luna-base`, `luna-api`
+(the `lunapi` Python package), LunaScope, _lunaR_, and the Docker images.
+See [downloads](download/index.md#quick-links) for pinned 1.8.0 and unpinned routes.
 Use `luna -v` to display the specific build date/time.
 
 ## Where

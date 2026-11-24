@@ -213,16 +213,17 @@ plot( (1:8000/400), scan( "cz.txt" ),
 
 
 !!! hint "Alternatively: using lunaR" 
-    To simplify matters in this vignette, we are not going to use the [_lunaR_](../ext/R/index.md) package: instead, we will swap
+    To simplify matters in this vignette, we are not going to use the [R package `luna`](../ext/R/index.md): instead, we will swap
     between command-line luna ([_lunaC_](../luna/args.md)) and the R package for any visualization, as above.  However, all the steps performed
     here could be performed using only _lunaR_ if so desired, and in some instances this could be simpler/preferable. For example: here we attach the correct EDF, extract
     a data-frame `d` that corresponds to 20-seconds of `Cz`, and then plot it:
     ```
     library(luna)
-    sl <- lsl( "s.lst" )
-    lattach( sl , "pp3_N3_mast" )
-    d <- ldata.intervals( chs = "Cz" , i = list( c( 1660 , 1680 ) ) ) 
-    plot( d$SEC , d$Cz , type="l" , ylab="Cz" , xlab="Seconds" , col="darkorange" ) 
+    p <- lp$proj()
+    p$sample_list("s.lst")
+    inst <- p$inst("pp3_N3_mast")
+    d <- inst$slice(inst$s2i(c(1660, 1680)), "Cz", time = TRUE)
+    plot( d$T , d$Cz , type="l" , ylab="Cz" , xlab="Seconds" , col="darkorange" )
     ```
 
 ## Spectral analyses
@@ -980,7 +981,7 @@ components to generate an empirical null distribution for each metric:
 !!! Example "C&F Figure 6 (E,F) : slow oscillation-spindle coupling"
     ![img](../img/cf/cf10.png){width="100%"}
 
-Their example considers a single 30-second epoch epoch from the EDF `pp2_N3_mast`.  We can recreate those results here, with the [`CC`](../ref/cc.md#cc) command.
+Their example considers a single 30-second epoch from the EDF `pp2_N3_mast`.  We can recreate those results here, with the [`CC`](../ref/cc.md#cc) command.
 
 ```
 luna s.lst pp2_N3_mast  -o out/pac1.db  \

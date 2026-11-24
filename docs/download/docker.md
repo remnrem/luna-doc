@@ -38,6 +38,32 @@ We currently support three main Docker images:
    environment, [as described here](https://github.com/remnrem/luna-api-notebooks?tab=readme-ov-file#lunapi-a-python-interface-for-luna)
 
 
+## Choosing a version
+
+The current stable release of all three images is **1.8.0**. Choose
+`remnrem/luna:1.8.0`, `remnrem/lunapi:1.8.0`, or
+`remnrem/lunalite:1.8.0` to pin that release. Use the corresponding
+`:latest` tag for the unpinned route. Omitting a tag also means `:latest`.
+Choose one command from each paired example below.
+
+Pull the chosen image before running it; for the unpinned route, repeat
+`docker pull IMAGE:latest` when you want updates. `docker run` can reuse
+a locally cached image. Always use the same tag in both commands.
+For example:
+
+```bash
+# Pinned stable release
+docker pull remnrem/luna:1.8.0
+docker run --rm -it remnrem/luna:1.8.0 /bin/bash
+
+# Unpinned: fetch and run the latest image
+docker pull remnrem/luna:latest
+docker run --rm -it remnrem/luna:latest /bin/bash
+```
+
+The older console transcripts below are illustrative; version numbers,
+build dates, image digests, and download progress vary with the selected image.
+
 ## Getting Docker
 
 [Docker](https://www.docker.com/) provides a quick way to run Luna on
@@ -75,7 +101,11 @@ Hub](https://hub.docker.com)) and create a containerized version of
 Luna:
 
 ```
-docker run --rm -it remnrem/luna /bin/bash
+# Pinned stable release
+docker run --rm -it remnrem/luna:1.8.0 /bin/bash
+
+# Unpinned: latest image
+docker run --rm -it remnrem/luna:latest /bin/bash
 ``` 
 
 (Alternatively, swap in `remnrem/lunalite` for the lightweight version.)
@@ -193,31 +223,31 @@ ___________________________________________________________________
 ```
 
 
-This container also provides the R package with the _lunaR_ library pre-installed.  To start R:
+This container also provides the R package `luna`. You can alternatively
+[install it directly](lunar.md) without Docker. To start R:
 
 ```
 root@82bcf5c52204:/data# R
 ```
 
-To attach the _lunaR_ library:
+To load the R interface and check its Python engine:
 
-```
-> library(luna)
-** lunaR v0.2 1-Mar-2019
-** luna v0.9 12-Feb-2019
+```r
+library(luna)
+luna_config()
 ```
 
-To attach the tutorial project: 
+To open the tutorial project with the 1.8.0 interface:
 
-```
-> sl <- lsl( "/tutorial/s.lst" , path = "/tutorial/" ) 
-3 observations in /tutorial/s.lst 
+```r
+p <- lp$proj()
+p$sample_list("/tutorial/s.lst", path = "/tutorial/")
 ```
 
 To attach, for example, the second individual `nsrr02`:
-```
-> lattach( sl , 2 )
-nsrr02 : 14 signals, 10 annotations, 09:57:30 duration
+```r
+i <- p$inst(2)
+i$desc()
 ```
 
 ## Container contents
@@ -229,8 +259,8 @@ nsrr02 : 14 signals, 10 annotations, 09:57:30 duration
 - _text editors:_ `emacs` (powerful but complicated to use if you
   are not familiar with it) and `nano` (simple) are pre-installed
 
-- _build directory:_ `/build/`, this folder container the source code used to build
-   _lunaC_ and _lunaR_, and can be ignored by most users
+- _build directory:_ `/build/`, this folder contains the source code used to build
+   the command-line tools and R package, and can be ignored by most users
 
 
 ## Luna and RStudio
@@ -240,186 +270,52 @@ an image that bundles RStudio with a pre-installed version of _lunaC_
 and _lunaR_.  To obtain this:
 
 ```
-docker run  -e PASSWORD=abc123 -p 8787:8787 remnrem/luna
+# Pinned stable release
+docker run  -e PASSWORD=abc123 -p 8787:8787 remnrem/luna:1.8.0
+
+# Unpinned: latest image
+docker run  -e PASSWORD=abc123 -p 8787:8787 remnrem/luna:latest
 ```
 
 If this command is successful, then after it downloads and installs, you will be able 
-to go to you web browser and visit the URL: `localhost:8787`
+to go to your web browser and visit the URL: `localhost:8787`
 
 ![img](../img/rstudio1.png){width="100%"}
 
-Log in with username name `rstudio` and the password you specified above (i.e. `abc123`).   You will 
+Log in with username `rstudio` and the password you specified above (i.e. `abc123`).   You will
 then have an interactive environment, for which both the command prompt (for _lunaC_) and R (for _lunaR_) 
 are available, along with the tutorial data.  For example, we can run _lunaC_ in the terminal:
 
 ![img](../img/rstudio2.png){width="100%"}
 
-Likewise, we can use _lunaR_ to query the tutorial data:
+In the R console, analyze the tutorial data with the 1.8.0 interface:
 
-![img](../img/rstudio3.png){width="100%"}
+```r
+library(luna)
+p <- lp$proj()
+p$sample_list("/tutorial/s.lst", path = "/tutorial")
+inst <- p$inst("nsrr02")
+r <- inst$proc("EPOCH & MASK ifnot=N2 & RE & PSD sig=EEG spectrum")
+psd <- r$table("PSD", "CH_F")
+lp$psd(psd, "EEG", dB = TRUE)
+```
 
 The commands for mapping local folders to the Docker container
 (i.e. so that your own data are visible whilst in the container, and
 so that your output will be saved back on the host machine) are the
 same as for the standard Luna image.
 
-## _luna.docker_ 
+## _luna.docker_
 
-For Linux and Mac OS machines with the
-[bash](https://en.wikipedia.org/wiki/Bash_(Unix_shell)) shell
-installed, we provide a convenience wrapper script to help starting
-new Luna containers (i.e. instead of running `docker run` etc).  See
-Docker [documentation](https://docs.docker.com/get-started/) for full
-details on using Docker.
+The older `luna.docker` wrapper targets historical container images.
+For current installations, use the direct `docker pull` and `docker run`
+commands in [Choosing a version](#choosing-a-version) and
+[Luna and RStudio](#luna-and-rstudio). These provide both pinned 1.8.0
+and unpinned routes.
 
-Download the script `luna.docker` from
-[here](https://raw.githubusercontent.com/remnrem/luna-docker/master/luna.docker), save it in
-your path (e.g. see `echo $PATH`) and set permissions to be executable, e.g.:
-```
-chmod +x /usr/local/bin/luna.docker
-```
-
-Note that, depending where you place it and your operating system, you
-may need to prefix this (and subsequent) docker command with `sudo`.
-
-Typing `luna.docker` will then show the usage of this script:
-```
-new instance               : luna.docker /path/data/ /path/data1/ /path/data2/
-new RStudio instance       : luna.docker -rs password /path/data/ /path/data1/ /path/data2/
-list instances             : luna.docker -l
-attach to running instance : luna.docker -a {container-ID}
-delete instance            : luna.docker -d [container-ID|all]
-pull latest luna image     : luna.docker --pull
-```
-
-To start a new instance, specify between one and three paths, that
-will be mounted to `/data/`, `/data1/` and `/data2/` respectively (or,
-with RStudio, in `/home/rstudio/data/`, etc).
-
-
-!!! hint 
-    Although the paths should generally be full/absolute paths
-    (i.e. starting `/`), for the first argument only, the period (`.`)
-    can be used to mount `/data/` to the current working directory.
-
-For example, if on the host system we are in the folder `test`:
-```
-$ pwd
-/Users/joe/test
-```
-which contains three files:
-```
-$ ls
-a.txt  b.txt  c.txt
-```
-then running:
-```
-luna.docker .
-```
-will give a message:
-```
-mounting /Users/joe/test to /data/
-```
-The container starts in the `/data/` folder;  therefore, running `ls` will show the contents of `/Users/joe/test/` but from _inside_ the container:
-```
-root@ab8e676352ec:/data# pwd
-/data
-```
-
-```
-root@ab8e676352ec:/data# ls
-a.txt  b.txt  c.txt
-```
-
-Any new files you create in `/data/` from within the container will
-also be visible in `/Users/joe/test/` after leaving the container
-(with Control-D) or typing `exit`. For example, from within the container
-```
-root@ab8e676352ec:/data# echo "Hello World!" > d.txt
-```
-Then, after we exit the container and return to the host system's prompt, we will now see the new file:
-```
-$ ls
-a.txt	    b.txt  c.txt	d.txt
-```
-```
-cat d.txt
-```
-```
-Hello World!
-```
-
-In this way, you can map inputs (i.e. EDFs and annotation files) to
-outputs (e.g. destrat databases or extracted plain-text files) between
-your host system and the container.  Being able to specify multiple
-mounted volumes (on `/data/`, `/data1/` and `/data2/`) is convenient
-if you have different EDFs in different locations, or if you want
-output to be written to a different folder than contains the input
-EDFs, etc.
-
-
-### Other options
-
-You can initiate multiple containers at the same time.  Under standard
-conditions, different containers are completely isolated: i.e. new
-files generated in one container will not be present in other
-containers, etc.
-
-Running with the `-l` flag will list the currently active containers:
-
-```
-luna.docker -l
-```
-```
-CONTAINER ID  IMAGE         COMMAND      CREATED         NAMES
-e07c4e1adca2  remnrem/luna  "/bin/bash"  3 seconds ago   serene_bartik
-```
-
-To attach a new shell on an _existing_ running container, use the `-a`
-option, along with the container `ID` or `NAME`.  In the above case,
-the `ID` is `e07c4e1adca2` and the `NAME` is `serene_bartik` (Docker
-automatically generates cute names.) For example, this will open a new
-terminal command prompt for the running container:
- 
-```
-luna.docker -a serene_bartik
-```
-
-This can be useful if you have a long-running process in one container
-and want to check its output, or if you want to have a text-editor
-open in one window and cut-and-paste to run those commands in another
-window, for example.   
-
-To delete an active container, use the `-d` flag, followed by either
-the `ID` or `NAME` of that container. For example:
-
-```
-luna.docker -d e07c4e1adca2
-```
-```
-removing e07c4e1adca2...
-e07c4e1adca2
-```
-Re-running with the `-l` option now shows that there are no running containers:
-```
-luna.docker -l
-```
-
-```
-CONTAINER ID  IMAGE         COMMAND      CREATED         NAMES
-```
-
-As noted, this doesn't even begin to scratch the surface of using
-Docker containers, a full treatment of which is well beyond the scope
-of this documentation.  For example, you are able to control the
-memory and CPU cores available for each Docker container (simply via
-the `Preferences...` menu of the Desktop versions of Docker).  This
-will likely be important if running larger analysis jobs with Luna.
-
-We provide a containerized version of Luna as an experimental feature,
-but have not yet used it extensively ourselves: please let us know if you
-encounter limitations or if you think there are better ways to set
-things up...
+Mount your local data with `-v` as shown in the
+[Windows examples](#windows-machines) and the
+[lightweight-container examples](#remnremlunalite).
 
 ## Windows machines
 
@@ -435,7 +331,11 @@ At the Command Prompt, to open a new container and map the `D:\luna`
 folder on the host to `/data/` in the container, and `C:\mydata\work` to `/data1` type:
 
 ```
-docker run --rm -it -v D:/luna:/data -v C:/mydata/work:/data1 remnrem/luna /bin/bash
+# Pinned stable release
+docker run --rm -it -v D:/luna:/data -v C:/mydata/work:/data1 remnrem/luna:1.8.0 /bin/bash
+
+# Unpinned: latest image
+docker run --rm -it -v D:/luna:/data -v C:/mydata/work:/data1 remnrem/luna:latest /bin/bash
 ```
 
 By default, the container has folders `/data`, `/data1` and `/data2`
@@ -448,7 +348,11 @@ At the Command Prompt, to open a new container and map the `D:\luna`
 folder on the host to `/data/` in the container, type:
 
 ```
-docker run --rm -e PASSWORD=abc123 -p 8787:8787 -v D:/luna:/data remnrem/luna 
+# Pinned stable release
+docker run --rm -e PASSWORD=abc123 -p 8787:8787 -v D:/luna:/data remnrem/luna:1.8.0
+
+# Unpinned: latest image
+docker run --rm -e PASSWORD=abc123 -p 8787:8787 -v D:/luna:/data remnrem/luna:latest
 ```
 
 and then open your web-browser at `http://localhost:8787` and enter
@@ -492,15 +396,15 @@ __Hints__
   [hello-world](https://docs.docker.com/get-started/) example/tutorial
 
 - expect to run into issues if your institution/machine has particular
-  firewalls or other types of network security features, of if you are
-  trying to to mount folders on access-protected shared volumes, etc.
+  firewalls or other types of network security features, or if you are
+  trying to mount folders on access-protected shared volumes, etc.
   These types of issues are completely beyond the scope of Luna and
   this documentation, and things you'll need to work with your IT team
   to fix
 
 - the whole point of Luna Docker is that it is _meant_ to provide a
   quick, out-of-the-box way to run/test Luna.  If you are having trouble
-  trying using a binary version, or a different operating system.
+  try using a binary version, or a different operating system.
 
 - in general, you'll likely have a better Luna experience if you use a
   Unix-like operating system, i.e. macOS or Linux.  Of course, use
@@ -513,37 +417,43 @@ __Hints__
 
 To obtain the lightweight version:
 ```
-docker pull remnrem/lunalite
+# Pinned stable release
+docker pull remnrem/lunalite:1.8.0
+
+# Unpinned: latest image
+docker pull remnrem/lunalite:latest
 ```
 
 To run Luna from the host:
 ```
-docker run --rm -it remnrem/lunalite luna -v
+# Pinned stable release
+docker run --rm -it remnrem/lunalite:1.8.0 luna -v
+
+# Unpinned: latest image
+docker run --rm -it remnrem/lunalite:latest luna -v
 ```
 ```
-luna-base version v1.1.0  (release date 11-Oct-2024)
-luna-base build date/time Oct 13 2024 22:06:18
-Eigen library v3.4.0
-sqlite v3.41.2
+luna-base version v1.8.0
 ```
 
 To run interactively:
 ```
-docker run --rm -it remnrem/lunalite
+# Pinned stable release
+docker run --rm -it remnrem/lunalite:1.8.0
+
+# Unpinned: latest image
+docker run --rm -it remnrem/lunalite:latest
 ```
 which will give a prompt within the container (note: `/data #` is part of the shell prompt here, not part of the
-command to be entered)::
+command to be entered):
 ```
 /data #  luna -v
 ```
 ```
-luna-base version v1.1.0  (release date 11-Oct-2024)
-luna-base build date/time Oct 13 2024 22:06:18
-Eigen library v3.4.0
-sqlite v3.41.2
+luna-base version v1.8.0
 ```
 
-To be practically useful, one would also bind a local folder to a contain volume: e.g. if the tutorial `s.lst`
+To be practically useful, one would also bind a local folder to a container volume: e.g. if the tutorial `s.lst`
 data exist in the current local folder.  Locally:
 
 ```
@@ -557,7 +467,11 @@ nsrr03	edfs/learn-nsrr03.edf	edfs/learn-nsrr03-profusion.xml
 ```
 We can start a Luna session, binding the current directory (`${PWD}` on Posix systems) to `/data/` inside the container:
 ```
-docker run --rm -it -v ${PWD}:/data remnrem/lunalite
+# Pinned stable release
+docker run --rm -it -v ${PWD}:/data remnrem/lunalite:1.8.0
+
+# Unpinned: latest image
+docker run --rm -it -v ${PWD}:/data remnrem/lunalite:latest
 ```
 where we can now run commands:
 ```
@@ -597,5 +511,5 @@ specified `--rm`).
 This [github repository](https://github.com/remnrem/luna-docker)
 contains the latest version of the `Dockerfile`, and the corresponding
 `luna.docker` wrapper.  Pre-built images are sent to the
-``remnrem/luna` [Docker Hub page](https://hub.docker.com/u/remnrem)
+`remnrem/luna` [Docker Hub page](https://hub.docker.com/u/remnrem)
 for distribution.

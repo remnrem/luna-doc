@@ -145,9 +145,9 @@ follow the same structure.
 ## Docker is often the best Windows environment
 
 The Luna docs already recommend [Docker](../download/docker.md) as the
-most complete Windows environment.  This is also the only documented
-way to get the full Luna ecosystem on Windows, including the R-based
-workflow.
+most complete Windows environment.  For the R interface, the new package `luna` can also be
+[installed directly](../download/lunar.md) on Windows
+x86_64 without Docker or a compiler.
 
 The main advantages are:
 
@@ -155,7 +155,7 @@ The main advantages are:
 
  - Unix shell tools are available inside the container
 
- - Docker is the documented route for using `_lunaR_` on Windows
+ - Docker provides an optional RStudio environment; the R package `luna` can also run directly on Windows x86_64
 
  - it is often easier to reproduce the same setup across machines
 
@@ -164,7 +164,11 @@ The Windows-specific Docker notes are [here](../download/docker.md#windows-machi
 A typical Windows Docker command from the docs is:
 
 ```text
-docker run --rm -it -v D:/luna:/data -v C:/mydata/work:/data1 remnrem/luna /bin/bash
+# Pinned stable release
+docker run --rm -it -v D:/luna:/data -v C:/mydata/work:/data1 remnrem/luna:1.8.0 /bin/bash
+
+# Unpinned: latest image
+docker run --rm -it -v D:/luna:/data -v C:/mydata/work:/data1 remnrem/luna:latest /bin/bash
 ```
 
 Once inside the container, Luna behaves much more like the examples in

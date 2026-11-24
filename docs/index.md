@@ -6,9 +6,9 @@ analyzing polysomnographic recordings, with a focus on the sleep EEG.
 Originally oriented around command-line scripting
 ([_lunaC_](luna/args.md)), we are developing various _extensions_,
 including the [Python](http://python.org) module
-[_lunapi_](lunapi/index.md) and the [_lunaR_](ext/R/index.md) library
-for the [R](https://www.r-project.org/) statistical package. The
-__current release is v1.7.0__ (03-Sep-2026): see [here](updates.md) for
+[_lunapi_](lunapi/index.md) and the [_lunaR_](ext/R/index.md) interface
+for the [R](https://www.r-project.org/) statistical environment. The
+__current stable release is v1.8.0__: see [here](updates.md) for
 a list of changes/additions. Please direct any questions to `luna.remnrem@gmail.com`. For
 background on the project itself, see [About](about.md).
 
@@ -24,7 +24,7 @@ background on the project itself, see [About](about.md).
 The Luna package comprises a number of related components, all of
 which are oriented around the same core C/C++ library.  The core library
 implements all the [commands](ref/index.md) for working with sleep
-signal data. There are three main ways to use the library, all of which
+signal data. The main ways to use the library all
 provide fundamentally the same basic functionality:
 
  - via [_LunaScope_](https://zzz-luna.org/lunascope/), an interactive
@@ -44,9 +44,11 @@ provide fundamentally the same basic functionality:
    best approach for interactive analyses and for those familiar with
    Python
 
- - via the [_lunaR_](ext/R/index.md) R library: users more familiar
-   with R may prefer this option, although current development emphasis is on
-   the Python interface and related GUI tools
+ - via the [_lunaR_](ext/R/index.md) R interface: a pure R package that
+   uses _lunapi_ through reticulate and mirrors its project/instance API.
+   The installed package is named `luna`, loaded with `library(luna)`.
+   See [R installation](download/lunar.md) for automatic
+   Python setup
 
 These tools can either be [installed individually](download/index.md)
 or they can be accessed via prebuilt [Docker containers](download/docker.md)

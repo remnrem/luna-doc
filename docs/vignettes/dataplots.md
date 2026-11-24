@@ -84,7 +84,7 @@ awake by then) at about 6am. That is:
 
  - as shown in the __middle__ plot, as recordings typically stopped
    prior to final wake, the total sleep time estimated for these studies
-   (and indeed many other related related parameters) will be a
+   (and indeed many other related parameters) will be a
    biased, truncated estimate of typical sleep duration
 
  

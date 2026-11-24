@@ -138,7 +138,7 @@ that would have caused some signals to be flipped.
 !!! detail "The cause of flipped polarities in NSRR"  
     Specifically, it seems that the `edf-editor-translator` checked for 
     whether the EDF had a _physical maximum_ (in the EDF
-    header) that was smaller the the _physical minimum_.  Although this in itself is
+    header) that was smaller than the _physical minimum_.  Although this in itself is
     not necessarily an error for an EDF, the tool nonetheless swapped the physical 
     min/max header values, _but did not change any of the corresponding 
     sample points or the digital min/max_.  This effectively flips the

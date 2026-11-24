@@ -1,120 +1,217 @@
-# lunaR plotting functions
+# Plotting in R
 
-!!! warning
-    This page is a placeholder and will be completed in due course.
+The **`luna` 1.8.0** plotting methods use base R graphics. You can plot a
+recording directly or pass existing results as R data frames.
+See the [worked example](example.md) for preparing the data.
 
-<!---
-```
-psd    <- read.table("out1/id1/PSD_F_CH.txt",header=T,stringsAsFactors=F)
-coh    <- read.table("out1/id1/COH_B_CH1_CH2.txt" , header =T , stringsAsFactors=F)
-hjorth <- read.table("out1/id1/SIGSTATS_E_CH.txt" , header=T,stringsAsFactors=F )
-mtm    <- read.table("out1/id1/MTM_F_CH_SEG.txt.gz" , header=T , stringsAsFactors=F ) 
-```
----->
+## Open a recording
 
-## `lheatmap()`
+After extracting the [tutorial data](../../download/data.md), start R
+from the directory containing `tutorial`:
 
-_A simple heatmap_
-
-__Syntax:__ `lheatmap(x, y , z)` 
-
-- `x`, `y` and `z` are three similarly-sized vectors where `x` and `y` define a rectangular grid of values, and `z` is the _heat_ (i.e. plotted value)
-
-__Returns:__ a heatmap image
-
-This simple wrapper will likely need editing to produce high-quality
-figures, but it might provide a good starting point.  It is designed
-to work with data in the format as returned by `epoch-spectrum` from
-[`PSD`](../../ref/power-spectra.md#psd) and
-[`MTM`](../../ref/power-spectra.md#mtm), for example:  
-
-```
-d <- lx( k , "PSD" , "CH" , "E", "F" ) 
-lheatmap( mtm$SEG , mtm$F , mtm$MTM ) 
+```r
+library(luna)
+p <- lp$proj()
+p$sample_list("tutorial/s.lst", path = "tutorial")
+i <- p$inst("nsrr02")
+i$epoch("len=30")
 ```
 
-![img](../../img/rplot1.png){width="100%"}
+Instance plotting methods run Luna commands and can replace the
+instance's current output tables. Keep important results in a saved
+`r <- i$proc(...)` before plotting.
 
-## `ltopo.heat()`
+## Hypnograms
 
-```
-ltopo.heat( psd$CH , psd$PSD , flt = psd$F == 15  , sz = 3 , zlab = "Power 15 Hz", mt = "Plot 1" ) 
-```
+For a recording with sleep-stage annotations:
 
-![img](../../img/rplot2.png){width="100%"}
-
-<!---
-c=         flt=       mt=        show.leg=  sz=        th.z=      th=        z=         zeroed=    zlab=      zlim=      
---->
-
-
-## `ltopo.rb()`
-
-As `ltopo.heat()` except using a blue (negative) and red (positive) color scale, with 0 as white.  This is the
-same `zeroed=T` and with a different color scheme.  
-
-![img](../../img/ms/sol4.png){width="100%"}
-
-
-## `ltopo.xy()`
-
-
-```
-ltopo.xy( c = hj$CH , x = hj$E , y = log( hj$H1 ) , xlab = "Epoch" , ylab = "H1"  ) 
+```r
+i$hypno()
 ```
 
-![img](../../img/rplot4.png){width="100%"}
+To plot a stage vector or a saved `STAGE` table:
 
-```
-ltopo.xy( c = hj$CH , x = hj$E , y = log( hj$H1 ) , xlab = "Epoch" , ylab = "H1" , z = log( hj$H1 ) , pch=20  , col=rbpal , cex = 0.2   ) 
-```
-
-![img](../../img/rplot3.png){width="100%"}
-
-
-
-<!---
-## `ltopo.heat2()`
---->
-
-
-## `ltopo.conn()`
-
-
-```
-ltopo.conn( chs1 = coh$CH1 , chs2 = coh$CH2 , z = coh$COH , flt = coh$B == "DELTA" & coh$COH > 0.8 , w = 3 , zr = c(-1 , 1 ) ) 
+```r
+stages <- i$stages()
+lp$hypno(stages$STAGE, e = stages$E - 1, title = "nsrr02")
 ```
 
-![img](../../img/rplot5.png){width="100%"}
+Supported labels include `W`, `N1`, `N2`, `N3`, `R`, `?`, and `L`.
+The time axis assumes **30-second epochs**. `e` contains zero-based
+30-second positions; when omitted, the stages are treated as consecutive.
+For other epoch durations, draw your own time axis using the stage table's
+time columns.
 
-```
-ltopo.conn( chs1 = coh$CH1 , chs2 = coh$CH2 , z = coh$ICOH , flt = coh$B == "SIGMA" & coh$COH > 0.7 , w = 5 , signed = T ) 
-```
-
-![img](../../img/rplot6.png){width="100%"}
-
-## `ltopo.dconn()`
-
-```
-ltopo.dconn( ch = "C3" , chs1 = coh$CH1 , chs2 = coh$CH2 , z = coh$COH , flt = coh$B == "SIGMA" ) 
+```r
+lp$hypno(ss = c("W", "N1", "N2", "N3", "N2", "R", "W"),
+         title = "Example stages")
 ```
 
-![img](../../img/rplot7.png){width="100%"}
+For custom plots, `lp$stgcol(ss)` returns stage colors and `lp$stgn(ss)`
+returns vertical positions. `lp$stgcol(NA)` returns a transparent color.
 
-## `ltopo.topo()`
+## Hypnodensity
 
+`lp$hypno_density()` plots a data frame of stage probabilities. It needs
+columns `PP_N1`, `PP_N2`, `PP_N3`, `PP_R`, and `PP_W`, with one row per
+epoch. These can come from automated staging output; see
+[POPS](../../ref/pops.md).
+
+Here is a standalone illustration with made-up probabilities:
+
+```r
+probs <- data.frame(
+  PP_N1 = c(0.10, 0.20, 0.05, 0.05),
+  PP_N2 = c(0.10, 0.55, 0.80, 0.10),
+  PP_N3 = c(0.00, 0.10, 0.10, 0.00),
+  PP_R  = c(0.00, 0.05, 0.00, 0.80),
+  PP_W  = c(0.80, 0.10, 0.05, 0.05)
+)
+lp$hypno_density(probs, title = "Example stage probabilities")
 ```
-ltopo.topo( c = c( coh$CH1 , coh$CH2 )  , c2 = c( coh$CH2 , coh$CH1 ) , z = c( coh$ICOH , -1 * coh$ICOH )  , f = rep( coh$B == "SIGMA" , 2 )   , sz=0.08, sz2=0.6 )
+
+The R plot uses row positions as epochs on its x-axis; the compatibility
+argument `e` does not change that axis.
+
+## Power spectra
+
+Calculate and plot spectra directly from an instance:
+
+```r
+i$psd("EEG", maxf = 30)
 ```
 
-![img](../../img/rplot8.png){width="100%"}
+This runs `PSD spectrum dB` and draws a decibel spectrum. Pass a channel
+vector for multiple traces, and use `minf`, `maxf`, `minp`, `maxp`,
+`xlines`, and `ylines` to control the displayed range and reference lines.
+With `var = "MTM"`, the method runs the multitaper estimator instead.
 
+To plot a saved linear-power spectrum:
 
+```r
+r <- i$proc("PSD sig=EEG spectrum max=30")
+spectrum <- r$table("PSD", "CH_F")
+lp$psd(spectrum, "EEG", dB = TRUE, minf = 0.5, maxf = 30,
+       xlines = c(4, 8, 12, 16))
+```
 
-## `ldefault.xy()`
+`dB = TRUE` applies `10 * log10()` for display. If the analysis already
+used `PSD ... dB`, leave `dB = FALSE` to avoid converting twice:
 
-_Default channel coordinates for plotting_
+```r
+r_db <- i$proc("PSD sig=EEG spectrum max=30 dB")
+lp$psd(r_db$table("PSD", "CH_F"), "EEG")
+```
 
-## `ldefault.coh.xy()`
+The helper expects `CH`, `F`, and the power column named by `var`
+(default `PSD`). Select one individual from cohort output before
+plotting, for example with `lp$subset(df, ids = "nsrr02")`.
 
-_Default channel coordinates for plotting connectivity maps_
+## Spectrograms
+
+Calculate an epoch-by-frequency spectrum and plot it:
+
+```r
+i$spec("EEG", minf = 0.5, maxf = 30)
+```
+
+Or plot saved per-epoch output:
+
+```r
+r_tf <- i$proc("PSD sig=EEG epoch-spectrum dB min=0.5 max=30")
+tf <- r_tf$table("PSD", "CH_E_F")
+lp$spec(tf, ch = "EEG", minf = 0.5, maxf = 30)
+```
+
+The table needs `E`, `F`, `CH`, and the column named by `var` (default
+`PSD`). `mine`/`maxe` restrict epoch numbers; `minf`/`maxf` restrict
+frequencies. `w = 0.025` clips the lowest and highest 2.5% of displayed
+values to limit color-scale outliers; use `w = 0` to disable this.
+Select one individual before plotting cohort output.
+
+## Channel maps
+
+`lp$topo_heat()` draws one colored point per channel at its scalp
+location. It does not interpolate a continuous scalp surface.
+Channel names and values must be in matching order:
+
+```r
+chs <- c("C3", "C4", "CZ", "F3", "F4", "O1", "O2")
+z <- c(-1.2, 0.8, 0.1, -0.5, 0.6, -0.2, 0.4)
+lp$topo_heat(chs, z, lmts = c(-1.5, 1.5),
+             colormap = "bwr", title = "Example channel values", lab = "Value")
+```
+
+These are illustrative values. For analysis results, take channel names
+and values from the same rows of your output table.
+
+| Argument | Use |
+| --- | --- |
+| `chs`, `z` | Channel labels and numeric values of equal length; matching is case-insensitive |
+| `topo = NULL` | Use the standard 64-channel coordinates; otherwise supply a data frame with `CH`, `X`, `Y` |
+| `lmts = NULL` | Color limits; if supplied, they must contain all values in `z` |
+| `colormap = "bwr"` | Blue/white/red, `"turbo"`, an R `hcl.colors()` palette name, or a vector of colors |
+| `ths = NULL`, `th = 0.05` | Optional per-channel values, e.g. p-values; values below `th` receive thicker outlines |
+| `sz = 70` | Point-size control |
+| `rimcolor = "black"` | Point-outline color |
+| `title = ""`, `lab = "dB"` | Plot title and color-scale label |
+
+Get the built-in coordinates for use in your own plots:
+
+```r
+xy <- lp$default_xy()
+head(xy)
+```
+
+Unmatched channels are omitted; no matching channels produces an error.
+Supply `topo` for a montage with other labels or locations.
+
+## Saving plots
+
+Plots appear on the current R graphics device. In RStudio, use the
+Plots pane, or save a file by opening a device first:
+
+```r
+pdf("EEG-spectrum.pdf", width = 8, height = 4)
+lp$psd(spectrum, "EEG", dB = TRUE)
+dev.off()
+```
+
+The `xsize` and `ysize` arguments accepted by `lp$hypno()` and
+`lp$hypno_density()` do not size R plots. Set dimensions on `pdf()`,
+`png()`, or your other graphics device instead.
+
+## Plot method signatures
+
+```text
+i$hypno()
+i$psd(ch, var = "PSD", minf = NULL, maxf = 25,
+      minp = NULL, maxp = NULL, xlines = NULL, ylines = NULL)
+i$spec(ch, mine = NULL, maxe = NULL, minf = NULL, maxf = NULL, w = 0.025)
+
+lp$hypno(ss, e = NULL, xsize = 20, ysize = 2, title = NULL)
+lp$hypno_density(probs, e = NULL, xsize = 20, ysize = 2, title = NULL)
+lp$psd(df, ch, var = "PSD", minf = NULL, maxf = NULL,
+       minp = NULL, maxp = NULL, xlines = NULL, ylines = NULL, dB = FALSE)
+lp$spec(df, ch = NULL, var = "PSD", mine = NULL, maxe = NULL,
+        minf = NULL, maxf = NULL, w = 0.025)
+lp$topo_heat(chs, z, ths = NULL, th = 0.05, topo = NULL, lmts = NULL,
+             sz = 70, colormap = "bwr", title = "", rimcolor = "black", lab = "dB")
+lp$default_xy()
+lp$stgcol(ss)
+lp$stgn(ss)
+```
+
+## Moving from old R plots
+
+These old plotting functions are not exported by 1.8.0. Use the new
+helpers or draw plots directly from R data frames:
+
+| Old helper | Current approach |
+| --- | --- |
+| <span id="lheatmap"></span>`lheatmap()` | `lp$spec()` for epoch/frequency spectra, or R `image()` for other matrices |
+| <span id="ltopoheat"></span>`ltopo.heat()` | `lp$topo_heat()` for channel-value maps |
+| <span id="ltoporb"></span>`ltopo.rb()` | `lp$topo_heat(..., colormap = "bwr")` |
+| <span id="ldefaultxy"></span>`ldefault.xy()` | `lp$default_xy()` |
+| <span id="ltopoxy"></span>`ltopo.xy()` | Make channel-specific plots from the output data frame using base R or ggplot2 |
+| <span id="ltopoheat2"></span><span id="ltopoconn"></span><span id="ltopodconn"></span><span id="ltopotopo"></span><span id="ldefaultcohxy"></span>Other `ltopo.*` connectivity/panel plots and `ldefault.coh.xy()` | No direct replacement in the new plotting helpers; use the returned data frames with your preferred R plotting tools |

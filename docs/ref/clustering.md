@@ -127,8 +127,9 @@ We can also load the clusters that Luna assigned from the _K_ = 12
 hierarchical (complete linkage) clustering:
 
 ```
-k <- ldb("out.db")
-c <- k$EXE$E
+k <- lp$proj()
+k$import_db("out.db")
+c <- k$table("EXE", "E")
 ```
 
 The cluster each epoch is assigned to is in `c$CL`.
@@ -141,7 +142,7 @@ just use a quick-and-dirty way to assign colors to clusters here, and
 sometimes different clusters are assigned the same color):
 
 ```
-image(as.matrix(m), col = jet.colors(100) )
+image(as.matrix(m), col = grDevices::hcl.colors(100, "Viridis"))
 plot( cmdscale(as.dist(m)), xlab="MDS component 1", ylab="MDS component 2", pch=21, bg=as.factor( c$CL ) ) 
 ```
 ![img](../img/exe2.png){width="100%"}
@@ -175,8 +176,15 @@ table( c$CL )
 The top numbers (the values of `c$CL`, e.g. 57, etc) are the 'seeds'
 of each cluster, i.e. representing one epoch that was assigned to the cluster.
 
-To look at the raw data for a given epoch, via lunaR, we can use
-`ldata()`.  First, we randomly pick some epochs assigned to the
+To inspect raw data, open the corresponding recording in R:
+
+```r
+proj$sample_list("s.lst")
+inst <- proj$inst(1)
+inst$epoch("len=30")
+```
+
+First, randomly pick some epochs assigned to the
 cluster centered around epoch 242:
 
 ```
@@ -185,7 +193,8 @@ epochs <- sample( c$E[ c$CL == 242 ] , 5 )
 
 Plotting 2 seconds worth of data from the first of these epochs (sample rate is 128 Hz):
 ```
-plot( ldata( e=epochs[1] , chs="C3" )$C3[1:256]  , type = "l" )
+d_epoch <- inst$slice(inst$e2i(epochs[1]), "C3", time = TRUE)
+plot(head(d_epoch$T, 256), head(d_epoch$C3, 256), type = "l", xlab = "Seconds", ylab = "C3")
 ```
 
 Repeating this for typical epochs, we can view different examples of
@@ -199,10 +208,12 @@ present in the rest of the signal (i.e. which made these epochs _more similar_).
 can use lunaR to view the spectrogram for the C3 channel, up to 64 Hz:
 
 ```
-lattach( lsl( "s.lst" )  , 1 )
-k <- leval( "PSD sig=C3 epoch-spectrum max=64 dB" ) 
-d <- k$PSD$CH_E_F 
-lheatmap( d$E , d$F , d$PSD , col = jet.colors(100) ) 
+proj <- lp$proj()
+proj$sample_list("s.lst")
+inst <- proj$inst(1)
+k <- inst$proc("EPOCH len=30 & PSD sig=C3 epoch-spectrum max=64 dB")
+d <- k$table("PSD", "CH_E_F")
+lp$spec(d, ch = "C3", maxf = 64)
 ```
 
 ![img](../img/exe4.png){width="100%"}

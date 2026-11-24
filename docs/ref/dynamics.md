@@ -207,6 +207,8 @@ The peri-event view performs windowed averaging around one or more anchor annota
 
 An anchor instance contributes to a given `SEC` bin only if it has complete, gap-free coverage of that bin's entire sample range: partial or thinned bins are never formed. An instance near the start or end of the recording, or close to a genuine discontinuity (e.g. after [`MASK`](masks.md#mask) + [`RE`](masks.md#restructure)), simply forms fewer bins rather than being dropped outright, and the `CH,ANNOT` summary row is still built from whichever bins and instances are complete. `require-full=T` instead reverts to requiring an instance's entire nominal window to be available and gap-free, rejecting the whole instance otherwise — a stricter, all-or-nothing-per-instance policy. `min-n=` drops any `SEC` bin, or `CH,ANNOT` summary row, with fewer than this many contributing instances. Before averaging, `tolog` log-transforms the signal, and peri-event outlier control can be applied per bin: `th=` drops values beyond that many SDs of the bin mean, or, if `th` is not set, `win=` instead Winsorizes them at that many SDs.
 
+Optionally, `norm=` normalizes each anchor instance's own window before instances are pooled, so the per-bin `M`/`SD`/`MD` are averages of already-normalized traces (rather than a normalization of the average). The baseline is that instance's own pre-anchor bins (`norm=pre`, i.e. all `SEC < 0` bins it forms) or all of its bins (`norm=window`), computed on the same bin values that enter the average (i.e. after `tolog`, and at `bin=` resolution if set). `mode=` picks how the baseline is applied: `sub` (the default) subtracts the baseline mean, `ratio` divides by it, and `z` subtracts the mean and divides by the baseline SD. An instance with no usable baseline — no baseline bins, a zero baseline mean for `ratio`, or fewer than two baseline bins or a zero SD for `z` — is dropped, and the number dropped is noted in the log. Without `require-full=T`, an instance near an edge or gap uses whichever baseline bins it formed. With `norm=pre`, the `CH,ANNOT` `L` value is then ~0 (`sub`, `z`) or ~1 (`ratio`) by construction, and `R` directly gives the mean post-anchor change.
+
 <h3>Parameters</h3>
 
 | Parameter | Example | Description |
@@ -226,6 +228,8 @@ An anchor instance contributes to a given `SEC` bin only if it has complete, gap
 | `tolog` | | Log-transform the signal before peri-event averaging |
 | `th` | `th=4` | Drop peri-event values beyond this many SDs of the bin mean (default: disabled) |
 | `win` | `win=4` | Winsorize peri-event values beyond this many SDs of the bin mean (default: disabled; ignored if `th` is set) |
+| `norm` | `norm=pre` | Normalize each peri-event window before averaging, against its own pre-anchor bins (`pre`) or all its bins (`window`) (default: none) |
+| `mode` | `mode=ratio` | With `norm=`, how the baseline is applied: `sub` (value − mean), `ratio` (value / mean) or `z` ((value − mean) / SD) (default `sub`) |
 
 <h3>Outputs</h3>
 

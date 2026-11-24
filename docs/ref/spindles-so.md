@@ -303,29 +303,33 @@ nsrr02  EEG   15   2.090    0.847   13.475
 ```
 
 We will further query the output using [_lunaR_](../ext/R/index.md) and
-[`ldb()`](../ext/R/ref.md#ldb). In R:
+[`import_db()`](../ext/R/ref.md#running-commands-across-a-project). In R:
 
 ```
 library(luna)
 
-k <- ldb( "out.db" )
+k <- lp$proj()
+k$import_db("out.db")
 ``` 
 
-We can use `lx()` to see the strata (factor combinations) that
+We can use `k$strata()` to see the strata (factor combinations) that
 correspond to the `destrat` output above:
 
 ```
-lx(k)
+k$strata()
 ```
-```
-MASK : EPOCH_MASK 
-RE : BL 
-SPINDLES : CH_F CH_E_F CH_F_SPINDLE 
+```text
+Command    Strata
+MASK    EMASK
+RE    BL
+SPINDLES    CH_F
+SPINDLES    CH_E_F
+SPINDLES    CH_F_SPINDLE
 ```
 
 Looking at the per-epoch data:
 ```
-d <- lx( k , "SPINDLES" , "CH_E_F" ) 
+d <- k$table("SPINDLES", "CH_E_F")
 ```
 ```
 head(d)
@@ -393,10 +397,8 @@ spindle corresponds to a brief increase in sigma power:
 
 ![img](../img/spindle.png){width="100%"}
 
-!!! note
-    Primarily in the context of [_lunaR_](../ext/R/index.md), in the near future
-    we'll be adding tutorials and helper functions to facilitate automatically making
-    these types of plots quickly for all spindles in a dataset.
+See the [R tutorial](../tut/tut4.md#inspecting-individual-spindles) for
+extracting event windows and plotting raw and band-filtered signals.
 
 
 ### Thresholds
@@ -469,17 +471,18 @@ artifact detection in place), adding the `empirical` threshold:
 luna s.lst sig=EEG -o out.db -s 'MASK ifnot=N2 & RE & SPINDLES fc=11,15 empirical' 
 ```
 
-In [_lunaR_](../ext/R/index.md), we use [`ldb()`](../ext/R/ref.md#ldb) to load the resulting `out.db` file:
+In [_lunaR_](../ext/R/index.md), we use [`import_db()`](../ext/R/ref.md#running-commands-across-a-project) to load the resulting `out.db` file:
 
 ```
-k <- ldb("out.db")
+k <- lp$proj()
+k$import_db("out.db")
 ```
 We extract the relevant table of results by different thresholds (`TH`):
 
 ```
-d <- lx( k , "SPINDLES" , "CH_F_TH" )
+d <- k$table("SPINDLES", "CH_F_TH")
 ```
-As this table contains all three individuals, we'll use `lid()` and basic R functions to create three plots separately, of the between-class variance as a function of threshold, split by fast and slow spindles.  First, we get a list of the individual IDs:
+As this table contains all three individuals, we'll use data-frame subsetting and basic R functions to create three plots separately, of the between-class variance as a function of threshold, split by fast and slow spindles.  First, we get a list of the individual IDs:
 
 ```
 ids <- unique( d$ID ) 
@@ -488,7 +491,7 @@ Then we loop to create three plots:
 ```
 par(mfcol=c(1,3))
 for (id in ids) { 
-t <- lid( d , id )  
+t <- d[d$ID == id, , drop = FALSE]
 plot( t$TH[ t$F==11 ] ,  t$SIGMAB[ t$F == 11 ] , 
       type="l" , lwd=2 , col="orange" , 
       main=id, xlab="Threshold" , ylab="Between-class variance" , ylim=c(0,1)) 
@@ -609,111 +612,78 @@ positive `q-max` also removes candidates above that upper bound.
 The `noq` flag disables Q calculation and filtering; setting `q` to
 -9 or lower also disables it.
 
-To illustrate this QC metric, we'll detect spindles for the second
-[tutorial](../tut/tut1.md) individual:
+To illustrate this QC metric, detect spindles for the second
+[tutorial](../tut/tut1.md) individual, retaining low-Q candidates with a
+permissive finite threshold while still calculating Q:
 
-```
+```bash
 luna s.lst 2 sig=EEG -o out.db \
-  -s ' MASK ifnot=NREM2 & RE  
-       SPINDLES fc=11,15 q=-9 annot=sp1 cycles=12 '
+  -s 'EPOCH & MASK ifnot=N2 & RE &
+      SPINDLES fc=11,15 q=-8 annot=sp1 cycles=12 per-spindle &
+      WRITE-ANNOTS file=sp1-^.annot annot=sp1'
 ```
 
-Here, we detect both fast and slow spindles, targeting 11 and 15 Hz
-respectively; we've set _cycles_ to 12 instead of the default 7, in
-order to increase frequency-specificity.  We also set `q` equal to -9,
-which turns off Q calculation and filtering, so that the output includes
-candidates that would not otherwise be retained with the default
-threshold (`q=0`).
+`cycles=12` increases frequency specificity relative to the default.
+Use `q=-8` here so Q is calculated for comparison; `noq` or `q<=-9`
+would disable that calculation. `per-spindle` requests event-level
+output, and `WRITE-ANNOTS` saves the events in `sp1-nsrr02.annot`.
 
-In [_lunaR_](../ext/R/index.md):
-```
+Read the results and open the source recording in R:
+
+```r
 library(luna)
-lattach( lsl( "s.lst" ) , 2 )
-```
-We'll attach as annotations the two newly-created files:
-```
-ladd.annot.file( "id_nsrr02_feature_SPINDLES-spindles-EEG-wavelet-11-sp1.ftr" ) 
-ladd.annot.file( "id_nsrr02_feature_SPINDLES-spindles-EEG-wavelet-15-sp1.ftr" ) 
-```
-We'll then load our previously-generated results, saved in `out.db`:
-```
-k <- ldb( "out.db" ) 
-```
-and extract the table which contains <em>Q<sub>i</sub></em>, the per-spindle quality metric. 
-```
-d <- lx( k , "SPINDLES" , "F" , "CH" , "SPINDLE" )
-```
-Plotting the distribution of this separately for slow and fast spindles:
-```
-par(mfcol=c(1,2))
-hist( d$Q[ d$F == 11 ] , breaks=30 , main="11 Hz spindles" , xlab="Q" , xlim=c(-2,2) ) 
-abline(v=0,col="red",lwd=2)
-hist( d$Q[ d$F == 15 ] , breaks=30 , main="15 Hz spindles" , xlab="Q" , xlim=c(-2,2) )
-abline(v=0,col="red",lwd=2)
-```
-We see that most spindles (as would be expected) have quality scores
-greater than 0, meaning that the interval showed greater
-target-frequency enrichment than reference-frequency enrichment.
-
-![img](../img/sqch.png){width="100%"}
-
-
-Of the _full_ set (i.e. running _without_ the default `q=0` threshold in place), we see that approximately 10% of spindles have `q` less than 0:
-```
-table( d$Q > 0 , d$F ) 
-```
-```
-         11  15
-  FALSE  68  36
-  TRUE  405 370
+proj <- lp$proj()
+proj$sample_list("s.lst")
+inst <- proj$inst(2)
+inst$attach_annot("sp1-nsrr02.annot")
+proj$import_db("out.db")
+d <- proj$table("SPINDLES", c("CH", "F", "SPINDLE"))
+par(mfrow = c(1, 2))
+for (frequency in c(11, 15)) {
+  hist(d$Q[d$F == frequency], breaks = 30,
+       main = paste(frequency, "Hz spindles"), xlab = "Q")
+  abline(v = 0, col = "red", lwd = 2)
+}
+par(mfrow = c(1, 1))
+table(d$Q > 0, d$F)
 ```
 
-Let's visualize some `q<0` and `q>0` spindles (we'll actually select
-`qc>1` spindles, to ensure that we don't randomly select spindles with
-`q` very near 0). For simplicity, we'll do this just for fast spindles.
+Positive Q indicates stronger target-frequency enrichment. The
+following illustrates the distributions:
 
-First, we'll save the labels of the two new annotation tracks we
-appended (i.e. you can see the names from running `lannots()`):
+![Spindle Q distributions](../img/sqch.png){width="100%"}
 
-```
-a15 = "SPINDLES-spindles-EEG-wavelet-15-sp1"
-```
-We'll then extract the intervals of each annotation _instance_, i.e. each spindle:
-```
-s15 <- lannots( a15 )
-```
-Confirming that we get 406 spindles, i.e. as output above, we can see `length(s15)` is indeed 406.
+Use `inst$annots()` to see annotation names and
+`inst$fetch_full_annots("sp1")` to retrieve the events with their target
+frequency and channel metadata. To compare low- and high-Q fast
+spindles, select rows directly from the event-level result:
 
-For visualization, here we'll just select five _low Q_ and five _high Q_ spindles: 
-```
-lo15 <- sample(d$SPINDLE[ d$Q < 0 & d$F == 15 ])[1:5]
-hi15 <- sample(d$SPINDLE[ d$Q > 1 & d$F == 15 ])[1:5]
-```
-
-Using [_lunaR_](../ext/R/index.md) functions, we can then write a function
-to plot the raw EEG signal for each spindle, with a 4-second flanking
-window on either side:
-
-```
-f1 <- function(i,a) { 
-x <- ldata.intervals( i , chs = "EEG" , annots = a , w = 4 )
-y <- x$EEG
-plot( x$SEC , y , type="l" , axes=F,xlab="",ylab="" , ylim=c(-125,125) )
-t <- x$SEC[ x[,lsanitize(a)] == 1 ]
-points( t , rep( -125,length(t)) , col=rgb(0,0,255,150,max=255) , pch="|" )
+```r
+low <- head(d[d$F == 15 & d$Q < 0, ], 5)
+high <- head(d[d$F == 15 & d$Q > 1, ], 5)
+inst$epoch("len=30")
+recording_end <- max(inst$epochs()$STOP)
+plot_event <- function(event) {
+  window <- c(max(0, event$START - 4), min(recording_end, event$STOP + 4))
+  x <- inst$slice(inst$s2i(window), "EEG", annots = "sp1", time = TRUE)
+  plot(x$T, x$EEG, type = "l", axes = FALSE, xlab = "", ylab = "",
+       ylim = c(-125, 125))
+  marked <- x$T[x$sp1 == 1]
+  points(marked, rep(-125, length(marked)), col = "blue", pch = "|")
+}
+n <- min(nrow(low), nrow(high))
+if (n > 0) {
+  par(mfrow = c(n, 2), mar = c(1, 1, 1, 1))
+  for (row in seq_len(n)) {
+    plot_event(low[row, ])
+    plot_event(high[row, ])
+  }
+  par(mfrow = c(1, 1))
 }
 ```
 
-Finally, we'll generate a matrix of plots, with the five _low Q_ spindles in the left column, and
-the five _high Q_ spindles in the right column:
-
-```
-par(mfrow=c(5,2),mar=c(0,0,0,0) )
-for (i in 1:5) {
-f1( i = s15[ lo15[ i ] ] , a = a15 )
-f1( i = s15[ hi15[ i ] ] , a = a15 )
-}
-```
+The left panels show low-Q events and the right panels high-Q events.
+If either group is empty, inspect `d$Q` and choose another cutoff.
 
 As you can see, the _low Q_ spindles (that would not have been
 detected using Luna's default `q=0` setting) appear to reflect some
@@ -997,13 +967,14 @@ nsrr02	EEG	15	5	14.181
 To plot the mean signal time-locked to each spindle peak (in [_lunaR_](../ext/R/index.md)):
 
 ```
-k <- ldb("out.db")
+k <- lp$proj()
+k$import_db("out.db")
 
-d <- lx( k , "SPINDLES" , "CH" , "F" , "MSEC" ) 
+d <- k$table("SPINDLES", c("CH", "F", "MSEC"))
 
 par( mfcol=c(1,2) )
 for (f in c(11,15)) { 
- plot( d$MSEC[ d$F==f ] , d$TLOCK[ d$F==f ] , ylim=c(-20,20) , type="l"
+ plot( d$MSEC[ d$F==f ] , d$TLOCK[ d$F==f ] , ylim=c(-20,20) , type="l",
        xlab="Time (sec)",ylab="Mean EEG",main=paste(f,"Hz spindles"), lwd=2)
  abline(h=0,col="red",lty=2)
 }

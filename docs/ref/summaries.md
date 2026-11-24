@@ -21,28 +21,63 @@ These commands are useful for inspecting the structure and content of an EDF bef
 
 ## DESC
 
-_Basic information on the attached EDF, written to the console_
+_Basic information on the attached EDF, written to the console or structured output_
 
 Writes the EDF filename, ID, EDF duration, number of signals and the
 labels and sampling rates of those signals.  If multiple EDFs are specified in a 
 [_sample list_](../luna/args.md#sample-lists), this information will be
-repeated for each one.  
+repeated for each one. With `table`, recording, channel, and annotation
+summaries are instead written through Luna's standard output mechanism.
+`DESC table` is designed as a quick, single-command summary of the information
+provided by [`HEADERS`](#headers) & [`ANNOTS`](annotations.md#annots) &
+[`SEGMENTS`](outputs.md#segments); use those commands for more detailed output.
 
 <h3>Methods</h3>
 
-Basic recording metadata is read directly from the EDF header and written to the console: recording identifier, start time, total duration, number of signals, and the label and sample rate of each signal. No signal data are read or processed.
+Basic recording metadata is read directly from the EDF header and written to the console: recording identifier, start time, total duration, number of signals, and the label and sample rate of each signal. With `table`, these summaries use structured output and include annotation instance counts and coverage. No signal data are read or processed.
 
 <h3>Parameters</h3>
 
 | Parameter | Example | Description |
 | --- | --- | --- |
 | `channels`  | `channels` | Only output simple list of channel names, one per row |
+| `table` | `table` | Write recording, channel, and annotation summaries through Luna's standard output mechanism instead of the console description |
+
+`channels` takes precedence if both `channels` and `table` are specified.
 
 <h3>Outputs</h3>
 
-Text written to the log/console.  Note that, unlike most Luna
-commands, the [`DESC`](summaries.md#desc) command does not generate any other output, i.e. via
-Luna's formal [output mechanism](../luna/args.md#output).  
+By default, text is written to the console without structured output.
+With `table`, the following summaries use Luna's standard
+[output mechanism](../luna/args.md#output), including database output with `-o`.
+
+Recording summary (option: `table`; strata: _none_)
+
+| Variable | Description |
+| --- | --- |
+| `EDF_TYPE` | EDF type: `EDF`, `EDF+C`, or `EDF+D` |
+| `START_TIME` | Recording start time (`hh:mm:ss`), or `.` if invalid |
+| `REC_DUR_HMS` | Recording duration excluding gaps (`hh:mm:ss`) |
+| `NS` | Number of selected data channels |
+| `NA` | Number of loaded annotation classes |
+| `NSEGS` | Number of contiguous data segments |
+
+Channel summary (option: `table`; strata: `CH`)
+
+| Variable | Description |
+| --- | --- |
+| `SR` | Sampling rate in Hz |
+| `PDIM` | Physical dimension from the EDF header, or `.` if blank |
+
+Annotation summary (option: `table`; strata: `ANNOT`)
+
+| Variable | Description |
+| --- | --- |
+| `N` | Number of annotation instances |
+| `DUR` | Total annotation coverage in seconds; overlapping intervals are counted only once per class |
+
+Channel summaries include only selected data channels. Annotation summaries
+include all loaded annotation classes and are not filtered by the epoch mask.
 
 <h3>Example</h3>
 
@@ -58,6 +93,15 @@ Clock time      : 23:07:56 - 07:39:00
 Duration        : 08:31:04
 # signals       : 6
 Signals         : EOG-L[256] EOG-R[256] EMG[256] EEG1[256] EEG2[256] EEG3[256]
+```
+
+To store the summaries in an output database and extract each table:
+
+```bash
+luna my.edf -o out.db -s 'DESC table'
+destrat out.db +DESC
+destrat out.db +DESC -r CH
+destrat out.db +DESC -r ANNOT
 ```
 
 ## SUMMARY
@@ -331,7 +375,7 @@ This command can be run with _either_ the `sig` or `stages` options:
 | Parameter | Example | Description |
 | --- | --- | --- |
 | `sig` | `${eeg}` | Channels to be checked for presence/absence |
-| `annot` | Instead of signals,  indicate whether specific annotations are present |
+| `annot` | `apnea,hypopnea` | Instead of signals, indicate whether specific annotations are present (an annotation class counts as present only if it has at least one instance) |
 | `stages`  | | Instead of signals, indicate whether sleep stage annotations are present |
 | `skip` | | Skip to the next EDF unless all of the requested signals/annotations are present |
 | `skip-if-none` | | Skip to the next EDF if none of the requested signals/annotations are present | 

@@ -98,42 +98,36 @@ luna -h
 ```
 List of domains
 ---------------
-
-actig      Actigraphy
-annot      Annotations
-artifact   Artifacts
-cc         Coupling/connectivity
-epoch      Epochs
-
+actig      Actigraphy                  
+annot      Annotations                 
+artifact   Artifacts                   
+assoc      Association                 
+canon      Canonoical signals          
+cc         Coupling/connectvitiy       
+cluster    Clustering                  
+epoch      Epochs                      
 ...
-
-For commands within a domain, add the domain label after -h, e.g.
-  luna -h annot
-
-For options and output for a given command, add the (upper-case) command after -h, e.g.
-  luna -h SIGSTATS
-
-To search help text across domains and commands, use -hs, e.g.
-  luna -hs spindle
-
-For verbose help for all commands in one domain, use -hv, e.g.
-  luna -hv summ
+...
 ```
 
 **List commands in a domain:**
+
 ```
 luna -h manip
 ```
 ```
-ANON         Anonymize EDF headers
+manip : Manipulating signal data
+--------------------------------
+
+ANON         Strip ID information
+COMBINE      Combine channels
 COPY         Duplicate one or more EDF channels
-FLIP         Flips the polarity of a signal
-RECORD-SIZE  Alters the record size and writes a new EDF
-REFERENCE    Re-reference signal(s)
-RESAMPLE     Resample signal(s)
-SIGNALS      Retain/remove specific EDF channels
-mV           Converts a signal to mV units
-uV           Converts a signal to uV units
+DEREFERENCE  De-reference signals
+EDF-MINUS    Realign EDF records
+ENFORCE-SR   Require a sample rate
+FLIP         Flip signal polarity
+...
+...
 ```
 
 **Parameters and outputs for a specific command:**
@@ -141,32 +135,58 @@ uV           Converts a signal to uV units
 luna -h PSD
 ```
 ```
-PSD : Power spectral density estimation (Welch) (Power spectra)
-    : http://zzz-luna.org/luna/ref/power-spectra/#psd
+PSD : Power spectral density estimation (Welch) (Time/frequency analysis)
+    : https://zzz-luna.org/luna/ref/power-spectra/#psd
+
+Estimate power spectra and band power using Welch's method.
+
+The signal is divided into overlapping segments, each segment is windowed and
+Fourier transformed, and the resulting periodograms are averaged to obtain a
+more stable spectral estimate than a single FFT. Luna can then summarize spectra
+as absolute power, relative power, spectral slope, per-epoch spectra, and
+band-level dynamics.
 
 Parameters:
 ===========
 
-  epoch                           Calculate per-epoch band power
-  epoch-spectrum                  Calculate per-epoch power spectra
-  max              max=100        Specify maximum frequency for power spectra
-  bin              bin=0.5        Specify bin-size for power spectra
-  sig              sig=C3,C4      Restrict analysis to these channels
-  spectrum                        Calculate power spectra
+  aperiodic                Robust power-law fit over inclusive, ordered lwr,upr
+                           pairs; bare flag uses min/max e.g.
+                           aperiodic=0.5,44.75
+
+  aperiodic-eval           Background evaluation lwr,upr (Hz); defaults to
+                           fitting envelope; permits extrapolation e.g.
+                           aperiodic-eval=0.5,30
+
+  aperiodic-iter           Maximum peak-rejection passes (1-100) e.g.
+                           aperiodic-iter=5
+
+  aperiodic-min-db         Positive-peak rejection floor in dB (positive,
+                           default 1) e.g. aperiodic-min-db=1
+
+  ... etc ...
 
 Outputs:
 ========
 
-   CH x F                  Whole-night, per-channel power spectra
+   CH : Channel-level output
    ------------------------------------------------------------
-     PSD                   Power
+     APER_EXP               Aperiodic exponent: PSD = 10^offset *
+                            (frequency/pivot)^(-exponent)
+     APER_FALLBACK          Used initial robust fit after peak-rejection fit
+                            failed (0/1)
+     APER_MAXGAP            Longest consecutive run of failed windows
+     APER_N                 Number of retained positive frequency bins
+     APER_NEXCLUDED         Positive finite envelope bins excluded by gaps
+     APER_NFAIL             Windows without usable aperiodic estimates after
+                            robust-fit fallback
+     APER_NFALLBACK         Windows rescued by the initial robust fit
+     APER_NFILL             Failed windows filled in added component channels
+                            (excludes edge padding)
 
-   B x CH                  Whole-night, per-channel band power
-   ------------------------------------------------------------
-     PSD                   Power
-     RELPSD                Relative power
-   ...
+     ... etc ...
+
 ```
+
 
 **Search help text by keyword** (`-hs`):
 ```
@@ -175,16 +195,19 @@ luna -hs spindle
 This searches command names, domain labels, and long-form descriptions for the
 given term (case-insensitive), printing matching domains first then any
 individual commands that match:
+
 ```
 Help search: spindle
 --------------------
 
-spindles : Spindle and slow oscillation analyses
--------------------------------------------------
+trans : Spindles and slow oscillations
+--------------------------------------
 
-SPINDLES   Detect spindles
-SO         Detect slow oscillations
+EVTDYN       Summarize event timing and event-level properties
+SO           Slow oscillation detection
+SPINDLES     Sleep spindle detection
 ```
+
 
 **Verbose domain help** (`-hv`):
 ```
@@ -233,6 +256,7 @@ Special-case, secondary options:
 | `--fs` | Specify a sample rate when reading an ASCII (non-EDF) file |
 | `--nr` | Specify the number of records when creating an [empty EDF](#empty-edfs) |
 | `--rs` | Specify the record duration (seconds) when creating an [empty EDF](#empty-edfs) |
+| `--build` | Build a sample list from one or more folders; supports [annotation-only lists](#annotation-only-sample-lists) |
 | `--opt` or `--options` | Only applicable when using a special helper/utility function such as `--psc`; options to be passed to that command come after this |
 
 ## Input 
@@ -467,9 +491,10 @@ files:
 luna --build mydata -ext=dat > s.lst
 ```
 
-By default, `--build` will match potential annotation files based on
-`.xml`, `.annot`, `.eannot`, `.txt` and `.tsv` extensions.  You can
-specify a comma-delimited list of multiple extensions with `-ext`.
+By default, `--build` recognizes `.xml`, `.annot`, `.eannot`, `.txt`, and
+`.tsv` annotation files, including common `-nsrr.xml` and `-profusion.xml`
+suffixes. You can specify a comma-delimited list of extensions with `-ext`,
+or use `-nsrr` as shorthand for `-ext=-nsrr.xml`.
 
 It can be convenient to specify extensions if annotation files have a
 regular naming scheme but do not match the EDF files identically.  For
@@ -484,6 +509,40 @@ To associate these files, add the full tag and extension:
 luna --build mydata -ext=-nsrr.xml > s.lst
 ```
 i.e. this matches __file1__[.edf] with __file1__[-nsrr.xml].
+
+By default, purely numeric IDs are prefixed with `id_` in the generated
+sample list, so that Luna does not later interpret them as row numbers. Add
+`-allow-numeric-ids` to retain numeric IDs unchanged.
+
+<h5>Annotation-only sample lists</h5>
+
+If a project contains annotations but no EDFs, add `-annot-only`. In
+this mode annotation files, rather than EDFs, seed the sample-list rows.
+The ID is the annotation filename with its matched extension removed, and
+the second (EDF) column is a period (`.`):
+
+```
+luna --build -annot-only annots > annotations.lst
+```
+
+For example, this command will include the default annotation extensions
+(`.annot`, `.eannot`, `.xml`, `.tsv`, and `.txt`) and generate rows such as:
+
+```
+id001   .   annots/id001.annot
+id002   .   annots/id002.xml
+```
+
+As with EDF-seeded builds, more than one annotation file can be associated
+with an ID. Use a comma-delimited `-ext` list for tagged suffixes:
+
+```
+luna --build -annot-only -ext=-staging.annot,-resp.annot,.annot annots > annotations.lst
+```
+
+This groups `id001-staging.annot`, `id001-resp.annot`, and `id001.annot`
+into one row for `id001`; the most-specific matching suffix is used to
+derive the ID.
 
 <h5>Absolute and relative paths</h5>
 
@@ -1062,7 +1121,7 @@ or
 ...
 ```
 
-When using a command such as as [`WRITE`](../ref/outputs.md#write) or
+When using a command such as [`WRITE`](../ref/outputs.md#write) or
 [`WRITE-ANNOTS`](../ref/annotations.md#write-annots), you will almost
 always want to use `^`: e.g. 
 ```
@@ -1603,7 +1662,9 @@ _Annotations_
 | [`annot-file`](#attaching-annotations) | Specify annotations to attach on the command line |
 | [`skip-annots`](#annotations) | (Or `skip-all-annots`). Same as `skip-sl-annots=T` and `skip-edf-annots=T` combined (default: F)  |
 | [`skip-sl-annots`](#annotations)  | Skip annotation files specified in the sample list (default: F) |
+| [`skip-sl-edfs`](#annotations) | Ignore EDF paths in the sample list and process its annotations only (default: F) |
 | [`skip-edf-annots`](#edf-annotations) | Skip EDF Annotations tracks from any EDF+ (default: F) |
+| `skip-bad-tals` | Skip malformed EDF+ TAL elements with a warning rather than halt (default: F) |
 |
 | [`remap`](#remapping-annotations)| Specify an annotation remapping (cf. channel aliases) |
 | [`annot-remap`](#remapping-annotations) | Set automatic remapping of stages (default: `T`) |
@@ -2326,6 +2387,14 @@ loading EDF annotations tracks (default no):
 skip-edf-annots    1
 ```
 
+Set `skip-sl-edfs=T` to ignore EDF paths in a sample list and process only
+its attached annotations, as if every EDF field were `.`. This can be useful
+when reusing an existing sample list for an annotation-only workflow.
+
+By default, a malformed onset or duration in an EDF+ TAL is an error. Set
+`skip-bad-tals=T` to skip only the malformed TAL element and continue, with a
+warning in the log.
+
 The `class-instance-delimiter` option changes the character used to
 separate annotation classes from instance IDs.  The `annot-span-gaps`
 option is relevant for discontinuous EDFs and controls whether
@@ -2780,7 +2849,7 @@ of `-o` to _append_ to an existing database.
     of the database output format is that all information (potentially from multiple people) is contained
     in a single place, and can be queried with `destrat`.  Databases
     can also be loaded directly into R, using
-    [`ldb()`](../ext/R/ref.md#ldb). _Disadvantages_ are 1) for very large
+    [`p$import_db()`](../ext/R/ref.md#running-commands-across-a-project). _Disadvantages_ are 1) for very large
     projects or output files, performance can suffer, and 2) to export
     into other software (other than R via _lunaR_), you first need to
     extract the information as an intermediate text file.  Text-table
@@ -2790,8 +2859,8 @@ of `-o` to _append_ to an existing database.
     text-table mode is that results are not automatically compiled
     across individuals: if your project contains 100 individuals,
     you'll have 100 separate subfolders, each with the same text-table
-    files.  The _lunaR_ package provides the function
-    [ltxttab()](../ext/R/ref.md#ltxttab) that can help by automatically compiling output across
+    files.  The R package `luna` provides the helper
+    [`lp$read_text_table()`](../ext/R/ref.md#text-output) that can help by automatically compiling output across
     different individuals/subfolders.  
 
     In general, use text-table mode

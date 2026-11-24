@@ -451,7 +451,7 @@ then use the `hms` flag to mask any epoch outside of the specified
 range.  (Actually, this _includes_ any epoch that has any overlap with
 the interval between 23:00:00 and 03:00:00, i.e. so it will also
 include a 30-second epoch that starts at 22:59:47, for example. If you
-require more precise timing, should should set epoch duration to be 1
+require more precise timing, you should set epoch duration to be 1
 second, not 30 seconds, for example, when running the `MASK hms`
 command.)
 

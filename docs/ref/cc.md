@@ -102,18 +102,20 @@ To estimate the cross-spectra (up to 20 Hz) between the two EEG channels during 
 sleep for the [tutorial](../tut/tut1.md) individual `nsrr02`:
 
 ```
-luna s.lst nsrr02 -o out.db -s 'MASK ifnot=NREM2 & RE \
+luna s.lst nsrr02 -o out.db -s 'MASK ifnot=N2 & RE \
                                 & COH spectrum max=20 sig=EEG,EEG(sec)'
 ```
 
 Loading this into [_lunaR_](../ext/R/index.md), 
 
-```
-k <- ldb( "out.db" ) 
+```r
+library(luna)
+k <- lp$proj()
+k$import_db("out.db")
 ```
 and extracting the relevant data frame:
 ```
-d <- lx(k,"COH","CH1","CH2","F")
+d <- k$table("COH", c("CH1", "CH2", "F"))
 ```
 and plotting:
 ```
@@ -264,7 +266,7 @@ channels for [tutorial](../tut/tut1.md) subject `nsrr02`.  Using
 the epoch level:
 
 ```
-luna s.lst nsrr02 -o out.db -s 'MASK if=wake & RE \
+luna s.lst nsrr02 -o out.db -s 'MASK if=W & RE \
                                 & STAGE \
                                 & CORREL epoch verbose sig=EOG(L),EOG(R)'
 ```
@@ -280,30 +282,35 @@ library(luna)
 We'll attach the output database just created:
 
 ```
-k <- ldb( "out.db" )
+k <- lp$proj()
+k$import_db("out.db")
 ```
 
-Examining the contents with `lx()`:
+Examining the contents with `k$strata()`:
 ```
-lx(k)
+k$strata()
 ```
-```
-CORREL : CH1_CH2 CH1_CH2_E 
-MASK : EPOCH_MASK 
-RE : BL 
-STAGE : E 
+```text
+Command    Strata
+CORREL    CH1_CH2
+CORREL    CH1_CH2_E
+MASK    EMASK
+RE    BL
+STAGE    E
 ```			
 
-First, we'll extract a simple vector of sleep stage (the [`STAGE`](hypnograms.md#stage) variable from the [`STAGE`](hypnograms.md#stage) command):
+First, extract the stage table so it can be joined to the correlations
+by individual and epoch:
 
 ```
-ss <- lx( k , "STAGE" , "E" )$STAGE 
+ss <- k$table("STAGE", "E")
 ```
 
 Second, we'll extract the epoch-by-epoch correlations:
 
 ```
-d <- lx( k , "CORREL" , "CH1" , "CH2" , "E" ) 
+d <- k$table("CORREL", c("CH1", "CH2", "E"))
+d <- merge(d, ss[, c("ID", "E", "STAGE")], by = c("ID", "E"))
 ```
 
 Viewing data-frame `d`, note that the epochs (`E`) do not start at 1,
@@ -326,7 +333,7 @@ head(d)
 Finally, we can plot these epochs: 
 
 ```
-plot( d$E , d$R , col = lstgcols( ss ) , pch=20 , ylab="L-R EOG correlation", xlab="Epoch", ylim=c(-1,1) )
+plot( d$E , d$R , col = lp$stgcol( d$STAGE ) , pch=20 , ylab="L-R EOG correlation", xlab="Epoch", ylim=c(-1,1) )
 abline( h=0 , lty=2 )
 ```
 
@@ -1032,6 +1039,29 @@ results in a `D` stratum with lag in seconds reported as `T`.
 
 Instantaneous phase coupling is computed from narrowband analytic signals obtained via the Hilbert transform. For each sample point, the instantaneous phase difference Δφ between a channel pair is formed from the pre-computed Hilbert phase channels, and a suite of synchrony metrics is derived from these differences across the recording: signed IPC (mean cosine of Δφ), amplitude-weighted IPC (weighted by the minimum of the two instantaneous amplitudes), phase-locking value (mean resultant length of the complex phase difference), and the proportion of samples with phase differences below a threshold. The circular mean phase offset characterizes the preferred phase relationship between channels. When a lag window is specified, the phase series of one channel is shifted across a range of time offsets, and the full set of synchrony metrics is re-evaluated at each lag, enabling characterization of the temporal profile of phase coupling.
 
+IPC processes each retained contiguous data segment by default, without changing the caller's epoch definitions, masks, or epoch iteration state. Contig mode uses retained recording samples, independently of epoch masks; apply `RE` first to remove masked records if that is the intended scope. With `epoch`, IPC instead uses the existing unmasked epochs and writes per-epoch results. If no epochs are defined, it uses default epochs locally and leaves the caller unepoched. With no usable intervals, IPC writes no results and adds no channels. Targets with the same actual channel identity as the seed are excluded from every output, including seed-average channels.
+
+**Summary weighting is unchanged:** each finite per-epoch (or per-contiguous-segment) statistic receives equal weight, regardless of duration or number of usable samples. `PHASE` is a circular mean of finite epoch mean phases. `N_TOT` and `N_USED` are sums over intervals; overlapping epochs can count a sample repeatedly. These summaries are not pooled sample statistics. In-phase means `abs(Δφ) < π/6` (strictly within ±30°), not merely a positive cosine.
+
+All Hilbert magnitude and phase channels must share a finite positive sampling rate; fractional rates are retained. Amplitude and phase vectors must have matching lengths. Samples with a nonfinite phase or amplitude in either channel are excluded from usable counts, weighted sums, the gating quantile, and derived aggregates, including with `no-weights`. Numeric parameters must be finite and in their stated ranges.
+
+By default the weight is `min(amplitude_seed, amplitude_target)`, and values below its 30th percentile are gated out. `q` changes that quantile; `th` supplies an absolute threshold and overrides `q`. `no-gate` disables gating but retains amplitude weighting. **`no-weights` disables both weighting and amplitude gating**, even if `q` or `th` is supplied; IPC logs the effective setting. The unweighted `IPC`, `PLV`, `PHASE`, and `P_INPHASE` remain available; `WIPC` summaries are missing in this mode, preserving existing behavior.
+
+At integer sample lag `D`, each interval contributes only its available overlap of `max(0, N−|D|)` samples. Thus lag profiles use progressively shorter overlaps, rather than a common cropped support for all lags. Gates are recomputed on each shifted overlap, and `edge` trims both ends of that overlap before summary calculation. Lag summaries retain equal interval weighting. Positive `D` compares later seed samples with earlier target samples; `T=D/sampling_rate`.
+
+<h3>Derived channels</h3>
+
+`add-channels` writes a channel for each non-self seed–target pair containing `w(t) × cos(Δφ(t))`; this is an amplitude-weighted waveform, distinct from the normalized `WIPC` summary. `add-channels=seed` writes one channel per seed containing `Σ_target w(t) cos(Δφ(t)) / Σ_target w(t)`. With `no-weights`, these become pairwise cosines or their mean across valid non-self targets. A seed with no non-self targets adds no channel. `prefix` defaults to `IPC_`.
+
+Values are placed at their original recording sample positions, rather than concatenating epoch slices:
+
+- Uncovered samples (masked epochs, partial coverage, or gaps between analysis epochs) are filled with zero. Invalid pair values are omitted from seed aggregates and overlap averages; samples with no finite contribution are zero-filled. Zero is a storage fill value, not an indicator that a sample contributed to a summary.
+- Gated pair samples and seed aggregates with zero total weight are zero. When epochs overlap, their finite waveform contributions are averaged at each sample; gated zeros participate in this average. This matters when quantile thresholds differ between epochs.
+- `edge` affects summaries only; it does not trim the stored waveforms.
+- For EDF+D, the buffer contains all retained samples in record order, retaining their original timepoints. No samples are synthesized for recording gaps. Contiguous segments are processed separately. With `add-channels`, an individual epoch spanning an EDF+D gap (for example, gap-spliced epochs) is rejected explicitly.
+
+Derived labels must be available before computation; IPC rejects collisions instead of overwriting an existing channel.
+
 <h3>Parameters</h3>
 
 | Parameter | Example | Description |
@@ -1039,18 +1069,19 @@ Instantaneous phase coupling is computed from narrowband analytic signals obtain
 | `sig` | `sig=C3,C4,F3,F4` | Channels to analyse (default: all channels) |
 | `sig1` | `sig1=C3` | Alternatively, specify seed channels |
 | `sig2` | `sig2=C4,F3,F4` | Non-seed channels to pair with `sig1` |
-| `w` | `w=0.5` | Also emit lag-resolved IPC summaries from `-w` to `+w` seconds |
-| `add-channels` | | Write new IPC waveform channels to the EDF; optionally set to `seed` to limit to seed-pair channels |
+| `epoch` | | Use unmasked existing epochs (local default epochs if none) and emit per-epoch rows |
+| `w` | `w=0.5` | Emit lag profiles over ±`w` seconds using progressively shorter overlaps; finite and nonnegative |
+| `no-weights` | | Disable amplitude weighting and gating; `WIPC` summaries are missing |
+| `no-gate` | | Disable amplitude gating while retaining weights |
+| `q` | `q=0.30` | Gating quantile in `[0,1]`; default 0.30; effective only with weighting and gating |
+| `th` | `th=0.5` | Nonnegative absolute gating threshold; overrides `q` |
+| `edge` | `edge=1` | Nonnegative duration trimmed from both interval edges for summaries only |
+| `add-channels` | `add-channels=seed` | Add pairwise weighted waveforms, or one normalized aggregate across non-self targets per seed |
 | `prefix` | `prefix=IPC_` | Label prefix for new channels (default `IPC_`) |
-
-!!! note
-    Internally, [`IPC`](cc.md#ipc) uses amplitude weighting based on the minimum
-    instantaneous amplitude of the two analytic signals and suppresses very
-    low-amplitude samples before forming weighted summaries.
 
 <h3>Output</h3>
 
-Output strata: `CH1 × CH2`
+Output strata: `CH1 × CH2` for summaries; `CH1 × CH2 × E` for per-epoch rows with `epoch`. Summary and lag rows have no epoch level. Both channel levels are present on every row.
 
 | Variable | Description |
 |---|---|
@@ -1058,9 +1089,9 @@ Output strata: `CH1 × CH2`
 | `N_USED` | Number of valid sample points contributing to the summaries after excluding unusable points |
 | [`IPC`](cc.md#ipc) | Mean signed zero-lag coherence, i.e. the average of `cos(Δφ)` across samples; ranges from `+1` (consistently in-phase) to `-1` (consistently anti-phase), with values near `0` indicating no stable zero-lag alignment |
 | `WIPC` | Weighted version of [`IPC`](cc.md#ipc) in which the per-sample weight is the minimum of the two instantaneous amplitudes; by default, very low-amplitude samples are also excluded before the summary is formed |
-| `PLV` | Weighted phase-locking value, i.e. the magnitude of the weighted circular mean of `exp(iΔφ)`; ranges from `0` to `1` and reflects consistency of the phase difference irrespective of whether the preferred offset is `0`, `π`, or another fixed angle |
+| `PLV` | Phase-locking value (amplitude-weighted unless `no-weights`), i.e. the magnitude of the weighted circular mean of `exp(iΔφ)`; ranges from `0` to `1` and reflects consistency of the phase difference irrespective of whether the preferred offset is `0`, `π`, or another fixed angle |
 | `PHASE` | Circular mean phase difference (radians), indicating the preferred phase offset between the two channels |
-| `P_INPHASE` | Fraction of used samples with `|Δφ| < π/6`, i.e. phase differences within 30 degrees of zero |
+| `P_INPHASE` | Fraction of used samples with `abs(Δφ) < π/6`, i.e. phase differences within 30 degrees of zero |
 
 Lag-profile output with `w` (strata: `CH1 × CH2 × D`)
 
@@ -1087,7 +1118,13 @@ IPC sig=C3,C4,F3,F4
 % Extract pairwise results
 destrat out.db +IPC -r CH1 CH2
 
+% Optional: use existing unmasked epochs, with a normalized channel per seed
+EPOCH len=30
+IPC sig1=C3,C4 sig2=C3,C4,F3,F4 epoch add-channels=seed
+
 % Optional: lag-resolved phase synchrony profile over +/- 0.5 seconds
 IPC sig=C3,C4 w=0.5
 destrat out.db +IPC -r CH1 CH2 D
 ```
+
+**Implementation correction:** earlier IPC paths could exhaust iteration after the first seed, access empty results, replace caller epoching in contig mode, or mislabel summary/lag rows. Derived channels could also concatenate epoch slices out of recording alignment and include self-targets. Corrected outputs can differ from earlier results; equal weighting of interval summaries and the strict ±30° in-phase definition are retained.

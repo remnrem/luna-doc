@@ -2,7 +2,7 @@
 
 _Commands to define epochs for an EDF, and to attach annotations after loading an EDF_
 
-Epochs are fixed-length time windows into which Luna divides a recording for analysis — by default 30 seconds, matching AASM sleep staging convention. Most commands that operate on time-series data require epochs to be defined first, either explicitly with [`EPOCH`](epochs.md#epoch) or implicitly (Luna applies a 30-second default if none has been set). [`EPOCH`](epochs.md#epoch) also supports overlapping windows (e.g. 4-second epochs in 2-second steps) and annotation-based generic epochs. `EPOCH-ANNOT` loads an epoch-level annotation file in `.eannot` format, attaching stage or other labels to each epoch.
+Epochs are time windows that Luna uses to organize a recording for analysis — by default fixed-length, non-overlapping 30-second intervals, matching AASM sleep staging convention. Most commands that operate on time-series data require epochs to be defined first, either explicitly with [`EPOCH`](epochs.md#epoch) or implicitly (Luna applies a 30-second default if none has been set). [`EPOCH`](epochs.md#epoch) also supports overlapping windows (e.g. 4-second epochs in 2-second steps) and annotation-based generic epochs. `EPOCH-ANNOT` loads an epoch-level annotation file in `.eannot` format, attaching stage or other labels to each epoch.
 
 | Command   | Description |
 |------|---|
@@ -16,7 +16,7 @@ Epochs are fixed-length time windows into which Luna divides a recording for ana
 
 ## Epoch types
 
-_Epochs_ are time intervals that span the recording. Many Luna
+_Epochs_ are time intervals selected from a recording. Many Luna
 commands either explicitly or implicitly rely on epochs being
 defined. Epoching an EDF is often a first step that is required for
 many other Luna functions that work with epoched data.
@@ -29,23 +29,32 @@ By default, epochs are non-overlapping, of fixed duration (30 seconds)
 and contiguous with respect to clock-time (i.e.  not spanning gaps in
 the recording). These epoch properties can be changed in various ways:
 
- - `dur`: epoch duration can be set to any duration in seconds, e.g. 5 seconds with `dur=5`
+ - `len` (or `dur`): set the epoch duration in seconds, e.g. `EPOCH len=5`
+   for 5-second epochs.
 
- - `inc`: the increment by default equals `dur` implying adjacent but
- non-overlapping epochs (e.g. 0-30 seconds, 30-60, 60-90, etc). If
- `inc` is set to a different value, epochs can either be overlapping
- or (less likely) spaced.  For example, with `inc=15`: 0-30, 15-45,
- 30-60, 45-75, etc).
+ - `inc`: set the interval between successive epoch starts. By default,
+   this equals the epoch duration, giving adjacent, non-overlapping epochs.
+   For example, `EPOCH len=30 inc=15` defines overlapping intervals of
+   0–30, 15–45, 30–60 seconds, and so on. An increment greater than the
+   duration leaves spaces between epochs.
 
-TODO
- - `annot`: __generic__ or _annotation-based_ epochs can be  ... ___Fixed versus generic epochs:___ The most basic type of epoch is of fixed length (e.g. 30 seconds).
-Epochs can be overlapping, e.g. shifting in 15 second increments
-however, but by default, epochs are contiguous but not overlapping.
-In contrast, _generic_ epochs are those of potentially variable
-duration, defined by existing [annotations](annotations.md); this is
-the most flexible form of epoch.
+ - `annot`: define __generic__ (annotation-based) epochs from existing
+   [annotations](annotations.md), rather than a regularly spaced grid.
+   For example, `EPOCH annot=Obstructive_Apnea,Hypopnea flatten=F` makes
+   each distinct matching annotation interval an epoch, using the event's
+   start and stop times. These epochs can vary in duration, overlap, and
+   leave parts of the recording outside any epoch. By default (`flatten=T`),
+   overlapping or contiguous source intervals are merged first. Generic epochs
+   allow epoch-based analyses to follow
+   events of interest; optional windows can extend each event or center an
+   epoch on its start, midpoint, or stop, as illustrated below.
 
- - `splice-gaps`: 
+ - `contig`: define one generic epoch per contiguous segment of available
+   signal data, with potentially different durations between segments.
+
+ - `splice-gaps`: allow fixed-length epochs to combine signal data across
+   gaps in an EDF+D recording, excluding the gap duration from the epoch.
+   By default, epochs do not span recording gaps.
 
 
 ![img](../img/epoch-splice1.png){width="100%"}
@@ -63,80 +72,191 @@ to use generic epochs with a command that does not accept them.
 
 _Divides the time series into epochs_
 
-This command can define either standard or generic epochs. 
+This command defines standard fixed-length epochs, annotation-based generic epochs, or one generic epoch per contiguous data segment.
 
 <h3>Methods</h3>
 
-The recording is partitioned into fixed-length, non-overlapping or overlapping epochs by advancing a window of specified duration through the signal at a specified increment. If the increment equals the epoch length the partition is non-overlapping (the standard 30-second sleep epoch); if the increment is shorter, consecutive epochs overlap by the difference between length and increment. Epoch boundaries can be aligned to the first occurrence of a specified annotation class (e.g., the first scored sleep stage), allowing epoch numbering to be anchored to a biologically meaningful reference point rather than the EDF start time.
+Standard epochs advance a fixed-length window through the recording at a
+specified increment. Equal length and increment give non-overlapping epochs;
+a smaller increment gives overlapping epochs. The grid can start at an
+explicit offset or align to the first matching annotation. By default,
+epochs do not cross recording gaps; `splice`/`splice-gaps` instead construct
+epochs from available signal data across those gaps.
+
+With `annot=`, existing annotation intervals define generic epochs. Source
+intervals are merged by default, then optionally reduced to an anchor point,
+expanded, shifted, or truncated. `fixed=` subdivides the resulting intervals
+into equal-length epochs. These remain generic epochs even when their lengths
+are equal. Alternatively, `contig` creates one generic epoch for each
+contiguous segment of available data.
 
 <h3>Parameters</h3>
 
-Without any parameters set, the default is 30-seconds, with no overlap
-(i.e. 30-second increments, equivalent to `len=30` or `epoch=30`).  In
-general, if the increment is not specified, it defaults to the epoch
-length (i.e. no overlap between epochs).
+<h4>Standard epoch length and spacing</h4>
 
-By default, epochs start at 0 seconds (start of EDF).
+Without parameters, `EPOCH` uses 30-second, non-overlapping epochs starting
+at the beginning of the EDF. If the increment is omitted, it equals the
+specified epoch length.
 
-| Parameter | Example |Description |
-| --- | --- | --- | 
-| `len`  | 30 | Epoch length (seconds), defaults to 30 |
-| `inc`  | 30 | Epoch increment (seconds), defaults to `len` (i.e. no overlap) |
-| `epoch` | 30,15 | Epoch length{,increment} (seconds), defaults to 30,30 |
-| `require` | 10 | Stop processing that EDF if there are not at least _N_ epochs | 
-| `align` | `N1,N2,N3,R,W,?` | Align epoch starts with the first of these annotations |
-| `offset` | 10 | Explicitly set start time for first epoch (seconds) |
-| `clear` | | Reset any defined epochs |
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `len` | `len=30` | Epoch length in seconds; default 30 |
+| `dur` | `dur=30` | Alias for `len` |
+| `inc` | `inc=15` | Increment between epoch starts in seconds; defaults to the epoch length |
+| `epoch` | `epoch=30,15` | Epoch length and optional increment, equivalent to `len=30 inc=15` |
 
-_Note: if `align` is not given an explicit argument, it defaults to `N1,N2,N3,R,W,?,L,U,M` - i.e.
-a list of common stage annotations._
+<h4>Standard epoch alignment and gaps</h4>
 
-Output options 
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `offset` | `offset=10` or `offset=22:00:00` | First epoch start as elapsed seconds or clock time; fractional seconds are supported |
+| `align` | `align=N1,N2,N3,R,W,?` | Start the epoch grid at the first matching annotation |
+| `splice` | | Construct fixed-length epochs across EDF+D gaps, counting available data rather than gap duration |
+| `splice-gaps` | | Alias for `splice` |
 
-| Parameter | Example |Description |
-| --- | --- | --- | 
-| `min` | | Minimal output: writes the number of epochs to standard output | 
-| `verbose` |  | Output epoch-level information when setting epochs |
-| `table` | | As `verbose` except do not change the current epochs, only output the table |
+`offset` and `align` cannot be combined. Clock-time offsets require a valid
+EDF start time and cannot precede it. A bare `align` defaults to
+`N1,N2,N3,R,W,?,L,U,M`.
 
-Generic epochs
+<h4>Generic epoch sources and merging</h4>
 
-| Parameter | Example |Description |
-| --- | --- | --- | 
-| `annot` | `spindle` | Set generic epochs based on existing annotations |
-| `w` | `5` |  Expanded window (seconds) both before and after each annotation |
-| `w-before` | `5` | Extend annotation `w-before` seconds before the start point |
-| `w-after` | `5` |  Extend annotation `w-after` seconds after the stop point |
-| `start` | | Reduce annotations to their start (designed to work with `w` ) |
-| `midpoint` | | Reduce annotations to their midpoint (designed to work with `w` ) |
-| `stop` | | Reduce annotations to their stop (designed to work with `w` ) |
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `annot` | `annot=Obstructive_Apnea,Hypopnea` | Define generic epochs from matching annotation classes; accepts comma-separated labels and wildcards |
+| `flatten` | `flatten=F` | Merge overlapping or contiguous source intervals before further adjustments; default `T`. Set `F` to keep distinct intervals separate |
+| `else` | `else=OTHER` | Add complementary epochs and a new annotation class for recording regions not covered by the adjusted event intervals; respects recording gaps |
+| `contig` | | Instead of annotation-based epochs, define one generic epoch per contiguous segment of available data |
 
+Use `annot` or `contig` to select a generic epoch mode. The remaining generic
+options apply to `annot`, not `contig`. The label supplied to `else` must not
+already exist, and `else` cannot be combined with `fixed`.
+
+<h4>Generic epoch anchors and windows</h4>
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `start` | | Reduce each source interval to its start before expanding a window |
+| `midpoint` | | Reduce each source interval to its midpoint before expanding a window |
+| `stop` | | Reduce each source interval to its stop before expanding a window |
+| `w` | `w=5` | Expand by this many seconds on both sides of the interval or selected anchor |
+| `w-before` | `w-before=2` | Expand the left side by this many seconds |
+| `w-after` | `w-after=5` | Expand the right side by this many seconds |
+| `shift` | `shift=0.25` | Shift the adjusted interval in seconds; positive moves later, negative moves earlier |
+| `trunc` | `trunc=0.1` | Remove this many seconds from the end of the adjusted interval; must be nonnegative |
+
+Choose at most one anchor option. Without an anchor option, window expansion
+extends the original interval. `w` cannot be combined with `w-before` or
+`w-after`; window values must be nonnegative.
+
+These anchor and window options take effect only with `annot=`. For example,
+`EPOCH start w-after=5` succeeds but ignores both options, creating standard
+30-second epochs (`GENERIC=0`).
+
+With `annot=`, using `start`, `midpoint`, or `stop` requires a combined
+before/after window duration of at least 0.001 seconds. Either side may be
+zero or omitted: `start w-after=5` defines the 5 seconds following the event
+start, while `stop w-before=5` defines the 5 seconds preceding its end.
+With `w=5`, the combined duration is 10 seconds. The separate `min` duration
+filter still applies after window adjustments.
+
+Earlier builds incorrectly required both sides to be nonzero and rejected
+one-sided anchored windows; this validation was corrected on 21 November 2026.
+
+<h4>Generic epoch duration and subdivision</h4>
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `fixed` | `fixed=5` | Divide each adjusted source interval into complete epochs of this duration in seconds; discard any shorter remainder. Must exceed 0.001 seconds |
+| `only-one` | | With `fixed`, retain only the first complete epoch from each adjusted source interval |
+| `min` | `min=0.1` | Minimum duration of event-derived epochs in seconds, before adding any `else` intervals; default 0.1, minimum permitted value 0.001 |
+| `debug` | | Log details of annotation-based epoch construction |
+
+With `flatten=T`, fixed-size subdivision operates on merged source intervals.
+Set `flatten=F` to subdivide each distinct source interval separately.
+`only-one` requires `fixed`.
+
+The processing order is: source merging/intersection with available data
+(unless `flatten=F`), anchor selection, window expansion, shift, end
+truncation, then fixed-size subdivision if requested. Resulting epochs that
+extend outside available data or span recording gaps are skipped. Merging
+occurs before window adjustments, so expanded or shifted epochs can overlap
+even with the default `flatten=T`.
+
+<h4>Epoch requirements and reset</h4>
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `require` | `require=10` | Stop processing the current EDF if fewer than this many epochs are available; supported in standard, annotation-based, and contiguous-segment modes |
+| `clear` | | Remove existing epoch definitions, leaving signals unepoched |
+
+A standalone `EPOCH require=N` checks an existing epoch definition without
+redefining it. If none exists, the check sees zero epochs; run `EPOCH` first to define
+default epochs. To clear
+an epoch definition, use `EPOCH clear` separately from the generic modes.
+
+<h4>Inspection and output control</h4>
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `verbose` | | Emit per-epoch information when defining epochs |
+| `dump` | | Report the current epoch table without changing the epoch definition |
+| `table` | | Alias for `dump` |
+| `masked` | | With `dump`/`table`, include masked epochs and report their mask status |
+| `min` | | In standard mode, write only the number of epochs to standard output |
+
+`dump`/`table` take precedence over epoch-definition options. If no epochs
+exist, they report that fact without creating any. By default, inspection
+shows only unmasked epochs. **`min` has two meanings:** with `annot`, it
+requires a numeric minimum duration; in standard mode, it is the minimal
+output flag shown above.
 
 <h3>Outputs</h3>
 
-Basic summary information (strata: _none_)
+Summary information (strata: _none_)
 
 | Variable | Description |
 | --- | --- |
-| `DUR` | Epoch duration (as per the input) |
-| `INC` | Epoch increment (as per the input) |
-| `NE` | Number of epochs in the EDF, given `DUR` and `INC` |
-| `GENERIC` | Flag to indicate whether epochs are _generic_ (0/1) |
-| `OFFSET` | Any offset (from EDF start) |
+| `NE` | Number of unmasked epochs |
+| `NE_MASKED` | Number of masked epochs, when inspecting with `masked` |
+| `DUR` | Epoch duration in seconds; emitted for standard epochs and generic epochs created with `fixed` |
+| `INC` | Epoch increment in seconds; standard epochs only |
+| `OFFSET` | Offset from EDF start in seconds; standard epochs only |
+| `GENERIC` | 1 for generic epochs, including `fixed` annotation-based and `contig` epochs; otherwise 0 |
+| `FIXED_DUR` | Fixed epoch duration in seconds, or 0 for variable-length epochs; currently reported as an integer, truncating fractional seconds |
+| `CONTIG` | 1 when epochs were defined with `contig`; otherwise 0 |
 
-Per-epoch interval information (option: `verbose`, strata: `E`)
+!!! note "Generic epoch duration summaries"
+    In the current implementation, summary `DUR` and `FIXED_DUR` can be 0
+    even for generic epochs created with `fixed`. Use the per-epoch `DUR`
+    values to obtain their actual durations.
+
+Recording coverage (strata: _none_; durations in seconds)
 
 | Variable | Description |
 | --- | --- |
-|`E1`       | Current epoch number (which may differ from `E` if the EDF has been restructured) |
-|`DUR`      | Epoch duration (secs) | 
-|`LABEL`    | Epoch label |
-|`HMS`      | Clock-time for epoch start (hh:mm:ss) | 
-|`INTERVAL` | String label of epoch interval (seconds) |
-|`MID`      | Midpoint of epoch (seconds elapsed from EDF start) |
-|`START`    | Start of epoch (seconds elapsed from EDF start) | 
-|`STOP`     | Stop of epoch (seconds elapsed from EDF start) |
-|`TP`       | Epoch interval in time-points (1TP = 1e-9 sec) |
+| `TOT_DUR` | Sum of epoch durations; overlapping time is counted once per epoch |
+| `TOT_SPANNED` | Duration covered by at least one epoch, counting overlapping time only once |
+| `TOT_UNSPANNED` | Recording duration not covered by any epoch |
+| `TOT_REC` | Available recording duration |
+| `TOT_PCT` | Fraction of available recording duration covered by epochs, from 0 to 1; despite the name, this is not multiplied by 100 |
+
+Coverage summaries normally include only unmasked epochs. With `dump masked`
+(or `table masked`), they include both masked and unmasked epochs.
+
+Per-epoch interval information (option: `verbose`, `dump`, or `table`; strata: `E`)
+
+| Variable | Description |
+| --- | --- |
+| `E1` | Current epoch number, which may differ from `E` after restructuring |
+| `EMASK` | 1 if the epoch is masked, otherwise 0; emitted with `dump masked`/`table masked` |
+| `DUR` | Epoch duration in seconds |
+| `LABEL` | Epoch label; annotation-based epochs use a combined label identifying the selected source annotation classes |
+| `HMS` | Clock time for epoch start, when the EDF start time is valid |
+| `INTERVAL` | Start and stop in elapsed seconds |
+| `MID` | Epoch midpoint in seconds from EDF start |
+| `START` | Epoch start in seconds from EDF start |
+| `STOP` | Epoch stop in seconds from EDF start |
+| `TP` | Epoch interval in time-points (1 TP = 1e-9 seconds) |
 
 <h3>Example</h3>
 
@@ -149,9 +269,9 @@ showing the first six epochs):
 luna my.edf -o out.db -s ' EPOCH len=10 inc=5 verbose ' 
 ```
 
-To get the number of epochs set:
+The following extracts selected summary columns:
 ```
-destrat out.db +EPOCH
+destrat out.db +EPOCH -v DUR GENERIC INC NE OFFSET
 ```
 ```
 ID      DUR   GENERIC   INC     NE   OFFSET
@@ -198,7 +318,7 @@ nsrr01  14  30  5 22:04:47  390.00->420.00   E14  405   390  420 390000000000->4
     ```
     Output from the first (untagged) [`EPOCH`](epochs.md#epoch):
     ```
-    destrat out.db +EPOCH -r R
+    destrat out.db +EPOCH -r R -v DUR GENERIC INC NE OFFSET
     ```
     ```
     ID      R  DUR  GENERIC  INC    NE  OFFSET
@@ -208,71 +328,103 @@ nsrr01  14  30  5 22:04:47  390.00->420.00   E14  405   390  420 390000000000->4
     i.e. note the difference in `NE`.
 
 
-<h4>Generic epochs</h4>
+<h4>Annotation-based epochs</h4>
 
-Generic epochs are those based on existing _annotations_.  One or more
-annotation labels follow the `annot` option of [`EPOCH`](epochs.md#epoch): e.g.
+To treat each distinct respiratory-event interval as an epoch:
+
 ```
-EPOCH annot=Obstructive_Apnea,Hypopnea 
+EPOCH annot=Obstructive_Apnea,Hypopnea flatten=F verbose
 ```
 
-will define epochs based on apnea or hypopnea events.  Note that
-generic epochs can be a variable size, and can overlap.  Running the above (with `verbose`)
-produces the following outputs:
-```
-destrat out.db +EPOCH 
-```
-```
-ID      GENERIC   NE
-nsrr02        1  106
-```
-Note the `GENERIC` is now set to 1, but there is no information on epoch duration - i.e. because it may vary between epochs.  That information
-is available in the epoch-stratified output (requested by `verbose`):
-```
-destrat out.db +EPOCH -r E 
-```
-```
-ID     E DUR  E1      HMS         INTERVAL     LABEL  MID     START  STOP   TP
-nsrr02 1 10.8  1 22:08:49 3043.70->3054.50  Hypopnea  3049.1  3043.7 3054.5 3043700000000->3054500000000
-nsrr02 2 10.5  2 22:16:53 3527.30->3537.80  Hypopnea  3532.55 3527.3 3537.8 3527300000000->3537800000000
-nsrr02 3 13    3 22:53:44 5738.40->5751.40  Hypopnea  5744.9  5738.4 5751.4 5738400000000->5751400000000
-nsrr02 4 10.5  4 22:55:43 5857.90->5868.40  Hypopnea  5863.15 5857.9 5868.4 5857900000000->5868400000000
-nsrr02 5 16.1  5 22:56:01 5875.30->5891.40  Hypopnea  5883.35 5875.3 5891.4 5875300000000->5891400000000
-nsrr02 6 15.9  6 22:59:33 6087.20->6103.10  Hypopnea  6095.15 6087.2 6103.1 6087200000000->6103100000000
-... (etc) ...
-```
-The `DUR` is the duration of each epoch (which here matches the duration of each hypopnea annotation). The `LABEL` is
-the annotation name (`Hypopnea` or `Obstructive_Apnea`).
+Epoch duration follows each event's duration. Overlapping event intervals
+remain separate with `flatten=F`; omitting it merges overlapping or contiguous
+source intervals before constructing epochs.
 
-Re-running with the altered command: 
-```
-EPOCH annot=Obstructive_Apnea,Hypopnea verbose start w-after=5 
-```
-This should define epochs as 5 seconds, starting at the _start_ of each respiratory event:
-```
-ID     E  DUR E1       HMS          INTERVAL     LABEL  MID    START  STOP   TP
-nsrr02 1  5   1   22:08:49  3043.70->3048.70  Hypopnea  3046.2 3043.7 3048.7 3043700000000->3048700000000
-nsrr02 2  5   2   22:16:53  3527.30->3532.30  Hypopnea  3529.8 3527.3 3532.3 3527300000000->3532300000000
-nsrr02 3  5   3   22:53:44  5738.40->5743.40  Hypopnea  5740.9 5738.4 5743.4 5738400000000->5743400000000
-nsrr02 4  5   4   22:55:43  5857.90->5862.90  Hypopnea  5860.4 5857.9 5862.9 5857900000000->5862900000000
-nsrr02 5  5   5   22:56:01  5875.30->5880.30  Hypopnea  5877.8 5875.3 5880.3 5875300000000->5880300000000
-nsrr02 6  5   6   22:59:33  6087.20->6092.20  Hypopnea  6089.7 6087.2 6092.2 6087200000000->6092200000000
-... (etc) ...
-```
-Now `DUR` is fixed at 5 seconds for each epoch; note how the start times are the same as above (e.g. 3043.70 seconds for the first epoch)
-but now the end is altered, reflecting the effect of `start w=5`.
+For a 10-second window centered on each event's midpoint:
 
-!!! hint "Reducing/expanding annotations to epochs"
-    If requested, note
-    that either `start`, `midpoint` or `stop` are applied first
-    (i.e. shrinking the annotation to a single time-point), followed
-    by either `w`, `w-before` or `w-after` (i.e. expanding the
-    interval either before, after or around (centered on) that
-    time-point.  Note that it is also possible to apply the `w*`
-    expansion options by first reducing the annotations by `start`,
-    `midpoint` or `stop`.  This expands the interval by the requested number
-    of seconds, at either the start (`w-before`), the end (`w-after`) or at both
-    start and end (`w`). 
+```
+EPOCH annot=Obstructive_Apnea,Hypopnea flatten=F midpoint w=5 verbose
+```
+
+For a 5-second window beginning at each event's start:
+
+```
+EPOCH annot=Obstructive_Apnea,Hypopnea flatten=F start w-after=5 verbose
+```
+
+Here the before-window is omitted and defaults to zero. To instead take the
+5 seconds ending at each event's stop:
+
+```
+EPOCH annot=Obstructive_Apnea,Hypopnea flatten=F stop w-before=5 verbose
+```
+
+For an asymmetric window extending 2 seconds before and 5 seconds after
+each event's start:
+
+```
+EPOCH annot=Obstructive_Apnea,Hypopnea flatten=F start w-before=2 w-after=5 verbose
+```
+
+These windows are 7 seconds long. Unlike the default annotation-sized epochs,
+their boundaries are determined by the selected anchor and window sizes.
+Windows that would extend outside available data or span a recording gap
+are skipped.
+
+<h4>Fixed-length epochs within annotations</h4>
+
+To split each distinct respiratory-event interval into complete 5-second epochs:
+
+```
+EPOCH annot=Obstructive_Apnea,Hypopnea flatten=F fixed=5 verbose
+```
+
+For example, a 13-second event yields two 5-second epochs; the final 3 seconds
+are discarded. Add `only-one` to keep just the first 5-second epoch from each
+interval:
+
+```
+EPOCH annot=Obstructive_Apnea,Hypopnea flatten=F fixed=5 only-one verbose
+```
+
+These commands do not expand short events to 5 seconds: an event shorter
+than `fixed` yields no epoch. The resulting epochs remain generic for
+command-compatibility purposes.
+
+<h4>Complementary and contiguous-segment epochs</h4>
+
+To define event epochs and epochs for the remaining recording regions,
+creating a new `OTHER` annotation class for those complementary intervals:
+
+```
+EPOCH annot=Obstructive_Apnea,Hypopnea else=OTHER verbose
+```
+
+This uses the default source merging and respects recording gaps.
+`OTHER` must not already be an annotation class. To subsequently select only
+the complementary epochs, use the new annotation class with `MASK`.
+
+To define one epoch per contiguous segment of available data instead:
+
+```
+EPOCH contig verbose
+```
+
+An uninterrupted recording yields one epoch; a recording with gaps yields
+one per continuous segment. These epochs are generic and may differ in length.
+
+<h4>Inspecting masked epochs</h4>
+
+After applying a mask, inspect all current epochs without changing their
+definition:
+
+```
+EPOCH dump masked
+```
+
+The per-epoch table includes `EMASK`, and the summary reports `NE` and
+`NE_MASKED`. Omitting `masked` reports only unmasked epochs. `EPOCH table masked`
+is equivalent.
 
 
 ## EPOCH-ANNOT

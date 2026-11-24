@@ -108,110 +108,46 @@ designed via the Kaiser window method with a ripple parameter
 FILTER sig=C3 bandpass=0.3,35 ripple=0.01 tw=0.5
 ```
 
-In this second example, we use [_lunaR_](../ext/R/index.md) to copy a
-signal, apply different bandpass filters to each duplicate
-(corresponding to delta, theta, alpha, sigma and beta frequency bands)
-and then plot the results.  Here we use the individual `nsrr02` from
-the [tutorial](../tut/tut1.md) dataset. In R, where we assume that the
-current directory is the one in which we unzipped the tutorial dataset
-(i.e. and so the `s.lst` sample-list is present), we'd enter the following:
+In this second example, use the [R package `luna`](../ext/R/index.md)
+to copy the EEG into five frequency bands and plot one epoch. Run R
+from the tutorial directory containing `s.lst`:
 
-
-```
+```r
 library(luna)
-lattach( lsl( "s.lst" ) , "nsrr02" )
-```
-```
-nsrr02 : 14 signals, 10 annotations, 09:57:30 duration
-```
-For simplicity, we first drop all signals except `EEG` using [`SIGNALS`](manipulations.md#signals):
-
-```
-leval( "SIGNALS keep=EEG" )
-```
-```
-nsrr02 : 1 signals, 10 annotations, 09:57:30 duration
-```
-
-We then duplicate this signal using [`COPY`](manipulations.md#copy)
-five times, giving new labels to each:
-
-```
-leval( "COPY sig=EEG tag=DELTA" )
-leval( "COPY sig=EEG tag=THETA" )
-leval( "COPY sig=EEG tag=ALPHA" )
-leval( "COPY sig=EEG tag=SIGMA" )
-leval( "COPY sig=EEG tag=BETA" )
-```
-By the end, the message in the console reads:
-```
-nsrr02 : 6 signals, 10 annotations, 09:57:30 duration
-```
-Using [`lchs()`](../ext/R/ref.md#lchs), we confirm that all channels have been appropriately added:
-```
-lchs()
-```
-```
-[1] "EEG"       "EEG_DELTA" "EEG_THETA" "EEG_ALPHA" "EEG_SIGMA" "EEG_BETA" 
-```
-We then apply the [`FILTER`](#filter) command to apply a different band-pass filter to each of the channels:
-```
-leval( "FILTER sig=EEG_DELTA bandpass=0.5,4 tw=1 ripple=0.02" )
-leval( "FILTER sig=EEG_THETA bandpass=4,8   tw=1 ripple=0.02" )
-leval( "FILTER sig=EEG_ALPHA bandpass=8,12  tw=1 ripple=0.02" )
-leval( "FILTER sig=EEG_SIGMA bandpass=12,15 tw=1 ripple=0.02" )
-leval( "FILTER sig=EEG_BETA  bandpass=15,30 tw=1 ripple=0.02" )
-```
-
-We then epoch the data using [`lepoch()`](../ext/R/ref.md#lepoch):
-```
-ne <- lepoch()
-```
-```
-nsrr02 : 6 signals, 10 annotations, 09:57:30 duration, 1195 unmasked 30-sec epochs, and 0 masked
-```
-
-We can use the [`ldata()`](../ext/R/ref.md#ldata) function to pull out epochs of data for all 6 signals (i.e. as specified by giving `lchs()` as the second argument),  e.g. here for epoch 135:
-```
-d <- ldata( 135 , lchs() )
-```
-Looking at the first few rows of the returned data frame `d`: 
-```
-> head(d)
-               INT   E      SEC        EEG EEG_DELTA   EEG_THETA  EEG_ALPHA
-1 4020.00->4050.00 135 4020.000 -0.4901961 -3.473108 -0.06260304  3.4154174
-2 4020.00->4050.00 135 4020.008 -2.4509804 -3.452390 -0.53536473  2.2660953
-3 4020.00->4050.00 135 4020.016 -4.4117647 -3.307357 -1.13706143  0.4709635
-4 4020.00->4050.00 135 4020.024 -5.3921569 -3.051824 -1.76561958 -1.5923434
-5 4020.00->4050.00 135 4020.032 -6.3725490 -2.678883 -2.30284877 -3.4422047
-6 4020.00->4050.00 135 4020.040 -7.3529412 -2.188535 -2.65204775 -4.5915269
-   EEG_SIGMA   EEG_BETA
-1 -1.9357408 -0.2801375
-2 -2.7737269  1.0227155
-3 -2.3793805  1.6093081
-4 -0.9104402  0.8806983
-5  0.9774931 -0.6320931
-6  2.4513626 -1.3668775
-```
-
-We can plot a data frame in this format with a R's internal functions, such as:
-
-```
-f1 <- function(d) {
-par(mfcol=c(6,1),mar=c(0,5,0,0))
-plot( d$EEG , type="l" , col=rgb(50,50,50,100,max=255) , axes=F , ylab="Raw" )
-plot( d$EEG_DELTA , type="l" , col=rgb(200,100,00,150,max=255) , axes=F , ylab="Delta" )
-plot( d$EEG_THETA , type="l" , col=rgb(100,200,0,150,max=255) , axes=F , ylab="Theta" )
-plot( d$EEG_ALPHA , type="l" , col=rgb(0,200,100,150,max=255) , axes=F , ylab="Alpha" )
-plot( d$EEG_SIGMA , type="l" , col=rgb(0,0,100,150,max=255) , axes=F , ylab="Sigma" )
-plot( d$EEG_BETA ,  type="l" , col=rgb(100,0,100,150,max=255) , axes=F , ylab="Beta" )
+proj <- lp$proj()
+proj$sample_list("s.lst")
+inst <- proj$inst("nsrr02")
+inst$eval("SIGNALS keep=EEG")
+bands <- list(DELTA = c(0.5, 4), THETA = c(4, 8), ALPHA = c(8, 12),
+              SIGMA = c(12, 15), BETA = c(15, 30))
+for (band in names(bands)) {
+  label <- paste0("EEG_", band)
+  limits <- bands[[band]]
+  inst$eval(sprintf(
+    "COPY sig=EEG new=%s & FILTER sig=%s bandpass=%s,%s tw=1 ripple=0.02",
+    label, label, limits[1], limits[2]
+  ))
 }
+inst$chs()
+inst$epoch("len=30")
+d <- inst$slice(inst$e2i(135), inst$chs()$Channels, time = TRUE)
+head(d)
 ```
 
-Then, running `f1( d )` will produce this plot (although, note that different
-signals are not uniformly scaled in this particular representation):
+Each channel is a column in the returned data frame; `T` gives seconds
+from recording start. Plot the raw EEG and its filtered copies:
 
-![img](../img/band-filters.png){width="100%"}
+```r
+par(mfrow = c(6, 1), mar = c(2, 4, 1, 1))
+for (ch in c("EEG", paste0("EEG_", names(bands)))) {
+  plot(d$T, d[[ch]], type = "l", xlab = "Seconds", ylab = ch)
+}
+par(mfrow = c(1, 1))
+```
+
+The panels have separate vertical scales, as in this illustration:
+
+![Raw and band-filtered EEG](../img/band-filters.png){width="100%"}
 
 
 ## FILTER-DESIGN
@@ -374,4 +310,3 @@ plot(d$F, d$MAG_DB, type="l",lwd=2,col="blue", xlab="Hz",ylab="Magnitude (dB)")
 ```
 
 ![img](../img/fir2.png){width="100%"}
-

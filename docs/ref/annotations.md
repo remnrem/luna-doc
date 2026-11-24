@@ -1066,7 +1066,13 @@ when building per-subject annotation tables at scale.
 
 <h3>Methods</h3>
 
-For each ordered seed–query annotation pair, a set of descriptive co-occurrence statistics is computed without resampling. Overlap metrics (proportion, duration, and count of query events spanning each seed event) are derived by intersecting seed and query interval sets. Nearest-event distances are computed as the signed time from each seed event to the temporally closest query event, with the sign indicating whether the query precedes (negative) or follows (positive) the seed; an optional window restricts which query events are considered. When instance IDs are used, comparisons can optionally be limited to annotation pairs sharing the same instance identifier, enabling channel- or event-level specificity.
+For each ordered seed–query pair, AXA reports descriptive statistics without resampling. Nearest distances use annotation midpoints by default, or `start`/`stop` anchors. Select the nearest anchor on either side (including coincidences), minimizing absolute distance; equal-distance ties choose the preceding target. Signed distance is target minus seed. Self-comparisons retain the same event as a possible match. `w` excludes the selected distance if it exceeds the window; `truncate` instead caps it at ±`w`. With no `w`, distances are unrestricted. Empty eligible target lists give `D_N=0`, with `D` and `DABS` missing.
+
+**Correction affecting previous results:** older AXA versions could overwrite a nearer target with a farther preceding target, skipped point seeds, and did not report distances without `w`. Corrected `D`, `DABS` and `D_N` can therefore differ from earlier results.
+
+Point seeds and targets contribute to distances, including exact zero-distance coincidences. Interval-overlap calculations are unchanged: only positive-duration seeds contribute to `P`, `T`, `N`, `A`, `TOT_N`, and `TOT_T`. For mixed point/interval seed classes, the denominator of overlap means/proportions is the number of positive-duration seeds; point seeds are excluded. For point-only seed classes these overlap measures are omitted. `D_N` counts contributing seeds, including points.
+
+With `bg`, background intervals are merged when overlapping or contiguous. Anchors outside the resulting half-open segments are excluded, and nearest matches cannot cross gaps. An anchor on a segment's left edge belongs to it; one on its right edge does not. This restriction uses the selected anchor, without clipping event intervals for legacy overlap calculations. Without `bg`, ordinary distance analysis retains unrestricted background behavior. Existing channel, instance, flattening and pair-selection options still apply.
 
 <h3>Parameters</h3>
 
@@ -1077,10 +1083,12 @@ For each ordered seed–query annotation pair, a set of descriptive co-occurrenc
 | `match-instance` | | Only compare annotations with matching instance IDs [`by-instance`] |
 | `flatten` | | Flatten overlapping events within each annotation class before comparisons |
 | `within-channel` | | Restrict comparisons to annotations sharing the same channel |
-| `start` | | Anchor nearest-distance comparisons to annotation starts |
-| `stop` | | Anchor nearest-distance comparisons to annotation stops |
-| `w` | `w=5` | Search window (seconds) for nearest-event distance; events beyond the window are excluded (unless `truncate`) |
-| `truncate` | | Truncate nearest distances to the window rather than excluding them |
+| `start` | | Use annotation starts for nearest distances and offset profiles (default: midpoints) |
+| `stop` | | Use annotation stops for nearest distances and offset profiles (default: midpoints) |
+| `w` | `w=5` | Maximum absolute nearest distance (seconds); exclude selected distances beyond it unless `truncate`; unrestricted when omitted |
+| `truncate` | | Cap selected nearest distances at ±`w` rather than excluding them; alias: `trunc` |
+| `bg` | `bg=EPOCHED` | Explicit background annotation(s); restrict anchors and prevent nearest matches across gaps; required for `offset` |
+| `offset` | `offset=5,1,50` | Optional anchor-rate profile: width, increment, maximum window-start displacement, in seconds; independent of `w` |
 | `verbose` | | Write additional event-level detail to the console |
 
 <h3>Output</h3>
@@ -1095,9 +1103,43 @@ Output strata: `SEED × ANNOT` (or `CH × SEED × ANNOT` with `within-channel`)
 | `A` | Proportion of seed events with at least one spanning query event |
 | `D` | Mean signed distance to nearest query event (seconds; negative = query precedes seed) |
 | `DABS` | Mean absolute distance to nearest query event |
-| `D_N` | Number of seed events for which a nearest query event was found within the window |
+| `D_N` | Number of contributing seed events after window exclusion or truncation (including points) |
 | `TOT_N` | Total number of (flattened) query annotation intervals spanning any seed |
 | `TOT_T` | Total duration (seconds) of query annotations spanning any seed |
+
+<h3>Optional offset-rate profile</h3>
+
+```
+AXA annot=A,B start w=50 bg=EPOCHED offset=5,1,50
+```
+
+This optional descriptive calculation is off unless `offset` is supplied; it uses no permutations. Prefer actual retained analysis intervals, such as `EPOCHED`, to broader sleep-stage backgrounds. `bg` must be supplied; AXA never infers offset exposure from the last event.
+
+The window convention follows OVERLAP: for width `b`, increment `i` and maximum start displacement `m`, use `[s,s+b)` and `[-s-b,-s)` for `s=0,i,2i,…≤m`. Thus **`offset=5,1,50` has centres ±2.5 through ±52.5 seconds**, not a zero-centred ±50 grid. `OFFSET` reports the actual centre and `INT` the signed half-open bounds. `w` only restricts nearest-event summaries; it does not clip this profile.
+
+For each retained seed anchor, intersect each offset window with its containing background segment. Count **all target anchors** in this intersection and sum its duration as exposure. Both seed and target anchors use the same `start`, `stop`, or default midpoint selection. Point seeds are included. Repeated anchors from distinct retained intervals count separately. Overlapping seed windows can count a target repeatedly and also accumulate exposure repeatedly. Windows are half-open: include the left edge, exclude the right. A coincident target belongs to `[0,b)`, but not `[-b,0)`.
+
+For segment `k`, let `N_target,k` be the number of retained query anchors, `T_k` its duration, and `Exposure_k(δ)` the summed clipped window duration. The **baseline-rate expectation** is
+
+```text
+N_EXP_RATE(δ) = Σ_k (N_target,k / T_k) × Exposure_k(δ)
+ENRICHMENT(δ) = N_OBS(δ) / N_EXP_RATE(δ)
+```
+
+Segment-specific rates prevent differences between segments from being attributed to local enrichment. This is an **anchor-rate profile** for intervals; legacy OVERLAP instead counts interval intersections. It is not generally equivalent to OVERLAP's permutation expectation (which normally shifts seeds). AXA emits no `N_Z` or P-values.
+
+Additional output strata: `SEED × ANNOT × OFFSET`, retaining `CH` with `within-channel`.
+
+| Variable | Description |
+|---|---|
+| `INT` | Signed half-open window bounds, seconds |
+| `N_OBS` | Observed seed–target anchor pair count |
+| `EXPOSURE` | Summed available window duration, seconds |
+| `N_EXP_RATE` | Segment-specific baseline-rate expected count |
+| `RATE` | `N_OBS / EXPOSURE`, events/second; missing for zero exposure |
+| `ENRICHMENT` | `N_OBS / N_EXP_RATE`; missing for zero exposure or expectation |
+
+For noncoincident point events strictly inside matching windows/background, offset counts agree with OVERLAP `nreps=0`. At exact boundaries, OVERLAP's interval-intersection tests exclude both point-window edges; AXA includes the left edge. OVERLAP also excludes coincident points from its flanking windows. These intentional boundary differences and interval-versus-anchor semantics preclude general exact equivalence.
 
 <h3>Example</h3>
 
@@ -1115,6 +1157,12 @@ AXA annot=spindle,SO within-channel flatten
 Extract results:
 ```
 destrat out.db +AXA -r SEED ANNOT
+```
+
+Extract the optional offset profile (add `CH` with `within-channel`):
+
+```
+destrat out.db +AXA -r SEED ANNOT OFFSET -v INT N_OBS EXPOSURE N_EXP_RATE RATE ENRICHMENT
 ```
 
 ---
@@ -1147,6 +1195,8 @@ Also, there are special cases to
  - merge contiguous or overlapping annotations of a single class (`flatten`)
 
  - cut up longer annotations along the lines of epoch boundaries (`split`)
+
+If an operation produces no instances (e.g. `expr=stim+NR` when no `stim` events overlap `NR`), the new annotation class is not created at all, rather than being left as an empty class. Downstream, the class is then simply absent, e.g. so that [`CONTAINS`](summaries.md#contains) `annot=X skip` behaves as expected. Annotation classes that already existed before `MAKE-ANNOTS` are never removed.
 
 <h3>Methods</h3>
 

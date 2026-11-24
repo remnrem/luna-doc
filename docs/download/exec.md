@@ -13,7 +13,7 @@ this URL: <https://github.com/remnrem/luna-base/releases>.
 Prior to installing Luna binary executables, we strongly recommend
 that you figure out how to do the following:
 
-- figure out to how use your machine's __command prompt__: for macOS, this is the 
+- figure out how to use your machine's __command prompt__: for macOS, this is the
  [Terminal](https://www.wikihow.com/Get-to-the-Command-Line-on-a-Mac); for Windows, this is 
  the [Command Prompt](https://www.wikihow.com/Open-the-Command-Prompt-in-Windows).  The tutorials and 
  examples assume you are running a [bash](https://en.wikipedia.org/wiki/Bash_(Unix_shell)) shell.
@@ -35,64 +35,47 @@ that you figure out how to do the following:
 ## _lunaC_
 
 1. Select the appropriate __binary__ (ZIP/tar archive) from [this
-  table](index.md#quick-links) (or or visit
-  <https://github.com/remnrem/luna-base/releases>) and select the folder
-  appropriate platform: macOS (Intel or Silicon) or Windows.
-   (Linux users should compile from source.)
+  table](index.md#quick-links) (or visit
+  <https://github.com/remnrem/luna-base/releases>) and select the archive for the
+  appropriate platform: macOS (Intel or Silicon) or Windows. The table
+  provides both pinned **v1.8.0** assets and unpinned **latest release** links;
+  choose one route. (Linux users should compile from source.)
 
-2. Go the the command line on your machine, i.e. the `Terminal` App
+2. Go to the command line on your machine, i.e. the `Terminal` App
 for macOS, or PowerShell for Windows.
 
-3. Unzip/untar the archive, which will extract executables files
+3. Unzip/untar the archive, which will extract executable files
 (e.g. at least `luna`, `destrat` and `behead`) into the _current directory_.  (For
 the Windows download, there will be an additional file,
-`libfftw3-3.dll.)`
+`libfftw3-3.dll`.)
 
 4. Test if it works by typing `luna` or `./luna`.  You should see something like:
 ```
 usage: luna [sample-list|EDF] [n1] [n2] [@parameter-file] [sig=s1,s2] [v1=val1] < command-file
 ```
-To get the version number:
+For the pinned release, verify that the version is 1.8.0 (additional build
+details may also be shown). The unpinned route may report a newer release:
 ```
 luna -v
 ```
 ```
-luna-base version v1.1.0  (release date 11-Oct-2024)
-luna-base build date/time Nov  1 2024 12:54:03
-Eigen library v3.4.0
-sqlite v3.41.2
+luna-base version v1.8.0
 ```
 
 5. To enable running `luna` from any folder, place all three
 (or four) files in a folder that is in your command path
-(e.g. `/usr/local/bin/` or `'C:\Program Files\` for Windows, etc.  Alternatively, add 
+(e.g. `/usr/local/bin/` or `C:\Program Files\` for Windows, etc.). Alternatively, add
 the folder containing these files to your _Path_ environment variable. 
 
 6. Mac users may get a security message about running executables downloaded from the web.
 See [below](#macos-installation-notes) to fix this.
 
-<!---
+## R package `luna`
 
-## _lunaR_
+The R interface is installed directly from `remnrem/lunaR` and does not
+require these command-line binaries. See [R installation](lunar.md)
+for pinned 1.8.0 and unpinned routes.
 
-__For Mac users only__, there will be a second file named `luna_0.2.tgz`.
-This is a binary version of [_lunaR_](../ext/R.md) package.  After
-downloading, type this on the Terminal command line:
-
-```
-R CMD INSTALL luna_0.2.tgz
-```
-
-This should install the `luna` library for R, which can be started
-with the following command (from the R prompt):
-
-```
-library(luna)
-```
-
-See [_lunaR_](../ext/R.md) for more details.
-
---->
 
 
 ## macOS installation notes

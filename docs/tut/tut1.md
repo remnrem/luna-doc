@@ -46,13 +46,13 @@ need to grab them from the web, from the link below:
 
 | ZIP archive (67Mb) containing 3 EDFs, XML annotation files and 'sample list' |
 |----|
-| <http://zzz-luna.org/dist/luna/tutorial.zip> |
+| <https://github.com/remnrem/luna-resources/releases/latest/download/luna-resources-tutorial.zip> |
 
 After downloading, move the ZIP file to your working directory and
 unzip the contents:
 
 ```
-unzip tutorial.zip 
+unzip luna-resources-tutorial.zip
 ```
 
 This should create a folder named `tutorial` containing:

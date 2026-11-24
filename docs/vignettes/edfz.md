@@ -216,7 +216,7 @@ size) hdEEG dataset above:
 - [edfReader](https://cran.r-project.org/package=edfReader) R package: 8 minutes
 - [EEGLAB](https://sccn.ucsd.edu/eeglab/index.php) Matlab toolbox: 8 minutes 30 seconds
 - _lunaC_: 2 minutes 48 seconds 
-- _lunaR_: 2 minutes 45 seconds  
+- Earlier compiled R interface (historical benchmark): 2 minutes 45 seconds
 
 Although not formally checked, EEGLAB (using the Biosig toolbox) also
 appeared to use more than double the amount of RAM compared to Luna

@@ -422,7 +422,9 @@ _Re-references signals with respect to one or more other signals_
 
 <h3>Methods</h3>
 
-EEG signals are re-referenced by subtracting a reference signal (or the average of multiple reference signals) from each target channel. When a single reference channel is specified, this corresponds to a bipolar or linked-electrode reference; when multiple reference channels are provided, their arithmetic mean is subtracted, approximating a linked-mastoid or common-average-like reference restricted to the specified electrodes. A pairwise referencing mode applies distinct reference channels to corresponding target channels rather than averaging across all references. Optionally, all channels can be first resampled to a common rate before referencing to ensure sample-by-sample alignment.
+EEG signals are normally re-referenced by subtracting a reference signal (or the average of multiple reference signals) from each target channel. When a single reference channel is specified, this corresponds to a bipolar or linked-electrode reference; when multiple reference channels are provided, their arithmetic mean is subtracted, approximating a linked-mastoid or common-average-like reference restricted to the specified electrodes. A pairwise referencing mode applies distinct reference channels to corresponding target channels rather than averaging across all references. Optionally, all channels can be first resampled to a common rate before referencing to ensure sample-by-sample alignment.
+
+Alternatively, `make=` constructs one new signal representing the implicit recording reference from channels that were recorded against that common reference. This is a separate mode: it does not alter the input channels.
 
 <h3>Parameters</h3>
 
@@ -430,11 +432,14 @@ EEG signals are re-referenced by subtracting a reference signal (or the average 
 | --- | --- | --- |
 | `sig` | `sig=C3,C4` | Signal(s) to re-reference | 
 | `ref` | `ref=A1,A2` | Signal(s) to provide the reference | 
+| `make` | `make=FPz` | Create one signal equal to the negative mean of `ref` signals (separate mode) |
 | `pairwise` | | Perform pairwise re-referencing between `sig` and `ref` (see below) |
 | `new` | `new=C3_LM` | Generate a new channel instead of altering `sig` | 
 | `sr` | `sr=128` | Resample all channels first to this sample rate |
 
-Both `sig` and `ref` are required parameters. If more than one
+### Re-reference mode
+
+Without `make=`, both `sig` and `ref` are required parameters. If more than one
 channel is given as the reference (in a comma-delimited list), the
 average of those channels is used as the reference value.  Alternatively, if the `pairwise`
 option is also specified, then `sig` and `ref` should be of the same length.  In this case,
@@ -454,10 +459,36 @@ With `pairwise`:
 
 If using `new`, only a single channel can be re-referenced.
 
+### Construct an implicit reference with `make=`
+
+With `make=`, `ref=` is required but `sig=` must not be specified. Luna creates exactly one new channel, named by `make=`, using all listed reference channels:
+
+```
+make(t) = -(1/N) * sum(ref_i(t))
+```
+
+For example:
+
+```
+REFERENCE ref=A1,A2 make=FPz
+```
+
+creates:
+
+```
+FPz = -0.5 * A1 - 0.5 * A2
+```
+
+Thus, if the recorded signals are `A1 - FPz` and `A2 - FPz`, the generated channel is `FPz - (A1 + A2)/2`. The source channels are not changed. A single reference is also valid: `REFERENCE ref=A1 make=FPz` creates `FPz = -A1`.
+
+All `ref=` signals must have compatible sampling rates and sample alignment. `make=` cannot be combined with `sig=`, `new=`, `pairwise`, or `sr`.
+
 <h3>Output</h3>
 
-No output, other than a note to the log.  In memory, the updated
-`sig` channels will contain the re-referenced values.
+No output, other than a note to the log. In re-reference mode, the
+updated `sig` channels contain the re-referenced values. In `make=` mode,
+the input channels are unchanged and the new `make=` channel contains the
+negative reference mean.
 
 ## DEREFERENCE
 
@@ -466,6 +497,8 @@ _De-references signals with respect to one or more other signals_
 This command is a mirror of [`REFERENCE`](manipulations.md#reference): instead of subtracting another reference signal, this simply adds it back in, i.e.
 effectively removing an existing reference.  The options (`new`, `pairwise`, `sr`, `sig` and `ref`) are otherwise similar,
 see above for details.
+
+`make=` is not supported by `DEREFERENCE`. In this command, `ref=` means the existing signal to add back; it does not mean signals from which to construct an implicit reference. Construct such a signal first with `REFERENCE ref=... make=...`, then use it in a subsequent `DEREFERENCE` command if needed.
 
 <h3>Methods</h3>
 
@@ -1266,7 +1299,7 @@ every EDF, the record size can be adjusted on-the-fly:
 ```
 luna s.lst -s 'RECORD-SIZE dur=30 continue
                & EPOCH dur=30
-               & RUN-POPS hypnodensity=6 ...'
+               & RUN-POPS resolution=5 emit-pp ...'
 ```
 
 **What `continue` changes internally:**

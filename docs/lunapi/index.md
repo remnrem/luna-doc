@@ -9,11 +9,20 @@ many of the fundamental concepts described [here](../luna/args.md) apply here to
 
 ## Installation 
 
-To obtain _lunapi_ (macOS, Linux or Windows), use `pip`:
+The current stable release of _lunapi_ (the `luna-api` repository) is
+**1.8.0**, matching `luna-base`, LunaScope, and _lunaR_. On macOS, Linux
+or Windows, choose one installation route:
 
+```bash
+# Pinned stable release
+python -m pip install lunapi==1.8.0
+
+# Unpinned: install or upgrade to the latest release
+python -m pip install --upgrade lunapi
 ```
-pip install lunapi
-```
+
+For pinned and unpinned source checkouts, see the
+[source routes](../download/index.md#source).
 
 _lunapi_ supports Python 3.9 through 3.14. For an isolated installation,
 create and activate a virtual environment with:
@@ -28,7 +37,9 @@ Then install _lunapi_ inside the environment:
 
 ```
 python -m pip install --upgrade pip
-pip install lunapi
+# Choose one:
+python -m pip install lunapi==1.8.0          # pinned
+python -m pip install --upgrade lunapi      # unpinned
 ```
 
 To leave the virtual environment, use `deactivate`.
@@ -56,7 +67,7 @@ options that are not part of this interface (for example, `--xml`, `--merge`,
 or `--append`).
 
 ```bash
-luna.py s.lst -o out.db sig=EEG @params.txt -s "EPOCH len=30 PSD"
+luna.py s.lst -o out.db sig=EEG @params.txt -s "EPOCH len=30 & PSD"
 ```
 
 The command string can be read from standard input instead of using `-s`:
@@ -89,7 +100,7 @@ luna.py --validate s.lst
 ```
 
 Run `luna.py --help` for the complete list of supported options. The command
-is installed alongside `lunapi` by `pip install lunapi` and is named
+is installed by either of the `lunapi` installation routes above and is named
 `luna.py` so that it does not conflict with the native `lunaC` executable.
 
 The package also installs `destrat.py`, a Python/SQLite reader for Luna output
@@ -107,9 +118,20 @@ Results are written as tab-delimited text to standard output. Use
 [`lp.destrat()`](ref.md#lpdestrat) when the same queries should be performed
 inside Python and returned as pandas dataframes.
 
-Alternatively, you can pull the [lunapi Docker
+For a Docker installation, choose one:
+
+```bash
+# Pinned stable release
+docker pull remnrem/lunapi:1.8.0
+
+# Unpinned: latest image
+docker pull remnrem/lunapi:latest
+```
+
+Use the chosen tag in `docker run` too. See [Docker](../download/docker.md)
+for usage examples. The [lunapi Docker
 image](https://github.com/remnrem/luna-api-notebooks?tab=readme-ov-file#docker-installation)
-which also provides a Jupyter lab environment (as well as the
+also provides a JupyterLab environment (as well as the
 command-line Luna and R-based _lunaR_ tools) in a single package.
 
 

@@ -1,5 +1,9 @@
 # Source code
 
+The C/C++ build instructions on this page are for `luna-base`. The R
+package `luna` 1.8.0 uses lunapi through reticulate and needs no compilation;
+see [R installation](lunar.md).
+
 ## Preliminaries
 
 To compile luna from source, you'll need a system capable of
@@ -9,7 +13,7 @@ Unix-like operating systems, namely Linux and macOS.
 
 !!! hint "Please note..."
     If you are having trouble
-    installing _lunaC_ or _lunaR_, you might try working with the 
+    compiling _lunaC_, you might try working with the
     [Dockerized version](docker.md) instead.
 
 Before attempting to compile Luna, please ensure that you have the
@@ -36,7 +40,7 @@ following (all of which can be obtained for free):
 - optionally, a __package manager__: to obtain dependent libraries for
   Luna, a tool like [Homebrew](https://brew.sh) is very useful; follow
   the instructions on the linked page to install Homebrew. It is
-  possible that you may also need to __autotools__ installed to
+  possible that you may also need __autotools__ installed to
   compile some dependent libraries; e.g. on macOS with Homebrew
   installed, these can be obtained by typing:
   ```
@@ -75,10 +79,10 @@ brew install fftw
 ```
 
 If these options install FFTW so that it is accessible
-system-wide, so no special steps will be necessary when compiling
+system-wide, no special steps will be necessary when compiling
 Luna.   If not, you will need to add an extra argument when compiling Luna.  For
-example, newere versions of Homebrew place files under `/opt/homebrew/` which will
-not, by default, by in the system path (i.e. check by typing
+example, newer versions of Homebrew place files under `/opt/homebrew/` which will
+not, by default, be in the system path. Check by typing:
 ```
 echo $PATH
 ```
@@ -108,18 +112,25 @@ cd fftw-3.3.10
 make && make install
 ```
 
-You'll then need to set the `FFTW` variable when compiling Luna (and
-_lunaR_ too, if compiling that from source), as noted in the next
-section.
+You'll then need to set the `FFTW` variable when compiling `luna-base`,
+as noted in the next section.
 
 ## Luna base
 
-Pull the latest Luna source code from the
-[`luna-base`](<https://github.com/remnrem/luna-base>) Github repository:
+Choose one source route from the
+[`luna-base`](https://github.com/remnrem/luna-base) repository:
 
-```
+```bash
+# Pinned stable release
+git clone --branch v1.8.0 https://github.com/remnrem/luna-base.git
+
+# Unpinned: current development branch
 git clone https://github.com/remnrem/luna-base.git
 ```
+
+The current stable release is **1.8.0**. An unpinned clone may contain
+unreleased changes. The compilation instructions below apply to the
+checkout you selected.
 
 Enter the `luna-base` folder:
 
@@ -177,87 +188,6 @@ is in your path, such as `/usr/local/bin/`, so that you can
 subsequently run luna by typing `luna` in any folder.
 
 
-## lunaR
-
-!!! warning
-    LunaR is not currently supported for Windows.  Use the Docker version instead.
-
-Make sure you are running a relatively recent version of R (which can
-be [downloaded here](https://www.r-project.org)): _lunaR_ was
-developed on version 3.5.1.
-
-You can obtain source code directly:
-```
-git clone https://github.com/remnrem/luna.git
-```
-
-Install the package by running:
-```
-R CMD INSTALL luna
-```
-
-If needed, you can set `FFTW` to the location where you
-compiled FFTW as follows:
-```
-FFTW=/Users/joe/fftw R CMD INSTALL luna
-```
-If the above works, this will allow you to attach the _lunaR_ library in R:
-```
-library(luna)
-```
-If you don't have permission to write to the main R library, try creating a separate folder as follows:
-```
-mkdir ~/Rlib
-
-FFTW=/Users/joe/fftw R CMD INSTALL --library=~/my-Rlib luna
-```    
-Then, when in R, you'll need to call:
-```
-library(luna, lib.loc="~/my-Rlib")
-```    
-
-
-!!! note "Installing with `devtools`"
-
-    Alternatively, you can try using the `devtools` R package to install _lunaR_.  
-    ```
-    library(devtools)
-    ```
-    If you manually installed FFTW to a nonstandard location, 
-    then set the `FFTW` environment variable too:
-
-    ```
-    Sys.setenv( FFTW="/home/joe/fftw/" ) 
-    ```
-
-    Then run the following command to pull the package source from a
-    [Github](http://github.org) and compile it:
-
-    ```
-    devtools::install_github( "remnrem/luna" ) 
-    ```
-
-    If there is an issue with permissions, you might need to write this to
-    an alternate local library, e.g. assuming the `~/my-Rlib` folder exists:
-
-    ```
-    devtools::install_github( "remnrem/luna" , lib="~/my-Rlib" ) 
-    ```
-
-    Assuming that works, then once installed you should subsequently be able to run only this command to start the library:
-    ```
-    library(luna)
-    ```
-    ```
-    ** lunaR v0.25.5 31-Mar-2021
-    ** luna v0.25.5 31-Mar-2021
-    ```
-    If you specified an alternate library location, you'll need to add that too here:
-    ```
-    library(luna,lib.loc="~/my-Rlib")
-    ```
-
-
 ## LightGBM
 
 To use the [`POPS`](../ref/pops.md) and other commands, you need to
@@ -303,51 +233,6 @@ make -j4 LGBM=1 LGBM_PATH=~/tmp/LightGBM
 ```
 
 
-### LightGBM and lunaR
-
-Assuming LightGBM is in your system path, you can build _lunaR_ with
-LGBM support by adding the `LGBM=1` flag (so that the base Luna library will be
-compiled with LGBM support) and `EXTRA_PKG_LIBS` (so that the R library will link to
-the LGBM library):
-
-```
-LGBM=1 EXTRA_PKG_LIBS="-l_lightgbm" R CMD INSTALL luna
-```
-
-Otherwise, you can specify additional flags using `EXTRA_PKG_CPPFLAGS`
-and `EXTRA_PKG_LIBS` to point to the LighGBM headers and libraries.  As a full example:
-
- - if FFTW has been manually installed at `/Users/mary/src/fftw3-3.3.10`
-
- - if LGBM has been manually installed at `/Users/mary/src/LightGBM`
-
- - to correctly build the base Luna library (the prerequisite for
- install the R package) we need to pass Luna information on the
- location of FFTW (via `FFTW`) and to include LightGBM (`LGBM=1`) and
- also point to its location (`LGBM_PATH`)
-
- - we also,separately need to tell the R library compilation step about the locations of both libraries, via `EXTRA_PKG_LIBS`
-
-In all:
-
-```
-FFTW="/Users/albert/fftw-3.3.10/" \
- LGBM=1 \
- LGBM_PATH="/Users/albert/src/LightGBM/" \
- EXTRA_PKG_LIBS="-L/Users/albert/src/LightGBM/ -L/Users/albert/src/fftw-3.3.10/ -l_lightgbm" \
- R CMD INSTALL luna
-```
-
-As a second example: if FFTW is available system wide, but say LGBM
-has been installed outside of the system path (say from `brew install`
-on newer Macs):
-
-```
-LGBM=1 \
- LGBM_PATH="/opt/homebrew/" \
- EXTRA_PKG_LIBS="-L/opt/homebrew/lib -l_lightgbm" \
- R CMD INSTALL luna
-```
 ## ONNX Runtime support
 
 ONNX Runtime (ORT) support is optional. The instructions below build a

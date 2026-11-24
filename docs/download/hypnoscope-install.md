@@ -1,5 +1,10 @@
 # Running Hypnoscope
 
+These are historical startup notes for the separate Hypnoscope Shiny
+application. For current visual review, see
+[LunaScope](https://zzz-luna.org/lunascope/); for the current R interface,
+see [installing `luna`](lunar.md).
+
 ## Dockerized version
 
 The [Dockerized](docker.md) version of Luna contains Hypnoscope.
@@ -38,8 +43,8 @@ runApp()
 which should bring up a browser window.
 
 _Hypnoscope_ will be distributed as a proper R package, but for now,
-you may need to first install these libraries (as well as having
-[lunaR](../ext/R/index.md) installed):
+consult its repository for compatible dependencies. The Shiny libraries
+used by the application include:
 
 ```
 install.packages( c("shiny","shinybusy","shinyjs","dplyr","lubridate","shinydashboard","datamods") )

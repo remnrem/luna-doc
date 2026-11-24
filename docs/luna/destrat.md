@@ -2,30 +2,18 @@
 
 ## Overview
 
-The primary output of most [_lunaC_](args.md) commands is a
-specially-formatted _database_ file, which can contain the results of
-one or more analyses for one or more individuals/EDFs.  Although they
-can have any filename (typically in this documentation we call them
-`out.db`). This section describes how to use
-the [destrat](#destrat) command-line tool as well as the
-[_lunaR_](../ext/R/index.md) package to extract information from output
-databases.
+Most [_lunaC_](args.md) commands write results for one or more
+individuals/EDFs to an output database (called `out.db` throughout this
+documentation). This page describes how to extract those results with
+the [destrat](#destrat) command-line tool or [_lunaR_](../ext/R/index.md).
 
 !!! info "Why doesn't Luna just write to plain text files?"
-    Although you don't _have_ to use these databases (i.e. you can use [text table](#text-tables) mode, or have Luna
-    write
-	everything to [standard out](https://en.wikipedia.org/wiki/Standard_streams) which can be redirected to a text file),
-    in practice it is often easier to work with output databases. In large
-    part, this is because Luna's output is often from multiple
-    commands, and each command may have output _stratified_ by a
-    number of factors: channel, sleep stage, frequency, epoch or sleep
-    cycle, pairs of channels, etc. Rather than generate dozens of text
-    files for each of these differently-formatted commands, Luna
-    stores everything in a single database, along with a set of tools
-    for extracting the required information. Although the syntax and
-    logic may appear a little opaque at first, there is a consistency
-    across commands, meaning that once learned it will help
-    with all aspects of Luna.
+    You can instead use [Luna text-tables](#luna-text-tables) or redirect
+    [standard output](https://en.wikipedia.org/wiki/Standard_streams) to a
+    text file. Databases are usually more convenient when output comes from
+    several commands and is stratified by channel, stage, frequency, epoch,
+    or similar factors: one database holds all results, and `destrat` extracts
+    the required table.
     
     
  
@@ -38,13 +26,9 @@ write its output to an output database file:
 luna s.lst nsrr01 sig=ECG,EMG -o out.db -s HEADERS 
 ```
 
-This example generates an output database called `out.db`.  This file (which
-is actually an [SQLite](http://sqlite.org) database) cannot be directly
-displayed in the terminal via a text-editor or spreadsheet.  Rather, a
-database is an intermediate form, from which various text-files (or
-R objects) can be extracted in a variety of formats, using the
-`destrat` program that comes with Luna (or, as described below,
-[_lunaR's_](../ext/R/index.md) `ldb()` function).
+This generates an [SQLite](http://sqlite.org) output database called
+`out.db`. Use `destrat` to inspect it and extract text tables, or use
+the [R package `luna`](../ext/R/index.md) to import it with `p$import_db()`.
 
 To view the contents of this file, run destrat without any other
 options:
@@ -92,12 +76,11 @@ table, defined by a particular set of factors: it does not make sense
 to mix the information about the general EDF with the information
 about individual channels, for example.
 
-Running `destrat` with just a command label, which should either be in
-square brackets or preceded by a `+` character will show the data
-from the baseline stratum for that command, if one exists:
+Running `destrat` with a `+` command label shows the data from the
+baseline stratum for that command, if one exists:
 
 ```
-destrat out.db [HEADERS]
+destrat out.db +HEADERS
 ```
 which prints the **tab-delimited** output:
 ```
@@ -105,25 +88,34 @@ ID      NR      NS   REC.DUR   TOT.DUR.HMS   TOT.DUR.SEC
 nsrr01  40920   2    1         11:22:00      40920
 ```
 The output of the [`HEADERS`](../ref/summaries.md#headers) command is described
-[here](../ref/summaries.md#headers).
+[here](../ref/summaries.md#headers). Only a subset of columns is shown above for
+clarity.
 
-!!! hint
-    Some shells interpret square brackets `[` and `]` as special characters.
-    If this appears to be the case, either place quotes around the command, e.g.:
-    ```
-    destrat out.db "[HEADERS]" 		
-    ```
-    or (even easier) use a single `+` character (at the start of the command name)
-    to indicate it is a command:
-    ```
-    destrat out.db +HEADERS
-    ```
+### Main options
+
+| Option | Example | Description |
+| ---- | ----- | ----- |
+| `+command` | `+ANNOTS` | Select output from this command |
+| `-r` _factor(s)_ | `-r CH` | Select strata group defined by `CH` and organize by rows |
+| `-c` _factor(s)_ | `-c CH` | Select strata group defined by `CH` and organize by columns |
+| `-x` | `-x` | Display information about the database, rather than extracting data |
+| `-l` | `-l +PSD` | Emit one long-format row per stored value |
+| `-d` | `-d` | Emit the database variable dictionary |
+| `-p` _integer_ | `-p 2` | Restrict numeric output to two decimal places |
+| `-a` _prefix_ | `-a PSG` | Prefix output variable names |
+| `-i` _ID(s)_ | `-i nsrr01` | Restrict output to these individuals |
+| `-v` _variable(s)_ | `-v DENS` | Restrict output to these variables |
+| `-e` | `-e` | Retain selected row strata that are empty for an individual |
+| `-t` _directory_ | `-t extracted` | Extract all selected tables to a directory; see below |
+| `-z` | `-t extracted -z` | Gzip files written by `-t` |
+| `--mean`, `--median`, `--sd`, `--range` | `--mean` | Summarize numeric values across individuals |
+| `--metrics-cols`, `--metrics-rows` | `--mean --metrics-rows` | Put numeric summary measures in columns (default) or rows |
+| `--tabulate` | `--tabulate` | Count observed values rather than extract them |
+| `--tabulate-all` | `--tabulate --tabulate-all` | Allow tabulations with more than 100 groups |
 
 Naturally, one can save any output from `destrat` to a file using
 standard redirection operators (i.e. to create files that can be
-loaded into other analysis programs such as R). For example, (here
-using the `+command` format, which we'll adopt as the default in this
-documentation):
+loaded into other analysis programs such as R). For example:
 
 
 ```
@@ -245,23 +237,7 @@ destrat out.db +PSD -r CH B
 ID       B           CH        PSD                 RELPSD
 nsrr01   SLOW        EEG       105.991683363628    0.0732300733474261
 nsrr01   DELTA       EEG       198.692418792271    0.137277378186528
-nsrr01   THETA       EEG       54.713385057902     0.0378016941869899
-nsrr01   ALPHA       EEG       63.1553608045886    0.0436342886275004
-nsrr01   SIGMA       EEG       678.134027746239    0.468525482521808
-nsrr01   SLOW_SIGMA  EEG       563.260922552984    0.389159199696685
-nsrr01   FAST_SIGMA  EEG       114.873105193254    0.0793662828251232
-nsrr01   BETA        EEG       225.6867899095      0.155927895983292
-nsrr01   GAMMA       EEG       45.8934730333316    0.0317079820769435
-nsrr01   TOTAL       EEG       1447.37917796109    1
-nsrr01   SLOW        EEG(sec)  173.30016852818     0.11036981788844
-nsrr01   DELTA       EEG(sec)  368.806565177362    0.234882134162885
-nsrr01   THETA       EEG(sec)  99.1852731160328    0.0631682047628917
-nsrr01   ALPHA       EEG(sec)  113.195854898732    0.0720911352655018
-nsrr01   SIGMA       EEG(sec)  427.048500439725    0.271974722375411
-nsrr01   SLOW_SIGMA  EEG(sec)  346.660966460099    0.220778248874063
-nsrr01   FAST_SIGMA  EEG(sec)  80.3875339796257    0.0511964735013477
-nsrr01   BETA        EEG(sec)  239.891616774602    0.152779967158952
-nsrr01   GAMMA       EEG(sec)  74.5169610826192    0.0474576770128835
+...      ...         ...       ...                 ...
 nsrr01   TOTAL       EEG(sec)  1570.17717201771    1
 ```
 
@@ -302,16 +278,10 @@ nsrr01   TOTAL      1447.37917796109  1570.17717201771  1                   1
 !!! hint
     The order in which you specify the `-r` and `-c` options does not matter.
 
-### Aggregating output
+### Multiple databases
 
-
-If there are multiple individuals in a Luna project, these will be
-compiled and output together.  The `-i` option, followed by a list of
-one or more individual IDs can be used to restrict the output to only
-those individuals/EDFs.
-
-`destrat` can also compile and integrate information across multiple
-databases by listing multiple files as follows, e.g. something like:
+To combine results from multiple databases, list their files before the
+selection options:
  
 ```
 destrat out1.db out2.db +HEADERS -r CH > all-out.txt
@@ -323,25 +293,23 @@ or
 destrat *.db +HEADERS -r CH > all-out.txt
 ```
 
-The different databases may contain similar or different individuals;
-further, they may contain similar or different commands.  One issue to
-remember is that if the same data-point is included in more than one
-file, only one value will be used (i.e. there is no mechanism for resolving
-potential discrepancies, etc).  If an individual did not have data for
-that command/variable/level, `destrat` will output `NA` (the missing
-code used in R).
+Databases may contain different individuals and commands. If a data point
+occurs in more than one database, `destrat` uses one value. Missing values
+are output as `NA`.
 
-!!! note "Restriction on `-c` when combining multiple databases"
-    One caveat is that the `-c` option cannot be used when multiple
-    databases are specified on the command line.  That is, you have to
-    use `-r` instead. (It is always possible to restructure back to
-    column-format using other tools, e.g. `dcast()` in R
+!!! note "Combining multiple databases"
+    `destrat` supports both `-r` and `-c` when combining databases. Columns
+    are matched by their factor names and levels; values absent from an input
+    database are emitted as `NA`.
 
 
 ### Restricting output
 
-The `-v` option can be used to select only certain variables (with spaces between variables, and noting that 
-all names are _case-sensitive_):
+When a database contains several individuals, use `-i` followed by one or
+more IDs to limit the output to those individuals.
+
+Use `-v` followed by one or more space-separated variables to restrict
+output; names are _case-sensitive_:
 
 ```
 destrat out.db +EPOCH -r E -v START STOP 
@@ -368,9 +336,8 @@ That is, this extracts only `RELPSD` (from `-v`) for only sigma and
 beta power (from `B/SIGMA,BETA`).  Furthermore, it uses the `-p 2`
 option to restrict numeric output to two decimal places.
 
-To obtain a list of the levels for a given stratum, run destrat with
-the `-x` option (which means _no output_) as follows (here, it doesn't
-matter whether `-r` or `-c` is used):
+To list the levels in a stratum, use `-x` (no data are extracted). It makes
+no difference whether the factors follow `-r` or `-c`:
 
 ```
 destrat out.db +PSD -r B CH  -x
@@ -394,19 +361,37 @@ Variables: 2
      PSD/PSD PSD/RELPSD
 ```
 
-### Command summary
+### Extract all selected tables
 
+`destrat -t` is distinct from [Luna text-tables](#luna-text-tables)
+option of the same name. It reads one or more output databases and writes a
+separate, row-oriented text file for every selected command/factor-set table:
 
-| Option | Example | Description | 
-| ---- | ----- | ----- | 
-| `+command`  | `+ANNOTS` | Select output from this command |
-| `[command]`  | `[ANNOTS]` | Equivalent to `+ANNOTS` | 
-| `-r` _factor(s)_   | `-r CH` | Select strata group defined by `CH` and organize by rows | 
-| `-c` _factor(s)_   | `-c CH` | Select strata group defined by `CH` and organize by columns | 
-| `-x`               | `-x`  | Display information about the database, rather than extracting data | 
-| `-p` _integer_     | `-p 2` | Restrict numeric output to two decimal places | 
-| `-i` _ID(s)_       | `-i nsrr01` | Restrict output to this individual(s) | 
-| `-v` _variable(s)_ | `-v DENS` | Restrict output to only this variable(s) | 
+```
+destrat out.db -t extracted
+```
+
+The directory is created if needed. File names combine the command and factor
+names (for example, `PSD_CH_B.txt`), and each file combines the corresponding
+table across all supplied databases. `+command`, `-i`, and `-v` may be
+used to limit the exported tables, individuals, or variables. Add `-z` to
+write `.txt.gz` files.
+
+Because `-t` determines the row strata itself, it cannot be combined with
+`-r`, `-c`, `-l`, `-x`, or `-d`.
+
+### Long, dictionary, and summary output
+
+`-l` writes one tab-delimited row per stored value, with database, ID, command,
+strata, variable, and value columns. `-d` writes the variable dictionary.
+
+The numeric summary options (`--mean`, `--median`, `--sd`, and `--range`)
+aggregate numeric values across individuals; output also includes `N`.
+`--metrics-rows` places each summary measure on a separate row, whereas
+`--metrics-cols` (the default) writes them as columns. `--tabulate` instead
+counts observed values. It cannot be combined with numeric summary options;
+by default it stops if more than 100 groups would be produced, unless
+`--tabulate-all` is specified.
 
 
 ## behead
@@ -479,13 +464,20 @@ add `-nt` for both.
 
 ## lunaR
 
-_LunaR's_ [`ldb()`](../ext/R/ref.md#ldb) function can read output databases
-generated by [_lunaC_](args.md) directly into R.  Although destrat is
-more flexible, if you are performing downstream analyses in R anyway,
-then using `ldb()` obviates the need to use destrat to create
-intermediate text files, if they are then only read into R.
-See the documentation on [`ldb()`](../ext/R/ref.md#ldb) for more
-information.
+The R package `luna` 1.8.0 reads output databases directly:
+
+```r
+library(luna)
+p <- lp$proj()
+p$import_db("out.db")
+p$strata()
+headers <- p$table("HEADERS", "CH")
+```
+
+Choose the command and strata listed by `p$strata()` to retrieve another
+table. Importing a new database replaces the current project results,
+so save any data frames you need before the next import. See the
+[R reference](../ext/R/ref.md#running-commands-across-a-project).
 
 ## Scaling
 
@@ -508,18 +500,19 @@ a different database for each ID/EDF in the sample list:
 luna s.lst -o out/run1-^.db < cmd.txt
 ```  
 Alternatively, in certain circumstances, you may want to forego using an output database entirely
-and use [text-tables](#text-tables) instead.
+and use [Luna text-tables](#luna-text-tables) instead.
 
 
-## Text tables
+## Luna text-tables
 
-As described [here](args.md#text-tables), by using `-t folder` instead
+This section describes the `-t` option to _lunaC_, not `destrat -t` described
+above. As described [here](args.md#text-tables), by using `-t folder` instead
 of `-o database.db`, Luna will write all tables as text, with one
 subfolder per individual/EDF under `folder/`.  As noted above, this
 can be advantageous under some scenarios, e.g. for output with large
 numbers of strata/levels, including epoch-by-channel-by-frequency
 spectrograms as from `PSD epoch-spectrum`.  See also the _lunaR_
-function [`ltxttab()`](../ext/R/ref.md#ltxttab) which can facilitate
+helper [`lp$read_text_table()`](../ext/R/ref.md#text-output) which can facilitate
 working with text-table output (i.e. concatenating tables across
 individuals/subfolders).
 
@@ -528,50 +521,41 @@ By default, certain files that Luna expects to be large will be
 compressed (`.txt.gz`).  To turn off compression, add `compressed=0`.
 To force _all_ output to be compressed, add `compressed=1`.
 
-### Naming conventions
+### Advanced filename conventions
 
-For use with the [`merge`](../merge/merge.md) utility, the special variables
-`tt-prefix` and `tt-suffix` (equivalently, `tt-prepend` and
-`tt-append`) can be set to alter the naming of files generated by the
-`-t` option.  If a file would have been generated with
-the name:
+For legacy `dmerge` workflows, `tt-prefix` and `tt-suffix` (also
+`tt-prepend` and `tt-append`) alter names generated by `-t`. For example,
+the default name:
 
 ```
 SPINDLES-F_CH_THR_PHASE.txt
 ```
-then adding `tt-prefix=XXX` and `tt-suffix=YYY` will result in:
+becomes the following with `tt-prefix=XXX tt-suffix=YYY`:
 ```
 XXX-SPINDLES-F_CH_THR_PHASE_YYY.txt
 ```
-Specifically, the suffix can be used to specify factor/level values for that table,
-with factor and level delimited by a hyphen/minus (`-`), e.g.:
+`tt-prepend` can also encode factor/level values, with factor and level
+delimited by a hyphen (`-`):
 ```
 tt-prepend=SS-N2_TH-4.5
 ```
-implies a factor `SS` with level value `N2`, and a second factor `TH` with level value `4.5`.  The prefix `XXX` is
-understood by [`merge`](../merge/merge.md) to indicate the domain-group pair.
-See [merge](../merge/merge.md) for more details. 
+This specifies factor `SS` at level `N2` and factor `TH` at level `4.5`.
 
 
 !!! warning "Known issues"
-    You may encounter one of these issues when using to `-t` flag
+    You may encounter one of these issues when using the `-t` flag:
 
-    - Certain commands may given a message saying that `-t` has not yet been enabled: in this case, use `-o` or plain-text output mode
+    - Some commands do not yet support `-t`; use `-o` or plain-text output
+      mode instead.
     
-    - Certain commands may add additional variables to the output, even if the option normally required
-    (under `-o` output mode) wasn't given.  For example, the
-    [`SPINDLES`](../ref/spindles-so.md#spindles) command will generate variables for slow oscillations
-    and their coupling with spindles, even if the `sw` parameter was
-    not specified. These extra columns will be populated by `NA` (not
-    available) values when that option wasn't specified. Whereas the
-    database output only lists what it observes, text-table output
-    mode has to force the columns of the output file _before_ it knows
-    what analyses will be performed; this will occasionally mean that
-    extra variables are included.
+    - Text-table mode sometimes creates columns for optional output that was
+      not requested. Those columns contain `NA`. For example,
+      [`SPINDLES`](../ref/spindles-so.md#spindles) includes slow-oscillation
+      and coupling columns even when `sw` was not specified.
 
-    - In certain instances (e.g. especially for the [`SPINDLES`](../ref/spindles-so.md#spindles) command
-      when using additional options) you may find that information is
-      split across multiple rows.  For example
+    - In some cases, particularly [`SPINDLES`](../ref/spindles-so.md#spindles)
+      with additional options, values for identical strata may be split across
+      rows. For example:
       ```
       ID   F   CH   V1    V2    V3
       id1  15  C3   1.2   -0.8  NA
@@ -582,7 +566,5 @@ See [merge](../merge/merge.md) for more details.
       ID   F   CH   V1    V2    V3
       id1  15  C3   1.2   -0.8  44.5
       ```
-      i.e. as the strata (here `ID`, `F` and `CH` are identical, all this information should be on one row.       
-      You can use the `-o` option and _destrat_, or just work around the issue with the output files. 
-
-      __We expect all these issues to be fixed in future releases.__
+      Here the identical `ID`, `F`, and `CH` strata would ideally occupy one
+      row. Use `-o` with _destrat_ if a rectangular table is required.

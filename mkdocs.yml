@@ -58,29 +58,28 @@ nav:
  - Updates: 'updates.md'
  
  - Install:
-    - 'Overview': 'download/index.md'
+    - 'Installation': 'download/index.md'
     - 'Binaries': 'download/exec.md'
+    - 'lunapi (Python)': 'lunapi/index.md'
+    - 'LunaScope': 'download/index.md'
+    - 'lunaR': 'download/lunar.md'
     - 'Source': 'download/source.md'
-    - 'Docker': 'download/docker.md'
-    - 'lunapi (Python)': 'https://github.com/remnrem/luna-api-notebooks?tab=readme-ov-file#lunapi-a-python-interface-for-luna'
-    - 'LunaScope': 'https://zzz-luna.org/lunascope/install/'
-    - 'Hypnoscope': 'download/hypnoscope-install.md'
     - 'Data': 'download/data.md'
-    - 'Notes': 'download/misc.md'
 
  - Tutorial:
      - 'Path': 'path.md'
      - 'Quick start': 'tut/tut1.md'
      - 'Take two': 'tut/tut2.md'
      - 'Deeper dive': 'tut/tut3.md'
-     - 'Lunapi': 'https://github.com/remnrem/luna-api-notebooks/blob/main/tutorial.ipynb'
+     - 'Quick start (Python)': 'tut/python1.md'
+     - 'Take two (Python)': 'tut/python2.md'
+     - 'Deeper dive (Python)': 'tut/python3.md'     
+     - 'Lunapi (interactive)': 'https://github.com/remnrem/luna-api-notebooks/blob/main/tutorial.ipynb'
      - '/R/epeat': 'tut/tut4.md'
 
  - Concepts:
     - 'Overview' : 'luna/args.md'
     - 'Output': 'luna/destrat.md'
-    - 'dmerge': 'merge/merge.md'
-    - 'dmerge example': 'merge/merge-example.md'
 
  - Commands:
     - 'Overview': 'ref/index.md'
@@ -128,7 +127,6 @@ nav:
     - Example usage: 'ext/R/example.md'
     - Reference: 'ext/R/ref.md'
     - Plotting: 'ext/R/viz.md'
-    - 'Hypnoscope' : 'apps/hypnoscope.md'
 
  - NSRR: 'nsrr.md'
 

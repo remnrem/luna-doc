@@ -337,7 +337,7 @@ In the above command, we also specify `write-states` option, in order to save th
     backfit=sol.4,B,A,C,D
     ```
 
-We can visualize the prototype maps, e.g. using [`ltopo.rb()`](../ext/R/viz.md#ltoporb)
+We can visualize the prototype maps, e.g. using [`lp$topo_heat()`](../ext/R/viz.md#channel-maps)
 
 ![img](../img/ms/sol4.png){width="100%"}
 
@@ -714,7 +714,7 @@ columns with those headers):
 library(luna)
 k4 <- read.table("k4",header=T,stringsAsFactors=F)
 par(mfrow=c(3,4),mar=c(0,0,0,0) )
-for (i in 1:4) ltopo.rb( c = k4$CH , z = k4[,1+i] , mt = names(k4)[1+i])
+for (i in 1:4) lp$topo_heat(k4$CH, k4[, 1+i], title = names(k4)[1+i], lab = "Map value")
 ```
 
 ![img](../img/ms-labels1.png)
@@ -723,7 +723,7 @@ Likewise, the canonical maps are as follows:
 
 ```
 t4 <- read.table("t4",header=T,stringsAsFactors=F)
-for (i in 1:4) ltopo.rb( c = t4$CH , z = t4[,1+i] , mt = names(t4)[1+i])
+for (i in 1:4) lp$topo_heat(t4$CH, t4[, 1+i], title = names(t4)[1+i], lab = "Map value")
 ```
 
 ![img](../img/ms-labels2.png)
@@ -750,7 +750,7 @@ luna --label-maps --options sol=k4 template=t6 new=k4.b th=0.8
 To plot the relabelled maps in `n4`:
 ```
 n4 <- read.table("n4",header=T,stringsAsFactors=F)
-for (i in 1:4) ltopo.rb( c = n4$CH , z = n4[,1+i] , mt = names(n4)[1+i])
+for (i in 1:4) lp$topo_heat(n4$CH, n4[, 1+i], title = names(n4)[1+i], lab = "Map value")
 ```
 
 ![img](../img/ms-labels3.png)

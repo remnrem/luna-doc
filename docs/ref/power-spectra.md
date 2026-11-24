@@ -254,7 +254,7 @@ compared to N2 (50%) for this individual.
 To look at per-epoch estimates of band power for all N2 and N3 sleep:
 
 ```
-luna s.lst 2 sig=EEG -o out2.db -s 'MASK if=wake & RE & PSD epoch'
+luna s.lst 2 sig=EEG -o out2.db -s 'MASK if=W & RE & PSD epoch'
 ```
 
 For a change, here we'll use [_lunaR_](../ext/R/index.md) to directly load
@@ -265,20 +265,26 @@ If you have R and [lunaR](../ext/R/index.md) installed, then at the R prompt:
 library(luna)
 ```
 ```
-k <- ldb("out2.db")
+k <- lp$proj()
+k$import_db("out2.db")
 ```
 To summarize the contents:
 ```
-lx(k)
+k$strata()
 ```
-```
-MASK : EPOCH_MASK 
-PSD : CH B_CH CH_F B_CH_E CH_E_F 
-RE : BL 
+```text
+Command    Strata
+MASK    EMASK
+PSD    CH
+PSD    B_CH
+PSD    CH_F
+PSD    B_CH_E
+PSD    CH_E_F
+RE    BL
 ```
 We can directly extract a data frame of epoch by band by channel information:
 ```
-d <- k$PSD$B_CH_E
+d <- k$table("PSD", "B_CH_E")
 ```
 From this, we can further select on delta power:
 ```
@@ -354,17 +360,7 @@ Plotting the resulting power spectra from both runs, we can clearly see the supe
 
 ![img](../img/peaks0.png){width="100%"}
 
-<!----
-k <- ldb( "out.db" )
-k2 <- ldb( "out2.db" )
-d <- k$PSD$CH_F
-d2 <- k2$PSD$CH_F 
-par(mfcol=c(1,4))
-frame()
-plot( d$F , d$PSD , type="l" , ylim=c(-20 , 35 ) , xlab="Frequency (Hz)" , main="Original" , ylab="Power" , col="#1e6b33" )
-plot( d2$F , d2$PSD , type="l" , ylim=c(-20 , 35 ) , xlab="Frequency (Hz)" , main="With artifact" , ylab="Power" , lwd=1, col="purple" )
-frame()
---->
+
 
 
 We can use the `peaks` option to provide one simple way of quantifying the extent of _peakedness_, by adding `peaks` to the [`PSD`](power-spectra.md#psd) command.
@@ -434,21 +430,7 @@ of bins in the spectrum over which to do median smoothing), which
 basically requires peaks to be sharper by doing less smoothing.
 
 
-<!----
-k <- ldb( "out.db" )
-d <- k$PSD$CH_F 
 
-par(mfcol=c(1,3))
-plot( d$F , d$DT , type="l" , ylim=c(-0.5 , 0.6 ) , xlab="Frequency (Hz)" , ylab="Detrended (DT), smoothed (SM) PSD" ) 
-lines( d$F , d$SM , ylim=c(-0.5 , 0.6 ) , col="blue" , lwd=2 )
-
-plot( d$F , d$DF , type="l" , ylim=c(-0.5 , 0.6 ) , xlab="Frequency (Hz)" , ylab="Difference = DT - SM" ) 
-abline(h=0,lty=2,col="lightgray")
-
-hist( d$DF , xlim=c(-0.6 , 0.6 ) , breaks=20 , col="gray" , xlab="Frequency (Hz)" , ylab="Difference" , main="" ) 
-abline(v=0,lty=2,col="lightgray")
-
----->
 
 
 ### Spectral slopes
@@ -758,12 +740,13 @@ This gives some output describing the properties of the MT analysis in the conso
 
 Using `library(luna)` in R to view the resulting output:
 ```
-k <- ldb( "out.db" )
+k <- lp$proj()
+k$import_db("out.db")
 ```
 
 ```
-mtm <- lx( k , "MTM" , "CH" , "F" )
-psd <- lx( k , "PSD" , "CH" , "F" )
+mtm <- k$table("MTM", c("CH", "F"))
+psd <- k$table("PSD", c("CH", "F"))
 
 ```
 
@@ -790,24 +773,31 @@ As a second example, here is a whole-night MT spectrogram, performed within luna
 
 ```
 library(luna)
-lattach( lsl( "s.lst" ) , 1 ) 
-k <- leval( "MTM sig=EEG tw=15 max=30 epoch dB" ) 
+proj <- lp$proj()
+proj$sample_list("s.lst")
+inst <- proj$inst(1)
+k <- inst$proc( "MTM sig=EEG tw=15 max=30 epoch dB" )
 ```
 
 Examining the output:
 
 ```
-lx(k)
+k$strata()
 ```
-```
-MTM : CH_F CH_F_SEG 
+```text
+Command    Strata
+MTM    CH_F
+MTM    CH_F_SEG
 ```
 
 And plotting a heatmap:
 
 ```
-d <- k$MTM$CH_F_SEG
-lheatmap( d$SEG , d$F , d$MTM ) 
+d <- k$table("MTM", "CH_F_SEG")
+z <- with(d, tapply(MTM, list(SEG, F), mean))
+image(as.numeric(rownames(z)), as.numeric(colnames(z)), z,
+      col = grDevices::hcl.colors(100, "Viridis"),
+      xlab = "Segment", ylab = "Frequency (Hz)")
 ```
 
 ![img](../img/mtm3.png){width="100%"}
@@ -910,11 +900,12 @@ The irregular-resampling auto-spectral analysis (IRASA) method is applied to dec
 | `sig` | `C3,C4` | Which signal(s) to analyse |
 | `h-min` | 1.05 | Minimum resampling factor (default 1.05) |
 | `h-max` | 1.95 | Maximum resampling factor (default 1.95) |
-| `h-steps` | 19 | Number of steps between `h-min` and `h-max` (default 19, i.e. 0.05 increments) ||
-| `dB` | | Report log-scaled power |
+| `h-cnt` | 19 | Number of steps between `h-min` and `h-max` (default 19, i.e. 0.05 increments) ||
+| `dB` | | Report aperiodic and positive periodic-residual power in dB, plus periodic excess relative to the aperiodic component |
 | `epoch` | | Report epoch-level statistics | 
-| `min` | 1  | Minimum frequency to include in the output (default 1 Hz) |
-| `max` | 30 | Maximum frequency to include in the output (default 30 Hz) |
+| `lwr` | 1  | Minimum frequency to include in the output (default 1 Hz) |
+| `upr` | 30 | Maximum frequency to include in the output (default 30 Hz) |
+| `band` | `yes` | Report complete standard band-power summaries within `lwr`/`upr`; use `band=no` to disable |
 
 _Secondary parameters_
 
@@ -930,6 +921,13 @@ _Secondary parameters_
 | `hamming` | | Use a Hamming window for Welch method |
 | `tukey50` | | Use a Tukey window for Welch method |
 
+The standard bands are SLOW (0.5--1 Hz), DELTA (1--4 Hz), THETA
+(4--8 Hz), ALPHA (8--12 Hz), SIGMA (12--15 Hz), SLOW_SIGMA (10--13
+Hz), FAST_SIGMA (13--15 Hz), BETA (15--30 Hz), GAMMA (30--50 Hz), and
+TOTAL (0.5--50 Hz).  They can be overridden for an individual command
+with `slow=`, `delta=`, `theta=`, `alpha=`, `sigma=`, `slow-sigma=`,
+`fast-sigma=`, `beta=`, `gamma=`, and `total=` respectively.
+
 
 <h3>Output</h3>
 
@@ -938,8 +936,15 @@ Whole-signal power spectra (strata: `CH` x `F`)
 | Variable | Description |
 | ----- | ----- |
 | `LOGF` | Log-scaled frequency `F` (if `dB` specified) |
-| `APER` | Aperiodic component of the power spectrum |
-| `PER` | Periodic component of the power spectrum |
+| `APER` | Aperiodic component of the power spectrum (dB when `dB` is specified) |
+| `PER` | Signed periodic residual, `PSD - APER` (linear output only) |
+| `PER_DB` | `10log10(PSD - APER)` (with `dB`; emitted only when the residual is positive) |
+| `PER_EXCESS_DB` | Periodic excess relative to the aperiodic component, `10log10(PSD / APER)` (with `dB`) |
+
+`PER` is a signed linear PSD residual, and so it can be negative at
+individual frequencies.  It must be summed or integrated in linear
+power units.  `PER_EXCESS_DB` is instead a dB ratio/contrast and is
+not a periodic PSD; it must not be integrated to obtain band power.
 
 Whole-signal slope statistics (strata: `CH`)
 
@@ -955,8 +960,10 @@ Optional epoch-level output (option: `epoch`, strata: `E` x `CH` x `F`)
 | Variable | Description |
 | ----- | ----- |
 | `LOGF` | Log-scaled frequency `F` ( if `dB` specified) |
-| `APER` | Aperiodic component of the power spectrum |
-| `PER` | Periodic component of the power spectrum |
+| `APER` | Aperiodic component of the power spectrum (dB when `dB` is specified) |
+| `PER` | Signed periodic residual, `PSD - APER` (linear output only) |
+| `PER_DB` | `10log10(PSD - APER)` (with `dB`; emitted only when the residual is positive) |
+| `PER_EXCESS_DB` | Periodic excess relative to the aperiodic component, `10log10(PSD / APER)` (with `dB`) |
 
 Epoch-level slope statistics (option: `epoch`, strata: `E` x `CH`)
 
@@ -966,6 +973,23 @@ Epoch-level slope statistics (option: `epoch`, strata: `E` x `CH`)
 |`SPEC_INTERCEPT` | Epoch spectral intercept (based on aperiodic component) |
 |`SPEC_RSQ`       | Epoch R-sq for above fit  |
 |`SPEC_SLOPE_N`   | Epoch number of non-outlier data points in slope estimate |
+
+Whole-signal IRASA band power (strata: `CH` x `B`)
+
+| Variable | Description |
+| ----- | ----- |
+| `PSD` | Original PSD band power |
+| `APER` | Aperiodic component band power |
+| `PER` | Signed periodic-residual band power, formed by integrating `PSD - APER` in linear power units |
+| `PER_DB` | Periodic-residual band power in dB (with `dB`; emitted only when positive) |
+| `PER_EXCESS_DB` | Band-level periodic excess, `10log10(PSD_band / APER_band)` (with `dB`) |
+
+With `epoch`, the same variables are reported at strata `CH` x `B` x
+`E`.  Band summaries use the same definitions and integration helper as
+[`PSD`](#psd).  To prevent partial-band summaries, IRASA reports only
+bands that lie entirely within the requested `lwr`--`upr` range.  For
+example, with the default 1--30 Hz range, DELTA through BETA are
+available, whereas SLOW, GAMMA, and TOTAL are not.
 
 
 <h3>Examples</h3>
@@ -1018,13 +1042,14 @@ destrat out.db +IRASA -r CH  | behead
 We can visualize the three resulting power spectra as follows, in R:
 
 ```
-k <- ldb( "out.db" )
+k <- lp$proj()
+k$import_db("out.db")
 par(mfcol=c(1,3))
-d <- k$PSD$CH_F
+d <- k$table("PSD", "CH_F")
 plot( d$F, d$PSD, type="l", lwd=3, col="blue", xlab="Frequency (Hz)", ylab="log(Power)", main="Welch" ) 
-i <- k$IRASA$CH_F
+i <- k$table("IRASA", "CH_F")
 plot( i$F, i$APER, type="l", lwd=3, col="orange", xlab="Frequency (Hz)", ylab="log(Power)", main = "IRASA, aperiodic" )
-plot( i$F, i$PER, type="l", lwd=3, col="purple", xlab="Frequency (Hz)", ylab="log(Power)", main="IRASA, periodic" )
+plot( i$F, i$PER_EXCESS_DB, type="l", lwd=3, col="purple", xlab="Frequency (Hz)", ylab="dB relative to APER", main="IRASA, periodic excess" )
 ```
 
 ![img](../img/irasa.png)
@@ -1096,31 +1121,34 @@ label.
 
 <h3>Example</h3>
 
-Using [_lunaR_](../ext/R/index.md), with `nsrr02` attached, we will use the filter-Hilbert method to 
-get the envelope of a sigma-filtered EEG signal.  After attaching the sample, we then drop all signals
-except the one of interest:
+Using the [R package `luna`](../ext/R/index.md), open `nsrr02` and
+retain the EEG channel before applying the filter-Hilbert method:
 
-```
-leval( "SIGNALS keep=EEG" ) 
+```r
+library(luna)
+proj <- lp$proj()
+proj$sample_list("s.lst")
+inst <- proj$inst("nsrr02")
+inst$eval("SIGNALS keep=EEG")
 ```
 
 We then apply the filter-Hilbert method, which will generate two new
 channels, `EEG_ht_mag` and `EEG_ht_ph`:
 
 ```
-leval( "HILBERT sig=EEG f=11,15 ripple=0.02 tw=0.5 phase" )
+inst$eval( "HILBERT sig=EEG f=11,15 ripple=0.02 tw=0.5 phase" )
 ```
 
 For illustration, we'll also generate a copy of the original signal:
 
 ```
-leval( "COPY sig=EEG tag=_SIGMA" )
+inst$eval( "COPY sig=EEG tag=_SIGMA" )
 ```
 
 and then apply a bandpass filter to it, in the same sigma range as above:
 
 ```
-leval( "FILTER sig=EEG_SIGMA bandpass=11,15 ripple=0.02 tw=0.5" ) 
+inst$eval( "FILTER sig=EEG_SIGMA bandpass=11,15 ripple=0.02 tw=0.5" )
 ```
 
 !!! note
@@ -1131,32 +1159,32 @@ We now have four signals in the _in-memory_ representation of the
 EDF:
 
 ```
-lchs()
+inst$chs()$Channels
 ```
 ```
 [1] "EEG"        "EEG_ht_mag" "EEG_ht_ph"  "EEG_SIGMA" 
 ```
 
-To view some of the results, we can use `ldata()` to extract signals
+To view some of the results, use `inst$slice()` to extract signals
 for a particular epoch.  For better visualization, here we'll select
 smaller (15 second) epochs:
 
 ```
-lepoch(15)
+inst$epoch("len=15")
 ```
 
 We can then pull all four signals for given (set of) epoch(s), say number 480:
 
 ```
-d <- ldata( 480 , chs=lchs() ) 
+d <- inst$slice(inst$e2i(480), inst$chs()$Channels, time = TRUE)
 ```
 Using R's plotting functions:  
 ```
 par(mfcol=c(3,1),mar=c(0,4,0,0),xaxt='n',yaxt='n')
-plot( d$SEC , d$EEG , ylab = "Raw" , type="l" ,axes=F)
-plot( d$SEC , d$EEG_SIGMA , ylab = "Filtered" , type="l" , axes=F)
-lines( d$SEC , d$EEG_ht_mag , col="red" , lwd=2 ) 
-plot( d$SEC , d$EEG_ht_ph , ylab = "Phase" , type="l" , axes=F)
+plot( d$T , d$EEG , ylab = "Raw" , type="l" ,axes=F)
+plot( d$T , d$EEG_SIGMA , ylab = "Filtered" , type="l" , axes=F)
+lines( d$T , d$EEG_ht_mag , col="red" , lwd=2 )
+plot( d$T , d$EEG_ht_ph , ylab = "Phase" , type="l" , axes=F)
 ```
 
 ![img](../img/hilbert.png){width="100%"}
@@ -1276,18 +1304,22 @@ echo "fc=15 cycles=12 fs=200" | luna --cwt -a out.db
 Using [_lunaR_](../ext/R/index.md) to view the output:
 
 ```
-k <- ldb("out.db")
+k <- lp$proj()
+k$import_db("out.db")
 ```
 We see two strata:
 ```
-lx(k)
+k$strata()
 ```
-```
-CWT_DESIGN : PARAM F_PARAM PARAM_SEC 
+```text
+Command    Strata
+CWT_DESIGN    PARAM
+CWT_DESIGN    F_PARAM
+CWT_DESIGN    PARAM_SEC
 ```
 Extracting the strata defined by `PARAM` (a description of the input parameters) and `F` (frequency):
 ```
-d <- lx( k , "CWT_DESIGN" , "PARAM" , "F" ) 
+d <- k$table("CWT_DESIGN", c("PARAM", "F"))
 ```
 We can then plot the amplitude response (arbitrary units, scaled to 1.0) for the two wavelets:
 ```
@@ -1307,7 +1339,7 @@ Looking at the estimated frequency domain FWHM values, we see these correspond t
 values for each wavelet, at lower and upper values respectively.
 
 ```
-lx( k , "CWT_DESIGN" , "PARAM"  )
+k$table("CWT_DESIGN", "PARAM")
 ```
 ```
 ID      PARAM    FWHM_F  FWHM_LWR  FWHM_UPR
@@ -1599,36 +1631,7 @@ Performing the FFT separately on each component, we see that EMD has in this ins
     work as expected every time...
 
 
-<!--
-R
-d <- read.table("s1.txt", header=T, stringsAsFactors=F)
-par(mfcol=c(1,3))
-frame()
-plot( seq(0,2,0.01) , d$S1[ 1000:1200 ] , type="l" , col="purple" , lwd=2 , xlab="Time (secs)" , ylab="Amplitude" , ylim=c(-0.25,0.25) )
-frame()
-plot( seq(0,2,0.01) , d$S1_IMF_1[ 1000:1200 ] , type="l" , col="blue" , lwd=2 , xlab="Time (secs)" , ylab="Amplitude" , ylim=c(-0.15,0.15) , main="IMF1" )
-plot( seq(0,2,0.01) , d$S1_IMF_2[ 1000:1200 ] , type="l" , col="blue" , lwd=2 , xlab="Time (secs)" , ylab="Amplitude" , ylim=c(-0.15,0.15) , main="IMF2" )
-plot( seq(0,2,0.01) , d$S1_IMF_3[ 1000:1200 ] , type="l" , col="blue" , lwd=2 , xlab="Time (secs)" , ylab="Amplitude" , ylim=c(-0.15,0.15) , main="IMF3" )
 
-library(luna)
-k <- ldb("out.db")
-d <-  k$FFT$CH_F
-frq <- sort( unique( d$F ) )
-par(mfcol=c(1,3))
-frame()
-plot( frq , d$PSD[ d$CH == "S1" ] , type="b" , pch=20 , col="purple" , ylim=c(0,3.5) , ylab="Power" , xlab="Frequency (Hz)", main="S1")
-abline(h=c(1,2,3) , lty=2 , col="gray" )
-frame()
-
-par(mfcol=c(1,3))
-plot( frq , d$PSD[ d$CH == "S1_IMF_1" ] , type="b" , pch=20 , col="blue" , ylim=c(0,3.5) , ylab="Power", main="IMF1" , xlab="Frequency (Hz)" )
-abline(h=c(1,2) , lty=2 , col="gray" )
-plot( frq , d$PSD[ d$CH == "S1_IMF_2" ] , type="b" , pch=20 , col="blue" , ylim=c(0,3.5) , ylab="Power", main="IMF2" , xlab="Frequency (Hz)" )
-abline(h=c(1,2) , lty=2 , col="gray" )
-plot( frq , d$PSD[ d$CH == "S1_IMF_3" ] , type="b" , pch=20 , col="blue" , ylim=c(0,3.5) , ylab="Power", main="IMF3" , xlab="Frequency (Hz)" )
-abline(h=c(1,2) , lty=2 , col="gray" )
-
--->
 
 
 ## MSE
@@ -1762,7 +1765,8 @@ luna s.lst sig=EEG -o out.db
 Using [_lunaR_](../ext/R/index.md) to visualize the normalized and raw power spectra (in R):
 
 ```
-k <- ldb( "out.db" )
+k <- lp$proj()
+k$import_db("out.db")
 ```
 
 Looking at the contents of `out.db`, we are interested in the results
@@ -1771,17 +1775,22 @@ of [`PSD`](power-spectra.md#psd) stratified by `F` (for power spectra), `CH` and
 applied the normalization or not):
 
 ``` 
-lx(k)
+k$strata()
 ```
-```
-MASK : EPOCH_MASK EPOCH_MASK_NORM 
-PSD : CH_NORM B_CH_NORM CH_F_NORM 
-RE : BL NORM 
+```text
+Command    Strata
+MASK    EMASK
+MASK    EMASK_NORM
+PSD    CH_NORM
+PSD    B_CH_NORM
+PSD    CH_F_NORM
+RE    BL
+RE    NORM
 ```
 
 Extracting these variables and values:
 ```
-d <- lx( k , "PSD" , "CH" , "F" , "NORM" )
+d <- k$table("PSD", c("CH", "F", "NORM"))
 
 head(d)
 ```
@@ -1848,12 +1857,9 @@ The [`TV`](power-spectra.md#tv) is a wrapper around the algorithm described
 In [_lunaC_](../luna/args.md) it operates on EDF channels, modifying
 the _in-memory_ representation of the signal.  
 
-!!! note 
-    Given that this is not something one typically wants to
-    perform on raw physiological signals, a more common use-case may
-    be via [_lunaR_](../ext/R/index.md) however, where the `ldenoise()`
-    function provides a simple interface for _any_ time series.  
-    It is mentioned here only for completeness.
+In R, run `TV` through an instance's `eval()` method. For a derived
+series such as epoch-level power, create a temporary signal from the
+numeric vector, as shown below.
 
 <h3>Methods</h3>
 
@@ -1866,12 +1872,9 @@ Signal denoising is performed using the total variation (TV) minimization algori
 | `sig` | `sig=EEG` | Optional specification of signals (otherwise applied to all signals) |
 | `lambda` | `lambda=10` | Smoothing parameter (0 to infinity) |  
 
-See the description of [`ldenoise()`](../ext/R/ref.md#ldenoise) for using
-this function with _lunaR_.  Higher values of _lambda_ put more weight
-on minimizing variation in the new signal, i.e. producing a more
-flattened representation.  The exact choice of _lambda_ will depend on
-the numerical scale of the data as well as its variability and the
-goal of the analysis.
+Higher values of `lambda` put more weight on minimizing variation.
+Choose a value appropriate to the numerical scale and variability of
+the series and the aim of the analysis.
 
 <h3>Outputs</h3>
 
@@ -1879,44 +1882,35 @@ No output other than modifying the _in-memory_ representation of the signal.
 
 <h3>Example</h3>
 
-Using [_lunaR_](../ext/R/index.md) to plot delta power across sleep epochs
-and fit a de-noised line using `ldenoise()` (which invokes [`TV`](power-spectra.md#tv)), to the 
-`nsrr02` individual from the [tutorial](../tut/tut1.md) dataset:
+Plot delta power across sleep epochs for `nsrr02` from the
+[tutorial](../tut/tut1.md), then apply TV denoising to that power series:
 
-```
+```r
 library(luna)
-sl <- lsl("s.lst")
-lattach(sl,2)
-```
-Get delta power (in dB units) for each sleep epoch:
-```
-k <- leval( "MASK if=wake & RE & PSD sig=EEG epoch dB" )
-d <- k$PSD$B_CH_E
-d <- d[ d$B == "DELTA" , ] 
+proj <- lp$proj()
+proj$sample_list("s.lst")
+inst <- proj$inst("nsrr02")
+k <- inst$proc("EPOCH len=30 & MASK if=W & RE & PSD sig=EEG epoch dB")
+d <- k$table("PSD", c("B", "CH", "E"))
+d <- d[d$B == "DELTA", ]
+stages <- inst$stages()
+d <- merge(d, stages[, c("ID", "E", "STAGE")], by = c("ID", "E"))
+d <- d[order(d$E), ]
+
+# One temporary sample per epoch: smooth the derived power values.
+trend <- proj$empty_inst("delta-trend", nr = nrow(d), rs = 1)
+trend$insert_signal("DELTA", d$PSD, sr = 1)
+trend$eval("TV sig=DELTA lambda=10")
+d$FIT <- trend$data("DELTA")$DELTA
+plot(d$E, d$PSD, col = lp$stgcol(d$STAGE), pch = 20,
+     xlab = "Sleep epoch", ylab = "Delta power (dB)")
+lines(d$E, d$FIT, lwd = 3, col = "orange")
 ```
 
-Also get sleep stages via the [`lstages()`](../ext/R/ref.md#lstages) function:
+This smooths the sequence of retained epochs; excluded epochs remain
+absent from the fitted series. The original EEG is unchanged.
 
-```
-ss <- lstages()
-```
-
-Using `ldenoise()`, we can fit a de-noised line, with _lambda_ of 10 in this particular case:
-
-```
-d1 <- ldenoise( d$PSD , lambda = 10 ) 
-```
-
-Plotting the original and de-noised versions, also using the
-convenience [`lstgcols()`](../ext/R/ref.md#lstgcols) function:
-
-```
-plot( d$PSD, col=lstgcols(ss), pch=20, xlab="Sleep Epochs", ylab="Delta power (dB)" ) 
-lines( d1 , lwd=5 , col="orange" )
-```
-
-![img](../img/tv.png){width="100%"}
-
+![Delta power with a TV-denoised trend](../img/tv.png){width="100%"}
 
 
 ## ACF

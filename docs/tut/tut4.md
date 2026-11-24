@@ -1,2229 +1,904 @@
-	
 # /R/epeat
 
-In this section, we'll repeat the steps of the previous three
-tutorial pages, but using [_lunaR_](../ext/R/index.md) instead of
-[_lunaC_](../luna/args.md).  That is, these sections mirror the
-sections from the past three tutorials, and we'll try to accomplish
-the same goals but by different means..
+This tutorial repeats the analyses from [Quick start](tut1.md),
+[Take two](tut2.md), and [Deeper dive](tut3.md) using the **`luna` 1.8.0
+R package**. It uses the same Luna commands, with projects and recording
+instances in R:
 
-For now, the easiest way to obtain _lunaR_ is via one of the [two
-Docker images](../download/docker.md), in which both Luna and the
-tutorial data are bundled with either classic R or RStudio.  Here
-we'll use RStudio so that we can interactively view graphics created
-along the way. (Aside from being able to view graphics immediately,
-all other steps can be equally carried out via either route.)
-
-As described in more detail on [this page](../download/docker.md),
-once you've installed the free 
-[Docker Desktop client](https://www.docker.com/products/docker-desktop), you can download
-and initiate the container with a single command:
-
-```
-docker run -e PASSWORD=abc123 -p 8787:8787 remnrem/luna 
+```r
+library(luna)
+p <- lp$proj()
 ```
 
-Docker will look for an image called `remnrem/luna` and if it is not
-found locally (i.e. it won't be on you first running this command), it
-will automatically download it, during which time you'll see something
-like this:
+If you have not installed the package, follow the
+[R installation notes](../download/lunar.md). The latest GitHub route is
+`pak::pak("remnrem/lunaR")`; use `pak::pak("remnrem/lunaR@v1.8.0")` for
+the fixed R release. Those notes also explain how to pin lunapi or
+select an existing Python environment before loading Luna. Docker is
+optional.
 
-```
-Unable to find image 'remnrem/luna:latest' locally
-latest: Pulling from remnrem/luna
-22dbe790f715: Extracting [============================>     ]  37.62MB/45.34MB
-4bda69fb795b: Downloading [=============>                   ]   66.1MB/204.9MB
-a9bef4c97d96: Downloading [============================>    ]  98.37MB/122.1MB
-90ec09c6bb70: Download complete 
-b4333f4fff5d: Waiting 
-8affb09c10ec: Waiting 
-0d00367ae604: Waiting 
-94ec4d08d2c2: Waiting 
-954a0ad24247: Waiting 
-fa5834f7ad81: Waiting 
-```
-
-The two other options on the command line above (i.e. `-e` and `-p`)
-specified the new password you'll use when starting RStudio (for this
-particular example, you can set it to anything) and mapped port 8787
-from the container to your host machine.  When the above command has
-finished running, go to your browser and go to the following URL:
-
-```
-http://localhost:8787
-```
-
-If it asks you for a username and password, login with user-name
-`rstudio` and the password you specified above
-(i.e. `abc123` in this example):
-
-![img](../img/rt1.png){width="100%"}
-
-This will bring up the RStudio environment, which is running as a
-server within the Docker container, and which you access via port
-8787 and your web browser.  If you're not familiar with R or
-RStudio, there are _lots_ of good tutorials available on-line if you
-search around.
-
-
-!!! Hint
-    For macOS and Linux users with the [luna.docker](http://zzz-luna.org/dist/luna/luna.docker) 
-    bash script installed, all the above can be accomplished with:
-    ```
-    luna.docker -rs abc123
-    ```
-
+The examples below show selected outputs from the tutorial data, with
+short tables and rounded values to keep the results easy to follow.
 
 ## Obtaining the data
 
-The tutorial data are pre-installed in this image, under the
-`/tutorial` folder.  Let's start by making a copy of this folder (so new can potentially manipulate it)
-to the home folder inside the container image.  Go to the _Terminal_ tab (next to the _Console_)
-tab in RStudio to get a command line: first ensure you are in the home folder:
-```
-cd ~
-```
-then copy the entire `/tutorial` folder to the current location (`.`):
-```
-cp -r /tutorial .
-```
-Returning back in the R _Console_, navigate to this in RStudio as follows:
-```
-setwd("~/tutorial/")
-```
-We can confirm the files are present:
-```
-dir()
-```
-```
-[1] "cmd"   "edfs"  "s.lst"
+Download and extract the [tutorial data](../download/data.md). Change
+the path below to the extracted folder containing `s.lst`, `edfs`, and
+`cmd`. If you use a Docker image with the data at `/tutorial`, copy that
+folder to a writable location first.
+
+```r
+setwd("~/tutorial")
+list.files()
+p$sample_list("s.lst")
+p$sample_list()
+valid <- p$validate()
+print(unique(valid[, c("ID", "Valid")]), row.names = FALSE)
 ```
 
-We'll also need to attach the _lunaR_ library with the following
-command:
-
-``` 
-library(luna) 
+```text
+     ID Valid
+ nsrr01  TRUE
+ nsrr02  TRUE
+ nsrr03  TRUE
 ```
+
+Check that the input files have `Valid = TRUE`. All subsequent paths in
+this tutorial are relative to this directory. Output files will also be
+written here; use a fresh working copy if you have already run the
+file-writing examples.
 
 ## Displaying EDF files
 
-!!! Info "Previous material"
-    The [corresponding section](tut1.md#displaying-edf-files) of the original tutorial covered:
-    
-    - the [`DESC`](../ref/summaries.md#desc) to obtain basic information on EDFs, essentially just stepping through this command: 
+Open the first individual, using either its ID or its 1-based
+sample-list position:
 
-    ```
-    luna s.lst -s DESC > res.txt
-    ```
-
-To mirror the previous operations, we must first load a
-[_sample-list_](../luna/args.md#sample-lists) with _lunaR_'s
-[`lsl()`](../ext/R/ref.md#lsl) function:
-
-```
-sl <- lsl( "s.lst" )
+```r
+i <- p$inst("nsrr01")
+i$desc()
+i$chs()
+i$headers()
 ```
 
-This function returns the sample-list as an R _list_ object, here
-named `sl`.  We can use _lunaR_'s [`lattach()`](../ext/R/ref.md#lattach)
-function to start working with the first individual, `nsrr01`, by
-passing by the sample-list and the ID (or the line number) of the
-individual we want to attach:
+`p$inst(1)` selects the same individual. `i` now holds the recording,
+including the annotation files listed in `s.lst`. Sampling rates vary
+between channels; for example:
 
-```
-lattach( sl , "nsrr01" ) 
-```
-
-![img](../img/rt2.png){width="100%"}
-
-
-Mirroring how _lunaC_ processes a _script_ (i.e. a set of Luna
-[commands](../ref/index.md) either after the `-s` option or from a
-[_command file_](../luna/args.md#command-files)), in _lunaR_ we can
-use the [`leval()`](../ext/R/ref.md/#leval) (or
-[`leval.project()`](../ext/R/ref.md#levalproject)) commands to process
-Luna commands such as [`DESC`](../ref/summaries.md#desc).  As for _lunaC_, the [`DESC`](../ref/summaries.md#desc) command just
-displays some information on the terminal, rather than sending output
-to the formal output mechanism (i.e. an output database).  The same is
-true in _lunaR_:
-
-```
-leval( "DESC" )
-```
-```
-EDF filename      : edfs/learn-nsrr01.edf
-ID                : nsrr01
-Clock time        : 21.58.17 - 09.20.16
-Duration          : 11:22:00  40920 sec
-# signals         : 14
-Signals           : SaO2[1] PR[1] EEG_sec[125] ECG[250] EMG[125] EOG_L[50]
-                    EOG_R[50] EEG[125] AIRFLOW[10] THOR_RES[10] ABDO_RES[10] POSITION[1]
-                    LIGHT[1] OX_STAT[1]
+```r
+headers <- i$headers()
+print(headers[headers$CH %in% c("ECG", "EEG", "SaO2"), c("CH", "SR")],
+      row.names = FALSE)
 ```
 
-To recap: here we've used a combination of _lunaR_ commands to
-recapitulate the simple _lunaC_ statement above:
+```text
+   CH  SR
+  ECG 250
+  EEG 125
+ SaO2   1
+```
 
-- `lsl()` to load a sample list called `s.lst`
-- `lattach()` to tell Luna which EDF we're interested in
-- `leval()` to evaluate a Luna command, the same as the `-s` option in _lunaC_
+`SR` is the sampling rate in Hz.
 
+To run the same [`DESC`](../ref/summaries.md#desc) command as in the
+command-line tutorial:
+
+```r
+i$eval("DESC")
+```
+
+Use `i$eval()` when you want to run commands on this recording. Use
+`i$proc()` when you also want to keep their output tables. For all
+recordings in the sample list, use `p$proc()`.
 
 ## Signal summary statistics
 
-!!! info "Previous context"
-    The [corresponding section](tut1.md#signal-summary-statistics) of the original tutorial covered:
+Run [`STATS`](../ref/summaries.md#stats) on the open recording:
 
-    - running the [`STATS`](../ref/summaries.md#stats) command for all three tutorial individuals
-    - saving the output to an [output database](../luna/destrat.md)
-    - querying it with [`destrat`](../luna/destrat.md#destrat)
-
-
-One difference between _lunaC_ and _lunaR_ is that, with a few
-exceptions, an attach EDF _persists_ in-memory after a `leval()`
-function has been performed.  That is, the effects of any `leval()`
-call that modifies the data (such as [`FILTER`](../ref/fir-filters.md#filter) or [`SIGNALS`](../ref/manipulations.md#signals) or [`MASK`](../ref/masks.md#mask))
-will carry over for the next `leval()`, up until a new EDF is
-`lattach()`-ed, or a `lrefresh()` command is issued to restore the EDF
-to its original state.  Therefore, unless you did something to make it
-otherwise, the EDF for `nsrr01` will still be in memory from the
-previous analysis.  We can confirm what the currently attached EDF is
-(if any) with the [`lstat()`](../ext/R/ref.md#lstat) command:
-
-```
-lstat()
-```
-```
-nsrr01 : 14 signals, 11 annotations, 11:22:00 duration
+```r
+k <- i$proc("STATS")
+print(k$strata(), row.names = FALSE)
+d <- k$table("STATS", "CH")
+print(d[d$CH %in% c("ECG", "EEG", "EMG"), c("CH", "MEAN", "RMS")],
+      row.names = FALSE, digits = 4)
 ```
 
-To run the [`STATS`](../ref/summaries.md#stats) command, we issue another `leval()`:
-
-```
-k <- leval( "STATS" )
-```
-```
-evaluating...
-nsrr01 : 14 signals, 11 annotations, 11:22:00 duration
-```
-
-![img](../img/rt3.png){width="100%"}
-
-Unlike the [`DESC`](../ref/summaries.md#desc) command,
-[`STATS`](../ref/summaries.md#stats) returns information to the formal
-output mechanism: this is why we've assigned the _return value_ of
-`leval()` to be a new R object, called `k`.
-
-!!! hint 
-    `leval()` returns its output _silently_, in that you won't
-    see anything printed to the console if you do not assign the
-    output to another object.  This doesn't mean the commands
-    weren't performed:  masks, filters, etc, will still
-    modify the internal EDF.
-
-The returned value `k` represents the same information that would have
-been sent to the `out.db` database, if running this command in _lunaC_
-from the command line.  Similar to how [`destrat`](../luna/destrat.md) 
-summarizes a database, in _lunaR_ the [`lx()`](../ext/R/ref.md#lx) command gives a simple 
-summary of a what `leval()` returns:
-
-```
-lx(k)
-```
-```
-STATS : CH 
+```text
+ Command Strata
+   STATS     CH
+  CH      MEAN     RMS
+ ECG  0.009396  0.2667
+ EEG -0.301199 37.8014
+ EMG -6.855696 13.9701
 ```
 
-That is, in this simple example, we have one command ([`STATS`](../ref/summaries.md#stats)) and
-one output table (defined by channel, `CH`).  Using R's `str()`
-function reveals more about the _structure_ of `k`:
+`k` is a saved result (`ProcResult`); `d` is an ordinary R data frame.
+`CH` selects the table with one row per channel. Display all of this
+run's tables with `k$tables`, or list their names with `k$keys()`.
 
-```
-str(k)
-```
-```
-List of 1
- $ STATS:List of 1
-  ..$ CH:'data.frame':	14 obs. of  23 variables:
-  .. ..$ ID  : chr [1:14] "nsrr01" "nsrr01" "nsrr01" "nsrr01" ...
-  .. ..$ CH  : chr [1:14] "ABDO_RES" "AIRFLOW" "ECG" "EEG" ...
-  .. ..$ MAX : num [1:14] 0.992 0.992 1.25 125 125 ...
-  .. ..$ MEAN: num [1:14] 0.0218 0.0664 0.0094 -0.3012 1.1856 ...
-  .. ..$ MIN : num [1:14] -1 -1 -1.24 -124.02 -124.02 ...
-  .. ..$ P01 : num [1:14] -0.71 -0.2 -1.24 -124.02 -124.02 ...
-  .. ..$ P02 : num [1:14] -0.506 -0.129 -0.858 -124.02 -124.02 ...
-  .. ..$ P05 : num [1:14] -0.3176 -0.0667 -0.1912 -70.098 -78.9216 ...
-  .. ..$ P10 : num [1:14] -0.2 -0.0275 -0.0833 -24.0196 -20.098 ...
-  .. ..$ P20 : num [1:14] -0.0902 0.0118 -0.0343 -9.3137 -7.3529 ...
-  .. ..$ P30 : num [1:14] -0.0196 0.0353 -0.0049 -5.3922 -3.4314 ...
-  .. ..$ P40 : num [1:14] 0.00392 0.05098 0.01471 -2.45098 -0.4902 ...
-  .. ..$ P50 : num [1:14] 0.0196 0.0667 0.0245 -0.4902 1.4706 ...
-  .. ..$ P60 : num [1:14] 0.0275 0.0745 0.0245 2.451 3.4314 ...
-  .. ..$ P70 : num [1:14] 0.051 0.0902 0.0343 4.4118 6.3725 ...
-  .. ..$ P80 : num [1:14] 0.098 0.1137 0.0343 8.3333 10.2941 ...
-  .. ..$ P90 : num [1:14] 0.2627 0.1608 0.0833 23.0392 22.0588 ...
-  .. ..$ P95 : num [1:14] 0.435 0.208 0.211 72.059 78.922 ...
-  .. ..$ P98 : num [1:14] 0.663 0.278 0.828 125 125 ...
-  .. ..$ P99 : num [1:14] 0.875 0.349 1.25 125 125 ...
-  .. ..$ RMS : num [1:14] 0.236 0.122 0.267 37.801 40.325 ...
-  .. ..$ SD  : num [1:14] 0.235 0.102 0.266 37.8 40.308 ...
-  .. ..$ SKEW: num [1:14] 0.3348 0.1384 -0.1152 0.0862 -0.0688 ...
+To process all three tutorial individuals:
+
+```r
+k <- p$proc("STATS")
+d <- k$table("STATS", "CH")
+print(head(d[d$CH %in% c("ECG", "EMG", "SaO2"), c("ID", "CH", "MEAN")], 3),
+      row.names = FALSE, digits = 4)
 ```
 
-To see the entire list (that really only contains one data frame), just type `k`:
-
-```
-k
-```
-```
-$STATS
-$STATS$CH
-       ID       CH      MAX      MEAN    MEDIAN      MIN     RMS      SD
-1  nsrr01 ABDO RES   0.9921  0.021828  0.01960   -1.0000  0.2357  0.2347
-2  nsrr01  AIRFLOW   0.9921  0.066441  0.06666   -1.0000  0.1219  0.1022
-3  nsrr01      ECG   1.2500  0.009395  0.02450   -1.2401  0.2666  0.2664
-4  nsrr01      EEG 125.0000 -0.301198 -0.49019 -124.0196 37.8013 37.8001
-5  nsrr01 EEG(sec) 125.0000  1.185577  1.47058 -124.0196 40.3254 40.3079
-6  nsrr01      EMG  31.5000 -6.855696 -4.81764  -31.2529 13.9700 12.1721
-7  nsrr01   EOG(L) 125.0000  0.472550  0.49019 -124.0196 54.4618 54.4598
-8  nsrr01   EOG(R) 125.0000  0.321446  0.49019 -124.0196 54.0092 54.0083
-9  nsrr01    LIGHT   1.0000  0.997262  1.00000    0.0000  0.9986  0.0522
-10 nsrr01  OX STAT   2.0000  0.428885  0.00000    0.0000  0.9261  0.8208
-11 nsrr01 POSITION   3.0000  1.654423  1.00000    0.0000  1.9157  0.9659
-12 nsrr01       PR 200.0000 57.348521 67.19157    0.2014 64.9523 30.4954
-13 nsrr01     SaO2  99.1195 76.924249 95.11558    0.1007 85.5665 37.4743
-14 nsrr01 THOR RES   0.9921  0.001188 -0.01176   -1.0000  0.1805  0.1805
+```text
+     ID  CH     MEAN
+ nsrr01 ECG 0.009396
+ nsrr02 ECG 0.005671
+ nsrr03 ECG 0.003571
 ```
 
-That is, we have statistics for 14 channels from one tutorial
-individual, `nsrr01`.  However, the original _lunaC_ command
-calculated and compiled results _for all three studies in the project_.  
-Obviously, we could write a simple loop to achieve this in R,
-repeatedly calling `lattach()` and `leval()` and compiling results.
-Alternatively, an easier way to do this is the [`leval.project()`](../ext/R/ref.md#levalproject) 
-function instead, which performs pretty much the same series of
-operations as _lunaC_ does.   That is, the _luna_C_ statement:
+This is the R equivalent of `luna s.lst -o out.db -s STATS` followed by
+extracting the channel-level table with destrat. In R, the results are
+already data frames.
 
-```
-luna s.lst -o out.db -s STATS
-```
-is equivalent to the following in _lunaR_:
-```
-k <- leval.project( sl , "STATS" )
-```
-
-where `sl` is the the file `s.lst` (attached with `lsl()`) and `k` is
-the equivalent of `out.db`.
-
-
-The returned value, `k` now contains results for all three
-individuals.  Although the overall structure is the same as before,
-each data-frame now has additional rows for the additional individuals
-(with the `ID` column indicating who's who).  In RStudio, you can
-explore the results by clicking on `k` in the Environment tab, or by
-typing
-
-```
-View(k)
-```
-
-![img](../img/rt4.png){width="100%"}
-
-
-
-To mirror the previous tutorial section, we need now to extract the
-_"signal means for the ECG, EMG and SaO2"_.  Here we can use the
-[`lx()`](../ext/R/ref.md#lx) function with an additional parameter (the command
-name), which will, in this case (as there is only a single table
-associated with this command's output) will return a data-frame with
-the output:
-```
-d <- lx( k , "STATS" )
-```
-which contains the six variables including the mean (`MEAN`) along with 
-`ID` and `CH` columns:
-```
-names(d)
-```
-```
- [1] "ID"   "CH"   "KURT" "MAX"  "MEAN" "MIN"  "P01"  "P02"  "P05"  "P10"  "P20" 
-[12] "P30"  "P40"  "P50"  "P60"  "P70"  "P80"  "P90"  "P95"  "P98"  "P99"  "RMS" 
-[23] "SD"   "SKEW"
-```
-Using R's basic row/column subsetting functions, we can pull out the required information as follows:
-```
-d[ d$CH %in% c("ECG","EMG","SaO2") , c("ID","CH","MEAN") ] 
-```
-```
-       ID   CH         MEAN
-7  nsrr01  ECG  0.009395566
-8  nsrr02  ECG  0.005670678
-9  nsrr03  ECG  0.003571143
-16 nsrr01  EMG -6.855696298
-17 nsrr02  EMG -0.609767419
-18 nsrr03  EMG  3.013591554
-37 nsrr01 SaO2 76.926126702
-38 nsrr02 SaO2 77.874804354
-39 nsrr03 SaO2 65.084439075
-```
-
-
+Commands on `i` retain changes to its in-memory signals and masks.
+Project runs with `p$proc()` load each recording from its source files,
+so edits made to `i` do not become edits to the whole cohort. To restore
+an instance after filtering or masking, use `i$refresh()`.
 
 ## Working with annotations
 
-!!! Info "Previous material"
-    The [corresponding section](tut1.md#working-with-annotations) of the original tutorial covered:
-    
-    - looking at the contents of an NSRR XML annotation file
-    - counting the number of apnea events per individual, either for the whole night, or specific to REM sleep
+Open `nsrr01` and list its annotations:
 
-
-When we attach an EDF with `lattach()`, if the sample list specified
-any annotation files, they too are automatically loaded.  For example,
-considering `nsrr01`, when we attach that dataset, we see there are 11
-annotation classes are also attached (i.e. from the XML file specified
-in `s.lst`):
-    
-```
-lattach( sl , 1 )
-```
-```
-nsrr01 : 14 signals, 11 annotations, 11:22:00 duration
+```r
+i <- p$inst("nsrr01")
+i$annots()
 ```
 
-To see what those annotations classes are, we can use the [`lannots()`](../ext/R/ref.md#lannots) command:
-```
-lannots()
-```
-```
- [1] "Arousal"           "Hypopnea"          "N1"               
- [4] "N2"                "N3"                "Obstructive_Apnea"
- [7] "R"                 "SpO2_artifact"     "SpO2_desaturation"
-```
-Re-running `lannots()` with a single annotation class name as a parameter, we'll get a list of 
-the intervals (in seconds elapsed since the start of the EDF):
-```
-lannots( "Obstructive_Apnea" )
-```
-```
-[[1]]
-[1] 2300.7 2310.7
+Annotation names are **case-sensitive**. These tutorial data include
+`Arousal`, `Obstructive_Apnea`, and `Hypopnea`; use those spellings in
+commands and R methods.
 
-[[2]]
-[1] 2329.6 2343.1
+Retrieve apnea events as a data frame with start/stop seconds:
 
-[[3]]
-[1] 4933.6 4953.2
-
-[[4]]
-[1] 5064.9 5095.1
-
-[[5]]
-[1] 5248.1 5265.5
-
-... (cont'd) ...
+```r
+apneas <- i$fetch_annots("Obstructive_Apnea")
+print(head(apneas, 3), row.names = FALSE)
 ```
 
-That is, the first apnea event was from 2300.7 to 2310.7 seconds (10
-seconds); the second was from 2329.6 to 2343.1 seconds (13.5 seconds),
-etc.
-
-Luna's [_masks_](../ref/masks.md) work in terms of
-[_epochs_](../ref/epochs.md), which are fixed intervals spanning the
-recording (by default, typically 30 seconds).  We can see how epochs
-and annotations line up with the [`letable()`](../ext/R/ref.md#letable)
-(_epoch_-table) command.  First, we need to specify epochs for this
-record:
-```
-lepoch()
-```
-```
-nsrr01 : 14 signals, 11 annotations, 11:22:00 duration, 1364 unmasked 30-sec epochs, and 0 masked
+```text
+             Class  Start   Stop
+ Obstructive_Apnea 2300.7 2310.7
+ Obstructive_Apnea 2329.6 2343.1
+ Obstructive_Apnea 4933.6 4953.2
 ```
 
-The output from `lstat()` now additionally includes information about
-the number of epochs, and whether or not they are currently _masked_.
+Use `i$fetch_full_annots("Obstructive_Apnea")` if you also want event
+instance IDs, channel labels, and metadata.
 
-To explore the epoch structure in more detail, along-side annotation
-information, we can use `letable()` to tabulate all epochs (when they
-occur, whether they are masked or not, and, if the EDF has been
-restructured, how that epoch maps to the original EDF):
+Set 30-second epochs and inspect stages and annotation coverage:
 
-```
-a <- letable( annots = lannots() ) 
-```
-
-![img](../img/rt5.png){width="100%"}
-
-
-!!! info "Quickly summarizing sleep stages" 
-    One other convenience
-    function is [`lstages()`](../ext/R/ref.md#lstages), which is just a wrapper
-    around the evaluation of the Luna
-    [`STAGES`](../ref/hypnograms.md#stage) command and returns a
-    vector of sleep stage labels (e..g NREM1, NREM2, etc) per
-    epoch. Stage labels must exist as annotations (i.e. this command
-    does not automatically infer sleep stage on-the-fly from the raw
-    signal data_).  
-
-    ```
-    ss <- lstages()
-    ```
-    ```
-    table( ss ) 
-    ```
-    ```
-     N1  N2  N3   R   W 
-    109 523  17 238 477 
-    ```
-
-    All NSRR data have annotations formatted in such a
-    way as to work with these commands, although it is easy to modify
-    this to work with other formats.
-
-
-Moving on the question of the original tutorial section: how can we
-count the number of apneas per individual?  As previously, we'll use the
-[`ANNOTS`](../ref/annotations.md#annots) command, combined with `leval.project()` to
-apply this to each individual:
-```
-k <- leval.project( sl, "ANNOTS" )
+```r
+i$epoch("len=30")
+epochs <- i$epochs()
+stages <- i$stages()
+head(epochs)
+table(stages$STAGE)
+coverage <- i$proc("ESPAN annot=Arousal,Obstructive_Apnea,Hypopnea has=T")
+coverage$strata()
+head(coverage$table("ESPAN", c("ANNOT", "E")))
 ```
 
-As described on the [`ANNOTS` command page](../ref/annotations.md#annots), 
-counts of annotation instances for each annotation class are in the table stratified by `ANNOT`:
+The stage counts from `table(stages$STAGE)` are:
 
-```
-lx(k)
-```
-```
-ANNOTS : ANNOT ANNOT_INST ANNOT_INST_T1_T2 
+```text
+ N1  N2  N3   R   W
+109 523  17 238 477
 ```
 
-We can simply extract this with `lx( k , "ANNOTS" , "ANNOT" )`, or
-alternatively, just write it directly:
+`epochs()` returns epoch timing; `stages()` returns a data frame with
+one sleep-stage label per epoch. These read the manual staging
+annotations, rather than predicting stages from the signals.
+[`ESPAN`](../ref/annotations.md#espan) describes annotation coverage per
+epoch, including the `HAS` indicator requested here.
 
-```
-d <- k$ANNOTS$ANNOT
-```
+Count annotation events across all individuals:
 
-If we restrict to rows where the annotation class name is `Obstructive_Apnea`, we'll see that `COUNT`s 
-for each individual.
-
-```
-d[ d$ANNOT == "Obstructive_Apnea" , ]
-```
-```
-       ID             ANNOT COUNT    DUR
-14 nsrr01 Obstructive_Apnea    37  824.5
-15 nsrr02 Obstructive_Apnea     5   67.7
-16 nsrr03 Obstructive_Apnea   163 3795.6
+```r
+k <- p$proc("ANNOTS")
+d <- k$table("ANNOTS", "ANNOT")
+print(d[d$ANNOT == "Obstructive_Apnea", c("ID", "COUNT", "DUR")],
+      row.names = FALSE)
 ```
 
-Reassuringly, these match what was obtained in the previous tutorial
-section.  To consider only events during REM, we can re-run but including a 
-[`MASK`](../ref/masks.md#mask) statement:
-
-```
-k <- leval.project( sl , "MASK ifnot=R & ANNOTS" )
-```
-
-Repeating the above steps to extract the output:
-
-```
-d <- k$ANNOTS$ANNOT
+```text
+     ID COUNT    DUR
+ nsrr01    37  824.5
+ nsrr02     5   67.7
+ nsrr03   163 3795.6
 ```
 
-```
-d[ d$ANNOT == "Obstructive_Apnea" , ]
-```
-```
-      ID             ANNOT COUNT   DUR
-7 nsrr01 Obstructive_Apnea    27 668.4
-8 nsrr02 Obstructive_Apnea     3  43.4
+`COUNT` is the event count and `DUR` is the total event duration in seconds.
+
+For REM-specific counts, restrict the epochs before running `ANNOTS`:
+
+```r
+k_rem <- p$proc("EPOCH len=30 & MASK ifnot=R & ANNOTS")
+d_rem <- k_rem$table("ANNOTS", "ANNOT")
+print(d_rem[d_rem$ANNOT == "Obstructive_Apnea", c("ID", "COUNT", "DUR")],
+      row.names = FALSE)
 ```
 
-Again, these results match what we observed with _lunaC_.
+```text
+     ID COUNT   DUR
+ nsrr01    27 668.4
+ nsrr02     3  43.4
+```
 
+The [`ANNOTS`](../ref/annotations.md#annots) reference explains how event
+counts and durations interact with masks. Individuals without REM may
+have no rows in this result.
 
 ## Putting it together
 
-!!! Info "Previous material"
-    The [corresponding section](tut1.md#putting-it-together) of the original tutorial covered:
-    
-    - running a command file (`cmd/first.txt`) in _lunaC_ 
-    - using [_variables_](../luna/args.md#variables) in command files
-    - tracking repeated runs of the same commands with [`TAG`](../ref/summaries.md#tag)s
+The tutorial's `cmd/first.txt` file sets 30-second epochs, labels the
+output by a `${stage}` variable, retains that stage, and runs EEG
+statistics. Read it from R:
 
-Up to now, we've directly entered Luna commands as text on the R
-command line.  We can also read [command
-files](../luna/args.md#command-files) in the same way that _lunaC_
-does, which is recommended for all non-trivial applications.  The _lunaR_ function [`lcmd()`](../ext/R/ref.md#lcmd) 
-will read and parse a Luna-format command file, and return a vector where each instruction in one element:
-```
-lcmd( "cmd/first.txt" )
-```
-```
-[1] "EPOCH len=30"           "TAG tag=STAGE/${stage}" "MASK ifnot=${stage}"   
-[4] "RESTRUCTURE"            "STATS sig=EEG"
+```r
+commands <- lp$cmdfile("cmd/first.txt")
+cat(commands)
 ```
 
-That is, `lcmd()` strips away comments (`%`) and blank lines, etc.  As
-well as using `&` to concatenate Luna commands, `leval()` and
-`leval.project()` functions accept vectors of commands, so we can pass
-the output of `lcmd()` to `leval()`, etc.  However, you'll note from
-looking at the commands above, we have one issue we need to first
-resolve, namely the use of [_variables_](../luna/args.md#variables) in
-the command file.  When using _lunaC_, we'd specify the value of
-`${stage}` on the command line, as well as passing special variables such as 
-`sig` to define the [signal list](../luna/args.md#signal-lists). For example, 
+`cmdfile()` reads the text; Luna handles its comments and command syntax.
+Set the variable, then run the file across the sample list:
 
-```
-luna s.lst stage=N1 sig=EEG -o out.db < cmd/first.txt
+```r
+p$vars("stage", "N1")
+p$vars("stage")
+k <- p$proc(commands)
+k$strata()
+d <- k$table("STATS", c("CH", "STAGE"))
+d[, c("ID", "CH", "STAGE", "RMS")]
 ```
 
-In _lunaR_, we can set _Luna environment variables_ with the
-[`lset()`](../ext/R/ref.md#lset) function:
-```
-lset( "stage","N1" )
-```
-```
-setting [stage] to [N1]
-```
+The script's [`TAG`](../ref/summaries.md#tag) adds a `STAGE` factor to
+the output, so this table has strata `CH_STAGE`, rather than just `CH`.
 
-We can query if a value exists, with [`lvar()`](../ext/R/ref.md#lvar):
-```
-lvar("stage")
-```
-```
-[1] "N1"
-```
+Repeat for several stages, keeping each run's results:
 
-We can use a similar approach with `sig`, to specify which signal(s)
-this analysis is restricted to:
-
-```
-lset( "sig" , "EEG" )
-```
-
-However, as `sig` is a _special variable_, it is treated a little differently:
- 
- - because it is not a user-defined variable, `lvar("sig")` will not
-   show anything; the same is true when setting other _special
-   variables_ such as `alias`
-
- - repeated calls setting to `sig` (or `alias`) variables do not
-   overwrite the earlier values; rather, they append to that list
-
-!!! info "Setting _special variables_ in _lunaR_"
-    In other words, after the commands:
-    ```
-    lset( "sig" , "EEG1,EEG2" ) 
-    lset( "sig" , "EEG3" )
-    ```
-
-    the _signal-list_ will comprise all three signals, not just `EEG3`.
-    To clear the signal-list, use this special form:
-
-    ```
-    lset( "sig" , "." )
-    ```
-    or run
-    ```
-    lreset()
-    ```
-    which clears _all_ variables (both user-defined and special variables), and resets all Luna global parameters to their default values.
-
-Having specified the value of `${stage}` as well as the signal-list
-(i.e. to restrict analysis to just the `EEG` channel), we can run
-`leval.project()`, using `lcmd()` to read in and parse the command
-script we used previously with _lunaC_:
-
-```
-k <- leval.project( sl , lcmd( "cmd/first.txt" ) ) 
-```
-After this completes, we can confirm the structure of the output (`k`) with `lx()`, as before:
-```
-lx(k)
-```
-```
-EPOCH : BL STAGE 
-MASK : EMASK_STAGE 
-RESTRUCTURE : STAGE 
-STATS : CH_STAGE 
-```
-
-Note that each table also has [`STAGE`](../ref/hypnograms.md#stage) as an additional factor, due to
-the use of the [`TAG`](../ref/summaries.md#tag) command.  That is, these results 
-are currently just for NREM1 sleep:
-```
-lx( k , "STATS" )
-```
-```
-      ID  CH STAGE      KURT       MAX         MEAN        MIN       P01       P02
-1 nsrr01 EEG    N1  1.770623  59.31373 -0.295451220  -81.86275 -18.13725 -16.17647
-2 nsrr02 EEG    N1  1.976144  49.50980  0.007177659  -72.05882 -28.92157 -23.03922
-3 nsrr03 EEG    N1 37.534412 125.00000  0.198371041 -124.01961 -25.98039 -20.09804
-        P05        P10       P20       P30       P40        P50      P60      P70      P80
-1 -12.25490  -9.313725 -6.372549 -3.431373 -1.470588 -0.4901961 1.470588 3.431373 5.392157
-2 -17.15686 -12.254902 -7.352941 -4.411765 -1.470588  0.4901961 2.450980 5.392157 8.333333
-3 -14.21569 -10.294118 -6.372549 -3.431373 -1.470588  0.4901961 2.450980 4.411765 7.352941
-        P90      P95      P98      P99       RMS        SD        SKEW
-1  8.333333 11.27451 15.19608 18.13725  7.354944  7.349016  0.01513765
-2 12.254902 16.17647 20.09804 24.01961 10.361542 10.361666 -0.48778254
-3 11.274510 14.21569 20.09804 26.96078 12.302106 12.300538 -0.46132928
-```
-
-To obtain the values for other sleep stages, we can just repeat the
-above procedures.  To facilitate this, and to make the output easier to
-collate, we'll do the following.  First, we'll define the stages we
-want to iterate over:
-
-```
-stgs <- c( "N1", "N2", "N3" , "R"  )
-```
-We'll then define a _single_ (empty) list to hold results from _all_ stages:
-```
-k <- list()
-```
-
-We then can use a `for` loop in R to iterate over each stage, setting
-the appropriate `${stage}` value, and then running the script:
-
-```
-for (s in stgs) {
-
- lset( "stage", s ) 
-
- k[[ s ]] <- leval.project( sl , lcmd( "cmd/first.txt" ) ) 
-
+```r
+stgs <- c("N1", "N2", "N3", "R")
+by_stage <- list()
+for (stage in stgs) {
+  p$vars("stage", stage)
+  by_stage[[stage]] <- p$proc(commands)
 }
+d <- lp$concat(by_stage, "STATS: CH_STAGE")
+print(with(d, tapply(RMS, list(ID, STAGE), mean)), digits = 4)
+p$clear_vars("stage")
 ```
 
-When this runs, you'll see a warning message displayed to the console for the last individual:
-```
-  ** skipping STATS as there are no unmasked records
-```
-
-This is fine and as expected: as we previously saw, this is because
-`nsrr03` doesn't have any REM epochs.  
-
-!!! hint 
-    If you see other errors in lunaR, it 
-    may often be that you forgot to `lset()`/`lreset()` any
-    _variables_, forgot to `lattach()` an individual, or need to
-    `lrefresh()` the attached EDF when running a new command, i.e. if there are 
-    no unmasked records left for that EDF.
-
-Note that rather than saving the output of `leval.project()` directly
-to `k`, we are writing it to a _sub-item_ of the existing list, using
-sleep stage `s` as index an index.  (A technical point, but R uses
-double brackets `[[` often when working with lists, to indicate any
-single element _itself_, rather than `[`, which indicates _a list of
-the selected elements_, 
-e.g. see [here](https://stackoverflow.com/questions/1169456/the-difference-between-bracket-and-double-bracket-for-accessing-the-elem)).
- 
-
-!!! warning "Persistence of EDFs in `leval()` and `leval.project()`"
-    When using `leval.project()`, _lunaR_ behaviors much more like _lunaC_ in terms of the persistence of in-memory 
-    EDFs.  That is, each EDF in the sample list is attached and then dropped before moving to the next EDF in the list.  So, 
-    unlike `leval()`, which does not detach the EDF, this means that after running the above, there will not be any currently attached EDF: 
-    ```
-    lstat()
-    ```
-    ```
-    Error in lstat() : no EDF attached
-    ```
-
-    More importantly, it means that when running `leval.project()`
-    inside a loop as above, any modifications made (e.g. from masks,
-    filters, dropping or adding signals, etc), will _not_ be reflected
-    when re-running the loop.  So, `leval.project()` is really like
-    running a single _lunaC_ statement.  In contrast, `leval()` works
-    more like the individual components that occur _within_ one
-    _lunaC_ run for one individual.
-
-
-Having run the above code successfully, we'll now have a slightly
-different format for `k`.  Namely, it is a list with 4 elements,
-correspond to the four sleep stages.  Each element is identical to the
-output that would have come from a single run of `leval.project()`
-(obviously... that is how we assigned it above).  
-
-Therefore, `lx()` will work slightly differently, due to the structure of the output. By itself, 
-rather than returning _each command_ as a row, along with a list of tables from that command, `lx()` 
-will now return _each higher level group_ (i.e. `s` or sleep stage in this case), along with a list of the _commands_
-performed:
-```
-lx(k)
-```
-```
-N1 : EPOCH MASK RESTRUCTURE STATS 
-N2 : EPOCH MASK RESTRUCTURE STATS 
-N3 : EPOCH MASK RESTRUCTURE STATS 
-R : EPOCH MASK RESTRUCTURE STATS 
+```text
+           N1    N2    N3      R
+nsrr01  7.355 10.65 13.01  7.564
+nsrr02 10.362 14.74 20.05 14.146
+nsrr03 12.302 14.50 18.98     NA
 ```
 
-We cannot use `lx()` to extract a particular table from a particular
-command however.  The alternative `lx2()` can be used in this
-scenario, i.e. if and only if you've consciously structured the output in 
-the way we have above.  So, instead if `lx( k , "STATS" )`, we'd run 
-```
-lx2( k , "STATS" )
-```
-which conveniently compiles all the similar results from different sleep stages into a _single_ table (nb.
-some columns omitted for clarity):
-```
-         ID  CH STAGE      KURT       MAX         MEAN        MIN       P01
-N1.1 nsrr01 EEG    N1  1.770623  59.31373 -0.295451220  -81.86275 -18.13725
-N1.2 nsrr02 EEG    N1  1.976144  49.50980  0.007177659  -72.05882 -28.92157
-N1.3 nsrr03 EEG    N1 37.534412 125.00000  0.198371041 -124.01961 -25.98039
-N2.1 nsrr01 EEG    N2  2.935892 125.00000 -0.313127132 -124.01961 -27.94118
-N2.2 nsrr02 EEG    N2  6.550833 125.00000 -0.134945206 -124.01961 -40.68627
-N2.3 nsrr03 EEG    N2 20.749735 125.00000  0.126607059 -124.01961 -37.74510
-N3.1 nsrr01 EEG    N3  7.165718 121.07843 -0.454932718 -112.25490 -37.74510
-N3.2 nsrr02 EEG    N3  1.547826 125.00000 -0.130731673 -124.01961 -51.47059
-N3.3 nsrr03 EEG    N3  2.156775 125.00000  0.171914099 -124.01961 -47.54902
-R.1  nsrr01 EEG     R  2.869020  85.78431 -0.371502169  -82.84314 -19.11765
-R.2  nsrr02 EEG     R 22.273566 125.00000 -0.384220044 -124.01961 -44.60784
-...
+`lp$concat()` collects the same table from the saved runs. The results
+for earlier stages remain available after subsequent runs. `nsrr03` has
+no REM in these data, so a missing REM result for that individual is
+expected.
+
+Each `p$proc()` run starts from the source recordings; the N1 mask from
+one run does not carry over into the N2 run. In contrast, consecutive
+commands on an instance share its current state.
+
+### Inspecting signal values in R
+
+You can also extract a signal directly, without defining epochs:
+
+```r
+i <- p$inst("nsrr01")
+x <- i$data("EEG")$EEG
+length(x)
+median(x)
+hist(x[x > -10 & x < 10], breaks = 100,
+     xlab = "EEG", main = "Signal values near zero")
+rm(x)
 ```
 
-Because we used [`TAG`](../ref/summaries.md#tag) in the script, we have a variable named [`STAGE`](../ref/hypnograms.md#stage)
-that corresponds to this higher-level structure, making it easy to
-keep track of results.
- 
-So, to extract the same information as previously (namely, signal RMS
-for the EEG channel for all three individuals, stratified by sleep
-stage), we could run the following:
-```
-d <- lx2( k , "STATS")
-```
-```
-d[ , c("ID","STAGE","RMS")]
-```
-```
-         ID STAGE       RMS
-N1.1 nsrr01    N1  7.354944
-N1.2 nsrr02    N1 10.361542
-N1.3 nsrr03    N1 12.302106
-N2.1 nsrr01    N2 10.646079
-N2.2 nsrr02    N2 14.742420
-N2.3 nsrr03    N2 14.496728
-N3.1 nsrr01    N3 13.014505
-N3.2 nsrr02    N3 20.054659
-N3.3 nsrr03    N3 18.980088
-R.1  nsrr01     R  7.563595
-R.2  nsrr02     R 14.146456
-```
-
-To get a nice tabulation, we could do the following: 
-(although there are [more efficient](https://www.r-bloggers.com/concatenating-a-list-of-data-frames/)
-ways to do this, if needed):
-
-```
-with( d , tapply( RMS , list( ID , STAGE ) , mean ) )
-```
-```
-              N1       N2       N3         R
-nsrr01  7.354944 10.64608 13.01451  7.563595
-nsrr02 10.361542 14.74242 20.05466 14.146456
-nsrr03 12.302106 14.49673 18.98009        NA
-```
-
-
-!!! hint "Something strange about the medians?"  
-    You may have noted
-    that in the tables above, the `MEDIAN` values of the EEG were all
-    very similar numbers: either 0.49019 or -0.49019.  Did we do
-    something wrong?  In this case, no we didn't, it is simply a property of the resolution of the data after 
-    analog to digital conversion.  To use _lunaR_ to check this out, let's attach one individual:
-    ```
-    lattach( sl , 1 )
-    ```
-
-    To pull an entire signal we can use `ldata()` but we need to
-    specify the interval in terms of epochs, so we must first epoch
-    the data (here, saving the number of epochs in `ne`):
-
-    ```
-    ne <- lepoch()
-    ```
-
-    We can then request the entire (`1:ne`) `EEG` signal (note, we
-    only keep the signal rather than the whole data frame returned by
-    `ldata()`: we'll add more efficient ways to extract only signals in
-    the future):
-
-    ```
-    x <- ldata( 1:ne , "EEG" )$EEG
-    ```
-
-    Let's check things are as expected: `length(x)` gives 5115000;
-    given we have 1364 30-second epochs and a sampling rate of 125 Hz,
-    this is good, as 1364 * 30 * 125 = 5115000.  Now, to check the median:
-
-    ```
-    median(x)
-    ```
-    ```
-    -0.4901961
-    ```
-
-    We're seeing the same number as above in the stage-stratified
-    analyses.  Looking at the distribution of the samples, we see this
-    simply reflects the resolution of the digital signal:
-    ```
-    par(mfcol=c(2,1))
-    hist(x , breaks=500)
-    hist(x[x> -10 & x < 10 ] , breaks= 500 ) 
-    ```
-
-    ![img](../img/rt6.png){width="100%"}
-
+The discrete signal values reflect the EDF's digital-to-physical scaling.
+For a short interval instead of the whole recording, use `i$slice()`
+with intervals from `i$s2i()`; examples appear below.
 
 ## Using destrat
 
-!!! Info "Previous material"
-    The [corresponding section](tut2.md#using-destrat) of the original tutorial covered:
-    
-    - how to use the [`destrat`](../luna/destrat.md#destrat) tool to work with the output databases generated by _lunaC_'s `-o` option
+For analyses run in R, retrieve tables directly and save them with the
+usual R functions:
 
-In _lunaR_ we do not generate [output databases](../luna/destrat.md);
-rather, any commands executed return their results directly as R list
-objects.  (If you want to _save_ any of these, you can simply use R's
-standard `save()` function, or similar.)  However, it is in fact
-possible to _read_ output databases generated by _lunaC_ into _lunaR_,
-with the [`ldb()`](../ext/R/ref.md#ldb) function.
-
-As a quick example, within RStudio, switch to the "Terminal" tab
-(instead of "Console").  This gives a prompt in a _bash_ (Bourne Again
-Shell) where you can access the virtual Linux machine running RStudio: 
-
-![img](../img/rt7.png){width="100%"}
-
-This should be in the same `tutorial/` folder (if you are not, run `cd
-tutorial`).  Typing `ls` should show the `s.lst` file and the two
-folders, `edfs` and `cmd`.  Now run a command that generates an `out.db` file: e.g. 
+```r
+saveRDS(by_stage$N2$tables, "N2-results.rds")
+write.csv(by_stage$N2$table("STATS", "CH_STAGE"),
+          "N2-stats.csv", row.names = FALSE)
 ```
+
+You can also import SQLite output databases created by the command-line
+Luna tools. For example, in a terminal with `luna` installed:
+
+```bash
 luna s.lst -o out.db -s 'EPOCH & STATS sig=ECG,EEG epoch'
-```
-(Note: depending on the set up, you may need to run this from the home directory
-inside Docker, if you have write permission issues based on your user.)
-As before, you can use destrat to summarize and query this database:
-```
 destrat out.db
 ```
-```
---------------------------------------------------------------------------------
-out.db: 2 command(s), 3 individual(s), 15 variable(s), 47157 values
---------------------------------------------------------------------------------
-  command #1:   c1      Thu Mar 21 19:33:09 2019        EPOCH
-  command #2:   c2      Thu Mar 21 19:33:09 2019        STATS
---------------------------------------------------------------------------------
-distinct strata group(s):
-  commands      : factors           : levels        : variables
-----------------:-------------------:---------------:---------------------------
-  [EPOCH]       : .                 : 1 level(s)    : DUR INC NE
-                :                   :               :
-  [EPOCH]       : CH                : 1 level(s)    : DUR INC NE
-                :                   :               :
-  [STATS]       : CH                : 2 level(s)    : MAX MEAN MEDIAN MEDIAN.MEAN MEDIAN.MEDIAN
-                :                   :               : MEDIAN.RMS MEDIAN.SD MIN NE NE1
-                :                   :               : RMS SD
-                :                   :               :
-  [STATS]       : E CH              : (...)         : MAX MEAN MEDIAN MIN RMS SD
-                :                   :               :
-----------------:-------------------:---------------:---------------------------
+
+If you use the Python command-line tools, `luna.py` and `destrat.py`
+provide the corresponding route. A separate command-line installation
+is only needed to run this terminal example, not for the other R
+analyses on this page.
+
+Back in R, import the database and retrieve its tables:
+
+```r
+p$import_db("out.db")
+p$strata()
+db_stats <- p$table("STATS", c("CH", "E"))
+head(db_stats)
 ```
 
-Switching back to the RStudio _Console_ (i.e. back to the R prompt), you can read in that same output database
-
-```
-k <- ldb( "out.db" )
-```
-
-!!! note
-    Not all return objects have to be named `k`, I'm just a creature of habit...
-
-
-Using `lx()`, we should see the same structure and information: 
-
-![img](../img/rt8.png){width="100%"}
-
+This reads results, not the source EDFs. For R-only workflows, keep
+using `p$proc()` and `i$proc()` to collect results directly.
 
 ## Parameter files
 
-!!! Info "Previous material"
-    The [corresponding section](tut2.md#parameter-files) of the original tutorial covered:
-    
-    - using a [_parameter file_](../luna/args.md#parameter-files) to specify variables
-    - executing the command file `cmd/second.txt` with the `cmd/vars.txt` parameter file
+The file `cmd/vars.txt` supplies aliases and variables used by later
+scripts. Reset the shared engine and reopen the sample list before
+this next analysis:
 
-You can use the [`lset()`](../ext/R/ref.md#lset) function to read in variable assignments from a parameter file.  
-We previously used the file `cmd/vars.txt`, which we can view within RStudio by navigating to the
-tutorial folder and clicking on that file:
-
-![img](../img/rt9.png){width="100%"}
-
-
-The previous section ran the command file `cmd/second.txt` for
-`nsrr01`, which basically just wrote some stats for the two EEG
-channels.  We'll start by attaching this EDF:
-
-```
-lattach( sl , "nsrr01" ) 
-```
-```
-nsrr01 : 1 signals, 11 annotations, 11:22:00 duration
+```r
+p$reinit()
+p$sample_list("s.lst")
+p$include("cmd/vars.txt")
+i <- p$inst("nsrr01")
+i$chs()
+unlist(p$vars(c("eeg", "myepoch", "nrem")))
 ```
 
-But wait!  Isn't there a problem?  This reads that only a single
-signal is present, whereas there are 14 in that EDF.  This isn't an
-error: rather, it reflects a previously set _Luna environment
-variable_, i.e. namely `sig`, the signal-list, from section
-above. Within the same session, _lunaR_ will remember these settings
-(i.e.  it is as if we're running every command with `sig=EEG`
-included). When starting a new analysis, it is therefore a good idea
-to first _reset_ these variables, i.e. to start afresh. 
-
-```
-lreset()
-```
-```
-lattach( sl , "nsrr01" ) 
-```
-```
-nsrr01 : 14 signals, 11 annotations, 11:22:00 duration
-```
-That's better.  We can check those channel names with `lchs()`:
-```
-lchs()
-```
-```
- [1] "SaO2"     "PR"       "EEG_sec"  "ECG"      "EMG"      "EOG_L"   
- [7] "EOG_R"    "EEG"      "AIRFLOW"  "THOR_RES" "ABDO_RES" "POSITION"
-[13] "LIGHT"    "OX_STAT" 
+```text
+        eeg     myepoch        nrem
+"EEG1,EEG2"        "10"  "N1,N2,N3"
 ```
 
+`p$reinit()` clears engine state, so create new instances afterwards.
+The parameter file defines `EEG1` and `EEG2` as aliases for the two EEG
+channels, and `OXSTAT` for the oximeter status channel. It also sets
+`${eeg}`, `${myepoch}`, and `${nrem}`.
 
-!!! note 
-    Running `lrefresh()` re-attaches the current EDF, but doesn't
-    change the environment variables.  An environment variable such as
-    `sig` means that when the EDF is re-attached, it is re-attached
-    with only the channels in the signal-list included.  Therefore,
-    you need to `lreset()` to clear the environment variables.  (`lreset()` also drops any 
-    currently attached EDF.)
+The commands in `cmd/second.txt` use those variables to calculate
+statistics on the EEG channels during NREM sleep:
 
-We can now include the parameter file, `cmd/vars.txt`, by running
-`lset()` with a single file name:
-
-```
-lset( "cmd/vars.txt" ) 
-```
-```
-setting [alias] to [EEG1|EEG]
-setting [alias] to [EEG2|EEG(sec)]
-setting [alias] to [OXSTAT|OX STAT]
-setting [eeg] to [EEG1,EEG2]
-setting [myepoch] to [10]
-setting [nrem] to [N1,N2,N3]
+```r
+cat(lp$cmdfile("cmd/second.txt"))
+k <- i$proc(lp$cmdfile("cmd/second.txt"))
+k$table("STATS", "CH")
 ```
 
-Note that if we now request `lchs()` again, Luna will automatically use the [_primary aliases_](../luna/args.md#aliases), i.e. `EEG1`, `EEG2` and `OXSTAT`:
-```
-lchs()
-```
-```
- [1] "SaO2"     "PR"       "EEG2"     "ECG"      "EMG"      "EOG_L"   
- [7] "EOG_R"    "EEG1"     "AIRFLOW"  "THOR_RES" "ABDO_RES" "POSITION"
-[13] "LIGHT"    "OXSTAT"  
-```
-
-That is, we can still refer to the original `EEG(sec)` as either
-`EEG_sec` (i.e. `EEG(sec)` after sanitization) or `EEG2`, but all
-output will use `EEG2`.
-
-Finally, we can run the commands in `cmd/second.txt`:
-```
-EPOCH len=${myepoch}
-MASK all
-MASK unmask-if=${nrem}
-RESTRUCTURE
-STATS sig=${eeg}
-```
-As this is just for one individual, we'll use `leval()`:
-```
-k <- leval( lcmd( "cmd/second.txt" ) )
-```
-
-Using `lx()` to consider the output, it seems to have worked as
-expected: 
-
-```
-lx( k , "STATS" ) 
-```
-
-```
-      ID   CH     KURT MAX       MEAN       MIN       P01       P02       P05
-1 nsrr01 EEG1 3.496488 125 -0.3138729 -124.0196 -26.96078 -22.05882 -16.17647
-2 nsrr01 EEG2 5.605977 125  1.4410615 -124.0196 -25.00000 -20.09804 -13.23529
-         P10       P20       P30        P40        P50      P60      P70
-1 -12.254902 -7.352941 -4.411765 -2.4509804 -0.4901961 1.470588 4.411765
-2  -9.313725 -5.392157 -2.450980 -0.4901961  1.4705882 3.431373 5.392157
-       P80      P90      P95      P98      P99       RMS        SD        SKEW
-1 6.372549 11.27451 16.17647 22.05882 26.96078 10.239962 10.235153  0.07195872
-2 8.333333 12.25490 16.17647 22.05882 25.98039  9.767967  9.661084 -0.06160423
-```
-
-That is, we used the variable `${eeg}` which was set to `EEG1` and
-`EEG2`, which were themselves _aliases_ for the original channel
-names.  All of this was specified in the parameter file, which we
-attached with `lset()`.
-
+Load parameters **before opening the instance** so the input labels and
+signal selection are applied as intended. Use `p$vars(key, value)` for
+individual assignments and `p$include(file)` for a parameter file.
 
 ## Epoch-level summaries
 
-!!! Info "Previous material"
-    The [corresponding section](tut3.md#epoch-level-summaries) of the original tutorial covered:
-    
-    - using the [`STATS`](../ref/summaries.md#stats) command to generate epoch-level summaries of signals for `nsrr02`
+Open `nsrr02` and calculate per-epoch ECG statistics. Explicitly set
+30-second epochs instead of inheriting the preceding script's 10-second
+choice:
 
-    - reading those summaries into R, in order to make per-epoch plots of the RMS for the ECG signal
-
-We'll perform the same steps here, except it can be done all within R.   Start by clearing Luna's environment variables:
-
-```
-lreset()
-```
-Attach `nsrr02`:
-```
-lattach( sl , 2 ) 
-```
-Epoch the data:
-```
-lepoch()
-```
-Then run [`STATS`](../ref/summaries.md#stats) for these signals (as per the previous tutorial section), requesting epoch-level output:
-```
-k <- leval( "STATS epoch sig=ECG" ) 
-```
-We next extract the epoch-level output from [`STATS`](../ref/summaries.md#stats):
-
-```
-d <- lx( k , "STATS" , "CH" , "E" ) 
-``` 
-Here, showing only a subset of columns in the output below: 
-```
-head(d)
-```
-```
-      ID  CH E  MAX        MEAN     MEDIAN        MIN       RMS        SD
-1 nsrr02 ECG 1 1.25 0.005067974 0.03431373 -0.6519608 0.2710508 0.2710215
-2 nsrr02 ECG 2 1.25 0.004716340 0.03431373 -0.7205882 0.2790225 0.2790012
-3 nsrr02 ECG 3 1.25 0.003096732 0.04411765 -0.6519608 0.2684238 0.2684239
-4 nsrr02 ECG 4 1.25 0.004414379 0.03431373 -0.7107843 0.2641340 0.2641148
-5 nsrr02 ECG 5 1.25 0.004943791 0.02450980 -0.6911765 0.2649496 0.2649211
-6 nsrr02 ECG 6 1.25 0.003168627 0.02450980 -0.7401961 0.2720457 0.2720454
+```r
+i <- p$inst("nsrr02")
+k <- i$proc("EPOCH len=30 & STATS epoch sig=ECG")
+d <- k$table("STATS", c("CH", "E"))
+stages <- i$stages()
+m <- merge(d, stages[, c("ID", "E", "STAGE")], by = c("ID", "E"))
+m <- m[order(m$E), ]
+print(head(m[, c("ID", "E", "RMS", "STAGE")], 3),
+      row.names = FALSE, digits = 4)
 ```
 
-As expected, `d` has 1195 rows, corresponding to the 1195 epochs (i.e. see `dim(d)`).
-
-The aim is to plot the RMS of the ECG channel coloured by sleep stage.
-To attach information on the sleep stage of an NSRR individual, we can
-use the convenience function `lstages()`:
-
-```
-d$SS <- lstages()
+```text
+     ID E    RMS STAGE
+ nsrr02 1 0.2711     W
+ nsrr02 2 0.2790     W
+ nsrr02 3 0.2684     W
 ```
 
-!!! note
-    As we can check, in this simple case we confirm that `d` is
-    exactly 1195 rows and ordered by epoch, and so we can use
-    `lstages()` (which returns a vector 1195 in length) to directly
-    populate a "sleep stage" variable.  In practice, it is safer to
-    use the full results of `leval("STAGE")` (for which `lstages()` is
-    just a wrapper) and `merge()` based on `E` (or `ID` if necessary).
+Join on `ID` and `E`, rather than assuming signal statistics and stages
+have the same row order. This also works after epochs have been
+excluded.
 
-Following the previous tutorial section, we want to restrict the output to the first 950 rows (as the
-end of the recording contains artifact):
+As in the command-line tutorial, plot the first 950 epochs to focus on
+the earlier portion of this recording:
 
-```
-d <- d[ 1:950 , ] 
-```
-We can then use standard R functions to generate the plots:
-```
-plot( d$E , d$RMS , ylab = "RMS(ECG)" , xlab = "Epoch" , pch=20 , col = as.factor( d$SS ) )
-cols <- as.factor(sort(unique(d$SS)))
-legend("bottomleft",legend=cols , fill = cols , cex=0.7)
+```r
+shown <- m[m$E <= 950, ]
+plot(shown$E, shown$RMS, pch = 20, col = lp$stgcol(shown$STAGE),
+     xlab = "Epoch", ylab = "RMS(ECG)")
+legend("bottomleft", legend = c("W", "N1", "N2", "N3", "R"),
+       col = lp$stgcol(c("W", "N1", "N2", "N3", "R")), pch = 20)
 ```
 
-![img](../img/rt10.png){width="100%"}
-
+![ECG RMS across epochs, colored by sleep stage](../img/tut-r-1.8-ecg.png){width="100%"}
 
 ## Hypnograms
 
-!!! Info "Previous material"
-    The [corresponding section](tut3.md#hypnograms) of the original tutorial covered:
-    
-    - using [`HYPNO`](../ref/hypnograms.md#hypno) to generate individual-level, cycle-level and epoch-level information about sleep architecture (based on manual staging)
+For a quick count of minutes in each stage, open `nsrr01` with
+30-second epochs:
 
-Repeating these steps for `nsrr01`, we should first reset Luna's environment (just as a safety measure):
-
-```
-lreset()
-```
-And then attach the EDF of interest:
-
-```
-lattach(sl,1)
-```
-To get a very quick summary of sleep macro-architecture, we can tabulate the values of `lstages()`, e.g. to get minutes in each stage:
-```
-table( lstages()  ) / 2 
-```
-```
-   N1    N2    N3     R     W 
- 54.5 261.5   8.5 119.0 238.5 
+```r
+i <- p$inst("nsrr01")
+i$epoch("len=30")
+stages <- i$stages()
+table(stages$STAGE) / 2
+i$hypno()
 ```
 
-Running the [`HYPNO`](../ref/hypnograms.md#hypno) command for all three individuals:
+Run [`HYPNO`](../ref/hypnograms.md#hypno) across the whole sample list
+for more detailed architecture measures:
 
-```
-k <- leval.project( sl , "HYPNO epoch" )
-```
-Here we extract individual-level results (i.e. from the baseline or `BL` strata ):
-```
-d <- lx( k , "HYPNO" , "BL" )
-```
-
-!!! Hint 
-    If you're unsure about which strata and variables are
-    generated by a command, visit the its section in the
-    [reference](../ref/index.md) part of this website: they are
-    tabulated for every command.  You can also run `lx()` (or destrat,
-    if on the command line).
-
-To extract minutes of each stage for all individuals - these are stratified by sleep stage (`SS`):
-```
-d <- lx( k , "HYPNO" , "SS" )
-```
-```
-d[ d$SS %in% c("N1","N2","N3","R") ,c("ID","SS","MINS")]
-```
-```
-       ID SS  MINS
-7  nsrr01 N1  54.5
-8  nsrr02 N1   5.5
-9  nsrr03 N1  26.0
-10 nsrr01 N2 261.5
-11 nsrr02 N2 199.5
-12 nsrr03 N2 187.5
-22 nsrr01 N3   8.5
-23 nsrr02 N3  92.5
-24 nsrr03 N3  10.5
-28 nsrr01  R 119.0
-29 nsrr02  R  60.0
-30 nsrr03  R   0.0
+```r
+hyp <- p$proc("EPOCH len=30 & HYPNO epoch")
+hyp$strata()
+night <- hyp$table("HYPNO", "BL")
+print(night[, c("ID", "TST", "SE")], row.names = FALSE, digits = 4)
+stage_minutes <- hyp$table("HYPNO", "SS")
+stage_minutes[stage_minutes$SS %in% c("N1", "N2", "N3", "R"),
+              c("ID", "SS", "MINS")]
+cycles <- hyp$table("HYPNO", "C")
+epoch_hyp <- hyp$table("HYPNO", "E")
 ```
 
-Cycle-level and epoch-level output can be extracted with the commands:
+The selected whole-night measures are:
 
-```
-d <- lx( k , "HYPNO" , "C" ) 
-```
-and
-```
-d <- lx( k , "HYPNO" , "E" ) 
+```text
+     ID   TST    SE
+ nsrr01 443.5 65.03
+ nsrr02 357.5 59.83
+ nsrr03 224.0 32.84
 ```
 
+`TST` is total sleep time in minutes; `SE` is sleep efficiency as a
+percentage. `BL` is the individual-level table, `SS` is stage-level output, `C`
+contains cycle summaries, and `E` contains per-epoch information.
 
 ## Epoch-level masks
 
-!!! Info "Previous material"
-    The [corresponding section](tut3.md#epoch-level-masks) of the original tutorial covered:
+This example selects epochs that are:
 
-    - used epoch-level [_masks_](../ref/masks.md) to select a particular subset of epochs for `nsrr01`
+- between 11pm and 3am;
+- in persistent sleep;
+- in N2;
+- free of obstructive-apnea and hypopnea events.
 
-    - illustrated how to attach epoch-level annotations after an EDF has been attached
-    
+First create an annotation from the persistent-sleep output:
 
-The corresponding section aimed to select epochs that met the
-following criteria (made up simply to illustrate how the commands
-operate):
-
-- epochs of persistent sleep (i.e. at least 10 minutes of sleep prior)
-- that occur between 11pm and 3am
-- and are during stage 2 NREM sleep
-- and do not contain any apnea or hypopnea events
-
-Although we could run `cmd/third.txt` as in the previous section, in
-order to introduce some new _lunaR_ commands, we'll do it a different
-way.  As before, if we've been doing previous work with _lunaR_, we
-should first reset the environment:
-
-```
-lreset()
-```
-We then attach the first individual:
-```
-lattach( sl , 1 ) 
-```
-and run the [`HYPNO`](../ref/hypnograms.md#hypno) command:
-```
-k <- leval( "HYPNO epoch" ) 
-```
-from which we can identify epochs of _persistent sleep_, from the epoch-level output, here extracting it directly rather than using `lx()`:
-```
-ps <- k$HYPNO$E$PERSISTENT_SLEEP 
-```
-The variable `ps` is a vector of `0` and `1` (i.e. no or yes) with as many elements as epochs for `nsrr01`:
-```
-table( ps)
-```
-```
-ps
-  0   1 
-720 644 
+```r
+i <- p$inst("nsrr01")
+i$epoch("len=30")
+epochs <- i$epochs()
+h <- i$proc("HYPNO epoch")
+hyp_epochs <- h$table("HYPNO", "E")
+persistent <- epochs[epochs$E %in%
+                       hyp_epochs$E[hyp_epochs$PERSISTENT_SLEEP == 1],
+                     c("START", "STOP")]
+i$insert_annot("persistent_sleep", persistent)
+i$annots()
 ```
 
-In _lunaR_, we can attach a new annotation with either the
-`ladd.annot()` or `ladd.annot.file()` command.  The latter form can
-read [any Luna annotation format](../ref/annotations.md), i.e XML,
-`.annot` or `.eannot` files.  One option would be to save the
-information about persistent sleep to a file, and load it with
-`ladd.annot.file()` therefore.  However, given we are already in R, it
-is easier to just directly specify the annotation, using
-`ladd.annot()`, which expects as input an R _interval list_.  In this
-context, an _interval list_ is something in the format we get out of
-the `lannots()` command for example.
+`insert_annot()` takes start/stop **seconds**, which are supplied by
+`epochs()` here. By contrast, `e2i()` returns internal nanosecond
+intervals for signal extraction; do not pass those directly to
+`insert_annot()`.
 
-We can use the helper function `le2i()` to convert epoch numbers to
-intervals, given a particular definition of epoch duration (and
-overlap), the default is 30 second, non-overlapping epochs. For example: 
+Apply the masks without restructuring yet:
 
-```
-le2i( 1:4 ) 
-```
-```
-> le2i( 1:10 )
-[[1]]
-[1]  0 30
-
-[[2]]
-[1] 30 60
-
-[[3]]
-[1] 60 90
-
-[[4]]
-[1]  90 120
-
-```
-We can therefore get a list of intervals (epoch start/stop times in seconds) for each epoch of persistent sleep (`ps==1`):
-
-```
-ps.ints <- le2i( which( ps == 1 ) ) 
+```r
+i$eval(c(
+  "MASK none",
+  "MASK hms=23:00:00-03:00:00",
+  "MASK mask-ifnot=persistent_sleep",
+  "MASK mask-ifnot=N2",
+  "MASK mask-if=Obstructive_Apnea,Hypopnea"
+))
+mask_result <- i$proc("DUMP-MASK")
+mask <- mask_result$table("DUMP-MASK", "E")
+table(mask$EMASK)
+head(mask[mask$EMASK == 0, ])
 ```
 
-This gives a list `ps.ints` which is 384 elements long.  We can add
-this as a new annotation as follows (we assign the name
-`persistent_sleep` but we could use anything):
+The mask counts are:
 
-```
-ladd.annot( "persistent_sleep" , ps.ints ) 
-```
-
-We can check that it has been added as follows:
-
-```
-lannots()
-```
-```
- [1] "Arousal"           "Hypopnea"          "N1"               
- [4] "N2"                "N3"                "Obstructive_Apnea"
- [7] "R"                 "SleepStage"        "SpO2_artifact"    
-[10] "SpO2_desaturation" "W"                 "persistent_sleep" 
+```text
+   0    1
+  86 1278
 ```
 
-Finally, here we illustrate how to use multiple `leval()` statements
-on the same attached EDF, to apply a series of masks (which could be
-done in any order, in this example).  Although this is always the
-default, we can start by ensuring that all epochs are included
-(i.e. none are masked):
+`EMASK = 1` means excluded and `0` means retained. Use `eval()` for
+these separate mask steps: the convenience `i$mask()` method also runs
+`RE` immediately.
 
-```
-leval( "MASK none" ) 
-```
-```
-nsrr01 : 14 signals, 13 annotations, 11:22:00 duration, 1364 unmasked 30-sec epochs, and 0 masked
-```
+Now remove masked epochs from the in-memory recording:
 
-Next, we mask epochs not between 11pm and 3am:
-
-```
-leval( "MASK hms=23:00:00-03:00:00" )
-```
-```
-nsrr01 : 14 signals, 13 annotations, 11:22:00 duration, 481 unmasked 30-sec epochs, and 883 masked
+```r
+i$eval("RE")
+kept_epochs <- i$epochs()
+print(head(kept_epochs[, c("E", "E1", "START", "STOP")], 3),
+      row.names = FALSE)
+nrow(kept_epochs)
 ```
 
-We see that the number of epochs has dropped from 1364 to 481
-_unmasked_ epochs.  As [previously noted](tut3.md#epoch-level-masks),
-we have 481 and not 480 (i.e. 4 hours) because the epochs start on 17
-and 47 seconds past the minute in this particular EDF, and so we
-include an additional epoch that starts at 10:59:47 but overlaps the
-requested period. (Also note that, at this point, none have actually
-been removed; that will not happen until a
-[`RESTRUCTURE`](../ref/masks.md#restructure) (or `RE`) command is
-given.)
-
-We next apply the persistent sleep mask:
-```
-leval( "MASK mask-ifnot=persistent_sleep" )
-```
-```
-nsrr01 : 14 (of 14) signals, 12 annotations, 11:22:00 duration, 272 unmasked 30-sec epochs, and 1092 masked
-
-```
-That takes us down to 272 epochs; we next restrict to NREM2 sleep only:
-```
-leval( "MASK mask-ifnot=N2" )
-```
-```
-nsrr01 : 14 (of 14) signals, 12 annotations, 11.22.00 duration, 235 unmasked 30-sec epochs, and 1129 masked
-```
-This takes us to 235 epochs; we next exclude epochs with any apnea or hypopnea events:
-```
-leval( "MASK mask-if=Obstructive_Apnea,Hypopnea" )
-```
-```
-nsrr01 : 14 (of 14) signals, 12 annotations, 11.22.00 duration, 86 unmasked 30-sec epochs, and 1278 masked
-```
-This gives us 86 epochs, as per the previous example with _lunaC_.
-
-
-We can confirm these steps by viewing the results of `letable()` and including these relevant annotations: 
-
-```
-d <- letable( annots = c( "persistent_sleep" , "N2" , "Obstructive_Apnea" , "Hypopnea" ) )
+```text
+   E E1 START STOP
+ 124  1  3690 3720
+ 127  2  3780 3810
+ 128  3  3810 3840
+[1] 86
 ```
 
-We can view the epoch table here (if the image is too small, click to upon in a new browser tab):
-```
-View(d)
-```
+The 86 retained epochs keep their original epoch numbers in `E`;
+`E1` numbers them consecutively after restructuring. `START` and `STOP`
+remain seconds from the recording start. Use this timing table to map
+retained epochs back to the recording.
+The on-disk EDF is unchanged; `i$refresh()` restores it.
 
-![img](../img/rt11.png){width="100%"}
-
-Epochs that are masked have `M` set to `1` and the epoch codes (`E`)
-and start-time (`SEC`) are set to _NA_.  Luna tracks the original
-epoch numbers, start times and clock-time however (`E0`, `SEC0` and
-`HMS`).  For example, the first epoch to be included (the new epoch #1) was the old epoch #124, etc.
-
-If we run a [`RESTRUCTURE`](../ref/masks.md#restructure) command, all masked epochs are permanently dropped from the internal EDF, and so we'll 
-end up with a 86-epoch (43 minutes) dataset, but for which there are no masked epochs:
-
-```
-leval( "RE" ) 
-```
-```
-nsrr01 : 14 (of 14) signals, 12 annotations, 00.43.00 duration, 86 unmasked 30-sec epochs, and 0 masked
-```
-
-Again, we can view the `letable()` for this:
-```
-d <- letable( annots = c( "persistent_sleep" , "N2" , "Obstructive_Apnea" , "Hypopnea" ) )
-```
-
-All masked epochs have now been dropped, although Luna still retains the original time/epoch encoding in `E0`, etc.
-
-![img](../img/rt12.png){width="100%"}
- 
 ## Manipulating EDFs
 
+The `cmd/fourth.txt` script rescales, resamples, filters, re-references,
+and writes new EDFs. Start with a clean engine, load the channel
+aliases, and select the two EEGs before running it:
 
-!!! Info "Previous material"
-    The [corresponding section](tut3.md#manipulating-edfs) of the original tutorial covered:
-
-    - filtering, resampling, relabeling and re-referencing signals
-    - re-writing new EDFs 
-
-The previous section basically involved running `cmd/fourth.txt`
-through _lunaC_, which is as follows:
-		 
-```
-mV 
-RESAMPLE sr=100
-FILTER bandpass=0.3,35 ripple=0.02 tw=1 fft
-REFERENCE ref=EEG1 sig=EEG2 
-WRITE edf-tag=v2 edf-dir=newedfs/ sample-list=new.lst
-```
-The _lunaC_ command line was:
-```
-luna s.lst @cmd/vars.txt sig=EEG1,EEG2 < cmd/fourth.txt
+```r
+p$reinit()
+p$sample_list("s.lst")
+p$include("cmd/vars.txt")
+p$vars("sig", "EEG1,EEG2")
+cat(lp$cmdfile("cmd/fourth.txt"))
+written <- p$proc(lp$cmdfile("cmd/fourth.txt"))
 ```
 
-To mirror this, we first need to load the environment variables in the parameter file:
-```
-lset( "cmd/vars.txt" )
-```
+The script writes files under `newedfs/` and a sample list `new.lst`.
+Use a fresh output location when repeating it: the sample-list output
+can be appended to if it already exists.
 
-Next, we need to specify that only signals `EEG1` and `EEG2` (these
-are _aliases_ for `EEG` and `EEG(sec)`) be included:
-```
-lset( "sig" , "EEG1,EEG2" )
-```
-Finally, we need to execute the script:
-```
-k <- leval.project( sl, lcmd( "cmd/fourth.txt" ) )
-```
+Inspect the resulting recordings:
 
-If you go the the _Files_ tab in RStudio, you should be able to see
-the newly created file and folder: `new.lst` and `newedfs`.  We can
-load this sample list, say calling is `nsl` for _new_ sample-list:
-
-```
-nsl <- lsl("new.lst")
-```
-and then run the [`DESC`](../ref/summaries.md#desc) command for all three individuals:
-
-```
-leval.project( nsl , "DESC" ) 
+```r
+p$sample_list("new.lst")
+p$proc("DESC")
+new_headers <- p$proc("HEADERS")
+headers <- new_headers$table("HEADERS", "CH")
+print(headers[, c("ID", "CH", "SR")], row.names = FALSE)
+p$sample_list("s.lst")
 ```
 
-```
-nsrr01 : 2 (of 2) signals, 0 annotations, 11.22.00.000 duration
-evaluating...
-EDF filename      : newedfs/learn-nsrr01-v2.edf
-ID                : nsrr01
-Clock time        : 21.58.17 - 09.20.17
-Duration          : 11:22:00  40920 sec
-# signals         : 2
-Signals           : EEG2[100] EEG1[100]
-
-nsrr02 : 2 (of 2) signals, 0 annotations, 09.57.30.000 duration
-evaluating...
-EDF filename      : newedfs/learn-nsrr02-v2.edf
-ID                : nsrr02
-Clock time        : 21.18.06 - 07.15.36
-Duration          : 09:57:30  35850 sec
-# signals         : 2
-Signals           : EEG2[100] EEG1[100]
-
-nsrr03 : 2 (of 2) signals, 0 annotations, 11.22.00.000 duration
-evaluating...
-EDF filename      : newedfs/learn-nsrr03-v2.edf
-ID                : nsrr03
-Clock time        : 20.15.00 - 07.37.00
-Duration          : 11:22:00  40920 sec
-# signals         : 2
-Signals           : EEG2[100] EEG1[100]
-
+```text
+     ID   CH  SR
+ nsrr01 EEG1 100
+ nsrr02 EEG1 100
+ nsrr03 EEG1 100
+ nsrr01 EEG2 100
+ nsrr02 EEG2 100
+ nsrr03 EEG2 100
 ```
 
-![img](../img/rt13.png){width="100%"}
+Both output EEG channels now have a sampling rate of 100 Hz.
 
-!!! note
-    Annotation files are _not_ automatically transferred to new EDFs, as
-    currently Luna only writes EDF, not EDF+.  As such, as timing information
-    would be lost, if the EDF has been restructured.
-
-
+Reading `new.lst` replaced the project's sample list. The final line
+switches back to the original inputs for subsequent analyses.
 
 ## Artifact detection
 
-!!! Info "Previous material"
-    The [corresponding section](tut3.md#artifact-detection) of the original tutorial covered:
+Reset again so that this section uses the original `EEG` label and a
+single input channel:
 
-    - generating per-epoch statistics including RMS, Hjorth parameters and and index of signal-clipping
-
-    - using these, alongside a second epoch-wise artifact detection
-      algorithm based on spectral analysis, to flag likely aberrant
-      epochs
-
-    - visualizing these statistics across the night, and looking at
-      raw EEG signals for an artifact-containing epoch
-
-The corresponding section involved running `cmd/fifth.txt` to generate
-the above-mentioned statistics, and then a slightly modified version
-(`cmd/sixth.txt`) to actually mask potentially bad epochs, all for `nsrr01`.
-
-Reset the Luna environment:
-```
-lreset()
+```r
+p$reinit()
+p$sample_list("s.lst")
+p$vars("sig", "EEG")
+i <- p$inst("nsrr01")
+k <- i$proc(lp$cmdfile("cmd/fifth.txt"))
+k$table("SIGSTATS", "CH")
+d <- k$table("SIGSTATS", c("CH", "E"))
+stages <- i$stages()
+m <- merge(d, stages[, c("ID", "E", "STAGE")], by = c("ID", "E"))
 ```
 
-_Before attaching the EDF_, we can specify that we want to restrict
-analyses to the `EEG` channel (no other variables were used in this
-script, so we didn't attach a parameter file, and so we use `EEG` and
-not the alias `EEG1` here):
+This script excludes wake, filters the EEG, and reports Hjorth
+parameters. Plot them by sleep stage:
 
-```
-lset( "sig" , "EEG" )
-```
-
-Attach `nsrr01`:
-
-```
-lattach( sl , 1 ) 
+```r
+par(mfrow = c(3, 1), mar = c(4, 4, 1, 1))
+for (metric in c("H1", "H2", "H3")) {
+  plot(m$E, m[[metric]], pch = 20, col = lp$stgcol(m$STAGE),
+       xlab = "Epoch", ylab = metric)
+}
+par(mfrow = c(1, 1))
 ```
 
+The saved result `k` still contains `SIGSTATS` after calling `stages()`.
 
-Run the script:
-```
-k <- leval( lcmd( "cmd/fifth.txt" ) )
-```
-Extract channel-level (whole-night) statistics:
-```
-lx( k , "SIGSTATS" , "CH" )  
-```
-```
-      ID  CH       H1        H2        H3
-1 nsrr01 EEG 78.38342 0.3536182 0.8316128
-```
+Refresh before running `cmd/sixth.txt`, which adds artifact masks to
+the same preprocessing:
 
-Extract epoch-level statistics:
-
-```
-d <- lx( k , "SIGSTATS" , "CH" , "E" ) 
+```r
+i$refresh()
+qc <- i$proc(lp$cmdfile("cmd/sixth.txt"))
+qc$strata()
+mask <- qc$table("DUMP-MASK", "E")
+table(mask$EMASK)
+head(mask[mask$EMASK == 1, ])
+hj <- qc$table("SIGSTATS", c("CH", "E"))
+m <- merge(hj, mask, by = c("ID", "E"))
 ```
 
-We can now tabulate:
-```
-View(d)
-```
-and plot these statistics, coloured by sleep stage:
-```
-q <- leval( "STAGE" )
-```
-```
-> ss <- lx(q,"STAGE")
-> head(ss)
-      ID  E CLOCK_TIME MINS OSTAGE STAGE STAGE_N START
-1 nsrr01 54   22:24:47 26.5     N1    N1      -1  1590
-2 nsrr01 55   22:25:17 27.0     N1    N1      -1  1620
-3 nsrr01 56   22:25:47 27.5     N1    N1      -1  1650
-4 nsrr01 58   22:26:47 28.5     N1    N1      -1  1710
-5 nsrr01 59   22:27:17 29.0     N1    N1      -1  1740
-6 nsrr01 60   22:27:47 29.5     N1    N1      -1  1770
-```
-```
-> dim(ss)
-[1] 887   8
-> dim(d)
-[1] 887   6
+The artifact mask counts from `table(mask$EMASK)` are:
+
+```text
+  0   1
+823  64
 ```
 
-```
-m <- merge( d , ss , by="E" )
-```
+Of the 887 sleep epochs considered here, 64 are flagged by these
+criteria. Plot the metrics with masked epochs in red:
 
-```
-par(mfcol=c(3,1),mar=c(0,0,0,0))
-plot( m$E , m$H1 , pch=20 , col = lstgcols( m$STAGE ) )
-plot( m$E , m$H2 , pch=20 , col = lstgcols( m$STAGE ) )
-plot( m$E , m$H3 , pch=20 , col = lstgcols( m$STAGE ) )
-```
-
-As well as clear evidence of ultradian dynamics (that correspond to sleep stage), we see evidence of some
-outlier epochs in these plots (Hjorth parameters 1, 2 and 3 from top to bottom):
-
-![img](../img/rt14.png){width="100%"}
-
-
-We'll now run the slightly modified script, that masks outlier epochs
-based on these metrics. 
-
-```
-EPOCH 
-MASK if=W
-RESTRUCTURE
-FILTER bandpass=0.3,35 ripple=0.02 tw=1
-SIGSTATS epoch
-ARTIFACTS mask
-CHEP-MASK ep-th=3,3,3
-CHEP epochs
-DUMP-MASK
+```r
+par(mfrow = c(3, 1), mar = c(4, 4, 1, 1))
+for (metric in c("H1", "H2", "H3")) {
+  plot(m$E, m[[metric]], pch = 20,
+       col = ifelse(m$EMASK == 1, "red", "black"),
+       xlab = "Epoch", ylab = metric)
+}
+par(mfrow = c(1, 1))
 ```
 
-See [`ARTIFACTS`](../ref/artifacts.md#artifacts) and
+![Hjorth parameters with masked epochs highlighted in red](../img/tut-r-1.8-artifacts.png){width="100%"}
+
+Inspect a flagged epoch in the original EEG. Select one from the mask
+rather than relying on a fixed epoch number:
+
+```r
+flagged <- mask$E[mask$EMASK == 1]
+epoch_to_view <- if (length(flagged)) flagged[1] else hj$E[which.max(hj$H1)]
+i$refresh()
+i$epoch("len=30")
+y <- i$slice(i$e2i(epoch_to_view), "EEG", time = TRUE)
+plot(y$T - min(y$T), y$EEG, type = "l",
+     xlab = "Seconds within epoch", ylab = "EEG")
+```
+
+The artifact criteria illustrate the earlier tutorial; inspect the
+signals and choose appropriate thresholds for your study. See
+[`ARTIFACTS`](../ref/artifacts.md#artifacts) and
 [`CHEP-MASK`](../ref/artifacts.md#chep-mask) for details.
-
-Because the previous `cmd/fifth.txt` script modified the internal EDF, we need to reattach or _refresh_ it:
-
-```
-lrefresh()
-```
-```
-nsrr01 : 1 signals, 11 annotations, 11:22:00 duration
-```
-
-We don't need to `lreset()` as we want to keep the same `sig`
-environment variable.  Because `sig` is still set, when re-attaching
-we only load that single channel (i.e. it's not that `lrefresh()`
-didn't work somehow here, as by itself would have led to in all
-channels being read in).
-
-Running this new script:
-```
-k <- leval( lcmd( "cmd/sixth.txt" ) ) 
-```
-```
-nsrr01 : 1 signals, 11 annotations, 07:23:30 duration, 840 unmasked 30-sec epochs, and 47 masked
-```
-
-It appears from the above that 47 sleep epochs have been masked on the
-basis of epoch-level artifact detection.  We can look at the `EMASK` variable in the
-epoch-level output from the `DUMP-MASK` command:
-
-```
-d <- k$DUMP_MASK$E
-table( d$EMASK )
-```
-```
-  0   1 
-840  47 
-```
-
-
-To see which epochs are masked:
-
-```
-head( d[ d$EMASK == 1 , ])
-```
-```
-       ID   E   EMASK
-14 nsrr01  78       1
-16 nsrr01  80       1
-20 nsrr01  85       1
-24 nsrr01  89       1
-80 nsrr01 145       1
-81 nsrr01 146       1
-```
-
-!!! hint
-    In _lunaR_, we could also use the `letable()` function to look at the current mask status:
-
-    ```
-    table( letable()$M ) 
-    ```
-    ```
-      0   1 
-    840  47 
-    ```
-
-Finally, to plot the Hjorth parameter statistics visually indicating which are masked:
-
-```
-h <- lx( k , "SIGSTATS" , "CH" , "E" ) 
-```
-
-```
-m <- merge( d , h , by="E" , all = T ) 
-```
-
-To obtain the same plot: Hjorth parameters per epoch with a flag to indicate a mask
-
-```
-par(mfcol=c(3,1),mar=c(4,4,1,1)) 
-plot( m$E , m$H1 , pch = 20 , xlab="Epoch" , ylab="H1" , col = m$EMASK + 1) 
-plot( m$E , m$H2 , pch = 20 , xlab="Epoch" , ylab="H2" , col = m$EMASK + 1) 
-plot( m$E , m$H3 , pch = 20 , xlab="Epoch" , ylab="H3" , col = m$EMASK + 1) 
-```
-
-![img](../img/rt15.png){width="100%"}
-
-From looking at `d`, we see that epoch #220 is one of the masked
-epochs.  To view it, we can use the [`ldata()`](../ext/R/ref.md#ldata) function.  Naturally, we 
-first need to refresh the EDF or clear the mask (i.e. as it is currently masked):
-
-```
-lrefresh()
-```
-We can then extract the EEG signal:
-```
-y <- ldata( 220 , chs="EEG" )  
-```
-And plot it:
-```
-plot( y$SEC - min(y$SEC) , y$EEG , type="l", 
-      ylim=c(-125, 125 ) , xlab="Time (sec)" , ylab="EEG" )
-```
-
-![img](../img/rt16.png){width="100%"}
 
 ## Spectral and spindle analyses
 
-!!! Info "Previous material"
-    The [corresponding section](tut3.md#spectral-and-spindle-analyses) of the original tutorial covered:
+Here is the R equivalent of the tutorial's final analysis script,
+with individual-spindle output requested explicitly. Prepare the
+`EEG1` alias in a fresh engine:
+
+```r
+p$reinit()
+p$sample_list("s.lst")
+p$include("cmd/vars.txt")
+p$vars("sig", "EEG1")
+analysis <- c(
+  "EPOCH len=30",
+  "MASK ifnot=N2",
+  "RE",
+  "FILTER sig=EEG1 bandpass=0.3,35 ripple=0.02 tw=1 fft",
+  "ARTIFACTS sig=EEG1 mask",
+  "CHEP-MASK sig=EEG1 ep-th=3,3,3",
+  "CHEP epochs",
+  "RE",
+  "PSD sig=EEG1 spectrum max=30",
+  "SPINDLES sig=EEG1 fc=11,15 annot=spindles per-spindle",
+  "WRITE-ANNOTS file=spindles-^.annot annot=spindles"
+)
+clean <- p$proc(analysis)
+clean$strata()
+spectrum <- clean$table("PSD", c("CH", "F"))
+```
+
+This retains N2, filters and cleans the EEG, estimates power, detects
+11 Hz and 15 Hz spindles, and writes their annotations. It creates
+`spindles-nsrr01.annot`, `spindles-nsrr02.annot`, and
+`spindles-nsrr03.annot` in the working directory.
+
+Plot the cleaned N2 spectra for each individual:
+
+```r
+par(mfrow = c(1, 3))
+for (id in unique(spectrum$ID)) {
+  d <- spectrum[spectrum$ID == id, ]
+  plot(d$F, 10 * log10(d$PSD), type = "l", lwd = 2,
+       xlab = "Frequency (Hz)", ylab = "Power (dB)", main = id)
+}
+par(mfrow = c(1, 1))
+```
+
+For comparison, estimate spectra on both unfiltered EEG channels,
+excluding wake, out to 62 Hz (below the 125 Hz signals' Nyquist
+frequency). Use a fresh engine to select both channels:
+
+```r
+p$reinit()
+p$sample_list("s.lst")
+p$include("cmd/vars.txt")
+p$vars("sig", "EEG1,EEG2")
+raw_spectra <- p$proc("EPOCH len=30 & MASK if=W & RE & PSD sig=EEG1,EEG2 spectrum max=62")
+d <- raw_spectra$table("PSD", c("CH", "F"))
+par(mfrow = c(2, 3))
+for (ch in c("EEG1", "EEG2")) {
+  for (id in unique(d$ID)) {
+    z <- d[d$ID == id & d$CH == ch, ]
+    plot(z$F, 10 * log10(z$PSD), type = "l",
+         xlab = "Frequency (Hz)", ylab = "Power (dB)", main = paste(id, ch))
+  }
+}
+par(mfrow = c(1, 1))
+```
+
+The earlier `clean` result remains available after the new project
+run. Retrieve its spindle densities:
+
+```r
+density <- clean$table("SPINDLES", c("CH", "F"))
+print(density[, c("ID", "CH", "F", "DENS")], row.names = FALSE, digits = 4)
+```
+
+```text
+     ID   CH  F   DENS
+ nsrr01 EEG1 11 0.7714
+ nsrr02 EEG1 11 1.4468
+ nsrr03 EEG1 11 0.7840
+ nsrr01 EEG1 15 0.6612
+ nsrr02 EEG1 15 2.2181
+ nsrr03 EEG1 15 0.1667
+```
+
+`F` is the detector's target frequency in Hz; `DENS` is detected
+spindles per minute of the retained N2 data.
+
+### Inspecting individual spindles
+
+Now repeat the cleaned analysis for `nsrr02`. Reset the input selection
+so only `EEG1` is loaded:
+
+```r
+p$reinit()
+p$sample_list("s.lst")
+p$include("cmd/vars.txt")
+p$vars("sig", "EEG1")
+i <- p$inst("nsrr02")
+individual <- i$proc(analysis)
+sp <- individual$table("SPINDLES", c("CH", "F", "SPINDLE"))
+table(sp$F)
+head(sp[, c("CH", "F", "START", "STOP")])
+```
+
+The counts from `table(sp$F)` are:
+
+```text
+ 11  15
+272 417
+```
 
-    - estimating power spectra for cleaned and raw EEG signals for all three tutorial individuals
-
-    - additionally detecting fast and slow spindles 
-
-
-In this final section, we'll re-run the `cmd/seventh.txt` script in _lunaR_:
-
-```
-EPOCH 
-MASK ifnot=N2
-RESTRUCTURE
-FILTER bandpass=0.3,35 ripple=0.02 tw=1 fft
-ARTIFACTS mask
-CHEP-MASK ep-th=3,3,3
-CHEP epoch
-RESTRUCTURE
-PSD spectrum
-SPINDLES fc=11,15 annot=spindles
-WRITE-ANNOTS file=spindles-^.txt annot=spindles
-```
-
-
-We'll first reset all environment variables:
-```
-lreset()
-```
-This also detaches any attached EDF:
-```
-lstat()
-```
-```
-Error in lstat() : no EDF attached
-```
-
-
-We'll reload the original set of environment variables we've been using:
-
-```
-lset( "cmd/vars.txt" ) 
-```
-We'll also restrict this analysis to a single EEG channel:
-```
-lset( "sig" , "EEG1" ) 
-```
-We can then execute the script:
-
-```
-k <- leval.project( sl , lcmd( "cmd/seventh.txt" ) )
-```
-
-We can extract the PSD (which is stratified by channel and frequency):
-
-```
-d <- lx( k , "PSD" , "CH" , "F" ) 
-```
-
-For the plot, to mirror the previous tutorial, we'll restrict the plot
-to frequencies of 0.5 Hz and above:
-
-```
-d <- d[ d$F >= 0.5 , ] 
-```
-
-Plots of power spectra; create 3 plots, on a log-scale (nb. due to
-very minor changes in some of the default settings of Luna since making this plot,
-the exact contour of these PSDs may look slightly different from below):
-
-```
-par(mfcol=c(1,3))
-ids <- unique(d$ID)
-for (i in ids) plot( d$F[ d$ID == i ] , log( d$PSD[ d$ID == i ] ) , 
-  type="l" , xlab="Hz" , ylab="log(uV^2/Hz)" , lwd=2,main=i) 
-```
-
-![img](../img/rt17.png){width="100%"}
-
-Next, mirroring the previous tutorial section, we need to repeat
-the PSD estimation, now for both channels and without the band-pass
-filtering or artifact detection steps, and also showing the full spectra
-(up to close to the Nyquist frequency);
-
-We can _append_ the channel aliased by `EEG2` to the signal list (i.e. `EEG1` will remain):
-```
-lset( "sig" , "EEG2" ) 
-```
-
-We can specify the Luna commands on the R command line this time, instead of reading them from a file:
-
-```
-k2 <- leval.project( sl , "EPOCH & MASK if=W & PSD spectrum max=62" ) 
-```
-
-Extracting the PSD:
-```
-d <- lx( k2 , "PSD" , "CH" , "F" ) 
-```
-And plotting:
-```
-par(mfrow=c(2,3))
-ids <- unique(d$ID)
-for (ch in c("EEG1","EEG2") )
- for (i in ids) 
-   plot( d$F[ d$ID == i & d$CH == ch ] , log( d$PSD[ d$ID == i & d$CH == ch ] ) , 
-            type="l" , xlab="Hz" , ylab="log(uV^2/Hz)" , lwd=2,main=paste(i,ch))
-```
-
-![img](../img/rt18.png){width="100%"}
-
-
-
-Now we'll turn to the spindle detection that was performed as part of `cmd/seventh.txt`.  
-As described [here](../ref/spindles-so.md#spindles), the primary individual-level output of 
-[`SPINDLES`](../ref/spindles-so.md#spindles) if stratified by channel (`CH`) and target frequency (`F`):
-
-```
-d <- lx( k , "SPINDLES" , "F" , "CH" ) 
-```
-There are many variables in the output, but here we restrict to spindle density (`DENS`):
-```
-d[ , c("ID","CH","F","DENS") ]
-```
-```
-      ID   CH  F      DENS
-1 nsrr01 EEG1 11 0.7300971
-2 nsrr02 EEG1 11 1.2860759
-3 nsrr03 EEG1 11 0.7242340
-4 nsrr01 EEG1 15 0.6407767
-5 nsrr02 EEG1 15 2.0556962
-6 nsrr03 EEG1 15 0.1949861
-```
-
-We've now completed the steps of the previous _lunaC_ tutorial.  As
-mentioned elsewhere, _lunaC_ is likely a better tool for running
-analyses on a large number of studies.  The advantages of _lunaR_ are
-primarily in terms of being able to leverage the power of the R
-language and its graphical abilities.  Along these lines, we'll close
-by using _lunaR_ to visualize the spindles detected on `nsrr02`, which
-also illustrates some additional _lunaR_ functions.
-
-We'll focus on `nsrr02`, in part because the other two studies had
-relatively low rates of spindles detected.  This is not necessarily
-unusual in older subjects, who may have fragmented sleep and/or
-full-blown sleep disorders.  The presence of artifact can also
-influence rates of spindles detected, of course, and so a more careful
-analyses and inspection of the data would be required before making
-any strong conclusions about these data.)
-
-We'll restrict analyses to `EEG1`, by first resetting the signal list and then adding `EEG1`:
-
-```
-lset( "sig", "." )
-lset( "sig" , "EEG1" ) 
-```
-We'll attach this EDF (the second subject in the sample list):
-
-```
-lattach( sl ,2 ) 
-```
-```
-nsrr02 : 1 signals, 10 annotations, 09:57:30 duration
-```
-
-Re-running the script `cmd/seventh.txt` for this one individual
-(i.e. using `level()` and not `leval.project()`):
-
-```
-k <- leval( lcmd( "cmd/seventh.txt" ) ) 
-```
-
-!!! hint
-    If you get errors such as 
-    ```
-    Error in leval(lcmd("cmd/seventh.txt")) : 
-       problem flag set: likely no unmasked records left? run lrefresh()
-    ```      
-    one possibility is that you forgot to include and/or reset the
-    necessary variables via `lset()`; if in doubt, running `lreset()`,
-    `lrefresh()` and repeating the commands is always a good idea.
-    Also, using `lchs()` and `lstat()` can help to orient you, in
-    terms of what has been "done" to the _in-memory_ EDF since it was
-    attached.
-
-```
-lx(k)
-```
-```
-ARTIFACTS : CH 
-EPOCH : BL 
-MASK : EMASK 
-PSD : CH B_CH CH_F 
-RESTRUCTURE : BL 
-SPINDLES : CH_F CH_F_SPINDLE 
-```
-
-We can extract the time-points from the [`SPINDLES`](../ref/spindles-so.md#spindles) table that is
-stratified by `SPINDLE` as well as `CH` and `F` (i.e. the
-spindle-level results):
-
-```
-d <- lx( k , "SPINDLES" , "CH_F_SPINDLE" ) 
-```
-
-```
-table( d$F ) 
-```
-```
- 11  15 
-254 406 
-```
-
-In other words, we detected 406 fast (15 Hz) spindles and 254 slow (11
-Hz) spindles.  That variable `START` (and `START_SP`) reflects the
-time in seconds (and in sample-points based on the current internal
-EDF) on when each spindle started; `STOP` variables are similarly
-defined. 
-
-We can plot when the spindles occur, as follows (nb. obviously there
-are many ways to do this and this isn't necessarily to most elegant or
-visually informative...)
-
-```	 
-d11 <- d[ d$F == 11 , ]
-
-d15 <- d[ d$F == 15 , ]
-
-plot( d11$START/3600 , rep( 11, length(d11$START) ) , 
-  pch="|" , ylim=c(10,16), col="orange",xlim=c(0,max(d$START)/3600), 
-  xlab="Hours", ylab="Spindle target frequency" )
-
-points( d15$START/3600 , rep( 15, length(d15$START) ) , 
-  pch="|" , ylim=c(10,16), col="purple")
-```
-
-![img](../img/rt19.png){width="100%"}
-
-The `annot` option we used for the [`SPINDLES`](../ref/spindles-so.md#spindles) command means that
-Luna will have written an [.annot file](../ref/annotations.md#annots) to the
-`edfs/` folder.  We can load those annotation files in as new annotations
-to be attached to the current EDF.  
-```
-ladd.annot.file( "spindles-nsrr02.txt" ) 
-```
-
-Now, when we ask for a list of attached annotations, we'll see a new one, `spindles`:
-
-```
-lannots()
-```
-```
- [1] "Arousal"           "Hypopnea"          "N1"               
- [4] "N2"                "N3"                "Obstructive_Apnea"
- [7] "R"                 "SpO2_artifact"     "SpO2_desaturation"
-[10] "W"                 "spindles"         
-```
-
-We'll then use the `lannots()` function with a annotation _class_ name
-specified, to get a list of intervals for that annotation:
-
-```
-sp.intervals <- lannots( "spindles" )
-```
-
-This list is 660 elements in length, i.e. corresponding to the 998
-spindles detected above:
-
-```
-length(sp.intervals)
-```
-```
-[1] 660
-```
-
-Taking a peak at the contents of `sp.intervals`, we see each item is a
-pair of numbers: the start and stop of the spindles in elapsed seconds
-(from the EDF start time):
-
-```
-head( sp.intervals )
-```
-
-```
-[[1]]
-[1] 2751.304 2751.896
-
-[[2]]
-[1] 2764.040 2764.592
-
-...
-```
-
-
-Now let's take a look at some spindles in the raw EEG.  The
-`ldata.intervals()` command will pull out the raw signal data (and
-optionally other annotations) for one or more intervals.  Optionally,
-we can also specify a _window_ (in seconds) around each annotation
-interval.  Here we specify 5 seconds (`w=5`), meaning that this function
-will return the raw signal corresponding to a spindle interval, _plus
-and minus_ 5 seconds.  (If the EDF is discontinuous, i.e. due to
-masking and restructuring, or if the interval abuts the start or end
-of the recording, this window will be shortened as appropriate.)
-
-Here, we request the raw signal data from the channel with alias
-`EEG1` as well as the annotation channel `sp.label` (i.e. fast
-spindles).  The first argument indicates which interval(s) we want to
-look at -- for simplicity, here we'll request a single spindle, say
-the 221st, with `sp.intervals[221]`:
-
-```
-d <- ldata.intervals( sp.intervals[ 221 ], chs="EEG1", annots= "spindles", w=5 )
-```
-
-Looking at the `d` data frame returned by `ldata.intervals()`:		
-
-```
-head(d)
-```
-```
-                 INT      SEC       EEG1 spindles
-1 15129.87->15140.66 15129.87 -11.184889        0
-2 15129.87->15140.66 15129.88 -10.571929        0
-3 15129.87->15140.66 15129.89 -11.300724        0
-4 15129.87->15140.66 15129.90  -9.616291        0
-5 15129.87->15140.66 15129.90  -5.364184        0
-6 15129.87->15140.66 15129.91  -3.394990        0
-```
-
-The annotation field (final column) is `0` or `1` to indicate the
-presence or absence of that annotation (i.e. a fast spindle) at that
-sample-point.  
-
-
-To plot this spindle, we could use something like the following:
-
-```
-par(mfcol=c(2,1) , mar=c(2,4,0,0) )
-plot( d$EEG1 , type="l" , xaxt = 'n' , yaxt='n' , axes=F , ylab="EEG1" )
-plot( d[, "spindles" ] , type="l" , lwd=2 , col="blue" , xaxt='n' , yaxt='n' , axes=F, ylab="Spindles" )
-```
-
-![img](../img/rt20.png){width="100%"}
-
-
-So far, so good.  Let's extend this to show some other information in
-the plot: say, band-pass filtered versions of the original EEG signal.
-We'll use the same approach as shown in the example for the
-[`FILTER`](../ref/fir-filters.md#filter) command, whereby we made five
-or so copies of a channel, and then band-pass filtered each copy to
-correspond to delta, theta, alpha, sigma and beta power.  In fact,
-_lunaR_ has a convenience function that does this automatically,
-`lbands()`, which takes a channel names and creates five new channels
-that are the band-pass filtered versions.  Running it with the
-`nsrr02` EDF still attached (actually, at this point the _in-memory_
-representation will reflect a masked and filtered version of `EEG1`
-for NREM2 sleep only):
-
-```
-lbands( "EEG1" ) 
-```
-
-If we look at the list of channels present, we should now see the
-following new channels (these are not saved to the on-disk EDF,
-rather they exist only in the _in-memory_ representation):
-
-```
-lchs()
-```
-
-```
-[1] "EEG1"       "EEG1_delta" "EEG1_theta" "EEG1_alpha" "EEG1_sigma"
-[6] "EEG1_beta" 
-```
-
-We can now re-run the `ldata.intervals()` function, but this time
-requesting all of these channels to be included in the output, by
-setting `chs` equal to `lchs()` (i.e. all channels):
-
-```
-d <- ldata.intervals( sp.intervals[ 221 ], chs=lchs(), annots="spindles" , w=5 )
-```
-
-Run `head(d)` to confirm the structure of the new output.  We can now
-augment the plotting code to include these additional channels:
-
-```
-png(file="rt21.png",res=100,width=800,height=500,units="px")
-par(mfcol=c(7,1) , mar=c(0,4,0,0) )
-plot( d$EEG1 , type="l" , xaxt = 'n' , yaxt='n' , axes=F , ylab="EEG1" )
-plot( d[, "spindles" ] , type="l" , lwd=2 , col="blue" , xaxt='n' , yaxt='n' , axes=F, ylab="Spindles" )
-plot( d$EEG1_delta , type="l" , col=rgb(200,100,00,150,max=255) , axes=F , ylab="Delta" )
-plot( d$EEG1_theta , type="l" , col=rgb(100,200,0,150,max=255) , axes=F , ylab="Theta" )
-plot( d$EEG1_alpha , type="l" , col=rgb(0,200,100,150,max=255) , axes=F , ylab="Alpha" )
-plot( d$EEG1_sigma , type="l" , col=rgb(0,0,100,150,max=255) , axes=F , ylab="Sigma" )
-plot( d$EEG1_beta  ,  type="l" , col=rgb(100,0,100,150,max=255) , axes=F , ylab="Beta" )
+`per-spindle` produces this table. `START` and `STOP` are seconds from
+the EDF start. Plot the detected events by target frequency:
+
+```r
+plot(sp$START / 3600, sp$F, pch = "|",
+     col = ifelse(sp$F == 11, "orange", "purple"),
+     xlab = "Hours from recording start", ylab = "Spindle target frequency (Hz)")
+```
+
+Restore the original raw EEG, then attach the saved spindle annotations
+for viewing:
+
+```r
+i$refresh()
+i$epoch("len=30")
+i$attach_annot("spindles-nsrr02.annot")
+events <- i$fetch_full_annots("spindles")
+head(events)
+recording_end <- max(i$epochs()$STOP)
+```
+
+`Instance` identifies the spindle target frequency and `Channel`
+identifies the signal. The class `spindles` is the name we chose in the
+analysis; it is distinct from the tutorial's manual `Arousal` annotations.
+
+Select an event near the middle of the list, add five seconds on each
+side, and extract the raw EEG and annotation indicator:
+
+```r
+stopifnot(nrow(events) > 0)
+event <- events[ceiling(nrow(events) / 2), ]
+window <- c(max(0, event$Start - 5), min(recording_end, event$Stop + 5))
+d <- i$slice(i$s2i(window), "EEG1", annots = "spindles", time = TRUE)
+print(head(d[, c("T", "EEG1", "spindles")], 3), row.names = FALSE, digits = 8)
+par(mfrow = c(2, 1), mar = c(4, 4, 1, 1))
+plot(d$T - min(d$T), d$EEG1, type = "l", xlab = "Seconds", ylab = "EEG1")
+plot(d$T - min(d$T), d$spindles, type = "s", col = "blue",
+     xlab = "Seconds", ylab = "Spindles")
+par(mfrow = c(1, 1))
+```
+
+The first three extracted samples are:
+
+```text
+         T        EEG1 spindles
+ 21344.640 -2.45098039        0
+ 21344.648  0.49019608        0
+ 21344.656 -5.39215686        0
+```
+
+Times in `window` are seconds; `s2i()` converts them to the intervals
+expected by `slice()`. `T` is elapsed seconds, and `spindles` is 1 for
+samples inside a spindle and 0 otherwise. There is no separate `SEC`
+or `INT` column in the new interface.
+
+### Band-filtered signals and repeated plots
+
+Create copies of the EEG and filter each into a frequency band using
+Luna commands:
+
+```r
+bands <- list(delta = c(0.5, 4), theta = c(4, 8), alpha = c(8, 12),
+              sigma = c(12, 16), beta = c(16, 30))
+for (band in names(bands)) {
+  label <- paste0("EEG1_", band)
+  limits <- bands[[band]]
+  i$eval(sprintf(
+    "COPY sig=EEG1 new=%s & FILTER sig=%s bandpass=%s,%s ripple=0.02 tw=1 fft",
+    label, label, limits[1], limits[2]
+  ))
+}
+channels <- c("EEG1", paste0("EEG1_", names(bands)))
+i$chs()
+```
+
+Extract the same window for all these channels and draw the traces:
+
+```r
+plot_spindle <- function(d) {
+  par(mfrow = c(7, 1), mar = c(2, 4, 1, 1))
+  elapsed <- d$T - min(d$T)
+  plot(elapsed, d$EEG1, type = "l", xlab = "", ylab = "EEG1")
+  plot(elapsed, d$spindles, type = "s", col = "blue", xlab = "", ylab = "Spindles")
+  for (band in names(bands)) {
+    plot(elapsed, d[[paste0("EEG1_", band)]], type = "l",
+         xlab = "Seconds", ylab = band)
+  }
+  par(mfrow = c(1, 1))
+}
+d <- i$slice(i$s2i(window), channels, annots = "spindles", time = TRUE)
+plot_spindle(d)
+```
+
+![A spindle in the raw EEG, its annotation, and five filtered frequency bands](../img/tut-r-1.8-spindle-bands.png){width="100%"}
+
+Use `slices()` and a normal R loop to repeat this for the first five
+events, with eight seconds on either side. Save the plots to a PDF so
+each event gets its own page:
+
+```r
+selected <- head(events, 5)
+windows <- cbind(pmax(0, selected$Start - 8),
+                 pmin(recording_end, selected$Stop + 8))
+parts <- i$slices(i$s2i(windows), channels, annots = "spindles", time = TRUE)
+pdf("spindle-examples.pdf", width = 9, height = 9)
+for (part in parts) plot_spindle(part)
 dev.off()
 ```
 
-![img](../img/rt21.png){width="100%"}
+For long recordings or many events, extract and plot smaller batches
+rather than loading every event window into R at once.
 
-In practice, there would be few scenarios where one wants to extract particular spindles
-for visaulization, beyond didactic purposes.  To make this a little more useful, 
-rather than having to manually re-run this code for each
-spindle, we can use Luna's `literate()` function to automate this
-process.  Given a list of intervals (or epoch-by-epoch), `literate()`
-will iterate over each one, generate a data frame (by calling either
-`ldata.intervals()` or `ldata()`) and then pass that data-frame to a
-user-defined function.  We'll wrap our plotting code in a function
-(`f1()`) as follows:
-
-
-```
-f1 <- function(d) { 
- par(mfcol=c(7,1) , mar=c(0,4,0,0) )
- plot( d$EEG1 , type="l" , xaxt = 'n' , yaxt='n' , axes=F , ylab="EEG1" )
- plot( d$spindles   , type="l" , lwd=2 , col="blue" , xaxt='n' , yaxt='n' , axes=F, ylab="Spindles" )
- plot( d$EEG1_delta , type="l" , col=rgb(200,100,00,150,max=255) , axes=F , ylab="Delta" )
- plot( d$EEG1_theta , type="l" , col=rgb(100,200,0,150,max=255) , axes=F , ylab="Theta" )
- plot( d$EEG1_alpha , type="l" , col=rgb(0,200,100,150,max=255) , axes=F , ylab="Alpha" )
- plot( d$EEG1_sigma , type="l" , col=rgb(0,0,100,150,max=255) , axes=F , ylab="Sigma" )
- plot( d$EEG1_beta  ,  type="l" , col=rgb(100,0,100,150,max=255) , axes=F , ylab="Beta" )
- cat( "spindle interval" , d$INT[1] , "\n" )
- readline(prompt="Press [enter] to continue")
-}
-```
-
-That is, this is identical to the prior plotting code, simply inside a
-function that also prints the spindle interval to the console, and
-requests that the [enter] key be pressed to advance to the next
-spindle.  We can then instruct _lunaR_ to iterate over the annotation
-class `spindles` (with `by.annot`), which will create a data-frame
-similar to the ones above for each spindle, plus or minus 8 seconds in
-this case (`w=8`), and then pass it to the newly-defined `f1()` function:  
-
-```
-literate( f1 , chs= lchs() , annots= "spindles" ,  by.annot= "spindles" , w = 8 ) 
-```
-
-!!! warning
-
-    The current implementation of `literate()` can lead to issues if
-    the function returns an error or is interrupted (or may give issues by not allowing an interrupt, e.g. from Ctrl-C, Ctrl-Z or similar):
-    this should be fixed on the next release...  for now, treat `literate()` with care...
-    
-You could imagine adding some code to save each plot, or to make multiple plots
-per page, etc, for reviewing all spindles detected.  Some example below:
-
-![img](../img/rt22.png){width="100%"}
-
-![img](../img/rt23.png){width="100%"}
-
-![img](../img/rt24.png){width="100%"}
-
-![img](../img/rt25.png){width="100%"}
-
-
-That's the end of the tutorial.  If this was your first pass, that 
-was likely a lot of material to cover.  Consult the [command
-reference](../ref/index.md) for more details about specific commands.
-And visit these pages for more details on using
-[_lunaC_](../luna/args.md) and [_lunaR_](../ext/R/index.md).
-
-----
-
-Feel free to explore the tutorial data more -- as with any dataset,
-there are probably a few quirks that you might discover if you look
-closely enough.  Have fun -- and if you get tired, remember _you can
-always sleep on it and you'll probably understand it better the next
-day :-)_
- 
+The [R reference](../ext/R/ref.md) lists the project, instance, and
+results methods. See [R plotting](../ext/R/viz.md) for the built-in
+hypnogram, spectrum, spectrogram, and channel-map helpers, and the
+[command reference](../ref/index.md) for analysis parameters.

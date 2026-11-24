@@ -223,7 +223,7 @@ specific to a domain and the names should be unique to a domain.
     meaning that this measure is stratified by either _band_ (`B`) or
     by both _band_ and _sleep stage_ (`SS`).  The variable [`PSD`](../ref/power-spectra.md#psd) would
     only feature once in the data dictionary `eeg_spec.txt` (along
-    with factor definitions for `B` and `SS`), and the the program
+    with factor definitions for `B` and `SS`), and the program
     would correctly pull these together.
 
 It would be burdensome to have to go back to the original files (which

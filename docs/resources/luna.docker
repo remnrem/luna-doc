@@ -1,5 +1,8 @@
 #!/bin/bash -e
 
+# Historical container wrapper; targets retired image names.
+# For current Luna/R installations use https://zzz-luna.org/luna/download/docker/
+
 WWWBROWSER="open"
 
 if   [ "$#" -eq 0 ]; then

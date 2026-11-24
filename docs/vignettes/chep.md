@@ -79,8 +79,9 @@ shades of pink) are located in the right hemisphere.
 Another way to gain some insight on data quality is to look at
 the Hjorth parameters computed with the 
 [`SIGSTATS`](../ref/summaries.md#sigstats) command in the above Luna run.  Using
-the [`lheatmap()` function](../ext/R/viz.md#lheatmap), we can visualize the
-data using [this code](chep-viz.md#raw-data-hjorth-parameters):
+the `plot_channels()` helper defined in the
+[accompanying R code](chep-viz.md#setup), we can visualize the
+data as shown [here](chep-viz.md#raw-data-hjorth-parameters):
 
 ![Placeholder](../img/chep/SS1.png){width="100%"}
 

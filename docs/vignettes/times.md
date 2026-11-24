@@ -242,7 +242,7 @@ _three days later_.  In elapsed seconds, this would be 259320 = 120 +
 ```
 b01 . 259320   259350	
 ```
-Similarly, we can specify the same event in in elapsed _hh:mm:ss_ encoding, i.e. adding 72 hours to 2 minutes:
+Similarly, we can specify the same event in elapsed _hh:mm:ss_ encoding, i.e. adding 72 hours to 2 minutes:
 ```
 b02 . 0+72:02:00 0+72:02:30 
 ```

@@ -159,12 +159,12 @@ Secondary/advanced options:
 | `qda` | | Use QDA instead of LDA |
 | `dump-svd` | `f` | Write PCA/SVD components to `f.U`, `f.W` and `f.V` |
 | `dump-features` | `f.txt` | Write epoch by feature matrix to `f.txt` |
-| `force-reload` | | Add if re-running SOAP when using lunaR R library |
+| `force-reload` | | Force the SOAP model to reload when repeating analyses in an interactive session |
 
 
 <h3>Output</h3>
 
-Individual-level summary metrics (strata: none)
+Individual/channel-level summary metrics (strata: `CH`)
 
 | Variable | Description |
 | -----| -----|
@@ -183,7 +183,7 @@ Individual-level summary metrics (strata: none)
 | `PREC_WGT` | Weighted precision |
 | `RECALL_WGT` | Weighted recall |
 
-Epoch-level output (option: `epoch`; strata: `E`)
+Epoch-level output (option: `epoch`; strata: `CH` x `E`)
 
 | Variable | Description |
 | -----| -----|	
@@ -199,7 +199,7 @@ Epoch-level output (option: `epoch`; strata: `E`)
 | `PRED` | Predicted stage |
 | `PRIOR` | Original observed stage |
 
-Stage-level output (strata: `SS`)
+Stage-level output (strata: `CH` x `SS`)
 
 | Variable | Description |
 | -----| -----|
@@ -209,14 +209,14 @@ Stage-level output (strata: `SS`)
 | `PREC` | Stage-specific precision |
 | `RECALL` | Stage-specific recall | 
 
-Component-level output (strata: `VAR`)
+Component-level output (strata: `CH` x `VAR`)
 
 | Variable | Description |
 | -----| -----|
 | `INC` | 0/1 for whether component included |
 | `PV` | Stage-component oneway ANOVA p-value |
 
-Stage-transition metrics (strata: `SS` x `ETYPE`)
+Stage-transition metrics (strata: `CH` x `SS` x `ETYPE`)
 
 | Variable | Description |
 | -----| -----|
@@ -236,7 +236,7 @@ of the three (here labelled `A`):
 | `XAX`  | _Singleton_ epochs, i.e. with different stages before and after |
 | `TRN`  | Epochs at any type of transition (`AAX`, `XAA` or `XAX`) | 
 
-Epoch-level confusion matrix (strata: `NSS` x `PRED` x `OBS` )
+Epoch-level confusion matrix (strata: `CH` x `NSS` x `PRED` x `OBS`)
 
 | Variable | Description |
 | -----| -----|
@@ -314,23 +314,26 @@ Even with this simple model, the kappa coefficient is high here,
 meaning that stages and signals align well.  See the above-referenced
 vignette for examples of when this is not the case.
 
-We can plot the _posterior probabilities_, e.g. using _lunaR_:
+Plot the posterior probabilities and observed/predicted stages with
+the R package `luna`:
 
+```r
+library(luna)
+proj <- lp$proj()
+proj$import_db("out.db")
+d <- proj$table("SOAP", c("CH", "E"))
+par(mfrow = c(3, 1), mar = c(3, 4, 1, 1))
+lp$hypno_density(d)
+lp$hypno(d$PRED, e = d$E - 1)
+lp$hypno(d$PRIOR, e = d$E - 1)
+par(mfrow = c(1, 1))
 ```
-k <- ldb( "out.db" )
-d <- k$SOAP$E
 
-# a small fix needed for now...
-d$FLAG <- 0  
+The first panel shows the probabilities; the next two show predicted
+and observed stages. These examples assume 30-second epochs and one
+individual in the database. Subset on `ID` first for a cohort database.
 
-# function to make the plot
-lpp2( d )
-```
-
-![img](../img/soappp.png)
-
-The top panel shows the posterior probabilities; the middle is the most likely stage from SOAP; then lower is the observed stage.
-[W, R, NREM = green, red, blue(s)].
+![SOAP probabilities and stages](../img/soappp.png)
 
 We can also extract the raw feature matrix, and the components:
 
@@ -340,15 +343,17 @@ luna s.lst -o out.db -s SOAP sig=EEG epoch dump-features=f.1 dump-svd=cmp
 
 In R:
 ```
-ss <- ldb( "out.db" )$SOAP$E
+proj <- lp$proj()
+proj$import_db("out.db")
+ss <- proj$table("SOAP", c("CH", "E"))
 ```
 Loading raw feature and plotting using observed stage label to color the points:
 ```
 d <- read.table( "f.1" , header=T ) 
 png( file="soap-dump1.png" , width=1000, height=350 , res=100 , units="px" )
 par(mfcol=c(1,2))
-plot( d$E , d$SPEC_EEG_1 , pch=20 , col= lstgcols( ss$PRIOR ) )
-plot( d$E , d$SPEC_EEG_13.5 , pch=20 , col= lstgcols( ss$PRIOR ) ) 
+plot( d$E , d$SPEC_EEG_1 , pch=20 , col= lp$stgcol(ss$PRIOR[match(d$E, ss$E)]) )
+plot( d$E , d$SPEC_EEG_13.5 , pch=20 , col= lp$stgcol(ss$PRIOR[match(d$E, ss$E)]) )
 dev.off()
 ```
 ![img](../img/soap-dump1.png)
@@ -357,8 +362,8 @@ Plotting components: here are the first two components:
 ```
 d <- read.table( "cmp.U" , header=T )
 par(mfcol=c(1,2))
-plot( d$E , d$C1 , pch=20 , col= lstgcols( ss$PRIOR ) )
-plot( d$E , d$C2 , pch=20 , col= lstgcols( ss$PRIOR ) )
+plot( d$E , d$C1 , pch=20 , col= lp$stgcol(ss$PRIOR[match(d$E, ss$E)]) )
+plot( d$E , d$C2 , pch=20 , col= lp$stgcol(ss$PRIOR[match(d$E, ss$E)]) )
 ```
 
 ![img](../img/soap-dump2.png)
@@ -367,8 +372,8 @@ plot( d$E , d$C2 , pch=20 , col= lstgcols( ss$PRIOR ) )
 Here are the third and fourth components:
 ```
 par(mfcol=c(1,2))
-plot( d$E , d$C3 , pch=20 , col= lstgcols( ss$PRIOR ) )
-plot( d$E , d$C4 , pch=20 , col= lstgcols( ss$PRIOR ) )
+plot( d$E , d$C3 , pch=20 , col= lp$stgcol(ss$PRIOR[match(d$E, ss$E)]) )
+plot( d$E , d$C4 , pch=20 , col= lp$stgcol(ss$PRIOR[match(d$E, ss$E)]) )
 ```
 
 ![img](../img/soap-dump3.png)

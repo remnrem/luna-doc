@@ -1,7 +1,97 @@
 
 # Updates, additions and fixes
 
-Current stable version: __v1.7.0__ (main [downloads](download/index.md) page)
+Current stable version: __v1.8.0__ (main [downloads](download/index.md) page)
+
+
+## v1.8.0
+
+The current stable release aligns `luna-base`, `luna-api` (`lunapi`),
+LunaScope, _lunaR_, and the `remnrem/luna`, `remnrem/lunapi`, and
+`remnrem/lunalite` Docker images at version 1.8.0. See
+[downloads](download/index.md#quick-links) for pinned and unpinned routes.
+
+_Major additions_
+
+- **Completely rewritten [lunaR interface](ext/R/index.md)**: the new R
+  package uses lunapi through reticulate and mirrors its project/instance
+  API, with results returned as R data frames and plots drawn with base R
+  graphics. Installation no longer requires a C/C++ compiler, FFTW, or a
+  standalone Luna executable; Python and lunapi are set up automatically
+  on first use. The repository is now `remnrem/lunaR`, while the installed
+  package remains `luna`, loaded with `library(luna)`. See the
+  [installation notes](download/lunar.md), updated [R tutorial](tut/tut4.md),
+  and [migration guide](ext/R/ref.md#migrating-old-r-scripts).
+
+Older release notes below retain the API names used by those historical
+releases.
+
+## v1.7.3 (21-November-2026)
+
+_Major additions_
+
+- added CODA, an optional second-stage rescoring workflow for
+  [`POPS`](ref/pops.md#pops-prediction) and [`RUN-POPS`](ref/pops.md#run-pops)
+
+- expanded [`HDSTATS`](ref/pops.md#hdstats) with long-range and ultradian
+  hypnodensity measures, transition summaries, and PCA workflows
+
+- expanded [`IRASA`](ref/power-spectra.md#irasa) with configurable band-power
+  summaries and clearer periodic/aperiodic output
+
+- added a normalized HYPNO-night template to [`SIGDYN`](ref/dynamics.md#sigdyn)
+
+- added annotation-only sample-list generation to
+  [`--build`](ref/helpers.md#-build), and implicit-reference construction with
+  [`REFERENCE`](ref/manipulations.md#reference) `make=`
+
+_Bug fixes_
+
+- fixed [`MASK`](ref/masks.md#mask) `retain` so that it correctly preserves the requested masked epochs
+
+- fixed [`STANDARDIZE`](ref/manipulations.md) copy-back when the current epoch pattern contains gaps
+
+- fixed [`SIGNALS`](ref/manipulations.md#signals) `keep=` so that it correctly retains the requested channels
+
+- fixed channel de-duplication (`.1`, `.2` suffixing) to also apply correctly
+  after [alias](luna/args.md#aliases) substitution
+
+- fixed [`POPS`](ref/pops.md#pops-prediction) feature-importance labels
+
+- fixed [`POPS`](ref/pops.md#pops-prediction)/[`RUN-POPS`](ref/pops.md#run-pops)
+  CODA model resolution to always use the `coda30` model, including at `resolution=5`
+
+
+_Other improvements_
+
+- enabled validation-based early stopping for [`POPS`](ref/pops.md#pops-training)
+  training (`early-stopping=`)
+
+- enabled continuation of an existing compatible [`POPS`](ref/pops.md#pops-training)
+  model (`continue-model=`)
+
+- EDF channel labels containing commas are now normalized when read, preventing
+  them from being misinterpreted as comma-delimited signal lists
+
+- improved malformed EDF+/EDFZ TAL diagnostics; `skip-bad-tals=T` can skip
+  invalid annotation entries instead of halting
+
+- treat NUL-padded EDF header fields as valid padding
+
+- significantly improved [`destrat`](luna/destrat.md#destrat) query performance
+  and added the `-t` extract-all option
+
+- added [`HYPNO`](ref/hypnograms.md#hypno) `SFI1`, a second sleep-fragmentation
+  index
+
+
+_Experimental_
+
+- added experimental [`HYPNO`](ref/hypnograms.md#hypno) PCA options: `pc-out=`,
+  `pc-proj=`, and `--hypno-pc`
+
+- expanded experimental [`AROUSALS`](ref/physio.md#arousals) diagnostics and
+  added an optional spindle veto
 
 
 ## v1.7.0 (03-September-2026)
@@ -78,14 +168,13 @@ release is also 1.7.0.
 
 _POPS / staging_
 
-- added [`RUN-POPS`](ref/pops.md#hypnodensity-mode) _hypnodensity mode_ — passing
-  `hypnodensity=N` to `RUN-POPS` runs the POPS model at N staggered epoch offsets
-  (N must divide 30; e.g. the default `N=6` gives one sample every 5 s at 0.2 Hz) and
-  writes the resulting per-stage posterior probability traces back into the EDF as
-  continuous signals (`PP_W`, `PP_N1`, `PP_N2`, `PP_N3`, `PP_R`; optionally also
-  `PP_NR`); edge regions filled by zero-order hold are marked with a `PP/edge`
-  annotation; output channel prefix and NREM channel composition are configurable
-  via `prefix`, `add-nrem123`, and `add-nrem`
+- added [`RUN-POPS`](ref/pops.md#hypnodensity-mode) _hypnodensity mode_ — now
+  invoked with `resolution=5 emit-pp`, it runs staggered 30-second POPS windows
+  every 5 seconds and writes per-stage posterior traces to EDF signals (`PP_W`,
+  `PP_N1`, `PP_N2`, `PP_N3`, `PP_R`; optionally `PP_NR`). Edge regions filled by
+  zero-order hold are marked with a `PP/edge` annotation; output channel prefix
+  and NREM channel composition are configurable via `prefix`, `add-nrem123`, and
+  `add-nrem`
 
 - added [`HDSTATS`](ref/pops.md#hdstats) — analysis of hypnodensity signals
   (posterior-probability EDF channels produced by `RUN-POPS hypnodensity`); organises
@@ -563,7 +652,7 @@ _Misc additions, changes and fixes_
 
  - added `uppercase-keys` to [`CACHE record`](ref/index.md)
 
- - added `scale` added to [`PSC`](ref/psc.md) (for scaled-PCA implementation)
+ - added `scale` to [`PSC`](ref/psc.md) (for scaled-PCA implementation)
 
  - [`PSC`](ref/psc.md#psc) now takes `cmd-var=SPINDLES,DENS` etc to select only specific variables
 
@@ -783,7 +872,7 @@ in Moonlight, 5) epoch-wise analysis using the multitaper command
 [`MTM`](ref/power-spectra.md#mtm), 6) ability to generate new
 annotations conveniently on-the-fly based on pairwise contrasts of
 existing ones, 7) a prototype of a new utility for viewing hypnograms
-([Hypnoscope](apps/hypnoscope.md)).
+(Hypnoscope).
 
 
 _Hypnograms_
@@ -830,7 +919,7 @@ _Moonlight_
 
 _Hypnoscope_
 
- - an initial implementation of [Hypnoscope](apps/hypnoscope.md)
+ - an initial implementation of Hypnoscope
    utility for viewing multiple hypnograms and generating
    hypnogram-based metrics
 

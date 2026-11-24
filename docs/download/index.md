@@ -1,32 +1,61 @@
 # Downloads
 
-<p align="right"><em>Current Luna release: <b>v1.7.0</b> (03-September-2026)</em></p>
+<p align="right"><em>Current stable Luna release: <b>v1.8.0</b></em></p>
 
 
 
 ## Quick links
 
-Latest stable Luna command-line tool (binaries and source):
+The current stable release is **1.8.0** for `luna-base`, `luna-api`
+(the `lunapi` Python package), LunaScope, _lunaR_ (the R package `luna`),
+and the three Docker images below. Choose the pinned route to keep this
+release fixed, or the unpinned route to follow updates. Unpinned package
+and binary routes follow releases; unpinned Git routes follow development.
 
-| Platform | Link/command |
-| ----- | ----- |
-| __Executables__ | |
-| macOS (Intel/x86_64) binaries | [https://github.com/remnrem/luna-base/releases/download/v1.7.0/mac_luna.tar.gz](https://github.com/remnrem/luna-base/releases/download/v1.7.0/mac_luna.tar.gz) |
-| macOS (Silicon/ARM64) binaries | [https://github.com/remnrem/luna-base/releases/download/v1.7.0/macos_arm64_luna.tar.gz](https://github.com/remnrem/luna-base/releases/download/v1.7.0/macos_arm64_luna.tar.gz) |
-| Windows binaries | [https://github.com/remnrem/luna-base/releases/download/v1.7.0/win_luna.zip](https://github.com/remnrem/luna-base/releases/download/v1.7.0/win_luna.zip) |
-| __Python__ | |
-| _lunapi_ Python package only | `pip install lunapi` |
-| LunaScope Python package | `pip install lunascope` |
-| __Interactive GUI__ | |
-| LunaScope install instructions | [https://zzz-luna.org/lunascope/install/](https://zzz-luna.org/lunascope/install/) |
-| __Source__| |
-| Stable Luna (all platforms)| [https://github.com/remnrem/luna-base/archive/refs/tags/v1.7.0.tar.gz](https://github.com/remnrem/luna-base/archive/refs/tags/v1.7.0.tar.gz)
-| Latest (unstable) Luna| [https://github.com/remnrem/luna-base/](https://github.com/remnrem/luna-base/) |
-| Latest (unstable) _lunaR_ | [https://github.com/remnrem/luna/](https://github.com/remnrem/luna/) |
-| __Docker__ | | 
-| Core Luna | `docker pull remnrem/luna` |
-| + JupyterLab & _lunapi_ | `docker pull remnrem/lunapi` |
-| lightweight Luna | `docker pull remnrem/lunalite` |
+### Binaries and packages
+
+| Component | Pinned: 1.8.0 | Unpinned |
+| ----- | ----- | ----- |
+| macOS (Intel/x86_64) binaries | [v1.8.0](https://github.com/remnrem/luna-base/releases/download/v1.8.0/mac_luna.tar.gz) | [Latest](https://github.com/remnrem/luna-base/releases/latest/download/mac_luna.tar.gz) |
+| macOS (Silicon/ARM64) binaries | [v1.8.0](https://github.com/remnrem/luna-base/releases/download/v1.8.0/macos_arm64_luna.tar.gz) | [Latest](https://github.com/remnrem/luna-base/releases/latest/download/macos_arm64_luna.tar.gz) |
+| Windows binaries | [v1.8.0](https://github.com/remnrem/luna-base/releases/download/v1.8.0/win_luna.zip) | [Latest](https://github.com/remnrem/luna-base/releases/latest/download/win_luna.zip) |
+| _lunapi_ (`luna-api`) | `python -m pip install lunapi==1.8.0` | `python -m pip install --upgrade lunapi` |
+| LunaScope with _lunapi_ | `python -m pip install lunascope==1.8.0 lunapi==1.8.0` | `python -m pip install --upgrade lunascope lunapi` |
+| R package `luna` | `pak::pak("remnrem/lunaR@v1.8.0")` | `pak::pak("remnrem/lunaR")` |
+
+Install `pak` first with `install.packages("pak")`. The unpinned R route
+tracks the development branch. See [R installation](lunar.md) for
+first-use setup and pinning the Python engine too.
+For GUI setup, see [LunaScope installation](#lunascope).
+
+### Source
+
+Git tags use the `v` prefix. Unpinned clones track each repository's
+default development branch, which may be newer than the stable release.
+Choose one clone command per repository, then follow its build instructions.
+
+| Repository | Pinned: v1.8.0 | Unpinned: development |
+| ----- | ----- | ----- |
+| `luna-base` | `git clone --branch v1.8.0 https://github.com/remnrem/luna-base.git` | `git clone https://github.com/remnrem/luna-base.git` |
+| `luna-api` | `git clone --branch v1.8.0 https://github.com/remnrem/luna-api.git` | `git clone https://github.com/remnrem/luna-api.git` |
+| `lunascope` | `git clone --branch v1.8.0 https://github.com/remnrem/lunascope.git` | `git clone https://github.com/remnrem/lunascope.git` |
+| R package `luna` (`lunaR` repository) | `git clone --branch v1.8.0 https://github.com/remnrem/lunaR.git` | `git clone https://github.com/remnrem/lunaR.git` |
+
+The `luna-base` source archive is also available as a
+[pinned v1.8.0 download](https://github.com/remnrem/luna-base/archive/refs/tags/v1.8.0.tar.gz);
+the [latest release page](https://github.com/remnrem/luna-base/releases/latest)
+provides the source archive for the latest stable release.
+
+### Docker
+
+| Image | Pinned: 1.8.0 | Unpinned: latest |
+| ----- | ----- | ----- |
+| Luna + _lunaR_ / RStudio | `docker pull remnrem/luna:1.8.0` | `docker pull remnrem/luna:latest` |
+| + JupyterLab & _lunapi_ | `docker pull remnrem/lunapi:1.8.0` | `docker pull remnrem/lunapi:latest` |
+| Lightweight command-line Luna | `docker pull remnrem/lunalite:1.8.0` | `docker pull remnrem/lunalite:latest` |
+
+Use the same tag in `docker run`; pulling `:1.8.0` does not change which
+image an untagged run uses. See [Docker](docker.md) for paired examples.
  
 ## Installation options 
 
@@ -35,38 +64,57 @@ Luna is released under the
 allowing free sharing and modification of the source code.  There are
 multiple ways to obtain Luna:
 
-- compile from source: see [here](source.md) for _lunaC_ and _lunaR_,
-  along with instructions for compilation
+- compile the command-line _lunaC_ from [source](source.md)
+
+- install the R package `luna` directly from `remnrem/lunaR` using
+  [pak](lunar.md); the R interface requires no compilation
 
 - download [binary executables](exec.md) for _lunaC_ for Mac OS and Windows
 
-- install the Python package with `pip install lunapi`
+- install the Python package with `python -m pip install lunapi==1.8.0`
+  (pinned) or `python -m pip install --upgrade lunapi` (unpinned)
 
 - or pull a [Docker container](docker.md), which allows any machine
   with [Docker](http://www.docker.com) installed on it to run Luna
-  (both _lunaC_ and either _lunapi_ or _lunaR_) and comes with JupyerLab (or R and
+  (both _lunaC_ and either _lunapi_ or _lunaR_) and comes with JupyterLab (or R and
   RStudio) and with the tutorial data pre-installed.
 
 
 !!! hint "Advice for Linux & macOS users"
-    For most up-to-date Linux and macOS distributions, we recommend pulling the
-    [source](source.md) and compiling directly.
+    For command-line Luna on up-to-date Linux and macOS distributions, you
+    can pull the [source](source.md) and compile directly. For R, use the
+    [R package installation](lunar.md).
  
 !!! hint "Advice for Windows" 
-    For Windows, we recommend using the
-    [Dockerized](docker.md) version of Luna to provide a complete
-    environment in which Luna can operate best.  Currently, it is the only way that you can use _lunaR_ on Windows too.
+    For Unix-style command-line workflows on Windows, consider
+    [Docker](docker.md). The R package `luna` can be installed directly
+    on Windows x86_64 using the [same R commands](lunar.md) as on
+    macOS and Linux; Docker is optional.
 
 !!! hint "Quick start w/ Docker"
     If you have trouble installing Luna via the above methods, using a Docker container may instead prove to be a relatively easy
     way to get a full Luna environment up and running.
 
 
+## R package `luna`
+
+See [lunaR installation](lunar.md) for pinned 1.8.0 and unpinned routes,
+automatic Python setup, and installation from a local source checkout.
+
 ## LunaScope
 
-[LunaScope install instructions](https://zzz-luna.org/lunascope/install/)
+In an activated Python virtual environment, choose one route:
 
-For installation and setup of the LunaScope interactive GUI, please use the dedicated LunaScope install page linked above.
+```bash
+# Pinned stable release (including the Python engine)
+python -m pip install lunascope==1.8.0 lunapi==1.8.0
+
+# Unpinned: install or upgrade to the latest releases
+python -m pip install --upgrade lunascope lunapi
+```
+
+For GUI setup and usage, see the dedicated
+[LunaScope install instructions](https://zzz-luna.org/lunascope/install/).
     
 
 ## Data resources

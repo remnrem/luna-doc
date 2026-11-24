@@ -1335,7 +1335,7 @@ __doesn't__ need to write:
 vars=D,E X=D,E grps=demo Zg=demo
 ```
 
-(This is important, as as the presence of any `vars` group will imply
+(This is important, as the presence of any `vars` group will imply
 that _only_ those variables are extracted from the binary file,
 i.e. this would exclude the 9 variables that (by default) are set to
 be the dependents.)
@@ -1786,20 +1786,22 @@ if in the R package:
 d <- d[ order(d$F) , ]
 ```
 
-We'll use the [lunaR `ltopo.xy()`](../ext/R/viz.md#ltopoxy)
-routine to produce a plot of these data, first defining an additional variable as the signed -log10 of the empirical p-value:
+Plot each channel's signed -log10 empirical p-values against frequency
+using ordinary R panels, saved 16 channels per PDF page:
 
+```r
+d$S <- sign(d$B) * -log10(pmax(d$PU, .Machine$double.xmin))
+channels <- unique(d$CH)
+pdf("channel-frequencies.pdf", width = 12, height = 10)
+par(mfrow = c(4, 4), mar = c(3, 3, 2, 1))
+for (ch in channels) {
+  z <- d[d$CH == ch, ]
+  plot(z$F, z$S, pch = 20, cex = 0.4, main = ch,
+       xlab = "Frequency (Hz)", ylab = "Signed -log10(p)")
+  abline(v = 15, h = c(-2, 0, 2), col = "gray", lty = 2)
+}
+dev.off()
 ```
-d$S <- sign( d$B ) * -log10( d$PU )
-```
-
-The Luna graph command:
-```
-ltopo.xy( c=d$CH, x=d$F, y=d$S, z=d$S, pch=20, col=rbpal, cex=0.4, xline=15, yline=c(-2,0,2), y.symm=T) 
-```
-then produces this plot where the Y-axis and also color-scaling show this scaled version of the empirical significance:
-
-![img](../img/cpt1.png){width="100%"}
 
 Directly examining the `PC` column, we see there are 46 variables significant at 0.05 after correction:
 ```

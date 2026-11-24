@@ -524,6 +524,7 @@ Sleep fragmentation indices
 | Variable | Description |
 | --- | --- |
 | `SFI` | Sleep Fragmentation Index: sleep to `W` transition count / `TST` |
+| `SFI1` | Sleep Fragmentation Index: sleep (except `N1`) to `W` or `N1` transition count / `TST` |
 | `TI_S` | Stage Transition Index (excludes `W`) `N1`-`N2`-`N3`-`R` transition count / `TST` |
 | `TI_S3` | 3-class Stage Transition Index, NREM-REM-wake transition count / `SPT` |
 | `TI_RNR` | REM-NREM transition count / `TST` |
@@ -1070,6 +1071,7 @@ plot( d$E , d$STAGE_N )
 
 <h3>See also</h3>
 
-The [`lstages()`](../ext/R/ref.md#lstages) function in
-[_lunaR_](../ext/R/index.md) provides a quick way to run the [`STAGE`](hypnograms.md#stage) command
-for a single EDF, returning just a vector of stage names.
+In the [R package `luna`](../ext/R/index.md), `i$stages()` runs
+[`STAGE`](hypnograms.md#stage) on a recording instance and returns a data
+frame. Use `i$stages()$STAGE` for the stage-label vector, or `i$hypno()`
+to plot it.
