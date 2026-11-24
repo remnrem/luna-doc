@@ -155,7 +155,7 @@ runs a command on the recording held in `p`. Running a command will
 generally generate a set of results, manipulate the in-memory
 recording, or write new EDF/annotation outputs to disk.
 
-After running the above, we can look at thes results, for example to see the result tables
+After running the above, we can look at these results, for example to see the result tables
 returned:
 ```python
 p.strata()

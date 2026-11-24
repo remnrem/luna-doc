@@ -348,7 +348,7 @@ Retrieve what you need first, including before helper calls such as
 
 If user-defined [`TAG`](../../ref/summaries/#tag)
 have been applied, they will feature here too.  For example,
-if we pass in a varable `${stages}`, the comma-separated
+if we pass in a variable `${stages}`, the comma-separated
 values of which are looped-over with the `#{stage}` loop variable, 
 we can track the value in the output using a `TAG`:
 
@@ -419,7 +419,7 @@ tbl = result.table( 'PSD',  [ 'CH' , 'B' , 'STG' ] )
 ## Manipulating outputs
 
 Python analyses can retrieve tables directly and use pandas to do the
-selection and reshaping.  For examle, to select only the fields you
+selection and reshaping.  For example, to select only the fields you
 want and arrange channels in columns:
 
 ```python
